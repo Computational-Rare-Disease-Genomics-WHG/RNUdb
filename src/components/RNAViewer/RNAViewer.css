@@ -1,0 +1,67 @@
+/* src/components/RNAViewer/RNAViewer.css */
+.rna-viewer {
+  position: relative;
+  font-family: Arial, sans-serif;
+}
+
+.rna-svg {
+  background-color: #fafafa;
+  border-radius: 4px;
+}
+
+.nucleotide-group {
+  transition: all 0.2s ease;
+}
+
+.nucleotide-group:hover {
+  filter: drop-shadow(0 0 4px rgba(0, 102, 204, 0.5));
+}
+
+.bonds-layer {
+  pointer-events: none;
+}
+
+.rna-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rna-controls button {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.rna-controls button:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.rna-controls button:active {
+  background: #e0e0e0;
+}
+
+.rna-svg-container {
+  position: relative;
+  user-select: none;
+}
+
+.tooltip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  z-index: 1000;
+}
