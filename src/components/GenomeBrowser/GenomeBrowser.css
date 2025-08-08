@@ -1,0 +1,100 @@
+/* GenomeBrowser.css */
+
+.genome-browser-container {
+  width: 100%;
+}
+
+.genome-browser-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.genome-browser-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.genome-browser-toolbar-divider {
+  height: 1rem;
+  width: 1px;
+  background-color: #cbd5e1;
+  margin: 0 0.5rem;
+}
+
+.genome-browser-viewer {
+  background-color: white;
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.conservation-track {
+  background-color: #ffffff;
+}
+
+.conservation-grid-line {
+  stroke: #e5e7eb;
+  stroke-width: 0.5;
+}
+
+.conservation-bar {
+  opacity: 0.8;
+}
+
+.conservation-label {
+  fill: #6b7280;
+  font-size: 7px;
+}
+
+.sequence-track {
+  background-color: #f8fafc;
+}
+
+.sequence-base {
+  font-size: 12px;
+  text-anchor: middle;
+  font-weight: bold;
+}
+
+.regulatory-track {
+  background-color: #fefefe;
+}
+
+.regulatory-element {
+  opacity: 0.8;
+  border-radius: 2px;
+}
+
+.regulatory-label {
+  fill: white;
+  font-size: 7px;
+  text-anchor: middle;
+  font-weight: bold;
+}
+
+.genes-track-label {
+  fill: #1f2937;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.genes-track-type {
+  fill: #6b7280;
+  font-size: 7px;
+}
+
+.genome-browser-cursor {
+  fill: none;
+  stroke: black;
+  stroke-dasharray: 5, 5;
+  stroke-width: 1;
+}
