@@ -1,5 +1,5 @@
-import React, { useRef, useCallback, forwardRef } from 'react';
-import type { RNAData, Nucleotide } from '../../types/rna';
+import React, {  useCallback, forwardRef } from 'react';
+import type { RNAData } from '../../types/rna';
 
 interface EditorCanvasProps {
   rnaData: RNAData;

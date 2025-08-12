@@ -10,9 +10,7 @@ import {
   Trash2, 
   Edit3, 
   Keyboard, 
-  Info, 
   Target,
-  Database,
   BarChart3
 } from 'lucide-react';
 import type { RNAData } from '../../types/rna';

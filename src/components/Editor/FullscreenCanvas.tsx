@@ -29,6 +29,7 @@ interface FullscreenCanvasProps {
   currentNucleotide: number | null;
   currentLabel: string | null;
   editingId: number | null;
+  isLabelModalOpen: boolean;
   onCanvasClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   onCanvasMouseDown: (e: React.MouseEvent) => void;
   onMouseMove: (e: React.MouseEvent) => void;
