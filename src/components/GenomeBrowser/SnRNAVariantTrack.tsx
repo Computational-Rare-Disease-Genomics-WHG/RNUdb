@@ -36,7 +36,7 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({ variants, gnomadV
         title="gnomAD Variants (40 variants)"
         height={40}
         variants={uniqueGnomadVariants}
-        variantColor={(variant) => {
+        variantColor={() => {
           return COLORBLIND_FRIENDLY_PALETTE.VARIANTS.GNOMAD;
         }}
       />

@@ -1,7 +1,7 @@
-import { useEffect, RefObject } from 'react';
+import { useEffect, type RefObject } from 'react';
 
 interface KeyboardShortcutsProps {
-  canvasRef: RefObject<HTMLDivElement>;
+  canvasRef: RefObject<HTMLDivElement | null>;
   currentNucleotide: number | null;
   currentLabel: string | null;
   editingId: number | null;

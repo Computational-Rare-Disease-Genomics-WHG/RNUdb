@@ -1,8 +1,8 @@
-import { useState, useCallback, RefObject, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, type RefObject } from 'react';
 
 interface DragAndZoomProps {
-  canvasRef: RefObject<HTMLDivElement>;
-  mode: 'select' | 'add' | 'pair' | 'delete' | 'pan';
+  canvasRef: RefObject<HTMLDivElement | null>;
+  mode: 'select' | 'add' | 'pair' | 'delete' | 'pan' | 'label';
   zoomLevel: number;
   panOffset: { x: number; y: number };
   onUpdateNucleotidePosition: (id: number, x: number, y: number) => void;
@@ -27,7 +27,6 @@ export const useDragAndZoom = ({
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const animationFrameRef = useRef<number | null>(null);
   const pendingUpdateRef = useRef<{ id: number; x: number; y: number } | null>(null);
-  const lastUpdateTime = useRef<number>(0);
 
   // Use requestAnimationFrame to batch position updates
   useEffect(() => {

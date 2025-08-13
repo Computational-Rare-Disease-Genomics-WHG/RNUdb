@@ -1,6 +1,5 @@
 import React from 'react';
 import { Track } from '@gnomad/region-viewer';
-import { variantData, createDepletionGroupOverlayData } from '../../data/variantData';
 import { sgeData, createDepletionGroupOverlayData as createSGEDepletionGroupOverlayData } from '../../data/sgeData';
 import { COLORBLIND_FRIENDLY_PALETTE } from '../../lib/colors';
 
@@ -13,10 +12,10 @@ const DepletionGroupTrack: React.FC<DepletionGroupTrackProps> = ({ regions }) =>
   
   // Create depletion group overlay data from SGE data and clinical variants
   const sgeDepletionGroupOverlay = createSGEDepletionGroupOverlayData(sgeData);
-  const clinicalDepletionGroupOverlay = createDepletionGroupOverlayData(variantData);
+  // const clinicalDepletionGroupOverlay = createDepletionGroupOverlayData(variantData);
   
   // Combine SGE and clinical data, with SGE taking precedence
-  const depletionGroupOverlay = { ...clinicalDepletionGroupOverlay, ...sgeDepletionGroupOverlay };
+  const depletionGroupOverlay = {  ...sgeDepletionGroupOverlay };
   
   // Filter for current region and RNU4-2 (nucleotides 1-146) and convert back to string labels
   const nucleotideGroups = Object.fromEntries(

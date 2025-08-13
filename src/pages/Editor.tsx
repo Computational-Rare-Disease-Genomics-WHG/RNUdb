@@ -161,7 +161,7 @@ const Editor: React.FC = () => {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = (e.clientX - rect.left - panOffset.x) / zoomLevel;
       const y = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-      const newId = addNucleotide(x, y);
+      addNucleotide(x, y);
       setMode('select');
     } else if (mode === 'pair') {
       setSelectedNucleotides([]);
@@ -205,9 +205,10 @@ const Editor: React.FC = () => {
     setCurrentLabel(null);
   }, [rnaData, updateRnaData]);
 
-  const handleAddNucleotideWithModeSwitch = useCallback((x: number, y: number) => {
-    addNucleotide(x, y);
+  const handleAddNucleotideWithModeSwitch = useCallback((x: number, y: number): number => {
+    const newId = addNucleotide(x, y);
     setMode('select');
+    return newId;
   }, [addNucleotide]);
 
   const handleExport = useCallback(() => {

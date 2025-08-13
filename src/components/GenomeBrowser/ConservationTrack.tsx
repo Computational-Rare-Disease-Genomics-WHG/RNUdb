@@ -47,7 +47,7 @@ const ConservationTrack: React.FC<ConservationTrackProps> = ({ regions }) => {
               />
             ))}
             {/* Conservation bars */}
-            {conservation.map((point, i) => {
+            {conservation.map((point) => {
               const x = scalePosition(point.position);
               const barHeight = (point.score / 100) * (height - 10);
               // Grayscale conservation - no colors
