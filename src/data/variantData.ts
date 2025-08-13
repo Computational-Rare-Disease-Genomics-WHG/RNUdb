@@ -168,8 +168,10 @@ export const createFunctionScoreOverlayData = (variants: Variant[]): OverlayData
   
   variants.forEach(item => {
     if (item.nucleotide !== null && item.function_score !== null) {
-      if (!functionScores[item.nucleotide] || Math.abs(item.function_score) > Math.abs(functionScores[item.nucleotide])) {
-        functionScores[item.nucleotide] = item.function_score;
+      const nucleotide = item.nucleotide as number;
+      const functionScore = item.function_score as number;
+      if (!functionScores[nucleotide] || Math.abs(functionScore) > Math.abs(functionScores[nucleotide]!)) {
+        functionScores[nucleotide] = functionScore;
       }
     }
   });
@@ -182,15 +184,19 @@ export const createDepletionGroupOverlayData = (variants: Variant[]): OverlayDat
   
   variants.forEach(item => {
     if (item.nucleotide !== null && item.depletion_group !== null) {
+      const nucleotide = item.nucleotide as number;
       const depletionValue = item.depletion_group === 'strong' ? 3 : 
                              item.depletion_group === 'moderate' ? 2 : 
                              item.depletion_group === 'normal' ? 1 : 0;
       
-      if (depletionValue > 0 && (!depletionGroups[item.nucleotide] || depletionValue > depletionGroups[item.nucleotide])) {
-        depletionGroups[item.nucleotide] = depletionValue;
+      if (depletionValue > 0 && (!depletionGroups[nucleotide] || depletionValue > depletionGroups[nucleotide]!)) {
+        depletionGroups[nucleotide] = depletionValue;
       }
     }
   });
   
   return depletionGroups;
 };
+
+// Export for backward compatibility
+export const variantData = clinicalVariants;

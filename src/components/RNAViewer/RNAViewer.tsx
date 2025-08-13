@@ -1,14 +1,11 @@
 // src/components/RNAViewer/RNAViewer.tsx
 import React, { useState, useCallback, useRef } from 'react';
 import type { RNAData, Nucleotide, OverlayData } from '../../types';
-import { getColorForValue } from '../../lib/colorUtils';
 import { findNucleotideById } from '../../lib/rnaUtils';
 import { COLORBLIND_FRIENDLY_PALETTE, generateGnomadColorWithAlpha, getFunctionScoreColor } from '../../lib/colors';
-import { sgeData } from '../../data/sgeData';
 import NucleotideComponent from './NucleotideComponent';
 import BasePairBond from './BasePairBond';
 import domtoimage from 'dom-to-image-more';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage, Database, BarChart3 } from 'lucide-react';
@@ -38,7 +35,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   onNucleotideHover,
   overlayMode = 'none',
   onCycleOverlay,
-  variantStats,
   variantData = [],
   gnomadVariants = []
 }) => {

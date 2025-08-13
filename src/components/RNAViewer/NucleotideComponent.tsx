@@ -20,9 +20,7 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
   isHovered, 
   isSelected, 
   onHover, 
-  onClick,
-  hasVariants = false,
-  variantCount = 0
+  onClick
 }) => {
   return (
     <g className="nucleotide-group">

@@ -77,7 +77,7 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
         <CardContent>
           <div className="overflow-x-auto">
             <div className="grid gap-3 max-h-96 overflow-y-auto">
-              {variantData.map((variant, index) => (
+              {variantData.map((variant) => (
                 <div key={variant.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -91,10 +91,10 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className={`text-xs ${getConsequenceBadge(variant.consequence)}`}>
-                          {variant.consequence.replace('_', ' ')}
+                        <Badge className={`text-xs ${getConsequenceBadge(variant.consequence ?? '')}`}>
+                          {variant.consequence?.replace('_', ' ') ?? 'Unknown'}
                         </Badge>
-                        <Badge className={`text-xs ${getClinicalBadge(variant.clinical)}`}>
+                        <Badge className={`text-xs ${getClinicalBadge(variant.clinical ?? '')}`}>
                           {variant.clinical}
                         </Badge>
                       </div>

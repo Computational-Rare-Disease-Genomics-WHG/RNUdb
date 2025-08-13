@@ -70,9 +70,9 @@ const Gene: React.FC = () => {
   const currentData = snRNAData[selectedSnRNA] || snRNAData['RNU4-2'];
 
   const getVariantStats = () => {
-    const pathogenic = variantData.filter(v => v.clinical === 'Pathogenic' || v.clinical === 'Likely Pathogenic').length;
-    const benign = variantData.filter(v => v.clinical === 'Benign').length;
-    const vus = variantData.filter(v => v.clinical === 'VUS').length;
+    const pathogenic = variantData.filter((v: typeof variantData[number]) => v.clinical === 'Pathogenic' || v.clinical === 'Likely Pathogenic').length;
+    const benign = variantData.filter((v: typeof variantData[number]) => v.clinical === 'Benign').length;
+    const vus = variantData.filter((v: typeof variantData[number]) => v.clinical === 'VUS').length;
     
     return { pathogenic, benign, vus, total: variantData.length };
   };

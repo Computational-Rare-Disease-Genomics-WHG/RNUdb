@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Database, Dna, ExternalLink, Globe, Search } from 'lucide-react';
+import { Database, Dna, Globe, Search } from 'lucide-react';
 import type { SnRNAGeneData } from '../data/snRNAData';
 import type { Paper } from '../data/paperData';
 import type { Variant } from '../data/variantData';
@@ -17,18 +17,9 @@ interface InfoPanelProps {
 
 const InfoPanel: React.FC<InfoPanelProps> = ({ 
   currentData, 
-  paperData, 
-  variantData, 
+  variantData: _variantData,
 }) => {
-  const getVariantStats = () => {
-    const pathogenic = variantData.filter(v => v.clinical === 'Pathogenic' || v.clinical === 'Likely Pathogenic').length;
-    const benign = variantData.filter(v => v.clinical === 'Benign').length;
-    const vus = variantData.filter(v => v.clinical === 'VUS').length;
-    
-    return { pathogenic, benign, vus, total: variantData.length };
-  };
 
-  const variantStats = getVariantStats();
 
   return (
     <div className="space-y-6">
