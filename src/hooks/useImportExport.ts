@@ -62,6 +62,7 @@ export const useImportExport = () => {
       
       return {
         id: parsed.id,
+        geneId: parsed.geneId || 'imported',
         name: parsed.name,
         nucleotides: parsed.nucleotides,
         basePairs: parsed.basePairs,
@@ -122,6 +123,7 @@ export const useImportExport = () => {
       const parsed = JSON.parse(data);
       return {
         id: parsed.id,
+        geneId: parsed.geneId || 'imported',
         name: parsed.name,
         nucleotides: parsed.nucleotides,
         basePairs: parsed.basePairs,

@@ -10,28 +10,35 @@ interface SequenceBase {
 
 interface SequenceTrackProps {
   regions: Array<{ start: number; stop: number }>;
+  geneSequence: string;
+  geneStart: number;
 }
 
-const generateSequenceData = (start: number, end: number): SequenceBase[] => {
-  const bases = ['A', 'C', 'G', 'T'];
+const getSequenceData = (regions: { start: number; stop: number }, geneSequence: string, geneStart: number): SequenceBase[] => {
   const sequence = [];
-  for (let i = start; i <= end; i++) {
-    sequence.push({
-      position: i,
-      seq: bases[Math.floor(Math.random() * bases.length)]
-    });
+  const regionStart = Math.max(regions.start, geneStart);
+  const regionEnd = Math.min(regions.stop, geneStart + geneSequence.length - 1);
+  
+  for (let pos = regionStart; pos <= regionEnd; pos++) {
+    const relativePos = pos - geneStart;
+    if (relativePos >= 0 && relativePos < geneSequence.length) {
+      sequence.push({
+        position: pos,
+        seq: geneSequence[relativePos].toUpperCase()
+      });
+    }
   }
   return sequence;
 };
 
-const SequenceTrack: React.FC<SequenceTrackProps> = ({ regions }) => {
+const SequenceTrack: React.FC<SequenceTrackProps> = ({ regions, geneSequence, geneStart }) => {
   const height = 30;
   
   if (regions.length === 0 || regions[0].stop - regions[0].start > 500) {
     return null;
   }
 
-  const sequence = generateSequenceData(regions[0].start, regions[0].stop);
+  const sequence = getSequenceData(regions[0], geneSequence, geneStart);
 
   return (
     <Track title="Reference Sequence">

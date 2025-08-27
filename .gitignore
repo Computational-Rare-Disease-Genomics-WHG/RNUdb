@@ -194,6 +194,9 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Database files
+data/
+
 ### react ###
 .DS_*
 *.log

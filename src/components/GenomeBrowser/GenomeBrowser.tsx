@@ -7,66 +7,54 @@ import { GenesTrack } from '@gnomad/track-genes';
 import { Button } from '@/components/ui/button';
 import { COLORBLIND_FRIENDLY_PALETTE } from '../../lib/colors';
 import SequenceTrack from './SequenceTrack';
-import ConservationTrack from './ConservationTrack';
-import RegulatoryTrack from './RegulatoryTrack';
 import SnRNAVariantTrack from './SnRNAVariantTrack';
-import FunctionScoreTrack from './FunctionScoreTrack';
-import DepletionGroupTrack from './DepletionGroupTrack';
+import GenericTrack from './GenericTrack';
 import './GenomeBrowser.css';
-
-// Mock gene data for snRNA with additional genes in the region
-const mockGenes = [
-  {
-    gene_id: 'RNU4-2',
-    gene_name: 'RNU4-2',
-    symbol: 'RNU4-2',
-    start: 6648956,
-    stop: 6649101,
-    strand: '+',
-    gene_type: 'snRNA',
-    exons: [
-      {
-        feature_type: 'exon',
-        start: 6648956,
-        stop: 6649101
-      }
-    ]
-  },
-  {
-    gene_id: 'ENSG00000123456',
-    gene_name: 'HYPOTHETICAL_GENE',
-    symbol: 'HYPOTHETICAL_GENE',
-    start: 6648800,
-    stop: 6648950,
-    strand: '-',
-    gene_type: 'protein_coding',
-    exons: [
-      {
-        feature_type: 'exon',
-        start: 6648800,
-        stop: 6648900
-      },
-      {
-        feature_type: 'exon',
-        start: 6648920,
-        stop: 6648950
-      }
-    ]
-  }
-];
 
 interface GenomeBrowserProps {
   selectedGene: string;
   variants: any[];
   gnomadVariants: any[];
+  aouVariants: any[];
+  functionScoreTrackData: any;
+  depletionGroupTrackData: any;
+  caddScoreTrackData: any;
+  geneData: {
+    id: string;
+    name: string;
+    chromosome: string;
+    start: number;
+    end: number;
+    sequence: string;
+  };
 }
 
-const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, gnomadVariants }) => {
+const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, gnomadVariants, aouVariants, functionScoreTrackData, depletionGroupTrackData, caddScoreTrackData, geneData }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [, setIsZoomed] = useState(false);
   
-  // Default region based on RNU4-2 - wider view
-  const defaultRegion = { start: 6648960, stop: 6649101. };
+  // Create gene data structure for tracks
+  const genes = [
+    {
+      gene_id: geneData.id,
+      gene_name: geneData.name,
+      symbol: geneData.name,
+      start: geneData.start,
+      stop: geneData.end,
+      strand: '+',
+      gene_type: 'snRNA',
+      exons: [
+        {
+          feature_type: 'exon',
+          start: geneData.start,
+          stop: geneData.end
+        }
+      ]
+    }
+  ];
+  
+  // Default region based on gene coordinates - wider view
+  const defaultRegion = { start: geneData.start, stop: geneData.end  };
   const [regions, setRegions] = useState([defaultRegion]);
 
   const renderCustomCursor = (x: number) => {
@@ -186,9 +174,9 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
       </div>
       
       <div ref={containerRef} className="genome-browser-viewer">
-        <RegionViewer regions={regions} width={900} leftPanelWidth={160} rightPanelWidth={160}>
+        <RegionViewer regions={regions} width={1080} leftPanelWidth={140} rightPanelWidth={0}>
           <PositionAxisTrack />
-            <SequenceTrack regions={regions} />
+            <SequenceTrack regions={regions} geneSequence={geneData.sequence} geneStart={geneData.start} />
           <Cursor
             onClick={(cursorPosition) => {
               if (cursorPosition !== null) {
@@ -202,9 +190,9 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
             }}
             renderCursor={renderCustomCursor}
           >
-            <GenesTrack
+            {/* <GenesTrack
               title="Genes"
-              genes={mockGenes}
+              genes={genes}
               renderGeneLabel={(gene) => (
                 <g>
                   <text className="genes-track-label">
@@ -227,12 +215,11 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
                   />
                 );
               }}
-            />
-            <RegulatoryTrack regions={regions} />
-            <ConservationTrack regions={regions} />
-            <FunctionScoreTrack regions={regions} />
-            <DepletionGroupTrack regions={regions} />
-            <SnRNAVariantTrack variants={variants} gnomadVariants={gnomadVariants} />
+            /> */}
+            <GenericTrack title="Function Score" height={80} data={functionScoreTrackData} regions={regions} displayType="bars" geneStart={geneData.start} />
+            <GenericTrack title="CADD Score" height={80} data={caddScoreTrackData} regions={regions} displayType="bars" geneStart={geneData.start} />
+            <GenericTrack title="Depletion Group" height={30} data={depletionGroupTrackData} regions={regions} displayType="bars" geneStart={geneData.start} />
+            <SnRNAVariantTrack variants={variants} gnomadVariants={gnomadVariants} aouVariants={aouVariants} />
           </Cursor>
         </RegionViewer>
       </div>

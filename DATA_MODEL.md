@@ -93,7 +93,8 @@ const clinicalVariant: Variant = {
   clinvar_significance: "Pathogenic", 
   clinical_significance: "Pathogenic",
   pmid: "12345678",
-  gnomad_frequency: 0.0015
+  gnomad_ac: 15,
+  gnomad_hom: 0
 };
 
 // SGE functional variant  

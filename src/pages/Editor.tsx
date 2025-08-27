@@ -14,6 +14,7 @@ const Editor: React.FC = () => {
   
   const initialRnaData: RNAData = {
     id: "custom-rna-1",
+    geneId: "custom-gene",
     name: "Custom RNA",
     nucleotides: [],
     basePairs: [],

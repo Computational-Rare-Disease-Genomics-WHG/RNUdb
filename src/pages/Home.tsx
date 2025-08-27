@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -6,16 +6,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Search, Database, Edit, Dna } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { getAllSnRNAIds } from '../data/snrnas';
-import type { SnRNAGeneData } from '../data/snRNAData';
+import { getAllSnRNAIds } from '../data/genes';
+import type { SnRNAGene } from '@/types';
 
 const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<SnRNAGeneData[] | null>(null);
+  const [searchResults, setSearchResults] = useState<SnRNAGene[] | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [availableSnRNAs, setAvailableSnRNAs] = useState<string[]>([]);
   const navigate = useNavigate();
   
-  const availableSnRNAs = getAllSnRNAIds();
+  useEffect(() => {
+    const loadSnRNAIds = async () => {
+      try {
+        const ids = await getAllSnRNAIds();
+        setAvailableSnRNAs(ids);
+      } catch (error) {
+        console.error('Error loading snRNA IDs:', error);
+        setAvailableSnRNAs(['RNU4-2']); // Fallback
+      }
+    };
+    
+    loadSnRNAIds();
+  }, []);
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
@@ -57,7 +70,7 @@ const Home: React.FC = () => {
           </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
             A comprehensive database for RNA structure visualization and analysis. 
-            Explore RNA sequences, variants, and regulatory elements with interactive tools.
+            Explore RNA sequences and variants with interactive tools.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-8">

@@ -37,46 +37,12 @@
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
 }
 
-.conservation-track {
-  background-color: #ffffff;
-}
-
-.conservation-grid-line {
-  stroke: #e5e7eb;
-  stroke-width: 0.5;
-}
-
-.conservation-bar {
-  opacity: 0.8;
-}
-
-.conservation-label {
-  fill: #6b7280;
-  font-size: 7px;
-}
-
 .sequence-track {
   background-color: #f8fafc;
 }
 
 .sequence-base {
   font-size: 12px;
-  text-anchor: middle;
-  font-weight: bold;
-}
-
-.regulatory-track {
-  background-color: #fefefe;
-}
-
-.regulatory-element {
-  opacity: 0.8;
-  border-radius: 2px;
-}
-
-.regulatory-label {
-  fill: white;
-  font-size: 7px;
   text-anchor: middle;
   font-weight: bold;
 }

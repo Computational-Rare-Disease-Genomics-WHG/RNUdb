@@ -1,8 +1,9 @@
 // src/components/RNAViewer/RNAViewer.tsx
 import React, { useState, useCallback, useRef } from 'react';
-import type { RNAData, Nucleotide, OverlayData } from '../../types';
+import type { RNAData, Nucleotide, OverlayData, Variant } from '../../types';
 import { findNucleotideById } from '../../lib/rnaUtils';
 import { COLORBLIND_FRIENDLY_PALETTE, generateGnomadColorWithAlpha, getFunctionScoreColor } from '../../lib/colors';
+import { getOverlayValue } from '../../lib/overlayUtils';
 import NucleotideComponent from './NucleotideComponent';
 import BasePairBond from './BasePairBond';
 import domtoimage from 'dom-to-image-more';
@@ -24,8 +25,8 @@ interface RNAViewerProps {
     vus: number;
     total: number;
   };
-  variantData?: any[];
-  gnomadVariants?: any[];
+  variantData?: Variant[];
+  gnomadVariants?: Variant[];
 }
 
 const RNAViewer: React.FC<RNAViewerProps> = ({ 
@@ -66,14 +67,13 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   const getVariantInfoForNucleotide = useCallback((nucleotideId: number) => {
     // Find variants that affect this nucleotide position
     const relevantVariants = variantData.filter(variant => {
-      // Handle both clinical variants (with position) and SGE variants (with nucleotide)
-      if (variant.nucleotide !== undefined && variant.nucleotide !== null) {
+      // Handle both clinical variants (with position) and SGE variants (with nucleotidePosition)
+      if (variant.nucleotidePosition !== undefined && variant.nucleotidePosition !== null) {
         // SGE variant - direct nucleotide mapping
-        return variant.nucleotide === nucleotideId;
+        return variant.nucleotidePosition === nucleotideId;
       } else if (variant.position) {
         // Clinical variant - convert genomic position to nucleotide
-        const position = parseInt(variant.position.split(':')[1]);
-        return Math.abs(position - (6648956 + nucleotideId)) < 5; // Within ~5bp
+        return Math.abs(variant.position - (6648956 + nucleotideId)) < 5; // Within ~5bp
       }
       return false;
     });
@@ -89,7 +89,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   }, [variantData, gnomadVariants]);
 
   const getOverlayColor = (nucleotide: Nucleotide): string => {
-    const value = overlayData[nucleotide.id];
+    const value = getOverlayValue(overlayData, nucleotide.id);
     if (!value) return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
     
     if (overlayMode === 'clinvar') {
@@ -403,70 +403,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           ))}
         </g>
         </svg>
-        
-        {hoveredNucleotide && (
-          <div className="absolute top-4 right-4 z-10 bg-white p-3 rounded-lg shadow-lg border border-slate-200 text-sm max-w-72">
-            <div className="font-semibold text-slate-800 mb-2">Nucleotide {hoveredNucleotide.id}</div>
-            <div className="space-y-1">
-              <div><strong>Base:</strong> {hoveredNucleotide.base}</div>
-              
-              {overlayData[hoveredNucleotide.id] && (
-                <div>
-                  <strong>
-                    {overlayMode === 'clinvar' ? 'Variant:' : 
-                     overlayMode === 'gnomad' ? 'Frequency:' : 
-                     overlayMode === 'function_score' ? 'Function Score:' :
-                     overlayMode === 'depletion_group' ? 'Depletion:' : 'Value:'}
-                  </strong> 
-                  {overlayMode === 'clinvar' ? 
-                    (overlayData[hoveredNucleotide.id] === 1 ? 'Pathogenic' : 
-                     overlayData[hoveredNucleotide.id] === 0.5 ? 'Benign' : 
-                     overlayData[hoveredNucleotide.id] === 0.25 ? 'VUS' : 'Unknown') : 
-                   overlayMode === 'depletion_group' ?
-                    (overlayData[hoveredNucleotide.id] === 3 ? 'Strong' :
-                     overlayData[hoveredNucleotide.id] === 2 ? 'Moderate' :
-                     overlayData[hoveredNucleotide.id] === 1 ? 'Normal' : 'Unknown') :
-                    overlayData[hoveredNucleotide.id].toFixed(3)}
-                </div>
-              )}
-              
-              {(() => {
-                const variantInfo = getVariantInfoForNucleotide(hoveredNucleotide.id);
-                return (
-                  <>
-                    {variantInfo.clinvarVariants.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-slate-200">
-                        <div className="font-medium text-slate-700 mb-1">ClinVar Variants ({variantInfo.clinvarVariants.length})</div>
-                        {variantInfo.clinvarVariants.slice(0, 3).map((variant, index) => (
-                          <div key={index} className="text-xs text-slate-600 ml-2">
-                            • {variant.ref}→{variant.alt}: {variant.clinical}
-                          </div>
-                        ))}
-                        {variantInfo.clinvarVariants.length > 3 && (
-                          <div className="text-xs text-slate-500 ml-2">...and {variantInfo.clinvarVariants.length - 3} more</div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {variantInfo.gnomadVariants.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-slate-200">
-                        <div className="font-medium text-slate-700 mb-1">gnomAD Variants ({variantInfo.gnomadVariants.length})</div>
-                        {variantInfo.gnomadVariants.slice(0, 2).map((variant, index) => (
-                          <div key={index} className="text-xs text-slate-600 ml-2">
-                            • AF: {variant.allele_freq.toFixed(4)}
-                          </div>
-                        ))}
-                        {variantInfo.gnomadVariants.length > 2 && (
-                          <div className="text-xs text-slate-500 ml-2">...and {variantInfo.gnomadVariants.length - 2} more</div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Legend */}
