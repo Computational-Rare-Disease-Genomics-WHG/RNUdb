@@ -82,6 +82,12 @@ export interface RNAStructure {
   annotations?: AnnotationLabel[]; // Optional structure annotations
 }
 
+export interface PDBStructure {
+  geneId: string;               // Reference to SnRNAGene.id
+  pdbData: string;              // Raw PDB file content as string
+}
+
+
 // Overlay and Track System - Backward compatible
 export interface OverlayData {
   [nucleotidePosition: number]: OverlayPoint | number; // Support both old and new formats

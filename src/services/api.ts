@@ -1,8 +1,9 @@
-import type { SnRNAGene, Variant, Literature, RNAStructure } from '../types';
+import type { SnRNAGene, Variant, Literature, RNAStructure, PDBStructure } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000';
 
 class ApiService {
+
   private async fetchFromApi<T>(endpoint: string): Promise<T> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`);
@@ -17,7 +18,6 @@ class ApiService {
       throw error;
     }
   }
-
   // Gene endpoints
   async getAllGenes(): Promise<SnRNAGene[]> {
     return this.fetchFromApi<SnRNAGene[]>('/genes');
@@ -49,6 +49,12 @@ class ApiService {
   async getGeneStructure(geneId: string): Promise<RNAStructure> {
     return this.fetchFromApi<RNAStructure>(`/genes/${geneId}/structure`);
   }
+
+  async getGenePDB(geneId: string): Promise<PDBStructure> {
+    return this.fetchFromApi<PDBStructure>(`/genes/${geneId}/pdb`);
+  }
+
+
 }
 
 // Create and export a singleton instance
@@ -62,3 +68,4 @@ export const getVariant = (variantId: string) => apiService.getVariant(variantId
 export const getAllLiterature = () => apiService.getAllLiterature();
 export const getGeneLiterature = (geneId: string) => apiService.getGeneLiterature(geneId);
 export const getGeneStructure = (geneId: string) => apiService.getGeneStructure(geneId);
+export const getGenePDB = (geneId: string) => apiService.getGenePDB(geneId);
