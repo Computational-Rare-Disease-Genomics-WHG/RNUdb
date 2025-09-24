@@ -6,11 +6,12 @@ import RNAViewer from './RNAViewer';
 import GenomeBrowser from './GenomeBrowser';
 import VariantsSection from './VariantsSection';
 import LiteratureSection from './LiteratureSection';
-import type { OverlayData, Literature, Variant, SnRNAGene, RNAStructure, Nucleotide } from '../types';
+import type { OverlayData, Literature, Variant, SnRNAGene, RNAStructure, Nucleotide, PDBStructure } from '../types';
 
 interface MainContentProps {
   currentData: SnRNAGene;
-  structureData: RNAStructure | null;
+  rnaStructureData: RNAStructure | null;
+  pdbStructureData: PDBStructure | null;
   paperData: Literature[];
   variantData: Variant[];
   gnomadVariants: Variant[];
@@ -31,7 +32,8 @@ interface MainContentProps {
 
 const MainContent: React.FC<MainContentProps> = ({
   currentData,
-  structureData,
+  rnaStructureData,
+  pdbStructureData,
   paperData,
   variantData,
   gnomadVariants,
@@ -49,14 +51,14 @@ const MainContent: React.FC<MainContentProps> = ({
 
   // Convert RNAStructure to RNAData format for RNAViewer
   const getRNAData = () => {
-    if (structureData) {
+    if (rnaStructureData) {
       return {
-        id: structureData.id,
-        geneId: structureData.geneId,
+        id: rnaStructureData.id,
+        geneId: rnaStructureData.geneId,
         name: currentData.name,
-        nucleotides: structureData.nucleotides,
-        basePairs: structureData.basePairs,
-        annotations: structureData.annotations
+        nucleotides: rnaStructureData.nucleotides,
+        basePairs: rnaStructureData.basePairs,
+        annotations: rnaStructureData.annotations
       };
     }
     // Return minimal structure if no data available
@@ -104,6 +106,7 @@ const MainContent: React.FC<MainContentProps> = ({
               <CardContent>
                 <RNAViewer
                   rnaData={getRNAData()}
+                  pdbData={pdbStructureData}
                   overlayData={getCurrentOverlayData()}
                   overlayMode={overlayMode}
                   onCycleOverlay={cycleOverlayMode}

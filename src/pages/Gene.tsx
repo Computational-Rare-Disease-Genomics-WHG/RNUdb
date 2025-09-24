@@ -6,9 +6,10 @@ import Footer from '../components/Footer';
 import { getGeneData } from '../data/genes';
 import { getVariants } from '../data/variants';
 import { getLiterature } from '../data/literature';
-import { getStructure } from '../data/structures';
-import type { OverlayData, SnRNAGene, Variant, Literature, RNAStructure } from '../types';
-import { getFunctionScoreColor, COLORBLIND_FRIENDLY_PALETTE } from '../lib/colors';
+import { getRNAStructure } from '../data/structures';
+import { getPDBStructure } from '../data/structures';
+import type { OverlayData, SnRNAGene, Variant, Literature, RNAStructure, PDBStructure } from '../types';
+import { COLORBLIND_FRIENDLY_PALETTE } from '../lib/colors';
 
 const Gene: React.FC = () => {
   const { geneId } = useParams<{ geneId: string }>();
@@ -31,7 +32,8 @@ const Gene: React.FC = () => {
   const [currentData, setCurrentData] = useState<SnRNAGene | null>(null);
   const [variantData, setVariantData] = useState<Variant[]>([]);
   const [paperData, setPaperData] = useState<Literature[]>([]);
-  const [structureData, setStructureData] = useState<RNAStructure | null>(null);
+  const [rnaStructureData, setRnaStructureData] = useState<RNAStructure | null>(null);
+  const [pdbData, setPdbData] = useState<PDBStructure | null>(null);
 
   // Load data when selectedSnRNA changes
   useEffect(() => {
@@ -42,11 +44,12 @@ const Gene: React.FC = () => {
       setError(null);
       
       try {
-        const [gene, variants, literature, structure] = await Promise.all([
+        const [gene, variants, literature, rnaStructure, pdbStructure] = await Promise.all([
           getGeneData(selectedSnRNA),
           getVariants(selectedSnRNA), 
           getLiterature(selectedSnRNA),
-          getStructure(selectedSnRNA)
+          getRNAStructure(selectedSnRNA),
+          getPDBStructure(selectedSnRNA)
         ]);
         
         if (!gene) {
@@ -56,7 +59,11 @@ const Gene: React.FC = () => {
         setCurrentData(gene);
         setVariantData(variants);
         setPaperData(literature);
-        setStructureData(structure);
+        setRnaStructureData(rnaStructure);
+        setPdbData(pdbStructure);
+
+
+
       } catch (err) {
         console.error('Error loading gene data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load gene data');
@@ -298,7 +305,8 @@ const Gene: React.FC = () => {
       
       <MainContent
         currentData={currentData}
-        structureData={structureData}
+        rnaStructureData={rnaStructureData}
+        pdbStructureData={pdbData}
         paperData={paperData}
         variantData={variantData}
         gnomadVariants={gnomadVariants}

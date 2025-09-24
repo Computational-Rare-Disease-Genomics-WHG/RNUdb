@@ -1,5 +1,6 @@
 // src/components/RNAViewer/RNAViewer.tsx
 import React, { useState, useCallback, useRef } from 'react';
+import PDBViewer from './PDBViewer';
 import type { RNAData, Nucleotide, OverlayData, Variant } from '../../types';
 import { findNucleotideById } from '../../lib/rnaUtils';
 import { COLORBLIND_FRIENDLY_PALETTE, generateGnomadColorWithAlpha, getFunctionScoreColor } from '../../lib/colors';
@@ -31,6 +32,7 @@ interface RNAViewerProps {
 
 const RNAViewer: React.FC<RNAViewerProps> = ({ 
   rnaData, 
+  pdbData,
   overlayData = {}, 
   onNucleotideClick,
   onNucleotideHover,
@@ -79,7 +81,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
     });
 
     const relevantGnomadVariants = gnomadVariants.filter(variant => {
-      return Math.abs(variant.pos - (6648956 + nucleotideId)) < 5;
+      return Math.abs(variant.position - (6648956 + nucleotideId)) < 5;
     });
 
     return {
@@ -180,10 +182,22 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
       });
   }, []);
 
+  const [show3D, setShow3D] = useState(false);
+
   return (
     <div className="rna-viewer space-y-4">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+      {/* Toggle 2D/3D Button */}
+      <div className="flex justify-end mb-2">
+        <Button variant="outline" size="sm" onClick={() => setShow3D(v => !v)}>
+          {show3D ? 'Show 2D Structure' : 'Show 3D Structure'}
+        </Button>
+      </div>
+      {show3D ? (
+        <PDBViewer pdbData={pdbData} height="600px" />
+      ) : (
+        <>
+          {/* Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
         {/* Zoom Controls */}
         <div className="flex items-center gap-1">
           <Button 
@@ -478,6 +492,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             ) : null}
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
