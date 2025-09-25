@@ -46,8 +46,27 @@ const MainContent: React.FC<MainContentProps> = ({
   depletionGroupTrackData,
   caddScoreTrackData
 }) => {
-  // State to manage hovered nucleotide
+  // State to manage hovered and selected nucleotides
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
+  const [selectedNucleotides, setSelectedNucleotides] = useState<Set<number>>(new Set());
+
+  // Handler for nucleotide selection
+  const handleNucleotideClick = (_nucleotide: Nucleotide, newSelectedSet: Set<number>) => {
+    setSelectedNucleotides(newSelectedSet);
+  };
+
+  // Get the nucleotide to display in InfoPanel (prioritize hovered, then selected)
+  const getDisplayNucleotide = (): Nucleotide | null => {
+    if (hoveredNucleotide) {
+      return hoveredNucleotide;
+    }
+    // If no hover, show the first selected nucleotide
+    if (selectedNucleotides.size > 0 && rnaStructureData) {
+      const firstSelectedId = Array.from(selectedNucleotides)[0];
+      return rnaStructureData.nucleotides.find(n => n.id === firstSelectedId) || null;
+    }
+    return null;
+  };
 
   // Convert RNAStructure to RNAData format for RNAViewer
   const getRNAData = () => {
@@ -79,13 +98,13 @@ const MainContent: React.FC<MainContentProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
           {/* Left Column: InfoPanel */}
           <div className="lg:col-span-1 space-y-8 w-full">
-            <InfoPanel 
+            <InfoPanel
               currentData={currentData}
               paperData={paperData}
               variantData={variantData}
               overlayMode={overlayMode}
               onCycleOverlay={cycleOverlayMode}
-              hoveredNucleotide={hoveredNucleotide}
+              hoveredNucleotide={getDisplayNucleotide()}
               overlayData={getCurrentOverlayData()}
             />
           </div>
@@ -114,6 +133,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   variantData={variantData}
                   gnomadVariants={gnomadVariants}
                   onNucleotideHover={setHoveredNucleotide}
+                  onNucleotideClick={handleNucleotideClick}
                 />
               </CardContent>
             </Card>

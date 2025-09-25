@@ -15,6 +15,7 @@ import './RNAViewer.css';
 
 interface RNAViewerProps {
   rnaData: RNAData;
+  pdbData?: any; // TODO: Define proper PDBStructure type
   overlayData?: OverlayData;
   onNucleotideClick?: (nucleotide: Nucleotide, selectedSet: Set<number>) => void;
   onNucleotideHover?: (nucleotide: Nucleotide | null) => void;

@@ -27,14 +27,14 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
       <circle
         cx={nucleotide.x}
         cy={nucleotide.y}
-        r={isHovered ? 20 : 18}
+        r={isSelected ? 20 : (isHovered ? 20 : 18)}
         fill={color}
         stroke={isSelected ? COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC : (isHovered ? COLORBLIND_FRIENDLY_PALETTE.PRIMARY : COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.DARK_GRAY)}
         strokeWidth={isSelected ? "3" : (isHovered ? "2" : "1")}
         onMouseEnter={() => onHover(nucleotide)}
         onMouseLeave={() => onHover(null)}
         onClick={() => onClick(nucleotide)}
-        style={{ 
+        style={{
           cursor: 'pointer',
           transition: 'all 0.2s ease'
         }}
