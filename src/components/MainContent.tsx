@@ -46,26 +46,23 @@ const MainContent: React.FC<MainContentProps> = ({
   depletionGroupTrackData,
   caddScoreTrackData
 }) => {
-  // State to manage hovered and selected nucleotides
+  // State to manage hovered and selected nucleotide
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
-  const [selectedNucleotides, setSelectedNucleotides] = useState<Set<number>>(new Set());
+  const [selectedNucleotide, setSelectedNucleotide] = useState<Nucleotide | null>(null);
 
-  // Handler for nucleotide selection
-  const handleNucleotideClick = (_nucleotide: Nucleotide, newSelectedSet: Set<number>) => {
-    setSelectedNucleotides(newSelectedSet);
+  // Handler for nucleotide selection (single select)
+  const handleNucleotideClick = (nucleotide: Nucleotide) => {
+    // Toggle selection: if clicking the same nucleotide, deselect it
+    if (selectedNucleotide?.id === nucleotide.id) {
+      setSelectedNucleotide(null);
+    } else {
+      setSelectedNucleotide(nucleotide);
+    }
   };
 
   // Get the nucleotide to display in InfoPanel (prioritize hovered, then selected)
   const getDisplayNucleotide = (): Nucleotide | null => {
-    if (hoveredNucleotide) {
-      return hoveredNucleotide;
-    }
-    // If no hover, show the first selected nucleotide
-    if (selectedNucleotides.size > 0 && rnaStructureData) {
-      const firstSelectedId = Array.from(selectedNucleotides)[0];
-      return rnaStructureData.nucleotides.find(n => n.id === firstSelectedId) || null;
-    }
-    return null;
+    return hoveredNucleotide || selectedNucleotide;
   };
 
   // Convert RNAStructure to RNAData format for RNAViewer
@@ -134,6 +131,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   gnomadVariants={gnomadVariants}
                   onNucleotideHover={setHoveredNucleotide}
                   onNucleotideClick={handleNucleotideClick}
+                  selectedNucleotide={selectedNucleotide}
                 />
               </CardContent>
             </Card>

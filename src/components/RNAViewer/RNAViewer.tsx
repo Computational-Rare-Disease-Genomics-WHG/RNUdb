@@ -17,7 +17,7 @@ interface RNAViewerProps {
   rnaData: RNAData;
   pdbData?: any; // TODO: Define proper PDBStructure type
   overlayData?: OverlayData;
-  onNucleotideClick?: (nucleotide: Nucleotide, selectedSet: Set<number>) => void;
+  onNucleotideClick?: (nucleotide: Nucleotide) => void;
   onNucleotideHover?: (nucleotide: Nucleotide | null) => void;
   overlayMode?: 'none' | 'clinvar' | 'gnomad' | 'function_score' | 'depletion_group';
   onCycleOverlay?: () => void;
@@ -29,21 +29,22 @@ interface RNAViewerProps {
   };
   variantData?: Variant[];
   gnomadVariants?: Variant[];
+  selectedNucleotide?: Nucleotide | null;
 }
 
-const RNAViewer: React.FC<RNAViewerProps> = ({ 
-  rnaData, 
+const RNAViewer: React.FC<RNAViewerProps> = ({
+  rnaData,
   pdbData,
-  overlayData = {}, 
+  overlayData = {},
   onNucleotideClick,
   onNucleotideHover,
   overlayMode = 'none',
   onCycleOverlay,
   variantData = [],
-  gnomadVariants = []
+  gnomadVariants = [],
+  selectedNucleotide = null
 }) => {
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
-  const [selectedNucleotides, setSelectedNucleotides] = useState<Set<number>>(new Set());
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -52,15 +53,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleNucleotideClick = useCallback((nucleotide: Nucleotide) => {
-    const newSelected = new Set(selectedNucleotides);
-    if (newSelected.has(nucleotide.id)) {
-      newSelected.delete(nucleotide.id);
-    } else {
-      newSelected.add(nucleotide.id);
-    }
-    setSelectedNucleotides(newSelected);
-    onNucleotideClick?.(nucleotide, newSelected);
-  }, [selectedNucleotides, onNucleotideClick]);
+    onNucleotideClick?.(nucleotide);
+  }, [onNucleotideClick]);
 
   const handleNucleotideHover = useCallback((nucleotide: Nucleotide | null) => {
     setHoveredNucleotide(nucleotide);
@@ -391,7 +385,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                 nucleotide={nucleotide}
                 color={getOverlayColor(nucleotide)}
                 isHovered={hoveredNucleotide?.id === nucleotide.id}
-                isSelected={selectedNucleotides.has(nucleotide.id)}
+                isSelected={selectedNucleotide?.id === nucleotide.id}
                 onHover={handleNucleotideHover}
                 onClick={handleNucleotideClick}
                 hasVariants={totalVariants > 0}
