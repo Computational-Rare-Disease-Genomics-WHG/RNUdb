@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Database, Edit, Dna, AlertTriangle } from 'lucide-react';
+import { Database, Edit, Dna } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AdvancedSearch from '../components/AdvancedSearch';

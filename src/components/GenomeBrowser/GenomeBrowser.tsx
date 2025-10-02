@@ -3,9 +3,7 @@ import React, { useState, useRef } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage } from 'lucide-react';
 import domtoimage from 'dom-to-image-more';
 import { RegionViewer, PositionAxisTrack, Cursor } from '@gnomad/region-viewer';
-import { GenesTrack } from '@gnomad/track-genes';
 import { Button } from '@/components/ui/button';
-import { COLORBLIND_FRIENDLY_PALETTE } from '../../lib/colors';
 import SequenceTrack from './SequenceTrack';
 import SnRNAVariantTrack from './SnRNAVariantTrack';
 import GenericTrack from './GenericTrack';
@@ -32,27 +30,7 @@ interface GenomeBrowserProps {
 const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, gnomadVariants, aouVariants, functionScoreTrackData, depletionGroupTrackData, caddScoreTrackData, geneData }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [, setIsZoomed] = useState(false);
-  
-  // Create gene data structure for tracks
-  const genes = [
-    {
-      gene_id: geneData.id,
-      gene_name: geneData.name,
-      symbol: geneData.name,
-      start: geneData.start,
-      stop: geneData.end,
-      strand: '+',
-      gene_type: 'snRNA',
-      exons: [
-        {
-          feature_type: 'exon',
-          start: geneData.start,
-          stop: geneData.end
-        }
-      ]
-    }
-  ];
-  
+
   // Default region based on gene coordinates - wider view
   const defaultRegion = { start: geneData.start, stop: geneData.end  };
   const [regions, setRegions] = useState([defaultRegion]);

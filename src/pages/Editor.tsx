@@ -54,8 +54,7 @@ const Editor: React.FC = () => {
     removeBasePair,
     navigateNucleotides,
     addStructuralFeature,
-    updateStructuralFeature,
-    removeStructuralFeature
+    updateStructuralFeature
   } = nucleotideManager;
 
   const {

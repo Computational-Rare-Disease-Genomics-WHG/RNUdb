@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from './ui/input';
-import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Search, X, ChevronRight, Dna, AlertTriangle } from 'lucide-react';
 import { searchService, type SearchResult } from '../services/search';

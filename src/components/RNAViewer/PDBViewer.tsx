@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import type { PDBStructure, Nucleotide, OverlayData, Variant } from "@/types";
 import { COLORBLIND_FRIENDLY_PALETTE, generateGnomadColorWithAlpha, getFunctionScoreColor } from '../../lib/colors';
 import { getOverlayValue } from '../../lib/overlayUtils';
@@ -26,11 +26,8 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
   height = "400px",
   overlayData = {},
   overlayMode = 'none',
-  selectedNucleotide = null,
   onNucleotideClick,
-  onNucleotideHover,
-  variantData = [],
-  gnomadVariants = []
+  onNucleotideHover
 }) => {
   const stageRef = useRef<HTMLDivElement>(null);
   const nglLoaded = useRef(false);
@@ -38,7 +35,6 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
   const nglComponentRef = useRef<any>(null); // Store NGL component for updates
   const isDisposing = useRef(false); // Flag to prevent operations during disposal
   const rnaChainInfoRef = useRef<Map<string, { minRes: number; maxRes: number; count: number }> | null>(null); // Cache chain info
-  const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
 
   // Color mapping function for overlays
   const getOverlayColor = useCallback((nucleotideId: number): string => {
@@ -66,7 +62,6 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
 
   // Handle nucleotide interactions
   const handleNucleotideHover = useCallback((nucleotide: Nucleotide | null) => {
-    setHoveredNucleotide(nucleotide);
     onNucleotideHover?.(nucleotide);
   }, [onNucleotideHover]);
 
@@ -213,7 +208,7 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
 
       if (overlayMode !== 'none' && Object.keys(overlayData).length > 0) {
         const chainInfo = rnaChains.get(primaryChain);
-        const overlayColorScheme = function(this: any, params: any) {
+        const overlayColorScheme = function(this: any) {
           this.atomColor = (atom: any) => {
             if (atom.residue && atom.residue.resno && atom.chainname) {
               if (atom.chainname === primaryChain) {
@@ -410,7 +405,7 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
 
       if (overlayMode !== 'none' && Object.keys(overlayData).length > 0) {
         const chainInfo = rnaChains.get(primaryChain);
-        const overlayColorScheme = function(this: any, params: any) {
+        const overlayColorScheme = function(this: any) {
           this.atomColor = (atom: any) => {
             if (atom.residue && atom.residue.resno && atom.chainname) {
               // Apply overlay colors to the primary RNA chain
@@ -445,8 +440,8 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
 
         try {
           // addScheme returns a scheme ID - use that directly
-          const schemeId = NGL.ColormakerRegistry.addScheme(overlayColorScheme);
-          colorScheme = schemeId;
+          const schemeId = NGL.ColormakerRegistry.addScheme(overlayColorScheme, 'overlayScheme');
+          colorScheme = String(schemeId);
           console.log("Custom overlay color scheme registered successfully");
           console.log("Overlay data keys:", Object.keys(overlayData).slice(0, 10));
           console.log("Overlay mode:", overlayMode);
@@ -485,7 +480,7 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
       }
 
       // Add click and hover event handlers
-      stage.mouseControls.add("clickPick-left", (stage: any, pickingProxy: any) => {
+      stage.mouseControls.add("clickPick-left", (_stage: any, pickingProxy: any) => {
         if (pickingProxy && pickingProxy.atom) {
           const atom = pickingProxy.atom;
           if (atom.residue && atom.residue.resno) {
@@ -494,22 +489,22 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
               id: atom.residue.resno,
               x: atom.x || 0,
               y: atom.y || 0,
-              base: atom.residue.resname || 'N'
+              base: (atom.residue.resname || 'N') as 'A' | 'U' | 'G' | 'C'
             };
             onNucleotideClick?.(nucleotide);
           }
         }
       });
 
-      stage.mouseControls.add("hoverPick", (stage: any, pickingProxy: any) => {
+      stage.mouseControls.add("hoverPick", (_stage: any, pickingProxy: any) => {
         if (pickingProxy && pickingProxy.atom) {
           const atom = pickingProxy.atom;
           if (atom.residue && atom.residue.resno) {
             const nucleotide: Nucleotide = {
               id: atom.residue.resno,
+              base: (atom.residue.resname || 'N') as 'A' | 'U' | 'G' | 'C',
               x: atom.x || 0,
-              y: atom.y || 0,
-              base: atom.residue.resname || 'N'
+              y: atom.y || 0
             };
             handleNucleotideHover(nucleotide);
           }

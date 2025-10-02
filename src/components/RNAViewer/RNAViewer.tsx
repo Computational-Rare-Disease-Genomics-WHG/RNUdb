@@ -1,5 +1,5 @@
 // src/components/RNAViewer/RNAViewer.tsx
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import PDBViewer from './PDBViewer';
 import type { RNAData, Nucleotide, OverlayData, Variant } from '../../types';
 import { findNucleotideById } from '../../lib/rnaUtils';
@@ -454,8 +454,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           if (nucleotides.length === 0) return null;
 
           // Calculate bounding box
-          const xs = nucleotides.map(n => n.x);
-          const ys = nucleotides.map(n => n.y);
+          const xs = nucleotides.map(n => n!.x);
+          const ys = nucleotides.map(n => n!.y);
           const minX = Math.min(...xs);
           const maxX = Math.max(...xs);
           const minY = Math.min(...ys);
@@ -468,10 +468,10 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
               {/* Highlight individual nucleotides */}
               {nucleotides.map(nuc => (
                 <circle
-                  key={`feature-${feature.id}-nuc-${nuc.id}`}
-                  cx={nuc.x}
-                  cy={nuc.y}
-                  r={28}
+                  key={`feature-${feature.id}-nuc-${nuc!.id}`}
+                  cx={nuc!.x}
+                  cy={nuc!.y}
+                  r={22}
                   fill={feature.color || '#8b5cf6'}
                   opacity={0.25}
                   className="pointer-events-none"

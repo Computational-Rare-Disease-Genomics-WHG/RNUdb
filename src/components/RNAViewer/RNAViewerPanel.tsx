@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import RNAViewer from "./RNAViewer";
 import PDBViewer from "./PDBViewer";
+import type { PDBStructure } from "@/types";
 
 interface RNAViewerPanelProps {
-  pdbUrl: string;
+  pdbData: PDBStructure | null;
   rna2dProps?: React.ComponentProps<typeof RNAViewer>;
 }
 
-const RNAViewerPanel: React.FC<RNAViewerPanelProps> = ({ pdbUrl, rna2dProps }) => {
+const RNAViewerPanel: React.FC<RNAViewerPanelProps> = ({ pdbData, rna2dProps }) => {
   const [show3D, setShow3D] = useState(false);
 
   return (
@@ -28,9 +29,9 @@ const RNAViewerPanel: React.FC<RNAViewerPanelProps> = ({ pdbUrl, rna2dProps }) =
         </button>
       </div>
       {show3D ? (
-        <PDBViewer pdbUrl={pdbUrl} height="400px" />
+        <PDBViewer pdbData={pdbData} height="400px" />
       ) : (
-        <RNAViewer {...(rna2dProps || {})} />
+        <RNAViewer {...(rna2dProps || {})} rnaData={rna2dProps?.rnaData || { id: '', geneId: '', name: '', nucleotides: [], basePairs: [] }} />
       )}
     </div>
   );
