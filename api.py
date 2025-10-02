@@ -2,11 +2,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse  # Add this import
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import sqlite3
 import logging
 from typing import List, Optional
 from pathlib import Path
 import uvicorn
+import os
 
 # Pydantic models for response validation
 from pydantic import BaseModel, Field
@@ -24,7 +26,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
-    ],  # React dev servers
+        "http://localhost:8000",
+    ],  # React dev servers and production
     allow_credentials=True,
     allow_methods=["GET"],
     allow_headers=["*"],
@@ -398,6 +401,12 @@ async def get_gene_pdb(gene_id: str):
         "geneId": gene_id,
         "pdbData": pdb_path.read_text(),
     }
+
+
+# Mount static files for frontend (only if dist exists - for production)
+dist_path = Path(__file__).parent / "dist"
+if dist_path.exists():
+    app.mount("/", StaticFiles(directory=str(dist_path), html=True), name="static")
 
 
 if __name__ == "__main__":
