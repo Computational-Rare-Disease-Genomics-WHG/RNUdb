@@ -1,9 +1,11 @@
-# Use Node.js to build the app
-FROM node:20-alpine AS builder
+# Multi-stage build: Frontend + Backend in one container
+
+# Stage 1: Build frontend
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Copy package files first for caching
+# Copy package files and install dependencies
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
@@ -11,16 +13,27 @@ RUN yarn install --frozen-lockfile
 COPY . .
 RUN yarn build
 
-# Serve the app with a lightweight HTTP server (no Nginx needed)
-FROM node:20-alpine
+# Stage 2: Python backend with uv
+FROM python:3.13-slim
+
 WORKDIR /app
-COPY --from=builder /app/dist ./dist
 
-# Install `serve` to host static files
-RUN yarn global add serve
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Expose port (default: 3000)
-EXPOSE 3000
+# Copy Python project files
+COPY pyproject.toml ./
+COPY api.py ./
+COPY rnudb_utils ./rnudb_utils
 
-# Start the server
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Install Python dependencies
+RUN uv sync --frozen
+
+# Copy built frontend from Stage 1
+COPY --from=frontend-builder /app/dist ./dist
+
+# Expose port for FastAPI
+EXPOSE 8000
+
+# Run FastAPI with uvicorn
+CMD ["uv", "run", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
