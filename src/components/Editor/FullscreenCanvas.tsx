@@ -69,8 +69,6 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
   editingId,
   isLabelModalOpen,
   selectedFeatureNucleotides,
-  isFeatureModalOpen,
-  editingFeature,
   onCanvasClick,
   onCanvasMouseDown,
   onMouseMove,
@@ -90,8 +88,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
   onClearSelection,
   onFeatureNucleotideToggle,
   onFeatureLabelClick,
-  onOpenFeatureModal,
-  onSetFeatureModalOpen
+  onOpenFeatureModal
 }, ref) => {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showNucleotideInfo, setShowNucleotideInfo] = useState(false);

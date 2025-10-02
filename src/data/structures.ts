@@ -11,9 +11,10 @@ export const getRNAStructure = async (geneId: string): Promise<RNAStructure | nu
   }
 };
 
-export const getPDBStructure = async (geneId: string): Promise<string | null> =>{
+export const getPDBStructure = async (geneId: string): Promise<{ geneId: string; pdbData: string } | null> => {
   try {
-    return await getGenePDB(geneId);
+    const result = await getGenePDB(geneId);
+    return result;
   } catch (error) {
     console.error(`Error fetching PDB for ${geneId}:`, error);
     return null;

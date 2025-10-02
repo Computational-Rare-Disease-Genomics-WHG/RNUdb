@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect, type RefObject } from 'react'
 
 interface DragAndZoomProps {
   canvasRef: RefObject<HTMLDivElement | null>;
-  mode: 'select' | 'add' | 'pair' | 'delete' | 'pan' | 'label';
+  mode: 'select' | 'add' | 'pair' | 'delete' | 'pan' | 'label' | 'feature';
   zoomLevel: number;
   panOffset: { x: number; y: number };
   onUpdateNucleotidePosition: (id: number, x: number, y: number) => void;
