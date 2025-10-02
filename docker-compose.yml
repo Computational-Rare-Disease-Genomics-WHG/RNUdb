@@ -1,10 +1,12 @@
 version: '3.8'
 
 services:
-  react-app:
+  rnudb:
     build: .
     ports:
-      - "3000:3000"  # Host:3000 → Container:3000
+      - "8000:8000"  # Host:8000 → Container:8000
+    volumes:
+      - ./data:/app/data  # Mount the data directory (contains database.db)
     restart: unless-stopped
     environment:
       - NODE_ENV=production
