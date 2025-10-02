@@ -59,7 +59,19 @@ export const useImportExport = () => {
           throw new Error('Invalid base pair structure');
         }
       }
-      
+
+      // Validate structural features if present
+      if (parsed.structuralFeatures) {
+        for (const feature of parsed.structuralFeatures) {
+          if (!feature.id || !feature.featureType || !Array.isArray(feature.nucleotideIds)) {
+            throw new Error('Invalid structural feature structure');
+          }
+          if (!feature.label || typeof feature.label.text !== 'string') {
+            throw new Error('Invalid structural feature label');
+          }
+        }
+      }
+
       return {
         id: parsed.id,
         geneId: parsed.geneId || 'imported',
@@ -68,7 +80,8 @@ export const useImportExport = () => {
         basePairs: parsed.basePairs,
         canvasWidth: parsed.canvasWidth,
         canvasHeight: parsed.canvasHeight,
-        annotations: parsed.annotations || []
+        annotations: parsed.annotations || [],
+        structuralFeatures: parsed.structuralFeatures || []
       };
     } catch (error) {
       console.error('Failed to import JSON:', error);
@@ -129,7 +142,8 @@ export const useImportExport = () => {
         basePairs: parsed.basePairs,
         canvasWidth: parsed.canvasWidth,
         canvasHeight: parsed.canvasHeight,
-        annotations: parsed.annotations || []
+        annotations: parsed.annotations || [],
+        structuralFeatures: parsed.structuralFeatures || []
       };
     } catch (error) {
       console.error('Failed to load from localStorage:', error);
