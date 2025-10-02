@@ -74,7 +74,8 @@ const MainContent: React.FC<MainContentProps> = ({
         name: currentData.name,
         nucleotides: rnaStructureData.nucleotides,
         basePairs: rnaStructureData.basePairs,
-        annotations: rnaStructureData.annotations
+        annotations: rnaStructureData.annotations,
+        structuralFeatures: rnaStructureData.structuralFeatures
       };
     }
     // Return minimal structure if no data available
@@ -84,7 +85,8 @@ const MainContent: React.FC<MainContentProps> = ({
       name: currentData.name,
       nucleotides: [],
       basePairs: [],
-      annotations: []
+      annotations: [],
+      structuralFeatures: []
     };
   };
 

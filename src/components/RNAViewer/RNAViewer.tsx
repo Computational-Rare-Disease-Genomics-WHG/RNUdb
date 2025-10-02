@@ -1,5 +1,5 @@
 // src/components/RNAViewer/RNAViewer.tsx
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import PDBViewer from './PDBViewer';
 import type { RNAData, Nucleotide, OverlayData, Variant } from '../../types';
 import { findNucleotideById } from '../../lib/rnaUtils';
@@ -179,6 +179,15 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   }, []);
 
   const [show3D, setShow3D] = useState(false);
+  const [showStructuralFeatures, setShowStructuralFeatures] = useState(true);
+
+  // Debug log
+  console.log('[RNAViewer] Rendering with:', {
+    hasStructuralFeatures: !!rnaData.structuralFeatures,
+    count: rnaData.structuralFeatures?.length || 0,
+    showStructuralFeatures,
+    features: rnaData.structuralFeatures
+  });
 
   return (
     <div className="rna-viewer space-y-4">
@@ -201,6 +210,22 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
         {/* Divider */}
         <div className="h-4 w-px bg-slate-300 mx-2" />
+
+        {/* Structural Features Toggle */}
+        {!show3D && (
+          <>
+            <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-md border border-slate-200">
+              <span className="text-sm text-slate-700 font-medium">Structural Features</span>
+              <Switch
+                checked={showStructuralFeatures}
+                onCheckedChange={setShowStructuralFeatures}
+                className="data-[state=checked]:bg-purple-600"
+              />
+            </div>
+            {/* Divider */}
+            <div className="h-4 w-px bg-slate-300 mx-2" />
+          </>
+        )}
 
         {/* Shared Overlay Controls */}
         <div className="flex items-center gap-3">
@@ -362,12 +387,20 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        <svg 
+        <svg
           ref={svgRef}
-          viewBox={`${Math.min(...rnaData.nucleotides.map(n => n.x), 0) - 25} ${Math.min(...rnaData.nucleotides.map(n => n.y), 0) - 25} ${Math.max(...rnaData.nucleotides.map(n => n.x), 0) - Math.min(...rnaData.nucleotides.map(n => n.x), 0) + 50} ${Math.max(...rnaData.nucleotides.map(n => n.y), 0) - Math.min(...rnaData.nucleotides.map(n => n.y), 0) + 50}`} 
+          viewBox={(() => {
+            if (rnaData.nucleotides.length === 0) return '0 0 2000 2000';
+            const minX = Math.min(...rnaData.nucleotides.map(n => n.x));
+            const maxX = Math.max(...rnaData.nucleotides.map(n => n.x));
+            const minY = Math.min(...rnaData.nucleotides.map(n => n.y));
+            const maxY = Math.max(...rnaData.nucleotides.map(n => n.y));
+            const padding = 100;
+            return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
+          })()}
           className="rna-svg"
-          style={{ 
-            width: '100%', 
+          style={{
+            width: '100%',
             height: '100%',
             transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
             transformOrigin: 'center center'
@@ -412,6 +445,81 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           })}
         </g>
         
+        {/* Structural Features Layer */}
+        {showStructuralFeatures && rnaData.structuralFeatures?.map(feature => {
+          const nucleotides = feature.nucleotideIds
+            .map(id => rnaData.nucleotides.find(n => n.id === id))
+            .filter(Boolean);
+
+          if (nucleotides.length === 0) return null;
+
+          // Calculate bounding box
+          const xs = nucleotides.map(n => n.x);
+          const ys = nucleotides.map(n => n.y);
+          const minX = Math.min(...xs);
+          const maxX = Math.max(...xs);
+          const minY = Math.min(...ys);
+          const maxY = Math.max(...ys);
+          const centerX = (minX + maxX) / 2;
+          const centerY = (minY + maxY) / 2;
+
+          return (
+            <g key={feature.id} className="structural-feature">
+              {/* Highlight individual nucleotides */}
+              {nucleotides.map(nuc => (
+                <circle
+                  key={`feature-${feature.id}-nuc-${nuc.id}`}
+                  cx={nuc.x}
+                  cy={nuc.y}
+                  r={28}
+                  fill={feature.color || '#8b5cf6'}
+                  opacity={0.25}
+                  className="pointer-events-none"
+                />
+              ))}
+
+              {/* Feature label with background */}
+              <g className="pointer-events-none">
+                <rect
+                  x={feature.label.x - (feature.label.text.length * feature.label.fontSize) / 3}
+                  y={feature.label.y - feature.label.fontSize / 1.5}
+                  width={(feature.label.text.length * feature.label.fontSize) / 1.5}
+                  height={feature.label.fontSize + 8}
+                  fill="rgba(255, 255, 255, 0.9)"
+                  stroke={feature.label.color || '#6d28d9'}
+                  strokeWidth="2"
+                  rx="4"
+                />
+                <text
+                  x={feature.label.x}
+                  y={feature.label.y}
+                  fontSize={feature.label.fontSize}
+                  fill={feature.label.color || '#6d28d9'}
+                  fontWeight="600"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className="select-none"
+                >
+                  {feature.label.text}
+                </text>
+              </g>
+
+              {/* Connector line from label to feature center */}
+              <line
+                x1={feature.label.x}
+                y1={feature.label.y + feature.label.fontSize / 2}
+                x2={centerX}
+                y2={centerY}
+                stroke={feature.label.color || '#6d28d9'}
+                strokeWidth="1"
+                strokeDasharray="2,2"
+                opacity="0.5"
+                className="pointer-events-none"
+              />
+            </g>
+          );
+        })}
+
         <g className="annotations-layer">
           {rnaData.annotations?.map(annotation => (
             <text
