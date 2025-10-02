@@ -8,6 +8,7 @@ import {
   EditorHeader,
   FullscreenCanvas
 } from '../components/Editor';
+import { StructuralFeatureModal } from '../components/Editor/StructuralFeatureModal';
 
 const Editor: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -23,12 +24,15 @@ const Editor: React.FC = () => {
     annotations: []
   };
 
-  const [mode, setMode] = useState<'select' | 'add' | 'pair' | 'delete' | 'label' | 'pan'>('select');
+  const [mode, setMode] = useState<'select' | 'add' | 'pair' | 'delete' | 'label' | 'pan' | 'feature'>('select');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [currentLabel, setCurrentLabel] = useState<string | null>(null);
   const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
+  const [selectedFeatureNucleotides, setSelectedFeatureNucleotides] = useState<number[]>([]);
+  const [isFeatureModalOpen, setIsFeatureModalOpen] = useState(false);
+  const [editingFeature, setEditingFeature] = useState<string | null>(null);
 
   const nucleotideManager = useNucleotideManager(initialRnaData);
   const importExport = useImportExport();
@@ -48,7 +52,10 @@ const Editor: React.FC = () => {
     updateNucleotideId,
     addBasePair,
     removeBasePair,
-    navigateNucleotides
+    navigateNucleotides,
+    addStructuralFeature,
+    updateStructuralFeature,
+    removeStructuralFeature
   } = nucleotideManager;
 
   const {
@@ -112,9 +119,12 @@ const Editor: React.FC = () => {
     setPanOffset({ x: 0, y: 0 });
   }, []);
 
-  const handleModeChange = useCallback((newMode: 'select' | 'add' | 'pair' | 'delete' | 'label' | 'pan') => {
+  const handleModeChange = useCallback((newMode: 'select' | 'add' | 'pair' | 'delete' | 'label' | 'pan' | 'feature') => {
     setMode(newMode);
     setSelectedNucleotides([]);
+    if (newMode !== 'feature') {
+      setSelectedFeatureNucleotides([]);
+    }
   }, [setSelectedNucleotides]);
 
   const handleNucleotideClick = useCallback((e: React.MouseEvent, nucleotideId: number) => {
@@ -191,6 +201,51 @@ const Editor: React.FC = () => {
     setCurrentLabel(null);
   }, [setCurrentNucleotide, setSelectedNucleotides]);
 
+  // Feature mode handlers
+  const handleFeatureNucleotideToggle = useCallback((nucleotideId: number) => {
+    setSelectedFeatureNucleotides(prev =>
+      prev.includes(nucleotideId)
+        ? prev.filter(id => id !== nucleotideId)
+        : [...prev, nucleotideId]
+    );
+  }, []);
+
+  const handleOpenFeatureModal = useCallback(() => {
+    if (selectedFeatureNucleotides.length === 0) {
+      alert('Please select nucleotides first');
+      return;
+    }
+    setIsFeatureModalOpen(true);
+  }, [selectedFeatureNucleotides]);
+
+  const handleFeatureSubmit = useCallback((feature: Omit<import('../types/rna').StructuralFeature, 'id'>) => {
+    if (editingFeature) {
+      updateStructuralFeature(editingFeature, feature);
+    } else {
+      addStructuralFeature(feature);
+    }
+    setIsFeatureModalOpen(false);
+    setSelectedFeatureNucleotides([]);
+    setEditingFeature(null);
+    setMode('select');
+  }, [editingFeature, addStructuralFeature, updateStructuralFeature]);
+
+  const handleFeatureLabelClick = useCallback((e: React.MouseEvent, featureId: string) => {
+    e.stopPropagation();
+    const feature = rnaData.structuralFeatures?.find(f => f.id === featureId);
+    if (feature) {
+      setEditingFeature(featureId);
+      setSelectedFeatureNucleotides(feature.nucleotideIds);
+      setIsFeatureModalOpen(true);
+    }
+  }, [rnaData.structuralFeatures]);
+
+  const handleFeatureCancel = useCallback(() => {
+    setIsFeatureModalOpen(false);
+    setSelectedFeatureNucleotides([]);
+    setEditingFeature(null);
+  }, []);
+
   const handleLabelClick = useCallback((e: React.MouseEvent, labelId: string) => {
     e.stopPropagation();
     setCurrentLabel(labelId);
@@ -232,6 +287,7 @@ const Editor: React.FC = () => {
     currentLabel,
     editingId,
     isLabelModalOpen,
+    isFeatureModalOpen,
     panOffset,
     zoomLevel,
     onAddNucleotide: handleAddNucleotideWithModeSwitch,
@@ -263,6 +319,9 @@ const Editor: React.FC = () => {
         currentLabel={currentLabel}
         editingId={editingId}
         isLabelModalOpen={isLabelModalOpen}
+        selectedFeatureNucleotides={selectedFeatureNucleotides}
+        isFeatureModalOpen={isFeatureModalOpen}
+        editingFeature={editingFeature}
         onCanvasClick={handleCanvasClick}
         onCanvasMouseDown={handleCanvasMouseDown}
         onMouseMove={handleMouseMoveWithPan}
@@ -283,7 +342,26 @@ const Editor: React.FC = () => {
           selectedNucleotides.forEach(id => removeNucleotide(id));
           setSelectedNucleotides([]);
         }}
+        onFeatureNucleotideToggle={handleFeatureNucleotideToggle}
+        onFeatureLabelClick={handleFeatureLabelClick}
+        onOpenFeatureModal={handleOpenFeatureModal}
+        onSetFeatureModalOpen={setIsFeatureModalOpen}
       />
+
+      {isFeatureModalOpen && (
+        <StructuralFeatureModal
+          isOpen={isFeatureModalOpen}
+          selectedNucleotides={selectedFeatureNucleotides}
+          nucleotides={rnaData.nucleotides}
+          initialFeature={
+            editingFeature
+              ? rnaData.structuralFeatures?.find(f => f.id === editingFeature)
+              : undefined
+          }
+          onSubmit={handleFeatureSubmit}
+          onCancel={handleFeatureCancel}
+        />
+      )}
     </div>
   );
 };
