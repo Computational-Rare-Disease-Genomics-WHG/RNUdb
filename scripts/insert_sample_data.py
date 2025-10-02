@@ -265,10 +265,11 @@ def insert_sample_structures():
         "geneId": "RNU4-2",
         "nucleotides": structure_data.get("nucleotides", []),
         "basePairs": structure_data.get("basePairs", []),
-        "annotations": structure_data.get("annotations", [])
+        "annotations": structure_data.get("annotations", []),
+        "structuralFeatures": structure_data.get("structuralFeatures", [])
     }]
 
-    print(f"Loading structure with {len(structure_data.get('nucleotides', []))} nucleotides, {len(structure_data.get('basePairs', []))} base pairs, and {len(structure_data.get('annotations', []))} annotations...")
+    print(f"Loading structure with {len(structure_data.get('nucleotides', []))} nucleotides, {len(structure_data.get('basePairs', []))} base pairs, {len(structure_data.get('annotations', []))} annotations, and {len(structure_data.get('structuralFeatures', []))} structural features...")
     insert_structures(structures_data)
     print("RNA structure inserted successfully!")
 
