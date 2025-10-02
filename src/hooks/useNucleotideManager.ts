@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { RNAData, Nucleotide, BasePair } from '../types/rna';
+import type { RNAData, Nucleotide, BasePair, StructuralFeature } from '../types/rna';
 
 export const useNucleotideManager = (initialData: RNAData) => {
   const [rnaData, setRnaData] = useState<RNAData>(initialData);
@@ -173,6 +173,37 @@ export const useNucleotideManager = (initialData: RNAData) => {
     setSelectedNucleotides([]);
   }, [setCurrentNucleotide, setSelectedNucleotides]);
 
+  // Structural Features Management
+  const addStructuralFeature = useCallback((feature: Omit<StructuralFeature, 'id'>) => {
+    const newFeature: StructuralFeature = {
+      ...feature,
+      id: `feature-${Date.now()}`
+    };
+
+    setRnaData(prev => ({
+      ...prev,
+      structuralFeatures: [...(prev.structuralFeatures || []), newFeature]
+    }));
+
+    return newFeature.id;
+  }, []);
+
+  const updateStructuralFeature = useCallback((featureId: string, updates: Partial<StructuralFeature>) => {
+    setRnaData(prev => ({
+      ...prev,
+      structuralFeatures: prev.structuralFeatures?.map(f =>
+        f.id === featureId ? { ...f, ...updates } : f
+      )
+    }));
+  }, []);
+
+  const removeStructuralFeature = useCallback((featureId: string) => {
+    setRnaData(prev => ({
+      ...prev,
+      structuralFeatures: prev.structuralFeatures?.filter(f => f.id !== featureId)
+    }));
+  }, []);
+
   return {
     rnaData,
     selectedNucleotides,
@@ -190,6 +221,9 @@ export const useNucleotideManager = (initialData: RNAData) => {
     updateNucleotideId,
     addBasePair,
     removeBasePair,
-    navigateNucleotides
+    navigateNucleotides,
+    addStructuralFeature,
+    updateStructuralFeature,
+    removeStructuralFeature
   };
 };

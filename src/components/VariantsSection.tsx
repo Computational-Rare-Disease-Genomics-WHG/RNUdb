@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { COLORBLIND_FRIENDLY_PALETTE } from '../lib/colors';
-import type { Variant } from '../data/variantData';
+import type { Variant } from '@/types';
 
 interface VariantsSectionProps {
   variantData: Variant[];
@@ -94,15 +94,15 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
                         <Badge className={`text-xs ${getConsequenceBadge(variant.consequence ?? '')}`}>
                           {variant.consequence?.replace('_', ' ') ?? 'Unknown'}
                         </Badge>
-                        <Badge className={`text-xs ${getClinicalBadge(variant.clinical ?? '')}`}>
-                          {variant.clinical}
+                        <Badge className={`text-xs ${getClinicalBadge(variant.clinical_significance ?? '')}`}>
+                          {variant.clinical_significance}
                         </Badge>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-right">
                       <div className="text-xs text-gray-600">
-                        <div><span className="font-medium">MAF:</span> {variant.frequency}</div>
-                        <div><span className="font-medium">gnomAD:</span> {variant.gnomad_frequency}</div>
+                        <div><span className="font-medium">MAF:</span> {variant.gnomad_ac ?? 'N/A'}</div>
+                        <div><span className="font-medium">gnomAD:</span> {variant.gnomad_ac ?? 'N/A'}</div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200 font-medium">

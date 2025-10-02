@@ -3,10 +3,10 @@ import { BookOpen, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Paper } from '../data/paperData';
+import type { Literature } from '@/types';
 
 interface LiteratureSectionProps {
-  paperData: Paper[];
+  paperData: Literature[];
   currentGene: string;
 }
 

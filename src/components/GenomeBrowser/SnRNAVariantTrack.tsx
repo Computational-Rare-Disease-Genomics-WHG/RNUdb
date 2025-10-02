@@ -6,47 +6,74 @@ import { COLORBLIND_FRIENDLY_PALETTE, getClinvarColor } from '../../lib/colors';
 interface SnRNAVariantTrackProps {
   variants: any[];
   gnomadVariants: any[];
+  aouVariants: any[];
 }
 
-const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({ variants, gnomadVariants }) => {
-  // Filter to only clinical variants that have a position field (exclude SGE variants)
+const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({ variants, gnomadVariants, aouVariants }) => {
+  // Transform clinical variants to the format expected by gnomAD VariantTrack
   const clinvarVariants = variants
-    .filter(variant => variant.position && typeof variant.position === 'string')
-    .map((variant, index) => {
-      const position = parseInt(variant.position.split(':')[1]);
-      return {
-        variant_id: `${variant.id}-${index}`, // Make variant_id unique
-        pos: position,
-        allele_freq: parseFloat(variant.gnomad_frequency || '0'),
-        consequence: variant.consequence,
-        clinical_significance: variant.clinvar_significance,
-        isHighlighted: variant.clinical === 'Pathogenic' || variant.clinical === 'Likely Pathogenic'
-      };
-    });
+    .filter(variant => 
+      variant.position && 
+      variant.clinical_significance &&
+      typeof variant.position === 'number'
+    )
+    .map((variant, index) => ({
+      variant_id: `clinvar-${variant.id}-${index}`,
+      pos: variant.position,
+      ref: variant.ref,
+      alt: variant.alt,
+      allele_freq: (variant.gnomad_ac || 0) / 1000000, // Convert AC to frequency estimate
+      consequence: variant.consequence || 'unknown',
+      clinical_significance: variant.clinical_significance,
+      isHighlighted: variant.clinical_significance === 'Pathogenic' || 
+                    variant.clinical_significance === 'Likely Pathogenic'
+    }));
 
-  // Ensure gnomAD variants also have unique IDs
-  const uniqueGnomadVariants = gnomadVariants.map((variant, index) => ({
-    ...variant,
-    variant_id: `${variant.variant_id}-gnomad-${index}`
-  }));
+  // Transform gnomAD variants to the expected format
+  const transformedGnomadVariants = gnomadVariants
+    .filter(variant => variant.position && typeof variant.position === 'number')
+    .map((variant, index) => ({
+      variant_id: `gnomad-${variant.id}-${index}`,
+      pos: variant.position,
+      ref: variant.ref,
+      alt: variant.alt,
+      allele_freq: (variant.gnomad_ac || 0) / 1000000, // Convert AC to frequency estimate
+      consequence: variant.consequence || 'unknown',
+      isHighlighted: false
+    }));
+
+  // Transform All of Us variants to the expected format
+  const transformedAouVariants = aouVariants
+    .filter(variant => variant.position && typeof variant.position === 'number')
+    .map((variant, index) => ({
+      variant_id: `aou-${variant.id}-${index}`,
+      pos: variant.position,
+      ref: variant.ref,
+      alt: variant.alt,
+      allele_freq: (variant.aou_ac || 0) / 1000000, // Convert AC to frequency estimate
+      consequence: variant.consequence || 'unknown',
+      isHighlighted: false
+    }));
 
   return (
     <>
       <VariantTrack
-        title="gnomAD Variants (40 variants)"
+        title={`gnomAD Variants (${transformedGnomadVariants.length} variants)`}
         height={40}
-        variants={uniqueGnomadVariants}
-        variantColor={() => {
-          return COLORBLIND_FRIENDLY_PALETTE.VARIANTS.GNOMAD;
-        }}
+        variants={transformedGnomadVariants}
+        variantColor={() => COLORBLIND_FRIENDLY_PALETTE.VARIANTS.GNOMAD}
       />
       <VariantTrack
-        title="ClinVar Variants (5 variants)"
+        title={`All of Us Variants (${transformedAouVariants.length} variants)`}
+        height={40}
+        variants={transformedAouVariants}
+        variantColor={() => '#8B5CF6'} // Purple color for All of Us
+      />
+      <VariantTrack
+        title={`ClinVar Variants (${clinvarVariants.length} variants)`}
         height={40}
         variants={clinvarVariants}
-        variantColor={(variant) => {
-          return getClinvarColor(variant.clinical_significance || 'unknown');
-        }}
+        variantColor={(variant) => getClinvarColor(variant.clinical_significance || 'unknown')}
       />
     </>
   );

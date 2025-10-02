@@ -1,33 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Search, Database, Edit, Dna } from 'lucide-react';
+import { Database, Edit, Dna, AlertTriangle } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { getAllSnRNAIds } from '../data/snrnas';
-import type { SnRNAGeneData } from '../data/snRNAData';
+import AdvancedSearch from '../components/AdvancedSearch';
+import { getAllSnRNAIds } from '../data/genes';
+import type { SnRNAGene } from '@/types';
+import { Button } from '@/components/ui/button';
 
 const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<SnRNAGeneData[] | null>(null);
+  const [searchResults, setSearchResults] = useState<SnRNAGene[] | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [availableSnRNAs, setAvailableSnRNAs] = useState<string[]>([]);
   const navigate = useNavigate();
   
-  const availableSnRNAs = getAllSnRNAIds();
+  useEffect(() => {
+    const loadSnRNAIds = async () => {
+      try {
+        const ids = await getAllSnRNAIds();
+        setAvailableSnRNAs(ids);
+      } catch (error) {
+        console.error('Error loading snRNA IDs:', error);
+        setAvailableSnRNAs(['RNU4-2']); // Fallback
+      }
+    };
+    
+    loadSnRNAIds();
+  }, []);
 
-  const handleSearch = () => {
-    if (searchTerm.trim()) {
-      navigate(`/gene/${searchTerm}`);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
+  // No longer needed - AdvancedSearch handles this
+  // const handleSearch = () => {
+  //   if (searchTerm.trim()) {
+  //     navigate(`/gene/${searchTerm}`);
+  //   }
+  // };
 
   const handleGeneSelect = (geneName: string) => {
     navigate(`/gene/${geneName}`);
@@ -56,36 +64,32 @@ const Home: React.FC = () => {
             </h1>
           </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-            A comprehensive database for RNA structure visualization and analysis. 
-            Explore RNA sequences, variants, and regulatory elements with interactive tools.
+            A comprehensive database for RNA structure visualization and analysis.
+            Explore RNA sequences, variants, and clinical data with interactive tools.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-8">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="Search genes (e.g., RNU4-2)"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="pl-10"
-              />
-            </div>
-            <Button 
-              onClick={handleSearch} 
-              className="px-8 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
-            >
-              Search
-            </Button>
+
+          <div className="max-w-2xl mx-auto mb-8">
+            <AdvancedSearch
+              className="w-full"
+              placeholder="Search genes, variants, HGVS notation, clinical significance..."
+            />
           </div>
-          
+
+          {/* Search Examples */}
+          <div className="text-center mb-8">
+            <p className="text-sm text-gray-500 mb-3">Try searching for:</p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">RNU4-2</span>
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">c.34A&gt;G</span>
+            </div>
+          </div>
+
           <p className="text-sm text-gray-500 mb-8">
-            Currently available: {availableSnRNAs.join(', ')}
+            Available genes: {availableSnRNAs.join(', ')}
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
           <Card className="hover:shadow-lg transition-shadow border-slate-200 bg-white/95 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -112,6 +116,9 @@ const Home: React.FC = () => {
             </CardContent>
           </Card>
 
+         
+
+          {/* RNA Editor Card */}
           <Card className="hover:shadow-lg transition-shadow border-slate-200 bg-white/95 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -123,13 +130,12 @@ const Home: React.FC = () => {
               <p className="text-gray-600 mb-4">
                 Create and edit RNA structures with our interactive WYSIWYG editor.
               </p>
-              <Button 
-                variant="outline" 
+              <button
                 onClick={() => navigate('/editor')}
-                className="border-teal-600 text-teal-600 hover:bg-teal-50"
+                className="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
               >
                 Open Editor
-              </Button>
+              </button>
             </CardContent>
           </Card>
         </div>

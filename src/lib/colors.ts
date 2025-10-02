@@ -33,20 +33,6 @@ export const COLORBLIND_FRIENDLY_PALETTE = {
     C: '#F59E0B',  // Amber
   },
   
-  // Conservation scores (earth tones - colorblind safe)
-  CONSERVATION: {
-    HIGH: '#059669',      // Emerald green (good conservation)
-    MEDIUM: '#F59E0B',    // Amber (medium conservation)
-    LOW: '#DC2626',       // Red (poor conservation)
-  },
-  
-  // Regulatory elements (distinct, colorblind-friendly)
-  REGULATORY: {
-    ENHANCER: '#7C3AED',    // Purple (violet)
-    PROMOTER: '#DC2626',    // Red
-    TFBS: '#F59E0B',       // Amber
-    SILENCER: '#6B7280',   // Gray
-  },
   
   // Gene types
   GENES: {
@@ -121,11 +107,6 @@ export const getClinvarColor = (significance: string): string => {
   return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS;
 };
 
-export const getConservationColor = (score: number): string => {
-  if (score > 75) return COLORBLIND_FRIENDLY_PALETTE.CONSERVATION.HIGH;
-  if (score > 50) return COLORBLIND_FRIENDLY_PALETTE.CONSERVATION.MEDIUM;
-  return COLORBLIND_FRIENDLY_PALETTE.CONSERVATION.LOW;
-};
 
 export const getFunctionScoreColor = (score: number): string => {
   if (score === 0) return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;

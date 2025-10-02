@@ -6,6 +6,7 @@ interface KeyboardShortcutsProps {
   currentLabel: string | null;
   editingId: number | null;
   isLabelModalOpen: boolean;
+  isFeatureModalOpen: boolean;
   panOffset: { x: number; y: number };
   zoomLevel: number;
   onAddNucleotide: (x: number, y: number) => number;
@@ -23,6 +24,7 @@ export const useKeyboardShortcuts = ({
   currentLabel,
   editingId,
   isLabelModalOpen,
+  isFeatureModalOpen,
   panOffset,
   zoomLevel,
   onAddNucleotide,
@@ -35,8 +37,8 @@ export const useKeyboardShortcuts = ({
 }: KeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle keyboard shortcuts when editing ID or when label modal is open
-      if (editingId !== null || isLabelModalOpen) return;
+      // Don't handle keyboard shortcuts when editing ID or when modals are open
+      if (editingId !== null || isLabelModalOpen || isFeatureModalOpen) return;
       
       switch (e.key.toLowerCase()) {
         case 'n':
@@ -89,8 +91,8 @@ export const useKeyboardShortcuts = ({
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      // Don't handle keyboard shortcuts when editing ID or when label modal is open
-      if (editingId !== null || isLabelModalOpen) return;
+      // Don't handle keyboard shortcuts when editing ID or when modals are open
+      if (editingId !== null || isLabelModalOpen || isFeatureModalOpen) return;
       
       if (e.key === ' ') {
         e.preventDefault();
@@ -110,6 +112,7 @@ export const useKeyboardShortcuts = ({
     currentLabel,
     editingId,
     isLabelModalOpen,
+    isFeatureModalOpen,
     panOffset,
     zoomLevel,
     onAddNucleotide,

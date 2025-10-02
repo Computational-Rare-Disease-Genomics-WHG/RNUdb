@@ -1,15 +1,10 @@
-import type { RNAData } from './rna';
-import type { SnRNAGeneData } from '../data/snRNAData';
-import type { Variant } from '../data/variantData';
-
-export interface SGEData {
-  [key: string]: any;
-}
+import type { RNAStructure, SnRNAGene, Variant, Literature, SGEDataset } from './rna';
 
 export interface SnRNADataset {
   id: string;
-  metadata: SnRNAGeneData;
-  structure?: RNAData;
+  gene: SnRNAGene;
+  structure?: RNAStructure;
   variants?: Variant[];
-  sgeData?: SGEData[];
+  literature?: Literature[];
+  sgeData?: SGEDataset;
 }

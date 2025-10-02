@@ -4,13 +4,14 @@ import { Dna, Menu, X, Database } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { snRNAData, type SnRNAGeneData } from '../data/snRNAData';
+import { getAllSnRNAIds, getGeneData } from '../data/genes';
+import type { SnRNAGene } from '@/types';
 
 interface HeaderProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  searchResults: SnRNAGeneData[] | null;
-  setSearchResults: (results: SnRNAGeneData[] | null) => void;
+  searchResults: SnRNAGene[] | null;
+  setSearchResults: (results: SnRNAGene[] | null) => void;
   setSelectedSnRNA: (snRNA: string) => void;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -26,15 +27,29 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (searchTerm.trim()) {
-      const results = Object.values(snRNAData).filter(snrna =>
-        snrna.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        snrna.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setSearchResults(results);
-      if (results.length > 0) {
-        navigate(`/gene/${results[0].name}`);
+      try {
+        const geneIds = await getAllSnRNAIds();
+        const results: SnRNAGene[] = [];
+        
+        for (const geneId of geneIds) {
+          const geneData = await getGeneData(geneId);
+          if (geneData) {
+            if (geneData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                geneData.fullName.toLowerCase().includes(searchTerm.toLowerCase())) {
+              results.push(geneData);
+            }
+          }
+        }
+        
+        setSearchResults(results);
+        if (results.length > 0) {
+          navigate(`/gene/${results[0].name}`);
+        }
+      } catch (error) {
+        console.error('Error during search:', error);
+        setSearchResults([]);
       }
     }
   };
@@ -90,7 +105,7 @@ const Header: React.FC<HeaderProps> = ({
                               <strong className="text-teal-800">{result.name}</strong> - {result.fullName}
                               <br />
                               <span className="text-sm text-gray-600">
-                                Chr {result.chromosome}:{result.position} | {result.length}
+                                Chr {result.chromosome}:{result.start.toLocaleString()}-{result.end.toLocaleString()} | {(result.end - result.start + 1)} bp
                               </span>
                             </div>
                             <Button 

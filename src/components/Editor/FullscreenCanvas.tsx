@@ -2,25 +2,26 @@ import React, { forwardRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCcw, 
-  Move, 
-  Plus, 
-  Link, 
-  Trash2, 
-  Keyboard, 
+import {
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Move,
+  Plus,
+  Link,
+  Trash2,
+  Keyboard,
   Target,
   X,
   Type,
-  MousePointer2 
+  MousePointer2,
+  Shapes
 } from 'lucide-react';
 import type { RNAData } from '../../types/rna';
 
 interface FullscreenCanvasProps {
   rnaData: RNAData;
-  mode: 'select' | 'add' | 'pair' | 'delete' | 'label' | 'pan';
+  mode: 'select' | 'add' | 'pair' | 'delete' | 'label' | 'pan' | 'feature';
   zoomLevel: number;
   panOffset: { x: number; y: number };
   isPanning: boolean;
@@ -30,6 +31,9 @@ interface FullscreenCanvasProps {
   currentLabel: string | null;
   editingId: number | null;
   isLabelModalOpen: boolean;
+  selectedFeatureNucleotides: number[];
+  isFeatureModalOpen: boolean;
+  editingFeature: string | null;
   onCanvasClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   onCanvasMouseDown: (e: React.MouseEvent) => void;
   onMouseMove: (e: React.MouseEvent) => void;
@@ -39,7 +43,7 @@ interface FullscreenCanvasProps {
   onLabelClick: (e: React.MouseEvent, labelId: string) => void;
   onZoom: (delta: number) => void;
   onResetView: () => void;
-  onModeChange: (mode: 'select' | 'add' | 'pair' | 'delete' | 'label' | 'pan') => void;
+  onModeChange: (mode: 'select' | 'add' | 'pair' | 'delete' | 'label' | 'pan' | 'feature') => void;
   onUpdateNucleotideBase: (nucleotideId: number, newBase: 'A' | 'C' | 'G' | 'U') => void;
   onUpdateNucleotideId: (oldId: number, newId: number) => boolean;
   onSetEditingId: (id: number | null) => void;
@@ -47,6 +51,10 @@ interface FullscreenCanvasProps {
   onSetLabelModalOpen: (isOpen: boolean) => void;
   onDeleteSelected: () => void;
   onClearSelection: () => void;
+  onFeatureNucleotideToggle: (nucleotideId: number) => void;
+  onFeatureLabelClick: (e: React.MouseEvent, featureId: string) => void;
+  onOpenFeatureModal: () => void;
+  onSetFeatureModalOpen: (isOpen: boolean) => void;
 }
 
 const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
@@ -60,6 +68,9 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
   currentLabel,
   editingId,
   isLabelModalOpen,
+  selectedFeatureNucleotides,
+  isFeatureModalOpen,
+  editingFeature,
   onCanvasClick,
   onCanvasMouseDown,
   onMouseMove,
@@ -76,7 +87,11 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
   onUpdateRnaData,
   onSetLabelModalOpen,
   onDeleteSelected,
-  onClearSelection
+  onClearSelection,
+  onFeatureNucleotideToggle,
+  onFeatureLabelClick,
+  onOpenFeatureModal,
+  onSetFeatureModalOpen
 }, ref) => {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showNucleotideInfo, setShowNucleotideInfo] = useState(false);
@@ -85,6 +100,8 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
   const [labelDragStart, setLabelDragStart] = useState<{x: number, y: number} | null>(null);
   const [pendingLabelPosition, setPendingLabelPosition] = useState<{x: number, y: number} | null>(null);
   const labelUpdateRef = React.useRef<number | null>(null);
+  const [draggingFeature, setDraggingFeature] = useState<string | null>(null);
+  const [featureDragStart, setFeatureDragStart] = useState<{x: number, y: number} | null>(null);
 
   const handleLabelModalClose = () => {
     setShowLabelModal(false);
@@ -146,7 +163,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
             <input
               type="range"
               min="8"
-              max="24"
+              max="50"
               value={fontSize}
               onChange={(e) => setFontSize(Number(e.target.value))}
               className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
@@ -234,6 +251,51 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
     }
   };
 
+  const handleFeatureLabelMouseDown = (e: React.MouseEvent, featureId: string) => {
+    if (mode === 'select') {
+      e.stopPropagation();
+      setDraggingFeature(featureId);
+      setFeatureDragStart({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleFeatureLabelMouseMove = (e: React.MouseEvent) => {
+    if (draggingFeature && featureDragStart) {
+      e.preventDefault();
+      const screenDeltaX = e.clientX - featureDragStart.x;
+      const screenDeltaY = e.clientY - featureDragStart.y;
+
+      const logicalDeltaX = screenDeltaX / zoomLevel;
+      const logicalDeltaY = screenDeltaY / zoomLevel;
+
+      const feature = rnaData.structuralFeatures?.find(f => f.id === draggingFeature);
+      if (feature) {
+        const updatedFeature = {
+          ...feature,
+          label: {
+            ...feature.label,
+            x: feature.label.x + logicalDeltaX,
+            y: feature.label.y + logicalDeltaY
+          }
+        };
+
+        onUpdateRnaData({
+          ...rnaData,
+          structuralFeatures: rnaData.structuralFeatures?.map(f =>
+            f.id === draggingFeature ? updatedFeature : f
+          )
+        });
+      }
+
+      setFeatureDragStart({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleFeatureLabelMouseUp = () => {
+    setDraggingFeature(null);
+    setFeatureDragStart(null);
+  };
+
   const handleAddLabel = (text: string, fontSize: number) => {
     if (pendingLabelPosition) {
       const newAnnotation = {
@@ -303,20 +365,30 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
     });
   };
 
+  const handleNucleotideClickInternal = (e: React.MouseEvent, nucleotideId: number) => {
+    if (mode === 'feature') {
+      e.stopPropagation();
+      onFeatureNucleotideToggle(nucleotideId);
+    } else {
+      onNucleotideClick(e, nucleotideId);
+    }
+  };
+
   const renderNucleotides = () => {
     return rnaData.nucleotides.map((nucleotide) => {
       const isSelected = selectedNucleotides.includes(nucleotide.id);
       const isCurrent = currentNucleotide === nucleotide.id;
+      const isFeatureSelected = selectedFeatureNucleotides.includes(nucleotide.id);
       const baseColors = {
         'A': '#ef4444',
         'U': '#3b82f6',
         'G': '#10b981',
         'C': '#f59e0b'
       };
-      
+
       const fillColor = nucleotide.base ? baseColors[nucleotide.base] : '#9ca3af';
       const displayText = nucleotide.base || nucleotide.id.toString();
-      
+
       return (
         <g key={nucleotide.id}>
           <circle
@@ -324,12 +396,12 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
             cy={nucleotide.y + 15}
             r="15"
             fill={fillColor}
-            stroke={isCurrent ? "#0d9488" : isSelected ? "#0891b2" : "#374151"}
-            strokeWidth={isCurrent ? "4" : isSelected ? "3" : "2"}
+            stroke={isCurrent ? "#0d9488" : isFeatureSelected ? "#8b5cf6" : isSelected ? "#0891b2" : "#374151"}
+            strokeWidth={isCurrent ? "4" : isFeatureSelected ? "3" : isSelected ? "3" : "2"}
             className="cursor-pointer"
             style={{ pointerEvents: 'auto' }}
-            onMouseDown={(e) => onNucleotideMouseDown(e, nucleotide.id)}
-            onClick={(e) => onNucleotideClick(e, nucleotide.id)}
+            onMouseDown={(e) => mode !== 'feature' && onNucleotideMouseDown(e, nucleotide.id)}
+            onClick={(e) => handleNucleotideClickInternal(e, nucleotide.id)}
           />
           <text
             x={nucleotide.x + 15}
@@ -407,7 +479,17 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
           >
             <Type className="h-4 w-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onModeChange('feature')}
+            title="Annotate Structural Features (F)"
+            className={`h-9 w-9 p-0 rounded-lg ${mode === 'feature' ? 'bg-teal-600 text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'}`}
+          >
+            <Shapes className="h-4 w-4" />
+          </Button>
         </div>
+
       </div>
 
       {/* Floating Zoom Controls - Minimalist */}
@@ -514,6 +596,17 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
                 Delete Label
               </Button>
             </>
+          )}
+          {mode === 'feature' && selectedFeatureNucleotides.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onOpenFeatureModal}
+              className="h-9 px-3 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-medium"
+            >
+              <Shapes className="h-4 w-4 mr-2" />
+              Create Feature ({selectedFeatureNucleotides.length})
+            </Button>
           )}
         </div>
       </div>
@@ -659,14 +752,17 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
         onMouseMove={(e) => {
           onMouseMove(e);
           handleLabelMouseMove(e);
+          handleFeatureLabelMouseMove(e);
         }}
         onMouseUp={() => {
           onMouseUp();
           handleLabelMouseUp();
+          handleFeatureLabelMouseUp();
         }}
         onMouseLeave={() => {
           onMouseUp();
           handleLabelMouseUp();
+          handleFeatureLabelMouseUp();
         }}
         tabIndex={0}
       >
@@ -683,15 +779,23 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
         </div>
         
         {/* Main SVG Canvas */}
-        <svg 
-          width="100%" 
-          height="100%" 
-          viewBox={`0 0 ${Math.max(rnaData.canvasWidth || 4000, Math.max(...rnaData.nucleotides.map(n => n.x), 0) + 500)} ${Math.max(rnaData.canvasHeight || 4000, Math.max(...rnaData.nucleotides.map(n => n.y), 0) + 500)}`}
+        <svg
+          width="100%"
+          height="100%"
+          viewBox={(() => {
+            if (rnaData.nucleotides.length === 0) return '0 0 4000 4000';
+            const minX = Math.min(...rnaData.nucleotides.map(n => n.x));
+            const maxX = Math.max(...rnaData.nucleotides.map(n => n.x));
+            const minY = Math.min(...rnaData.nucleotides.map(n => n.y));
+            const maxY = Math.max(...rnaData.nucleotides.map(n => n.y));
+            const padding = 100;
+            return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
+          })()}
           className="absolute inset-0 pointer-events-none"
-          style={{ 
+          style={{
             pointerEvents: 'none',
             transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
-            transformOrigin: 'top left'
+            transformOrigin: 'center center'
           }}
         >
           {/* Bonds Layer */}
@@ -703,7 +807,107 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
           <g className="nucleotides-layer" style={{ pointerEvents: 'auto' }}>
             {renderNucleotides()}
           </g>
-          
+
+          {/* Structural Features Layer */}
+          {mode !== 'add' && rnaData.structuralFeatures?.map(feature => {
+            const nucleotides = feature.nucleotideIds
+              .map(id => rnaData.nucleotides.find(n => n.id === id))
+              .filter(Boolean) as typeof rnaData.nucleotides;
+
+            if (nucleotides.length === 0) return null;
+
+            // Calculate bounding box (accounting for nucleotide center offset of +15)
+            const xs = nucleotides.map(n => n.x + 15);
+            const ys = nucleotides.map(n => n.y + 15);
+            const minX = Math.min(...xs);
+            const maxX = Math.max(...xs);
+            const minY = Math.min(...ys);
+            const maxY = Math.max(...ys);
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+
+            return (
+              <g key={feature.id} className="structural-feature">
+                {/* Highlight individual nucleotides */}
+                {nucleotides.map(nuc => (
+                  <circle
+                    key={`feature-${feature.id}-nuc-${nuc.id}`}
+                    cx={nuc.x + 15}
+                    cy={nuc.y + 15}
+                    r={19}
+                    fill={feature.color || '#8b5cf6'}
+                    opacity={0.25}
+                    className="pointer-events-none"
+                  />
+                ))}
+
+                {/* Feature label with clickable background */}
+                <g style={{ pointerEvents: 'auto' }}>
+                  <rect
+                    x={feature.label.x - (feature.label.text.length * feature.label.fontSize) / 3}
+                    y={feature.label.y - feature.label.fontSize / 1.5}
+                    width={(feature.label.text.length * feature.label.fontSize) / 1.5}
+                    height={feature.label.fontSize + 8}
+                    fill="rgba(255, 255, 255, 0.9)"
+                    stroke={feature.label.color || '#6d28d9'}
+                    strokeWidth="2"
+                    rx="4"
+                    className="cursor-move hover:fill-purple-50"
+                    onClick={(e) => onFeatureLabelClick(e, feature.id)}
+                    onMouseDown={(e) => handleFeatureLabelMouseDown(e, feature.id)}
+                  />
+                  <text
+                    x={feature.label.x}
+                    y={feature.label.y}
+                    fontSize={feature.label.fontSize}
+                    fill={feature.label.color || '#6d28d9'}
+                    fontWeight="600"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="cursor-move select-none"
+                    onClick={(e) => onFeatureLabelClick(e, feature.id)}
+                    onMouseDown={(e) => handleFeatureLabelMouseDown(e, feature.id)}
+                  >
+                    {feature.label.text}
+                  </text>
+                </g>
+
+                {/* Connector line from label to feature center */}
+                <line
+                  x1={feature.label.x}
+                  y1={feature.label.y + feature.label.fontSize / 2}
+                  x2={centerX}
+                  y2={centerY}
+                  stroke={feature.label.color || '#6d28d9'}
+                  strokeWidth="1"
+                  strokeDasharray="2,2"
+                  opacity="0.5"
+                  className="pointer-events-none"
+                />
+              </g>
+            );
+          })}
+
+          {/* Show selected nucleotides for feature in progress */}
+          {mode === 'feature' && selectedFeatureNucleotides.map(id => {
+            const nucleotide = rnaData.nucleotides.find(n => n.id === id);
+            if (!nucleotide) return null;
+
+            const NUCLEOTIDE_RADIUS = 15;
+            return (
+              <circle
+                key={`feature-selection-${id}`}
+                cx={nucleotide.x + 15}
+                cy={nucleotide.y + 15}
+                r={NUCLEOTIDE_RADIUS + 4}
+                fill="none"
+                stroke="#8b5cf6"
+                strokeWidth="3"
+                className="pointer-events-none"
+              />
+            );
+          })}
+
           {/* Annotations Layer */}
           <g className="annotations-layer" style={{ pointerEvents: 'auto' }}>
             {rnaData.annotations?.map(annotation => (
