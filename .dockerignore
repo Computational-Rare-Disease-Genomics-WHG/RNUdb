@@ -1,0 +1,49 @@
+# Node
+node_modules
+npm-debug.log
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+.venv
+venv
+ENV
+env
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.sublime*
+
+# Logs
+*.log
+logs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts (we'll build these in Docker)
+dist
+build
+
+# Don't ignore src/lib - we need these files!
+!src/lib
+
+# Database (we'll mount this)
+data/
+!data/rnu4-2/structure.pdb
+
+# Misc
+.env
+*.backup.*
+*.back.*
