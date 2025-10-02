@@ -69,9 +69,29 @@ export interface AnnotationLabel {
   id: string;          // Annotation ID
   text: string;        // Label text
   x: number;           // X position
-  y: number;           // Y position  
+  y: number;           // Y position
   fontSize: number;    // Font size for display
   color?: string;      // Optional color override
+}
+
+// Structural Features for annotating RNA motifs
+export type FeatureType = 'k-turn' | 'hairpin' | 'loop' | 'stem' | 'bulge' | 'internal-loop' | 'multi-branch-loop' | 'custom';
+
+export interface StructuralFeatureLabel {
+  text: string;           // Label text (e.g., "K-turn I")
+  x: number;              // X position
+  y: number;              // Y position
+  fontSize: number;       // Font size for display
+  color?: string;         // Optional color override
+}
+
+export interface StructuralFeature {
+  id: string;                      // Unique feature ID (e.g., "feature-1234567890")
+  featureType: FeatureType;        // Type of structural feature
+  nucleotideIds: number[];         // Array of nucleotide IDs that comprise this feature
+  label: StructuralFeatureLabel;   // Label for this feature
+  description?: string;            // Optional description
+  color?: string;                  // Optional highlight color for the feature
 }
 
 export interface RNAStructure {
@@ -80,6 +100,7 @@ export interface RNAStructure {
   nucleotides: Nucleotide[];    // Nucleotide positions and bases
   basePairs: BasePair[];        // Base pairing information
   annotations?: AnnotationLabel[]; // Optional structure annotations
+  structuralFeatures?: StructuralFeature[]; // Optional structural feature annotations
 }
 
 export interface PDBStructure {
@@ -139,4 +160,5 @@ export interface RNAData {
   canvasWidth?: number;
   canvasHeight?: number;
   annotations?: AnnotationLabel[];
+  structuralFeatures?: StructuralFeature[]; // Optional structural feature annotations
 }
