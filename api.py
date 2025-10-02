@@ -111,12 +111,30 @@ class AnnotationLabel(BaseModel):
     color: Optional[str] = None
 
 
+class StructuralFeatureLabel(BaseModel):
+    text: str
+    x: float
+    y: float
+    fontSize: int
+    color: Optional[str] = None
+
+
+class StructuralFeature(BaseModel):
+    id: str
+    featureType: str
+    nucleotideIds: List[int]
+    label: StructuralFeatureLabel
+    description: Optional[str] = None
+    color: Optional[str] = None
+
+
 class RNAStructure(BaseModel):
     id: str
     geneId: str
     nucleotides: List[Nucleotide]
     basePairs: List[BasePair]
     annotations: Optional[List[AnnotationLabel]] = []
+    structuralFeatures: Optional[List[StructuralFeature]] = []
 
 
 @app.get("/")
@@ -322,12 +340,40 @@ async def get_gene_structure(gene_id: str):
         for row in annotation_rows:
             annotations.append(AnnotationLabel(**dict(row)))
 
+        # Get structural features
+        cursor.execute(
+            "SELECT * FROM structural_features WHERE structure_id = ?", (structure_id,)
+        )
+        feature_rows = cursor.fetchall()
+
+        structural_features = []
+        for row in feature_rows:
+            import json
+            row_dict = dict(row)
+            nucleotide_ids = json.loads(row_dict['nucleotide_ids'])
+
+            structural_features.append(StructuralFeature(
+                id=row_dict['id'],
+                featureType=row_dict['feature_type'],
+                nucleotideIds=nucleotide_ids,
+                label=StructuralFeatureLabel(
+                    text=row_dict['label_text'],
+                    x=row_dict['label_x'],
+                    y=row_dict['label_y'],
+                    fontSize=row_dict['label_font_size'],
+                    color=row_dict.get('label_color')
+                ),
+                description=row_dict.get('description'),
+                color=row_dict.get('color')
+            ))
+
         structure = RNAStructure(
             id=structure_row["id"],
             geneId=structure_row["geneId"],
             nucleotides=nucleotides,
             basePairs=base_pairs,
             annotations=annotations,
+            structuralFeatures=structural_features,
         )
 
         conn.close()

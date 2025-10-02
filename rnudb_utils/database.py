@@ -143,6 +143,25 @@ def create_database() -> sqlite3.Connection:
     )
     """)
 
+    # Create Structural Features table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS structural_features (
+        id TEXT,
+        structure_id TEXT,
+        feature_type TEXT NOT NULL,
+        nucleotide_ids TEXT NOT NULL,
+        label_text TEXT NOT NULL,
+        label_x REAL NOT NULL,
+        label_y REAL NOT NULL,
+        label_font_size INTEGER NOT NULL,
+        label_color TEXT,
+        description TEXT,
+        color TEXT,
+        PRIMARY KEY (id, structure_id),
+        FOREIGN KEY (structure_id) REFERENCES rna_structures(id)
+    )
+    """)
+
     conn.commit()
     return conn
 
@@ -289,7 +308,25 @@ def insert_structures(structures_data: List[Dict[str, Any]]) -> None:
                 annotation['x'], annotation['y'], annotation['fontSize'],
                 annotation.get('color')
             ))
-    
+
+        # Insert structural features
+        for feature in structure.get('structuralFeatures', []):
+            import json
+            nucleotide_ids_json = json.dumps(feature['nucleotideIds'])
+
+            cursor.execute("""
+                INSERT OR REPLACE INTO structural_features (
+                    id, structure_id, feature_type, nucleotide_ids,
+                    label_text, label_x, label_y, label_font_size, label_color,
+                    description, color
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                feature['id'], structure_id, feature['featureType'], nucleotide_ids_json,
+                feature['label']['text'], feature['label']['x'], feature['label']['y'],
+                feature['label']['fontSize'], feature['label'].get('color'),
+                feature.get('description'), feature.get('color')
+            ))
+
     conn.commit()
     conn.close()
 
