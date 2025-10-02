@@ -15,13 +15,13 @@ from pydantic import BaseModel, Field
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(
+api_app = FastAPI(
     title="RNUdb API",
     description="Simple read-only API for RNAdb data",
     default_response_class=ORJSONResponse,  # Use ORJSONResponse for faster serialization
 )
 
-app.add_middleware(
+api_app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
@@ -140,12 +140,12 @@ class RNAStructure(BaseModel):
     structuralFeatures: Optional[List[StructuralFeature]] = []
 
 
-@app.get("/")
+@api_app.get("/")
 async def root():
     return {"message": "RNUdb API - Simple read-only access to RNA database"}
 
 
-@app.get("/genes", response_model=List[SnRNAGene])
+@api_app.get("/genes", response_model=List[SnRNAGene])
 async def get_all_genes():
     """Get all genes"""
     try:
@@ -165,7 +165,7 @@ async def get_all_genes():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/genes/{gene_id}", response_model=SnRNAGene)
+@api_app.get("/genes/{gene_id}", response_model=SnRNAGene)
 async def get_gene(gene_id: str):
     """Get specific gene by ID"""
     try:
@@ -187,7 +187,7 @@ async def get_gene(gene_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/genes/{gene_id}/variants", response_model=List[Variant])
+@api_app.get("/genes/{gene_id}/variants", response_model=List[Variant])
 async def get_gene_variants(gene_id: str):
     """Get all variants for a specific gene"""
     try:
@@ -207,7 +207,7 @@ async def get_gene_variants(gene_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/variants/{variant_id}", response_model=Variant)
+@api_app.get("/variants/{variant_id}", response_model=Variant)
 async def get_variant(variant_id: str):
     """Get specific variant by ID"""
     try:
@@ -229,7 +229,7 @@ async def get_variant(variant_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/literature", response_model=List[Literature])
+@api_app.get("/literature", response_model=List[Literature])
 async def get_all_literature():
     """Get all literature"""
     try:
@@ -259,7 +259,7 @@ async def get_all_literature():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/genes/{gene_id}/literature", response_model=List[Literature])
+@api_app.get("/genes/{gene_id}/literature", response_model=List[Literature])
 async def get_gene_literature(gene_id: str):
     """Get literature associated with a specific gene"""
     try:
@@ -293,7 +293,7 @@ async def get_gene_literature(gene_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/genes/{gene_id}/structure", response_model=RNAStructure)
+@api_app.get("/genes/{gene_id}/structure", response_model=RNAStructure)
 async def get_gene_structure(gene_id: str):
     """Get RNA structure for a specific gene"""
     try:
@@ -352,23 +352,26 @@ async def get_gene_structure(gene_id: str):
         structural_features = []
         for row in feature_rows:
             import json
-            row_dict = dict(row)
-            nucleotide_ids = json.loads(row_dict['nucleotide_ids'])
 
-            structural_features.append(StructuralFeature(
-                id=row_dict['id'],
-                featureType=row_dict['feature_type'],
-                nucleotideIds=nucleotide_ids,
-                label=StructuralFeatureLabel(
-                    text=row_dict['label_text'],
-                    x=row_dict['label_x'],
-                    y=row_dict['label_y'],
-                    fontSize=row_dict['label_font_size'],
-                    color=row_dict.get('label_color')
-                ),
-                description=row_dict.get('description'),
-                color=row_dict.get('color')
-            ))
+            row_dict = dict(row)
+            nucleotide_ids = json.loads(row_dict["nucleotide_ids"])
+
+            structural_features.append(
+                StructuralFeature(
+                    id=row_dict["id"],
+                    featureType=row_dict["feature_type"],
+                    nucleotideIds=nucleotide_ids,
+                    label=StructuralFeatureLabel(
+                        text=row_dict["label_text"],
+                        x=row_dict["label_x"],
+                        y=row_dict["label_y"],
+                        fontSize=row_dict["label_font_size"],
+                        color=row_dict.get("label_color"),
+                    ),
+                    description=row_dict.get("description"),
+                    color=row_dict.get("color"),
+                )
+            )
 
         structure = RNAStructure(
             id=structure_row["id"],
@@ -387,7 +390,7 @@ async def get_gene_structure(gene_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/genes/{gene_id}/pdb", response_class=JSONResponse)
+@api_app.get("/genes/{gene_id}/pdb", response_class=JSONResponse)
 async def get_gene_pdb(gene_id: str):
     """Serve a static PDB file for a given gene (demo: rnu4-2 only)"""
     print(f"Requesting PDB for gene: {gene_id}")
@@ -403,11 +406,18 @@ async def get_gene_pdb(gene_id: str):
     }
 
 
-# Mount static files for frontend (only if dist exists - for production)
+# Create a root app that serves static files at / and mounts the API under /api
+app = FastAPI(title="RNUdb (static + API gateway)")
+
+# Mount the API app under /api first so it is not shadowed by the root static mount
+app.mount("/api", api_app, name="api")
+
+# Mount static files for frontend at / (only if dist exists - for production)
 dist_path = Path(__file__).parent / "dist"
 if dist_path.exists():
     app.mount("/", StaticFiles(directory=str(dist_path), html=True), name="static")
 
 
 if __name__ == "__main__":
+    # Run the gateway app which serves the frontend and proxies API under /api
     uvicorn.run(app, host="0.0.0.0", port=8000)

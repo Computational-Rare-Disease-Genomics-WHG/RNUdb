@@ -1,18 +1,22 @@
 import type { SnRNAGene, Variant, Literature, RNAStructure, PDBStructure } from '../types';
 
-const API_BASE_URL = 'http://localhost:8000';
+// Default API base URL (hardcoded to localhost backend mounted at /api)
+const API_BASE_URL = 'http://localhost:8000/api';
 
 class ApiService {
 
   private async fetchFromApi<T>(endpoint: string): Promise<T> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`);
-      
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
-      
-      return await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json') || contentType.includes('application/vnd.api+json')) {
+        return await response.json();
+      }
+      // Fallback to plain text (e.g., PDB data or other text responses)
+      return (await response.text()) as unknown as T;
     } catch (error) {
       console.error(`API Error for ${endpoint}:`, error);
       throw error;
