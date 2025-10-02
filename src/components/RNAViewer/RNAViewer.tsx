@@ -10,6 +10,7 @@ import BasePairBond from './BasePairBond';
 import domtoimage from 'dom-to-image-more';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Switch } from '@/components/ui/switch';
 import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage, Database, BarChart3 } from 'lucide-react';
 import './RNAViewer.css';
 
@@ -181,18 +182,92 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
   return (
     <div className="rna-viewer space-y-4">
-      {/* Toggle 2D/3D Button */}
-      <div className="flex justify-end mb-2">
-        <Button variant="outline" size="sm" onClick={() => setShow3D(v => !v)}>
-          {show3D ? 'Show 2D Structure' : 'Show 3D Structure'}
-        </Button>
-      </div>
-      {show3D ? (
-        <PDBViewer pdbData={pdbData} height="600px" />
-      ) : (
-        <>
-          {/* Toolbar */}
-          <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+      {/* Toggle 2D/3D Button and Overlay Controls */}
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+        {/* Toggle 2D/3D Switch */}
+        <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-md border border-slate-200">
+          <span className={`text-sm font-medium transition-colors ${!show3D ? 'text-teal-600' : 'text-slate-500'}`}>
+            2D Structure
+          </span>
+          <Switch
+            checked={show3D}
+            onCheckedChange={setShow3D}
+            className="data-[state=checked]:bg-teal-600"
+          />
+          <span className={`text-sm font-medium transition-colors ${show3D ? 'text-teal-600' : 'text-slate-500'}`}>
+            3D Structure
+          </span>
+        </div>
+
+        {/* Divider */}
+        <div className="h-4 w-px bg-slate-300 mx-2" />
+
+        {/* Shared Overlay Controls */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Database className="h-4 w-4 text-slate-500" />
+            <span className="text-sm text-slate-700 font-medium">Data Overlay</span>
+          </div>
+          {onCycleOverlay && (
+            <ToggleGroup
+              type="single"
+              value={overlayMode}
+              onValueChange={(value) => {
+                if (value && value !== overlayMode) {
+                  const modes = ['none', 'clinvar', 'gnomad', 'function_score', 'depletion_group'];
+                  const currentIndex = modes.indexOf(overlayMode);
+                  const targetIndex = modes.indexOf(value);
+                  const cycles = targetIndex > currentIndex ? targetIndex - currentIndex : (modes.length - currentIndex) + targetIndex;
+
+                  for (let i = 0; i < cycles; i++) {
+                    onCycleOverlay();
+                  }
+                }
+              }}
+              className="flex gap-1"
+            >
+              <ToggleGroupItem value="none" className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-slate-100 data-[state=on]:border-slate-300">
+                None
+              </ToggleGroupItem>
+              <ToggleGroupItem value="clinvar" className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-blue-50 data-[state=on]:border-blue-200 data-[state=on]:text-blue-700">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  Variants
+                </div>
+              </ToggleGroupItem>
+              <ToggleGroupItem value="gnomad" className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-indigo-50 data-[state=on]:border-indigo-200 data-[state=on]:text-indigo-700">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  gnomAD
+                </div>
+              </ToggleGroupItem>
+              <ToggleGroupItem value="function_score" className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-emerald-50 data-[state=on]:border-emerald-200 data-[state=on]:text-emerald-700">
+                <div className="flex items-center gap-1.5">
+                  <BarChart3 className="h-3 w-3" />
+                  SGE Function Score
+                </div>
+              </ToggleGroupItem>
+              <ToggleGroupItem value="depletion_group" className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-orange-50 data-[state=on]:border-orange-200 data-[state=on]:text-orange-700">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex gap-0.5">
+                    <div className="w-1 h-3 bg-red-400 rounded-sm"></div>
+                    <div className="w-1 h-2 bg-amber-400 rounded-sm"></div>
+                    <div className="w-1 h-1 bg-green-400 rounded-sm"></div>
+                  </div>
+                  Depletion Group
+                </div>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          )}
+        </div>
+
+        {!show3D && (
+          <>
+            {/* Divider */}
+            <div className="h-4 w-px bg-slate-300 mx-2" />
+
+            {/* 2D-specific controls (Zoom Controls) */}
+            <div className="flex items-center gap-1">
         {/* Zoom Controls */}
         <div className="flex items-center gap-1">
           <Button 
@@ -248,86 +323,28 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             <span className="text-xs">PNG</span>
           </Button>
         </div>
-
-        {/* Divider */}
-        <div className="h-4 w-px bg-slate-300 mx-2" />
-
-        {/* Overlay Controls */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-slate-500" />
-            <span className="text-sm text-slate-700 font-medium">Data Overlay</span>
-          </div>
-          {onCycleOverlay && (
-            <ToggleGroup 
-              type="single" 
-              value={overlayMode}
-              onValueChange={(value) => {
-                if (value && value !== overlayMode) {
-                  // Calculate how many times to cycle to reach the target
-                  const modes = ['none', 'clinvar', 'gnomad', 'function_score', 'depletion_group'];
-                  const currentIndex = modes.indexOf(overlayMode);
-                  const targetIndex = modes.indexOf(value);
-                  const cycles = targetIndex > currentIndex ? targetIndex - currentIndex : (modes.length - currentIndex) + targetIndex;
-                  
-                  for (let i = 0; i < cycles; i++) {
-                    onCycleOverlay();
-                  }
-                }
-              }}
-              className="flex gap-1"
-            >
-              <ToggleGroupItem 
-                value="none" 
-                className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-slate-100 data-[state=on]:border-slate-300"
-              >
-                None
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="clinvar" 
-                className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-blue-50 data-[state=on]:border-blue-200 data-[state=on]:text-blue-700"
-              >
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                  Variants
-                </div>
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="gnomad" 
-                className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-indigo-50 data-[state=on]:border-indigo-200 data-[state=on]:text-indigo-700"
-              >
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                  gnomAD
-                </div>
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="function_score" 
-                className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-emerald-50 data-[state=on]:border-emerald-200 data-[state=on]:text-emerald-700"
-              >
-                <div className="flex items-center gap-1.5">
-                  <BarChart3 className="h-3 w-3" />
-                  SGE Function Score
-                </div>
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="depletion_group" 
-                className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-orange-50 data-[state=on]:border-orange-200 data-[state=on]:text-orange-700"
-              >
-                <div className="flex items-center gap-1.5">
-                  <div className="flex gap-0.5">
-                    <div className="w-1 h-3 bg-red-400 rounded-sm"></div>
-                    <div className="w-1 h-2 bg-amber-400 rounded-sm"></div>
-                    <div className="w-1 h-1 bg-green-400 rounded-sm"></div>
-                  </div>
-                  Depletion Group
-                </div>
-              </ToggleGroupItem>
-            </ToggleGroup>
-          )}
-        </div>
-
+            </div>
+        </>
+        )}
       </div>
+
+      {/* Main Content Area */}
+      {show3D && (
+        <PDBViewer
+          pdbData={pdbData}
+          height="600px"
+          overlayData={overlayData}
+          overlayMode={overlayMode}
+          selectedNucleotide={selectedNucleotide}
+          onNucleotideClick={handleNucleotideClick}
+          onNucleotideHover={handleNucleotideHover}
+          variantData={variantData}
+          gnomadVariants={gnomadVariants}
+        />
+      )}
+
+      {!show3D && (
+        <>
       
       <div 
         ref={containerRef}

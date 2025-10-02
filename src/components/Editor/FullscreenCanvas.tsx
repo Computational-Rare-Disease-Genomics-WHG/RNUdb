@@ -146,7 +146,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(({
             <input
               type="range"
               min="8"
-              max="24"
+              max="50"
               value={fontSize}
               onChange={(e) => setFontSize(Number(e.target.value))}
               className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
