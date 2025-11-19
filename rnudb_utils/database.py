@@ -67,6 +67,8 @@ def create_database() -> sqlite3.Connection:
         ukbb_ac INTEGER,
         ukbb_hom INTEGER,
         cadd_score REAL,
+        zygosity TEXT,
+        cohort TEXT,
         FOREIGN KEY (geneId) REFERENCES genes(id)
     )
     """)
@@ -162,6 +164,18 @@ def create_database() -> sqlite3.Connection:
     )
     """)
 
+    # Create Variant Links table for biallelic relationships
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS variant_links (
+        variant_id_1 TEXT NOT NULL,
+        variant_id_2 TEXT NOT NULL,
+        PRIMARY KEY (variant_id_1, variant_id_2),
+        FOREIGN KEY (variant_id_1) REFERENCES variants(id),
+        FOREIGN KEY (variant_id_2) REFERENCES variants(id),
+        CHECK (variant_id_1 < variant_id_2)
+    )
+    """)
+
     conn.commit()
     return conn
 
@@ -191,38 +205,39 @@ def insert_genes(genes_data: List[Dict[str, Any]]) -> None:
 
 def insert_variants(variants_data: List[Dict[str, Any]]) -> None:
     """Insert variants into the database
-    
+
     Args:
         variants_data: List of variant dictionaries with keys:
             id, geneId, position, nucleotidePosition, ref, alt, hgvs, consequence,
             clinvar_significance, clinical_significance, pmid, function_score,
             pvalues, qvalues, depletion_group, gnomad_ac, gnomad_hom,
-            aou_ac, aou_hom, ukbb_ac, ukbb_hom, cadd_score
+            aou_ac, aou_hom, ukbb_ac, ukbb_hom, cadd_score, zygosity, cohort
     """
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     for variant in variants_data:
         cursor.execute("""
             INSERT OR REPLACE INTO variants (
                 id, geneId, position, nucleotidePosition, ref, alt, hgvs, consequence,
                 clinvar_significance, clinical_significance, pmid, function_score,
                 pvalues, qvalues, depletion_group, gnomad_ac, gnomad_hom,
-                aou_ac, aou_hom, ukbb_ac, ukbb_hom, cadd_score
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                aou_ac, aou_hom, ukbb_ac, ukbb_hom, cadd_score, zygosity, cohort
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            variant['id'], variant['geneId'], variant['position'], 
-            variant.get('nucleotidePosition'), variant['ref'], variant['alt'], 
+            variant['id'], variant['geneId'], variant['position'],
+            variant.get('nucleotidePosition'), variant['ref'], variant['alt'],
             variant.get('hgvs'), variant.get('consequence'),
-            variant.get('clinvar_significance'), variant.get('clinical_significance'), 
+            variant.get('clinvar_significance'), variant.get('clinical_significance'),
             variant.get('pmid'), variant.get('function_score'),
-            variant.get('pvalues'), variant.get('qvalues'), 
-            variant.get('depletion_group'), variant.get('gnomad_ac'), 
-            variant.get('gnomad_hom'), variant.get('aou_ac'), 
-            variant.get('aou_hom'), variant.get('ukbb_ac'), 
-            variant.get('ukbb_hom'), variant.get('cadd_score')
+            variant.get('pvalues'), variant.get('qvalues'),
+            variant.get('depletion_group'), variant.get('gnomad_ac'),
+            variant.get('gnomad_hom'), variant.get('aou_ac'),
+            variant.get('aou_hom'), variant.get('ukbb_ac'),
+            variant.get('ukbb_hom'), variant.get('cadd_score'),
+            variant.get('zygosity'), variant.get('cohort')
         ))
-    
+
     conn.commit()
     conn.close()
 
@@ -329,6 +344,59 @@ def insert_structures(structures_data: List[Dict[str, Any]]) -> None:
 
     conn.commit()
     conn.close()
+
+
+def insert_variant_links(links_data: List[Dict[str, str]]) -> None:
+    """Insert variant links into the database
+
+    Args:
+        links_data: List of link dictionaries with keys:
+            variant_id_1, variant_id_2
+            Note: variant_id_1 should be < variant_id_2 (lexicographically)
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    for link in links_data:
+        # Ensure variant_id_1 < variant_id_2 to satisfy CHECK constraint
+        vid1 = link['variant_id_1']
+        vid2 = link['variant_id_2']
+        if vid1 > vid2:
+            vid1, vid2 = vid2, vid1
+
+        cursor.execute("""
+            INSERT OR REPLACE INTO variant_links (variant_id_1, variant_id_2)
+            VALUES (?, ?)
+        """, (vid1, vid2))
+
+    conn.commit()
+    conn.close()
+
+
+def get_linked_variants(variant_id: str) -> List[str]:
+    """Get all variant IDs linked to the given variant
+
+    Args:
+        variant_id: The variant ID to look up
+
+    Returns:
+        List of linked variant IDs
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Query both directions since we store ordered pairs
+    cursor.execute("""
+        SELECT variant_id_2 FROM variant_links WHERE variant_id_1 = ?
+        UNION
+        SELECT variant_id_1 FROM variant_links WHERE variant_id_2 = ?
+    """, (variant_id, variant_id))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [row['variant_id_2'] if 'variant_id_2' in row.keys() else row['variant_id_1']
+            for row in rows]
 
 
 if __name__ == "__main__":
