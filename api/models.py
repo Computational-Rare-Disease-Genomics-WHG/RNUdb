@@ -35,6 +35,9 @@ class Variant(BaseModel):
     ukbb_ac: Optional[int] = None
     ukbb_hom: Optional[int] = None
     cadd_score: Optional[float] = None
+    zygosity: Optional[str] = None
+    cohort: Optional[str] = None
+    linkedVariantIds: Optional[List[str]] = None
 
 
 class Literature(BaseModel):
