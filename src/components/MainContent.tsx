@@ -49,6 +49,8 @@ const MainContent: React.FC<MainContentProps> = ({
   // State to manage hovered and selected nucleotide
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
   const [selectedNucleotide, setSelectedNucleotide] = useState<Nucleotide | null>(null);
+  // State to track highlighted nucleotides from linked variant hover
+  const [highlightedNucleotideIds, setHighlightedNucleotideIds] = useState<number[]>([]);
 
   // Handler for nucleotide selection (single select)
   const handleNucleotideClick = (nucleotide: Nucleotide) => {
@@ -63,6 +65,15 @@ const MainContent: React.FC<MainContentProps> = ({
   // Get the nucleotide to display in InfoPanel (prioritize hovered, then selected)
   const getDisplayNucleotide = (): Nucleotide | null => {
     return hoveredNucleotide || selectedNucleotide;
+  };
+
+  // Handler for when user hovers over a linked variant in InfoPanel
+  const handleLinkedVariantHover = (variant: Variant | null) => {
+    if (variant && variant.nucleotidePosition) {
+      setHighlightedNucleotideIds([variant.nucleotidePosition]);
+    } else {
+      setHighlightedNucleotideIds([]);
+    }
   };
 
   // Convert RNAStructure to RNAData format for RNAViewer
@@ -105,6 +116,7 @@ const MainContent: React.FC<MainContentProps> = ({
               onCycleOverlay={cycleOverlayMode}
               hoveredNucleotide={getDisplayNucleotide()}
               overlayData={getCurrentOverlayData()}
+              onLinkedVariantHover={handleLinkedVariantHover}
             />
           </div>
 
@@ -134,6 +146,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   onNucleotideHover={setHoveredNucleotide}
                   onNucleotideClick={handleNucleotideClick}
                   selectedNucleotide={selectedNucleotide}
+                  highlightedNucleotideIds={highlightedNucleotideIds}
                 />
               </CardContent>
             </Card>

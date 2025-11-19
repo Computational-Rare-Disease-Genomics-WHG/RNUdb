@@ -31,6 +31,7 @@ interface RNAViewerProps {
   variantData?: Variant[];
   gnomadVariants?: Variant[];
   selectedNucleotide?: Nucleotide | null;
+  highlightedNucleotideIds?: number[];
 }
 
 const RNAViewer: React.FC<RNAViewerProps> = ({
@@ -43,7 +44,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   onCycleOverlay,
   variantData = [],
   gnomadVariants = [],
-  selectedNucleotide = null
+  selectedNucleotide = null,
+  highlightedNucleotideIds = []
 }) => {
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -180,14 +182,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
   const [show3D, setShow3D] = useState(false);
   const [showStructuralFeatures, setShowStructuralFeatures] = useState(true);
-
-  // Debug log
-  console.log('[RNAViewer] Rendering with:', {
-    hasStructuralFeatures: !!rnaData.structuralFeatures,
-    count: rnaData.structuralFeatures?.length || 0,
-    showStructuralFeatures,
-    features: rnaData.structuralFeatures
-  });
 
   return (
     <div className="rna-viewer space-y-4">
@@ -436,6 +430,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                 color={getOverlayColor(nucleotide)}
                 isHovered={hoveredNucleotide?.id === nucleotide.id}
                 isSelected={selectedNucleotide?.id === nucleotide.id}
+                isHighlighted={highlightedNucleotideIds.includes(nucleotide.id)}
                 onHover={handleNucleotideHover}
                 onClick={handleNucleotideClick}
                 hasVariants={totalVariants > 0}

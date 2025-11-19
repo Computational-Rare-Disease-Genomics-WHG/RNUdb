@@ -189,7 +189,6 @@ const Gene: React.FC = () => {
     const clinvarData = createClinvarOverlayData(variantData);
     const gnomadData = createGnomadOverlayData(variantData);
     const functionScoreOverlayData = createFunctionScoreOverlayData(variantData);
-
     setFunctionScoreTrackData(funcScoreData);
     setDepletionGroupTrackData(depletionData);
     setCaddScoreTrackData(caddData);

@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Database, Dna, Globe, Search } from 'lucide-react';
+import { Database, Dna, Globe, Search, Link as LinkIcon } from 'lucide-react';
 import type { SnRNAGene, Literature, Variant, Nucleotide, OverlayData } from '@/types';
 import { getOverlayValue } from '@/lib/overlayUtils';
 
@@ -14,14 +14,16 @@ interface InfoPanelProps {
   onCycleOverlay: () => void;
   hoveredNucleotide: Nucleotide | null;
   overlayData: OverlayData;
+  onLinkedVariantHover?: (variant: Variant | null) => void;
 }
 
-const InfoPanel: React.FC<InfoPanelProps> = ({ 
+const InfoPanel: React.FC<InfoPanelProps> = ({
   currentData,
   hoveredNucleotide,
   overlayData,
   overlayMode,
-  variantData
+  variantData,
+  onLinkedVariantHover
 }) => {
   const geneLength = currentData.end - currentData.start + 1;
 
@@ -43,6 +45,42 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       clinvarVariants: relevantVariants.filter(v => v.clinical_significance),
       gnomadVariants: relevantVariants.filter(v => v.gnomad_ac && v.gnomad_ac > 0)
     };
+  };
+
+  const getLinkedVariantsForNucleotide = (nucleotideId: number) => {
+    // Get all variants at this nucleotide position
+    const variantInfo = getVariantInfoForNucleotide(nucleotideId);
+    const allVariantsAtPosition = [...variantInfo.clinvarVariants, ...variantInfo.gnomadVariants];
+
+    // Find all linked variants
+    const linkedVariants: Variant[] = [];
+    allVariantsAtPosition.forEach(variant => {
+      if (variant.linkedVariantIds && variant.linkedVariantIds.length > 0) {
+        variant.linkedVariantIds.forEach(linkedId => {
+          const linkedVariant = variantData.find(v => v.id === linkedId);
+          if (linkedVariant && !linkedVariants.some(v => v.id === linkedVariant.id)) {
+            linkedVariants.push(linkedVariant);
+          }
+        });
+      }
+    });
+
+    return linkedVariants;
+  };
+
+  const getSignificanceColor = (significance?: string) => {
+    if (!significance) return 'bg-gray-100 text-gray-700';
+    const lower = significance.toLowerCase();
+    if (lower.includes('pathogenic') && !lower.includes('likely')) {
+      return 'bg-red-100 text-red-700 border-red-200';
+    } else if (lower.includes('likely pathogenic')) {
+      return 'bg-orange-100 text-orange-700 border-orange-200';
+    } else if (lower.includes('benign')) {
+      return 'bg-green-100 text-green-700 border-green-200';
+    } else if (lower.includes('vus') || lower.includes('uncertain')) {
+      return 'bg-amber-100 text-amber-700 border-amber-200';
+    }
+    return 'bg-gray-100 text-gray-700';
   };
 
   return (
@@ -211,6 +249,58 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                         )}
                       </div>
                     )}
+
+                    {/* Linked Biallelic Variants Section */}
+                    {(() => {
+                      const linkedVariants = getLinkedVariantsForNucleotide(hoveredNucleotide.id);
+                      if (linkedVariants.length === 0) return null;
+
+                      return (
+                        <div className="pt-3 border-t border-indigo-200 bg-indigo-50 -mx-6 -mb-6 mt-3 px-6 pb-6 rounded-b-lg">
+                          <div className="flex items-center gap-2 mb-3 pt-3">
+                            <LinkIcon className="h-4 w-4 text-indigo-600" />
+                            <div className="font-medium text-indigo-900 text-sm">
+                              Linked Biallelic Variants ({linkedVariants.length})
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {linkedVariants.map((variant) => (
+                              <div
+                                key={variant.id}
+                                className="p-2 bg-white rounded border border-indigo-200 text-xs hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer"
+                                onMouseEnter={() => onLinkedVariantHover?.(variant)}
+                                onMouseLeave={() => onLinkedVariantHover?.(null)}
+                              >
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <Badge variant="outline" className="font-mono text-xs">
+                                    {variant.id.split('-').slice(-3).join('-')}
+                                  </Badge>
+                                  <Badge variant="outline" className="font-mono text-xs">
+                                    {variant.ref}→{variant.alt}
+                                  </Badge>
+                                  {variant.zygosity && (
+                                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                      {variant.zygosity}
+                                    </Badge>
+                                  )}
+                                  {variant.clinical_significance && (
+                                    <Badge className={`text-xs ${getSignificanceColor(variant.clinical_significance)}`}>
+                                      {variant.clinical_significance}
+                                    </Badge>
+                                  )}
+                                </div>
+                                {(variant.hgvs || variant.cohort) && (
+                                  <div className="text-xs text-gray-600">
+                                    {variant.hgvs && <span className="font-mono mr-2">{variant.hgvs}</span>}
+                                    {variant.cohort && <span className="text-gray-500">({variant.cohort})</span>}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </>
                 );
               })()}

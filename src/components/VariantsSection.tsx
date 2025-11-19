@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, ExternalLink } from 'lucide-react';
+import { Database, ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -89,6 +89,17 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
                         <Badge className="font-mono text-xs bg-slate-200 text-slate-800 border-slate-300">
                           {variant.ref}→{variant.alt}
                         </Badge>
+                        {variant.linkedVariantIds && variant.linkedVariantIds.length > 0 && (
+                          <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+                            <LinkIcon className="h-3 w-3 mr-1" />
+                            Linked ({variant.linkedVariantIds.length})
+                          </Badge>
+                        )}
+                        {variant.zygosity && (
+                          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                            {variant.zygosity}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={`text-xs ${getConsequenceBadge(variant.consequence ?? '')}`}>
@@ -97,6 +108,11 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
                         <Badge className={`text-xs ${getClinicalBadge(variant.clinical_significance ?? '')}`}>
                           {variant.clinical_significance}
                         </Badge>
+                        {variant.cohort && (
+                          <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600 border-gray-200">
+                            {variant.cohort}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-right">

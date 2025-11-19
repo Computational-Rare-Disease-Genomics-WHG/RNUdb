@@ -65,3 +65,15 @@
   pointer-events: none;
   z-index: 1000;
 }
+
+/* Animation for highlighted nucleotides */
+@keyframes pulse {
+  0%, 100% {
+    r: 28;
+    opacity: 0.3;
+  }
+  50% {
+    r: 32;
+    opacity: 0.5;
+  }
+}

@@ -18,17 +18,17 @@ export interface Variant {
   ref: string;                  // Reference allele
   alt: string;                  // Alternate allele
   hgvs?: string;               // HGVS notation
-  
+
   // Clinical annotation fields (nullable)
   consequence?: string;         // Variant consequence type
   clinvar_significance?: string;// ClinVar pathogenicity
   clinical_significance?: string; // Clinical interpretation
   pmid?: string;               // PubMed ID for evidence
-  
+
   // Functional analysis fields (nullable)
   function_score?: number;     // Functional impact score
   pvalues?: number;           // Statistical p-value
-  qvalues?: number;           // Adjusted q-value  
+  qvalues?: number;           // Adjusted q-value
   depletion_group?: string;   // Depletion category ("normal", "moderate", "strong")
 
   // Population genetics fields (nullable)
@@ -39,6 +39,11 @@ export interface Variant {
   ukbb_ac?: number;           // UK Biobank allele count
   ukbb_hom?: number;          // UK Biobank homozygote count
   cadd_score?: number;        // CADD pathogenicity score
+
+  // Biallelic variant fields
+  zygosity?: 'hom' | 'het';   // Zygosity (homozygous/heterozygous)
+  cohort?: string;            // Study/cohort name
+  linkedVariantIds?: string[]; // IDs of linked biallelic variants
 }
 
 export interface Literature {
