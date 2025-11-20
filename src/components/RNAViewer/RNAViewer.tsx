@@ -578,15 +578,15 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
               <>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: getFunctionScoreColor(-3) }}></div>
-                  <span>Highly deleterious (-3)</span>
+                  <span>Highly Depleted (-3)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: getFunctionScoreColor(0) }}></div>
-                  <span>Neutral (0)</span>
+                  <span>Moderately Depleted (0)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: getFunctionScoreColor(3) }}></div>
-                  <span>Highly beneficial (+3)</span>
+                  <span>Neutral (+3)</span>
                 </div>
               </>
             ) : overlayMode === 'depletion_group' ? (
