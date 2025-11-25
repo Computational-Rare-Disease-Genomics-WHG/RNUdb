@@ -8,6 +8,7 @@ class SnRNAGene(BaseModel):
     chromosome: str
     start: int
     end: int
+    strand: str
     sequence: str
     description: str
 

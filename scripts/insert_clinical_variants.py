@@ -93,9 +93,9 @@ def load_clinical_variants():
             variant_id = f"{gene_id}-{variant_str}"
 
             # Calculate nucleotidePosition (1-based position in RNA sequence)
-            # Convert genomic position to nucleotide position
+            # Convert genomic position to nucleotide position (reverse strand)
             genomic_pos = variant_parts['position']
-            nucleotide_pos = genomic_pos - gene_start + 1 if gene_start <= genomic_pos <= gene_end else None
+            nucleotide_pos = gene_end - genomic_pos + 1 if gene_start <= genomic_pos <= gene_end else None
 
             # Create variant dictionary
             variant_dict = {

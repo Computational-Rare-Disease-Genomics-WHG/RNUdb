@@ -4,8 +4,9 @@ export interface SnRNAGene {
   name: string;         // Gene symbol (e.g., "RNU4-2") 
   fullName: string;     // Full descriptive name (e.g., "RNA, U4 small nuclear 2")
   chromosome: string;   // Chromosome location (e.g., "12")
-  start: number;        // Genomic start position (e.g., 6648956)
-  end: number;          // Genomic end position (e.g., 6649101)
+  start: number;        // Genomic start position
+  end: number;          // Genomic end position
+  strand: string;       // Strand orientation ("+" or "-")
   sequence: string;     // Reference RNA sequence
   description: string;  // Functional description
 }

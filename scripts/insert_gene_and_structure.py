@@ -27,6 +27,7 @@ def main():
             "chromosome": "12",
             "start": 120291759,
             "end": 120291903,
+            "strand": "-",
             "sequence": "tcagtctccgtagagactgtcaaaaattgccaatgccgactatatttcaagtcgtcatggcggggtattgggaaaagttttcaattagcaataatcgcgcctcggataaacctcattggctacgatactgccactgcgcaaagct",
             "description": "U4 small nuclear RNA involved in pre-mRNA splicing as part of the spliceosome complex. Binds to U6 snRNA to form the U4/U6 di-snRNP complex.",
         }

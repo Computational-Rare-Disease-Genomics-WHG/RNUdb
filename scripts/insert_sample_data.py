@@ -30,6 +30,7 @@ def insert_sample_genes():
             "chromosome": "12",
             "start": 120291759,
             "end": 120291903,
+            "strand": "-",
             "sequence": "tcagtctccgtagagactgtcaaaaattgccaatgccgactatatttcaagtcgtcatggcggggtattgggaaaagttttcaattagcaataatcgcgcctcggataaacctcattggctacgatactgccactgcgcaaagct",
             "description": "U4 small nuclear RNA involved in pre-mRNA splicing as part of the spliceosome complex. Binds to U6 snRNA to form the U4/U6 di-snRNP complex.",
         }
@@ -159,8 +160,12 @@ def insert_sample_variants():
     # Convert to database format
     variants_data = []
     for key, variant in all_variants.items():
-        # Calculate nucleotide position relative to gene start (120291759)
-        nucleotide_position = variant['position'] - 120291759 + 1 if variant['position'] else None
+        # Calculate nucleotide position relative to gene (reverse strand: position 1 = gene_end)
+        if variant['position']:
+            # For reverse strand genes: nucleotide_pos = gene_end - genomic_pos + 1
+            nucleotide_position = 120291903 - variant['position'] + 1
+        else:
+            nucleotide_position = None
         
         # Generate unique ID if not available
         variant_id = variant.get('variant_id')

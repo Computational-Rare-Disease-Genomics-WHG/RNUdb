@@ -1,6 +1,3 @@
-// Modern placeholder data - use this for development and testing
-// Replace with actual data imports from the organized data directories
-
 import type { SnRNAGene, Variant, Literature, RNAStructure } from '@/types';
 
 // Simple placeholder gene for development
@@ -9,8 +6,9 @@ export const placeholderGene: SnRNAGene = {
   name: "RNU4-2",
   fullName: "RNA, U4 small nuclear 2", 
   chromosome: "12",
-  start: 6648956,
-  end: 6649101,
+  start: 120291759,
+  end: 120291903,
+  strand: "-",
   sequence: "AUACUUACCUGAUUAGGUAGUGCAUUUCGUUCUAGACCUGAAGUGAUCCUGAGGGAAUUUCCCGACCGAAGCCGAAGCAACUUCGGUCGGAAUUCCCUCAGGAUCACUUCAGGUCUAGAACGA",
   description: "U4 small nuclear RNA involved in pre-mRNA splicing as part of the spliceosome complex."
 };
@@ -20,7 +18,7 @@ export const placeholderVariants: Variant[] = [
   {
     id: "test_variant_1",
     geneId: "RNU4-2",
-    position: 6649001,
+    position: 120291859,  // nucleotidePosition 45 on reverse strand: 120291903 - 45 + 1
     nucleotidePosition: 45,
     ref: "A",
     alt: "G",

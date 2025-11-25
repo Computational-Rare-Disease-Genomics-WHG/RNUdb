@@ -37,6 +37,7 @@ def create_database() -> sqlite3.Connection:
         chromosome TEXT NOT NULL,
         start INTEGER NOT NULL,
         end INTEGER NOT NULL,
+        strand TEXT NOT NULL,
         sequence TEXT NOT NULL,
         description TEXT NOT NULL
     )
@@ -192,11 +193,11 @@ def insert_genes(genes_data: List[Dict[str, Any]]) -> None:
     
     for gene in genes_data:
         cursor.execute("""
-            INSERT OR REPLACE INTO genes (id, name, fullName, chromosome, start, end, sequence, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO genes (id, name, fullName, chromosome, start, end, strand, sequence, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             gene['id'], gene['name'], gene['fullName'], gene['chromosome'],
-            gene['start'], gene['end'], gene['sequence'], gene['description']
+            gene['start'], gene['end'], gene['strand'], gene['sequence'], gene['description']
         ))
     
     conn.commit()

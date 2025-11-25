@@ -147,6 +147,15 @@ const MainContent: React.FC<MainContentProps> = ({
                   onNucleotideClick={handleNucleotideClick}
                   selectedNucleotide={selectedNucleotide}
                   highlightedNucleotideIds={highlightedNucleotideIds}
+                  geneData={{
+                    id: currentData.id,
+                    name: currentData.name,
+                    chromosome: currentData.chromosome,
+                    start: currentData.start,
+                    end: currentData.end,
+                    strand: currentData.strand,
+                    sequence: currentData.sequence
+                  }}
                 />
               </CardContent>
             </Card>
@@ -180,6 +189,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   chromosome: currentData.chromosome,
                   start: currentData.start,
                   end: currentData.end,
+                  strand: currentData.strand,
                   sequence: currentData.sequence
                 }}
               />

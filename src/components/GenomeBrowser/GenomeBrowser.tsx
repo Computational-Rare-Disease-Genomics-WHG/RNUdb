@@ -23,6 +23,7 @@ interface GenomeBrowserProps {
     chromosome: string;
     start: number;
     end: number;
+    strand: string;
     sequence: string;
   };
 }
