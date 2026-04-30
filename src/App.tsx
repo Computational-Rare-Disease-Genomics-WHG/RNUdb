@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Gene from './pages/Gene';
 import Editor from './pages/Editor';
 import Login from './pages/Login';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/gene/:geneId" element={<Gene />} />
           <Route path="/editor" element={<Editor />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </Router>
     </AuthProvider>

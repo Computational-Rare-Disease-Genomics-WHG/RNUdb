@@ -120,6 +120,75 @@ class StructuralFeatureLabel(BaseModel):
     color: Optional[str] = None
 
 
+class VariantCreate(BaseModel):
+    id: str
+    geneId: str
+    position: int
+    nucleotidePosition: Optional[int] = None
+    ref: str
+    alt: str
+    hgvs: Optional[str] = None
+    consequence: Optional[str] = None
+    clinvar_significance: Optional[str] = None
+    clinical_significance: Optional[str] = None
+    pmid: Optional[str] = None
+    function_score: Optional[float] = None
+    pvalues: Optional[float] = None
+    qvalues: Optional[float] = None
+    depletion_group: Optional[str] = None
+    gnomad_ac: Optional[int] = None
+    gnomad_hom: Optional[int] = None
+    aou_ac: Optional[int] = None
+    aou_hom: Optional[int] = None
+    ukbb_ac: Optional[int] = None
+    ukbb_hom: Optional[int] = None
+    cadd_score: Optional[float] = None
+    zygosity: Optional[str] = None
+    cohort: Optional[str] = None
+
+
+class VariantUpdate(BaseModel):
+    position: Optional[int] = None
+    nucleotidePosition: Optional[int] = None
+    ref: Optional[str] = None
+    alt: Optional[str] = None
+    hgvs: Optional[str] = None
+    consequence: Optional[str] = None
+    clinvar_significance: Optional[str] = None
+    clinical_significance: Optional[str] = None
+    pmid: Optional[str] = None
+    function_score: Optional[float] = None
+    pvalues: Optional[float] = None
+    qvalues: Optional[float] = None
+    depletion_group: Optional[str] = None
+    gnomad_ac: Optional[int] = None
+    gnomad_hom: Optional[int] = None
+    aou_ac: Optional[int] = None
+    aou_hom: Optional[int] = None
+    ukbb_ac: Optional[int] = None
+    ukbb_hom: Optional[int] = None
+    cadd_score: Optional[float] = None
+    zygosity: Optional[str] = None
+    cohort: Optional[str] = None
+
+
+class LiteratureCreate(BaseModel):
+    id: str
+    title: str
+    authors: str
+    journal: str
+    year: str
+    doi: str
+
+
+class LiteratureUpdate(BaseModel):
+    title: Optional[str] = None
+    authors: Optional[str] = None
+    journal: Optional[str] = None
+    year: Optional[str] = None
+    doi: Optional[str] = None
+
+
 class StructuralFeature(BaseModel):
     id: str
     featureType: str
