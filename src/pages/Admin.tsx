@@ -91,9 +91,9 @@ const Admin: React.FC = () => {
               <div className="flex items-center gap-2 mb-6">
                 <Users className="h-5 w-5 text-yellow-600" />
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Pending Approvals {pendingUsers.length > 0 && (}
-                  <span className="text-yellow-600 ml-2">({pendingUsers.length})</span>
-                  {)}
+                  Pending Approvals {pendingUsers.length > 0 && (
+                    <span className="text-yellow-600 ml-2">({pendingUsers.length})</span>
+                  )}
                 </h2>
               </div>
 

@@ -59,6 +59,28 @@ class UserResponse(BaseModel):
     role: str
 
 
+class GeneCreate(BaseModel):
+    id: str
+    name: str
+    fullName: str
+    chromosome: str
+    start: int
+    end: int
+    strand: str
+    sequence: str
+    description: str
+
+
+class GeneUpdate(BaseModel):
+    name: Optional[str] = None
+    fullName: Optional[str] = None
+    chromosome: Optional[str] = None
+    start: Optional[int] = None
+    end: Optional[int] = None
+    strand: Optional[str] = None
+    sequence: Optional[str] = None
+    description: Optional[str] = None
+
 
 class LiteratureCounts(BaseModel):
     variant_id: str
