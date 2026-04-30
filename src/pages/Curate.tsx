@@ -10,34 +10,52 @@ import LiteratureForm from '../components/Curate/LiteratureForm';
 
 const Curate: React.FC = () => {
   const navigate = useNavigate();
-  const { isCurator } = useAuth();
+  const { isCurator, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('genes');
   const [genes, setGenes] = useState([]);
   const [variants, setVariants] = useState([]);
   const [literature, setLiterature] = useState([]);
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to finish loading before checking role
+    if (isLoading) return;
+    
+    console.log('Curate page - isCurator:', isCurator);
     if (!isCurator) {
       navigate('/login');
       return;
     }
     loadData();
-  }, [isCurator, navigate]);
+  }, [isCurator, isLoading, navigate]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      console.log('Fetching data...');
       const [genesRes, variantsRes, litRes] = await Promise.all([
         fetch('/api/genes', { credentials: 'include' }),
         fetch('/api/variants', { credentials: 'include' }),
         fetch('/api/literature', { credentials: 'include' }),
       ]);
-      if (genesRes.ok) setGenes(await genesRes.json());
-      if (variantsRes.ok) setVariants(await variantsRes.json());
-      if (litRes.ok) setLiterature(await litRes.json());
+      console.log('Responses:', { genesRes: genesRes.status, variantsRes: variantsRes.status, litRes: litRes.status });
+      if (genesRes.ok) {
+        const genesData = await genesRes.json();
+        console.log('Genes data:', genesData);
+        setGenes(genesData);
+      }
+      if (variantsRes.ok) {
+        const variantsData = await variantsRes.json();
+        console.log('Variants data:', variantsData);
+        setVariants(variantsData);
+      }
+      if (litRes.ok) {
+        const litData = await litRes.json();
+        console.log('Literature data:', litData);
+        setLiterature(litData);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -122,6 +140,17 @@ const Curate: React.FC = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <div className="text-lg text-gray-600">Checking permissions...</div>
+        </div>
+      </div>
+    );
+  }
+
   if (!isCurator) return null;
 
   return (
@@ -140,6 +169,13 @@ const Curate: React.FC = () => {
             Add New
           </Button>
         </div>
+
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-4"></div>
+            <div className="text-gray-600">Loading data...</div>
+          </div>
+        )}
 
         {showForm && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
