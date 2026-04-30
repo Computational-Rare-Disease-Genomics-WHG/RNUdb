@@ -4,8 +4,6 @@ import { useNucleotideManager } from '../hooks/useNucleotideManager';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useDragAndZoom } from '../hooks/useDragAndZoom';
 import { useImportExport } from '../hooks/useImportExport';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import {
   EditorHeader,
   FullscreenCanvas
@@ -302,9 +300,7 @@ const Editor: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100">
-      <Header showSearch={false} />
-      <div className="pt-16">
-        <EditorHeader
+      <EditorHeader
           onExport={handleExport}
           onImport={handleImport}
         />
