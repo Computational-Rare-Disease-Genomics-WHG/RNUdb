@@ -77,4 +77,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 # Entrypoint - run FastAPI with uvicorn
-ENTRYPOINT ["/app/.venv/bin/python", "-m", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/.venv/bin/python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

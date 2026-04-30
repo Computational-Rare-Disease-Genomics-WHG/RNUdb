@@ -174,7 +174,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
       return <Dna className="h-4 w-4 text-teal-600" />;
     } else {
       const variant = result.item as Variant;
-      if (variant.clinical_significance === 'Pathogenic' || variant.clinvar_significance === 'Pathogenic') {
+      if (variant.clinical_significance === 'Pathogenic' || variant.clinical_significance === 'PATH' || variant.clinvar_significance === 'Pathogenic') {
         return <AlertTriangle className="h-4 w-4 text-red-500" />;
       }
       return <div className="h-4 w-4 rounded border border-amber-400 bg-amber-100" />;

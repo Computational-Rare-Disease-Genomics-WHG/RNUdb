@@ -9,11 +9,11 @@ export const COLORBLIND_FRIENDLY_PALETTE = {
   
   // ClinVar colors (high contrast, colorblind-friendly)
   CLINVAR: {
-    PATHOGENIC: '#DC2626',    // Bright red - universally dangerous
-    BENIGN: '#059669',        // Emerald green - universally safe
-    VUS: '#F59E0B',          // Amber - universally cautious/unknown
-    LIKELY_PATHOGENIC: '#B91C1C', // Darker red
-    LIKELY_BENIGN: '#047857',     // Darker green
+    PATHOGENIC: '#DC2626',        // Dark red - most severe
+    LIKELY_PATHOGENIC: '#EA580C', // Orange-red - moderately severe
+    VUS: '#F59E0B',              // Amber - uncertain significance
+    BENIGN: '#059669',           // Emerald green - safe
+    LIKELY_BENIGN: '#047857',    // Darker green
   },
   
   // gnomAD frequency colors (blue gradient - colorblind safe)
@@ -92,10 +92,10 @@ export const generateGnomadColorWithAlpha = (frequency: number): string => {
 
 export const getClinvarColor = (significance: string): string => {
   const sig = significance.toLowerCase();
-  if (sig.includes('pathogenic') && sig.includes('likely')) {
+  if (sig === 'lp' || (sig.includes('pathogenic') && sig.includes('likely'))) {
     return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC;
   }
-  if (sig.includes('pathogenic')) {
+  if (sig === 'path' || sig.includes('pathogenic')) {
     return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC;
   }
   if (sig.includes('benign') && sig.includes('likely')) {

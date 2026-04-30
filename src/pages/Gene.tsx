@@ -8,7 +8,8 @@ import { getVariants } from '../data/variants';
 import { getLiterature } from '../data/literature';
 import { getRNAStructure } from '../data/structures';
 import { getPDBStructure } from '../data/structures';
-import type { OverlayData, SnRNAGene, Variant, Literature, RNAStructure, PDBStructure } from '../types';
+import { getLiteratureCounts } from '../services/api';
+import type { OverlayData, SnRNAGene, Variant, Literature, LiteratureCounts, RNAStructure, PDBStructure } from '../types';
 import { COLORBLIND_FRIENDLY_PALETTE } from '../lib/colors';
 
 const Gene: React.FC = () => {
@@ -32,6 +33,7 @@ const Gene: React.FC = () => {
   const [currentData, setCurrentData] = useState<SnRNAGene | null>(null);
   const [variantData, setVariantData] = useState<Variant[]>([]);
   const [paperData, setPaperData] = useState<Literature[]>([]);
+  const [literatureCounts, setLiteratureCounts] = useState<LiteratureCounts[]>([]);
   const [rnaStructureData, setRnaStructureData] = useState<RNAStructure | null>(null);
   const [pdbData, setPdbData] = useState<PDBStructure | null>(null);
 
@@ -44,10 +46,11 @@ const Gene: React.FC = () => {
       setError(null);
       
       try {
-        const [gene, variants, literature, rnaStructure, pdbStructure] = await Promise.all([
+        const [gene, variants, literature, literatureCountsData, rnaStructure, pdbStructure] = await Promise.all([
           getGeneData(selectedSnRNA),
           getVariants(selectedSnRNA), 
           getLiterature(selectedSnRNA),
+          getLiteratureCounts(),
           getRNAStructure(selectedSnRNA),
           getPDBStructure(selectedSnRNA)
         ]);
@@ -59,6 +62,7 @@ const Gene: React.FC = () => {
         setCurrentData(gene);
         setVariantData(variants);
         setPaperData(literature);
+        setLiteratureCounts(literatureCountsData);
         setRnaStructureData(rnaStructure);
         setPdbData(pdbStructure);
 
@@ -121,82 +125,128 @@ const Gene: React.FC = () => {
       );
     };
 
-    const createClinvarOverlayData = (variants: Variant[]) => {
+    const createClinvarOverlayData = (variants: Variant[], geneData: SnRNAGene) => {
       return Object.fromEntries(
         variants
-          .filter(v => v.clinical_significance && v.nucleotidePosition !== undefined)
-          .map(v => [
-            v.nucleotidePosition!,
-            {
-              value: v.clinical_significance === 'Pathogenic' || v.clinical_significance === 'Likely Pathogenic' ? 1 :
-                     v.clinical_significance === 'Benign' || v.clinical_significance === 'Likely Benign' ? 0.5 :
-                     v.clinical_significance === 'VUS' ? 0.25 : 0,
-              label: v.clinical_significance,
-              variantId: v.id
+          .filter(v => v.clinical_significance && (v.nucleotidePosition !== undefined || v.position !== undefined))
+          .map(v => {
+            // Get nucleotide position - either directly or convert from genomic position
+            let nucleotidePos = v.nucleotidePosition;
+            if (nucleotidePos === undefined && v.position !== undefined) {
+              // Convert genomic position to nucleotide position (strand-aware)
+              if (geneData.strand === '-') {
+                nucleotidePos = geneData.end - v.position + 1;
+              } else {
+                nucleotidePos = v.position - geneData.start + 1;
+              }
             }
-          ])
+            return [
+              nucleotidePos!,
+              {
+                value: 
+                  // Pathogenic variants
+                  v.clinical_significance === 'Pathogenic' ? 1 :
+                  v.clinical_significance === 'Likely Pathogenic' ? 0.75 :
+                  v.clinical_significance === 'VUS' ? 0.25 : 0,
+                label: v.clinical_significance,
+                variantId: v.id
+              }
+            ];
+          })
       );
     };
 
-    const createFunctionScoreOverlayData = (variants: Variant[]) => {
+    const createFunctionScoreOverlayData = (variants: Variant[], geneData: SnRNAGene) => {
       return Object.fromEntries(
         variants
-          .filter(v => v.function_score !== undefined && v.function_score !== null && v.nucleotidePosition !== undefined)
-          .map(v => [
-            v.nucleotidePosition!,
-            {
-              value: v.function_score!, // Use actual continuous values for overlay
-              label: `Function Score: ${v.function_score!.toFixed(3)}`,
-              variantId: v.id
+          .filter(v => v.function_score !== undefined && v.function_score !== null && (v.nucleotidePosition !== undefined || v.position !== undefined))
+          .map(v => {
+            // Get nucleotide position - either directly or convert from genomic position
+            let nucleotidePos = v.nucleotidePosition;
+            if (nucleotidePos === undefined && v.position !== undefined) {
+              if (geneData.strand === '-') {
+                nucleotidePos = geneData.end - v.position + 1;
+              } else {
+                nucleotidePos = v.position - geneData.start + 1;
+              }
             }
-          ])
+            return [
+              nucleotidePos!,
+              {
+                value: v.function_score!, // Use actual continuous values for overlay
+                label: `Function Score: ${v.function_score!.toFixed(3)}`,
+                variantId: v.id
+              }
+            ];
+          })
       );
     };
 
-    const createGnomadOverlayData = (variants: Variant[]) => {
+    const createGnomadOverlayData = (variants: Variant[], geneData: SnRNAGene) => {
       return Object.fromEntries(
         variants
-          .filter(v => v.gnomad_ac !== undefined && v.gnomad_ac !== null && v.nucleotidePosition !== undefined)
-          .map(v => [
-            v.nucleotidePosition!,
-            {
-              value: Math.log10((v.gnomad_ac || 0) + 1) / 10, // Normalize for color scale
-              label: `gnomAD AC: ${v.gnomad_ac}`,
-              variantId: v.id
+          .filter(v => v.gnomad_ac !== undefined && v.gnomad_ac !== null && (v.nucleotidePosition !== undefined || v.position !== undefined))
+          .map(v => {
+            // Get nucleotide position - either directly or convert from genomic position
+            let nucleotidePos = v.nucleotidePosition;
+            if (nucleotidePos === undefined && v.position !== undefined) {
+              if (geneData.strand === '-') {
+                nucleotidePos = geneData.end - v.position + 1;
+              } else {
+                nucleotidePos = v.position - geneData.start + 1;
+              }
             }
-          ])
+            return [
+              nucleotidePos!,
+              {
+                value: Math.log10((v.gnomad_ac || 0) + 1) / 10, // Normalize for color scale
+                label: `gnomAD AC: ${v.gnomad_ac}`,
+                variantId: v.id
+              }
+            ];
+          })
       );
     };
 
-    const createCaddScoreTrackData = (variants: Variant[]) => {
+    const createCaddScoreTrackData = (variants: Variant[], geneData: SnRNAGene) => {
       return Object.fromEntries(
         variants
-          .filter(v => v.cadd_score !== undefined && v.cadd_score !== null && v.nucleotidePosition !== undefined)
-          .map(v => [
-            v.nucleotidePosition!,
-            {
-              value: v.cadd_score!,
-              label: `CADD Score: ${v.cadd_score!.toFixed(2)}`,
-              color: v.cadd_score! > 20 ? '#dc2626' : v.cadd_score! > 15 ? '#f97316' : '#10b981',
-            },
-          ])
+          .filter(v => v.cadd_score !== undefined && v.cadd_score !== null && (v.nucleotidePosition !== undefined || v.position !== undefined))
+          .map(v => {
+            // Get nucleotide position - either directly or convert from genomic position
+            let nucleotidePos = v.nucleotidePosition;
+            if (nucleotidePos === undefined && v.position !== undefined) {
+              if (geneData.strand === '-') {
+                nucleotidePos = geneData.end - v.position + 1;
+              } else {
+                nucleotidePos = v.position - geneData.start + 1;
+              }
+            }
+            return [
+              nucleotidePos!,
+              {
+                value: v.cadd_score!,
+                label: `CADD Score: ${v.cadd_score!.toFixed(2)}`,
+                color: v.cadd_score! > 20 ? '#dc2626' : v.cadd_score! > 15 ? '#f97316' : '#10b981',
+              }
+            ];
+          })
       );
     };
 
     const funcScoreData = createFunctionScoreTrackData(variantData);
     const depletionData = createDepletionGroupTrackData(variantData);
-    const caddData = createCaddScoreTrackData(variantData);
-    const clinvarData = createClinvarOverlayData(variantData);
-    const gnomadData = createGnomadOverlayData(variantData);
-    const functionScoreOverlayData = createFunctionScoreOverlayData(variantData);
-
+    const caddData = currentData ? createCaddScoreTrackData(variantData, currentData) : {};
+    const clinvarData = currentData ? createClinvarOverlayData(variantData, currentData) : {};
+    const gnomadData = currentData ? createGnomadOverlayData(variantData, currentData) : {};
+    const functionScoreOverlayData = currentData ? createFunctionScoreOverlayData(variantData, currentData) : {};
     setFunctionScoreTrackData(funcScoreData);
     setDepletionGroupTrackData(depletionData);
     setCaddScoreTrackData(caddData);
     setClinvarOverlayData(clinvarData);
     setGnomadOverlayData(gnomadData);
     setFunctionScoreOverlayData(functionScoreOverlayData);
-  }, [variantData]);
+  }, [variantData, currentData]);
 
   const cycleOverlayMode = () => {
     setOverlayMode(prev => {
@@ -221,14 +271,6 @@ const Gene: React.FC = () => {
     }
   };
 
-  const getVariantStats = () => {
-    const pathogenic = variantData.filter(v => v.clinical_significance === 'Pathogenic' || v.clinical_significance === 'Likely Pathogenic').length;
-    const benign = variantData.filter(v => v.clinical_significance === 'Benign').length;
-    const vus = variantData.filter(v => v.clinical_significance === 'VUS').length;
-    
-    return { pathogenic, benign, vus, total: variantData.length };
-  };
-
   // Separate gnomAD variants from clinical variants
   const getGnomadVariants = () => {
     return variantData.filter(v => 
@@ -247,7 +289,6 @@ const Gene: React.FC = () => {
     );
   };
 
-  const variantStats = getVariantStats();
   const gnomadVariants = getGnomadVariants();
   const aouVariants = getAllOfUsVariants();
 
@@ -257,7 +298,7 @@ const Gene: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <div className="text-lg text-gray-600">Loading gene data...</div>
@@ -268,7 +309,7 @@ const Gene: React.FC = () => {
   
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-lg mb-4">Error loading gene data</div>
           <div className="text-gray-600 mb-4">{error}</div>
@@ -285,14 +326,14 @@ const Gene: React.FC = () => {
   
   if (!currentData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center text-gray-600">Gene not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-stone-50 to-neutral-100">
       <Header
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -308,12 +349,12 @@ const Gene: React.FC = () => {
         rnaStructureData={rnaStructureData}
         pdbStructureData={pdbData}
         paperData={paperData}
+        literatureCounts={literatureCounts}
         variantData={variantData}
         gnomadVariants={gnomadVariants}
         overlayMode={overlayMode}
         getCurrentOverlayData={getCurrentOverlayData}
         cycleOverlayMode={cycleOverlayMode}
-        variantStats={variantStats}
         functionScoreTrackData={functionScoreTrackData}
         depletionGroupTrackData={depletionGroupTrackData}
         caddScoreTrackData={caddScoreTrackData}

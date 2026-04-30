@@ -15,12 +15,12 @@ export const getLiterature = async (geneId?: string): Promise<Literature[]> => {
   }
 };
 
-export const getPaperByPmid = async (pmid: string): Promise<Literature | null> => {
+export const getPaperById = async (id: string): Promise<Literature | null> => {
   try {
     const allLiterature = await getAllLiterature();
-    return allLiterature.find(paper => paper.pmid === pmid) || null;
+    return allLiterature.find(paper => paper.id === id) || null;
   } catch (error) {
-    console.error(`Error fetching paper with PMID ${pmid}:`, error);
+    console.error(`Error fetching paper with ID ${id}:`, error);
     return null;
   }
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, ExternalLink } from 'lucide-react';
+import { Database, ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,19 +9,36 @@ import type { Variant } from '@/types';
 interface VariantsSectionProps {
   variantData: Variant[];
   currentGene: string;
-  variantStats: {
-    pathogenic: number;
-    benign: number;
-    vus: number;
-    total: number;
-  };
 }
 
 const VariantsSection: React.FC<VariantsSectionProps> = ({ 
   variantData, 
-  currentGene, 
-  variantStats 
+  currentGene
 }) => {
+  // Filter to only show clinical variants (those with clinical significance or cohort data)
+  const clinicalVariants = variantData.filter(variant => 
+    variant.clinical_significance || variant.cohort
+  );
+
+  // Calculate stats for clinical variants only
+  const clinicalVariantStats = {
+    pathogenic: clinicalVariants.filter(v => 
+      v.clinical_significance?.toLowerCase().includes('path') ||
+      v.clinical_significance?.toLowerCase() === 'lp' ||
+      v.clinical_significance?.toLowerCase() === 'p'
+    ).length,
+    benign: clinicalVariants.filter(v => 
+      v.clinical_significance?.toLowerCase().includes('benign') ||
+      v.clinical_significance?.toLowerCase() === 'lb' ||
+      v.clinical_significance?.toLowerCase() === 'b'
+    ).length,
+    vus: clinicalVariants.filter(v => 
+      v.clinical_significance?.toLowerCase().includes('vus') || 
+      v.clinical_significance?.toLowerCase().includes('uncertain') ||
+      v.clinical_significance?.toLowerCase() === 'vus'
+    ).length,
+    total: clinicalVariants.length
+  };
   const getConsequenceBadge = (consequence: string) => {
     // Colorblind-friendly consequence colors
     const colorMap: { [key: string]: string } = {
@@ -35,12 +52,18 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
 
   const getClinicalBadge = (clinical: string) => {
     // Colorblind-friendly clinical significance colors
-    const colorMap = {
+    const colorMap: { [key: string]: string } = {
       'Benign': 'bg-emerald-100 text-emerald-800 border-emerald-200',
       'Pathogenic': 'bg-red-100 text-red-800 border-red-200',
       'Likely Pathogenic': 'bg-red-100 text-red-700 border-red-200',
       'Likely Benign': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-      'VUS': 'bg-amber-100 text-amber-800 border-amber-200'
+      'VUS': 'bg-amber-100 text-amber-800 border-amber-200',
+      // Abbreviations
+      'B': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      'LB': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      'P': 'bg-red-100 text-red-800 border-red-200',
+      'LP': 'bg-red-100 text-red-700 border-red-200',
+      'PATH': 'bg-red-100 text-red-800 border-red-200'
     };
     return colorMap[clinical as keyof typeof colorMap] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
@@ -52,24 +75,24 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Database className="h-6 w-6 text-teal-600" />
-                ClinVar Variants ({variantData.length} variants)
+                Clinical Variants ({clinicalVariants.length} variants)
               </CardTitle>
               <CardDescription>
-                Clinical variants in {currentGene} with gnomAD and ClinVar annotations
+                Curated clinical variants in {currentGene} with ACMG classifications
               </CardDescription>
             </div>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC }}></div>
-                <span>{variantStats.pathogenic} Pathogenic</span>
+                <span>{clinicalVariantStats.pathogenic} Pathogenic</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN }}></div>
-                <span>{variantStats.benign} Benign</span>
+                <span>{clinicalVariantStats.benign} Benign</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS }}></div>
-                <span>{variantStats.vus} VUS</span>
+                <span>{clinicalVariantStats.vus} VUS</span>
               </div>
             </div>
           </div>
@@ -77,7 +100,7 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
         <CardContent>
           <div className="overflow-x-auto">
             <div className="grid gap-3 max-h-96 overflow-y-auto">
-              {variantData.map((variant) => (
+              {clinicalVariants.map((variant) => (
                 <div key={variant.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -89,11 +112,19 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
                         <Badge className="font-mono text-xs bg-slate-200 text-slate-800 border-slate-300">
                           {variant.ref}→{variant.alt}
                         </Badge>
+                        {variant.linkedVariantIds && variant.linkedVariantIds.length > 0 && (
+                          <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+                            <LinkIcon className="h-3 w-3 mr-1" />
+                            Linked ({variant.linkedVariantIds.length})
+                          </Badge>
+                        )}
+                        {variant.zygosity && (
+                          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                            {variant.zygosity}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className={`text-xs ${getConsequenceBadge(variant.consequence ?? '')}`}>
-                          {variant.consequence?.replace('_', ' ') ?? 'Unknown'}
-                        </Badge>
                         <Badge className={`text-xs ${getClinicalBadge(variant.clinical_significance ?? '')}`}>
                           {variant.clinical_significance}
                         </Badge>
@@ -101,13 +132,9 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
                     </div>
                     <div className="flex items-center gap-3 text-right">
                       <div className="text-xs text-gray-600">
-                        <div><span className="font-medium">MAF:</span> {variant.gnomad_ac ?? 'N/A'}</div>
-                        <div><span className="font-medium">gnomAD:</span> {variant.gnomad_ac ?? 'N/A'}</div>
+                        <div><span className="font-medium">Position:</span> {variant.nucleotidePosition ?? 'N/A'}</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200 font-medium">
-                          {variant.clinvar_significance}
-                        </Badge>
                         <Button size="sm" variant="outline" className="h-7 px-2 hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200">
                           <ExternalLink className="h-3 w-3" />
                         </Button>

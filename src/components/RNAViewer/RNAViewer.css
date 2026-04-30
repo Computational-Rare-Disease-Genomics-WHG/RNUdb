@@ -1,7 +1,7 @@
 /* src/components/RNAViewer/RNAViewer.css */
 .rna-viewer {
   position: relative;
-  font-family: Arial, sans-serif;
+  font-family: 'Barlow', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .rna-svg {
@@ -64,4 +64,16 @@
   line-height: 1.4;
   pointer-events: none;
   z-index: 1000;
+}
+
+/* Animation for highlighted nucleotides */
+@keyframes pulse {
+  0%, 100% {
+    r: 28;
+    opacity: 0.3;
+  }
+  50% {
+    r: 32;
+    opacity: 0.5;
+  }
 }

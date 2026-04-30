@@ -23,6 +23,7 @@ interface GenomeBrowserProps {
     chromosome: string;
     start: number;
     end: number;
+    strand: string;
     sequence: string;
   };
 }
@@ -30,7 +31,6 @@ interface GenomeBrowserProps {
 const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, gnomadVariants, aouVariants, functionScoreTrackData, depletionGroupTrackData, caddScoreTrackData, geneData }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [, setIsZoomed] = useState(false);
-
   // Default region based on gene coordinates - wider view
   const defaultRegion = { start: geneData.start, stop: geneData.end  };
   const [regions, setRegions] = useState([defaultRegion]);
@@ -57,9 +57,24 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
 
   const handleZoomOut = () => {
     const currentRegion = regions[0];
+    const currentRange = currentRegion.stop - currentRegion.start;
+    const defaultRange = defaultRegion.stop - defaultRegion.start;
+
+    // If already at or beyond the default region, don't zoom out further
+    if (currentRange >= defaultRange) {
+      setRegions([defaultRegion]);
+      return;
+    }
+
     const center = (currentRegion.start + currentRegion.stop) / 2;
-    const newRange = (currentRegion.stop - currentRegion.start) * 2;
-    setRegions([{ start: center - newRange, stop: center + newRange }]);
+    const newRange = currentRange * 2;
+
+    // If the new range would exceed the default region, set to default region
+    if (newRange >= defaultRange) {
+      setRegions([defaultRegion]);
+    } else {
+      setRegions([{ start: center - newRange / 2, stop: center + newRange / 2 }]);
+    }
   };
 
   const handleReset = () => {

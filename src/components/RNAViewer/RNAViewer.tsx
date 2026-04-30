@@ -22,15 +22,19 @@ interface RNAViewerProps {
   onNucleotideHover?: (nucleotide: Nucleotide | null) => void;
   overlayMode?: 'none' | 'clinvar' | 'gnomad' | 'function_score' | 'depletion_group';
   onCycleOverlay?: () => void;
-  variantStats?: {
-    pathogenic: number;
-    benign: number;
-    vus: number;
-    total: number;
-  };
   variantData?: Variant[];
   gnomadVariants?: Variant[];
   selectedNucleotide?: Nucleotide | null;
+  highlightedNucleotideIds?: number[];
+  geneData: {
+    id: string;
+    name: string;
+    chromosome: string;
+    start: number;
+    end: number;
+    strand: string;
+    sequence: string;
+  };
 }
 
 const RNAViewer: React.FC<RNAViewerProps> = ({
@@ -43,7 +47,9 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   onCycleOverlay,
   variantData = [],
   gnomadVariants = [],
-  selectedNucleotide = null
+  selectedNucleotide = null,
+  highlightedNucleotideIds = [],
+  geneData
 }) => {
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -70,21 +76,38 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         // SGE variant - direct nucleotide mapping
         return variant.nucleotidePosition === nucleotideId;
       } else if (variant.position) {
-        // Clinical variant - convert genomic position to nucleotide
-        return Math.abs(variant.position - (6648956 + nucleotideId)) < 5; // Within ~5bp
+        // Clinical variant - convert genomic position to nucleotide (strand-aware)
+        let nucleotidePos: number;
+        if (geneData.strand === '-') {
+          // Reverse strand: nucleotide_pos = gene_end - genomic_pos + 1
+          nucleotidePos = geneData.end - variant.position + 1;
+        } else {
+          // Forward strand: nucleotide_pos = genomic_pos - gene_start + 1
+          nucleotidePos = variant.position - geneData.start + 1;
+        }
+        return nucleotidePos === nucleotideId;
       }
       return false;
     });
 
     const relevantGnomadVariants = gnomadVariants.filter(variant => {
-      return Math.abs(variant.position - (6648956 + nucleotideId)) < 5;
+      // gnomAD variants also use genomic positions, convert to nucleotide (strand-aware)
+      let nucleotidePos: number;
+      if (geneData.strand === '-') {
+        // Reverse strand: nucleotide_pos = gene_end - genomic_pos + 1
+        nucleotidePos = geneData.end - variant.position + 1;
+      } else {
+        // Forward strand: nucleotide_pos = genomic_pos - gene_start + 1
+        nucleotidePos = variant.position - geneData.start + 1;
+      }
+      return nucleotidePos === nucleotideId;
     });
 
     return {
       clinvarVariants: relevantVariants,
       gnomadVariants: relevantGnomadVariants
     };
-  }, [variantData, gnomadVariants]);
+  }, [variantData, gnomadVariants, geneData]);
 
   const getOverlayColor = (nucleotide: Nucleotide): string => {
     const value = getOverlayValue(overlayData, nucleotide.id);
@@ -93,6 +116,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
     if (overlayMode === 'clinvar') {
       // ClinVar coloring: colorblind-friendly palette
       if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC;      // red for pathogenic
+      if (value === 0.75) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC; // darker red for likely pathogenic
       if (value === 0.5) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN;        // green for benign
       if (value === 0.25) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS;          // amber for VUS
       return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
@@ -180,14 +204,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
   const [show3D, setShow3D] = useState(false);
   const [showStructuralFeatures, setShowStructuralFeatures] = useState(true);
-
-  // Debug log
-  console.log('[RNAViewer] Rendering with:', {
-    hasStructuralFeatures: !!rnaData.structuralFeatures,
-    count: rnaData.structuralFeatures?.length || 0,
-    showStructuralFeatures,
-    features: rnaData.structuralFeatures
-  });
 
   return (
     <div className="rna-viewer space-y-4">
@@ -436,6 +452,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                 color={getOverlayColor(nucleotide)}
                 isHovered={hoveredNucleotide?.id === nucleotide.id}
                 isSelected={selectedNucleotide?.id === nucleotide.id}
+                isHighlighted={highlightedNucleotideIds.includes(nucleotide.id)}
                 onHover={handleNucleotideHover}
                 onClick={handleNucleotideClick}
                 hasVariants={totalVariants > 0}
@@ -556,12 +573,12 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <span>Pathogenic</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN }}></div>
-                  <span>Benign</span>
+                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC }}></div>
+                  <span>Likely Pathogenic</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS }}></div>
-                  <span>VUS</span>
+                  <span>Uncertain Significance</span>
                 </div>
               </>
             ) : overlayMode === 'gnomad' ? (
@@ -583,15 +600,15 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
               <>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: getFunctionScoreColor(-3) }}></div>
-                  <span>Highly deleterious (-3)</span>
+                  <span>Highly Depleted (-3)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: getFunctionScoreColor(0) }}></div>
-                  <span>Neutral (0)</span>
+                  <span>Moderately Depleted (0)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: getFunctionScoreColor(3) }}></div>
-                  <span>Highly beneficial (+3)</span>
+                  <span>Neutral (+3)</span>
                 </div>
               </>
             ) : overlayMode === 'depletion_group' ? (

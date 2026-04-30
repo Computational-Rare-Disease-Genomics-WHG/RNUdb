@@ -26,7 +26,9 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({ variants, gnomadV
       consequence: variant.consequence || 'unknown',
       clinical_significance: variant.clinical_significance,
       isHighlighted: variant.clinical_significance === 'Pathogenic' || 
-                    variant.clinical_significance === 'Likely Pathogenic'
+                    variant.clinical_significance === 'Likely Pathogenic' ||
+                    variant.clinical_significance === 'PATH' ||
+                    variant.clinical_significance === 'LP'
     }));
 
   // Transform gnomAD variants to the expected format

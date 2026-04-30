@@ -37,7 +37,7 @@ const LiteratureSection: React.FC<LiteratureSectionProps> = ({
                   </p>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs bg-white border-slate-300 text-slate-700 font-mono">
-                      PMID: {paper.pmid}
+                      DOI: {paper.doi}
                     </Badge>
                     <Button size="sm" variant="ghost" className="h-6 px-2 hover:bg-teal-50 hover:text-teal-600 transition-colors duration-200">
                       <ExternalLink className="h-3 w-3" />

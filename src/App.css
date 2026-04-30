@@ -157,7 +157,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    font-family: 'Barlow', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Barlow', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   }
 }

@@ -1,4 +1,4 @@
-import type { SnRNAGene, Variant, Literature, RNAStructure, PDBStructure } from '../types';
+import type { SnRNAGene, Variant, Literature, LiteratureCounts, RNAStructure, PDBStructure } from '../types';
 
 // Default API base URL (hardcoded to localhost backend mounted at /api)
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -58,13 +58,16 @@ class ApiService {
     return this.fetchFromApi<PDBStructure>(`/genes/${geneId}/pdb`);
   }
 
+  async getLiteratureCounts(): Promise<LiteratureCounts[]> {
+    return this.fetchFromApi<LiteratureCounts[]>('/literature-counts');
+  }
+
 
 }
 
 // Create and export a singleton instance
 export const apiService = new ApiService();
 
-// Export individual functions for easier migration
 export const getAllGenes = () => apiService.getAllGenes();
 export const getGene = (geneId: string) => apiService.getGene(geneId);
 export const getGeneVariants = (geneId: string) => apiService.getGeneVariants(geneId);
@@ -73,3 +76,4 @@ export const getAllLiterature = () => apiService.getAllLiterature();
 export const getGeneLiterature = (geneId: string) => apiService.getGeneLiterature(geneId);
 export const getGeneStructure = (geneId: string) => apiService.getGeneStructure(geneId);
 export const getGenePDB = (geneId: string) => apiService.getGenePDB(geneId);
+export const getLiteratureCounts = () => apiService.getLiteratureCounts();

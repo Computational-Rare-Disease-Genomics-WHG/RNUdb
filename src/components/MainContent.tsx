@@ -6,25 +6,20 @@ import RNAViewer from './RNAViewer';
 import GenomeBrowser from './GenomeBrowser';
 import VariantsSection from './VariantsSection';
 import LiteratureSection from './LiteratureSection';
-import type { OverlayData, Literature, Variant, SnRNAGene, RNAStructure, Nucleotide, PDBStructure } from '../types';
+import type { OverlayData, Literature, Variant, SnRNAGene, RNAStructure, Nucleotide, PDBStructure, LiteratureCounts } from '../types';
 
 interface MainContentProps {
   currentData: SnRNAGene;
   rnaStructureData: RNAStructure | null;
   pdbStructureData: PDBStructure | null;
   paperData: Literature[];
+  literatureCounts: LiteratureCounts[];
   variantData: Variant[];
   gnomadVariants: Variant[];
   aouVariants: Variant[];
   overlayMode: 'none' | 'clinvar' | 'gnomad' | 'function_score' | 'depletion_group';
   getCurrentOverlayData: () => OverlayData;
   cycleOverlayMode: () => void;
-  variantStats: {
-    pathogenic: number;
-    benign: number;
-    vus: number;
-    total: number;
-  };
   functionScoreTrackData: OverlayData;
   depletionGroupTrackData: OverlayData;
   caddScoreTrackData: OverlayData;
@@ -35,13 +30,13 @@ const MainContent: React.FC<MainContentProps> = ({
   rnaStructureData,
   pdbStructureData,
   paperData,
+  literatureCounts,
   variantData,
   gnomadVariants,
   aouVariants,
   overlayMode,
   getCurrentOverlayData,
   cycleOverlayMode,
-  variantStats,
   functionScoreTrackData,
   depletionGroupTrackData,
   caddScoreTrackData
@@ -100,11 +95,11 @@ const MainContent: React.FC<MainContentProps> = ({
             <InfoPanel
               currentData={currentData}
               paperData={paperData}
+              literatureCounts={literatureCounts}
               variantData={variantData}
+              hoveredNucleotide={getDisplayNucleotide()}
               overlayMode={overlayMode}
               onCycleOverlay={cycleOverlayMode}
-              hoveredNucleotide={getDisplayNucleotide()}
-              overlayData={getCurrentOverlayData()}
             />
           </div>
 
@@ -128,12 +123,20 @@ const MainContent: React.FC<MainContentProps> = ({
                   overlayData={getCurrentOverlayData()}
                   overlayMode={overlayMode}
                   onCycleOverlay={cycleOverlayMode}
-                  variantStats={variantStats}
                   variantData={variantData}
                   gnomadVariants={gnomadVariants}
                   onNucleotideHover={setHoveredNucleotide}
                   onNucleotideClick={handleNucleotideClick}
                   selectedNucleotide={selectedNucleotide}
+                  geneData={{
+                    id: currentData.id,
+                    name: currentData.name,
+                    chromosome: currentData.chromosome,
+                    start: currentData.start,
+                    end: currentData.end,
+                    strand: currentData.strand,
+                    sequence: currentData.sequence
+                  }}
                 />
               </CardContent>
             </Card>
@@ -167,6 +170,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   chromosome: currentData.chromosome,
                   start: currentData.start,
                   end: currentData.end,
+                  strand: currentData.strand,
                   sequence: currentData.sequence
                 }}
               />
@@ -186,7 +190,6 @@ const MainContent: React.FC<MainContentProps> = ({
             <VariantsSection 
               variantData={variantData}
               currentGene={currentData.name}
-              variantStats={variantStats}
             />
           </div>
         </div>
