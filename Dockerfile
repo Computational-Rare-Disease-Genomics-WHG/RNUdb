@@ -17,7 +17,7 @@ COPY public ./public
 COPY index.html tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts ./
 
 # Build frontend
-RUN yarn build
+RUN npm run build
 
 # --------------------------------------------------
 # Stage 2: Backend builder (Python + uv)
@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy uv binary from official image
+# Copy uv binary from official multi-platform image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy Python project files
