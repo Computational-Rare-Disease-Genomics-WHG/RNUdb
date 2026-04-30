@@ -31,7 +31,7 @@ const RNAViewerPanel: React.FC<RNAViewerPanelProps> = ({ pdbData, rna2dProps }) 
       {show3D ? (
         <PDBViewer pdbData={pdbData} height="400px" />
       ) : (
-        <RNAViewer {...(rna2dProps || {})} rnaData={rna2dProps?.rnaData || { id: '', geneId: '', name: '', nucleotides: [], basePairs: [] }} />
+        <RNAViewer {...(rna2dProps || {})} geneData={rna2dProps?.geneData || { id: '', name: '', chromosome: '', start: 0, end: 0, strand: '', sequence: '' }} rnaData={rna2dProps?.rnaData || { id: '', geneId: '', name: '', nucleotides: [], basePairs: [] }} />
       )}
     </div>
   );

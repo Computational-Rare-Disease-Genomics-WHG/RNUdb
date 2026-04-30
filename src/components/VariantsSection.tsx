@@ -39,16 +39,6 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
     ).length,
     total: clinicalVariants.length
   };
-  const getConsequenceBadge = (consequence: string) => {
-    // Colorblind-friendly consequence colors
-    const colorMap: { [key: string]: string } = {
-      'synonymous_variant': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      'structural_variant': 'bg-red-100 text-red-800 border-red-200',
-      'regulatory_variant': 'bg-amber-100 text-amber-800 border-amber-200',
-      'splice_site_variant': 'bg-purple-100 text-purple-800 border-purple-200'
-    };
-    return colorMap[consequence] || 'bg-gray-100 text-gray-800 border-gray-200';
-  };
 
   const getClinicalBadge = (clinical: string) => {
     // Colorblind-friendly clinical significance colors
