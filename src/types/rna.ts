@@ -48,14 +48,18 @@ export interface Variant {
 }
 
 export interface Literature {
-  pmid: string;          // PubMed ID (primary key)
-  title: string;         // Paper title
-  authors: string;       // Author list as string
-  journal: string;       // Journal name
-  year: string;          // Publication year
-  doi?: string;          // Digital Object Identifier
-  abstract: string;      // Paper abstract
-  associatedGenes: string[]; // Array of gene IDs this paper relates to
+  id: string;           // Literature ID (primary key)
+  title: string;        // Paper title
+  authors: string;      // Author list as string
+  journal: string;      // Journal name
+  year: string;         // Publication year
+  doi: string;          // Digital Object Identifier
+}
+
+export interface LiteratureCounts {
+  variant_id: string;   // Reference to Variant.id
+  literature_id: string; // Reference to Literature.id
+  counts: number;       // Number of citations/references
 }
 
 // RNA Structure Interfaces

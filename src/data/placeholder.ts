@@ -31,13 +31,12 @@ export const placeholderVariants: Variant[] = [
 // Simple placeholder literature for development
 export const placeholderLiterature: Literature[] = [
   {
-    pmid: "test_paper_1",
+    id: "test_paper_1",
     title: "Test Research Paper on U4 snRNA",
     authors: "Researcher, A. et al.",
     journal: "Test Journal",
     year: "2023",
-    abstract: "This is a test abstract for development purposes.",
-    associatedGenes: ["RNU4-2"]
+    doi: "10.1234/test.doi.2023"
   }
 ];
 

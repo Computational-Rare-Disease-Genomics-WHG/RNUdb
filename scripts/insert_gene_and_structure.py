@@ -10,7 +10,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import directly from database module file to avoid __init__.py dependencies
 import importlib.util
-spec = importlib.util.spec_from_file_location("database", Path(__file__).parent.parent / "rnudb_utils" / "database.py")
+
+spec = importlib.util.spec_from_file_location(
+    "database", Path(__file__).parent.parent / "rnudb_utils" / "database.py"
+)
 db = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(db)
 
@@ -41,7 +44,7 @@ def main():
     structure_file = Path(__file__).parent.parent / "data" / "rnu4-2" / "structure.json"
     if structure_file.exists():
         print(f"\nLoading structure from {structure_file}...")
-        with open(structure_file, 'r') as f:
+        with open(structure_file, "r") as f:
             structure_data = json.load(f)
 
         print("Inserting RNA structure...")

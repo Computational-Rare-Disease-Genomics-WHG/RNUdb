@@ -2,7 +2,7 @@
 
 import sqlite3
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 
 def get_database_path() -> Path:
@@ -21,7 +21,7 @@ def get_db_connection() -> sqlite3.Connection:
 def create_database() -> sqlite3.Connection:
     """Create SQLite database with tables based on DATA_MODEL.md"""
     db_path = get_database_path()
-    
+
     # Create data directory if it doesn't exist
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -77,24 +77,24 @@ def create_database() -> sqlite3.Connection:
     # Create Literature table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS literature (
-        pmid TEXT PRIMARY KEY,
+        id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         authors TEXT NOT NULL,
         journal TEXT NOT NULL,
         year TEXT NOT NULL,
-        doi TEXT,
-        abstract TEXT NOT NULL
+        doi TEXT NOT NULL
     )
     """)
 
-    # Create Literature-Gene association table
+    # Create LiteratureCounts table
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS literature_genes (
-        pmid TEXT,
-        gene_id TEXT,
-        PRIMARY KEY (pmid, gene_id),
-        FOREIGN KEY (pmid) REFERENCES literature(pmid),
-        FOREIGN KEY (gene_id) REFERENCES genes(id)
+    CREATE TABLE IF NOT EXISTS literature_counts (
+        variant_id TEXT NOT NULL,
+        literature_id TEXT NOT NULL,
+        counts INTEGER NOT NULL,
+        PRIMARY KEY (variant_id, literature_id),
+        FOREIGN KEY (variant_id) REFERENCES variants(id),
+        FOREIGN KEY (literature_id) REFERENCES literature(id)
     )
     """)
 
@@ -183,23 +183,33 @@ def create_database() -> sqlite3.Connection:
 
 def insert_genes(genes_data: List[Dict[str, Any]]) -> None:
     """Insert genes into the database
-    
+
     Args:
         genes_data: List of gene dictionaries with keys:
             id, name, fullName, chromosome, start, end, sequence, description
     """
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     for gene in genes_data:
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO genes (id, name, fullName, chromosome, start, end, strand, sequence, description)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            gene['id'], gene['name'], gene['fullName'], gene['chromosome'],
-            gene['start'], gene['end'], gene['strand'], gene['sequence'], gene['description']
-        ))
-    
+        """,
+            (
+                gene["id"],
+                gene["name"],
+                gene["fullName"],
+                gene["chromosome"],
+                gene["start"],
+                gene["end"],
+                gene["strand"],
+                gene["sequence"],
+                gene["description"],
+            ),
+        )
+
     conn.commit()
     conn.close()
 
@@ -218,130 +228,200 @@ def insert_variants(variants_data: List[Dict[str, Any]]) -> None:
     cursor = conn.cursor()
 
     for variant in variants_data:
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO variants (
                 id, geneId, position, nucleotidePosition, ref, alt, hgvs, consequence,
                 clinvar_significance, clinical_significance, pmid, function_score,
                 pvalues, qvalues, depletion_group, gnomad_ac, gnomad_hom,
                 aou_ac, aou_hom, ukbb_ac, ukbb_hom, cadd_score, zygosity, cohort
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            variant['id'], variant['geneId'], variant['position'],
-            variant.get('nucleotidePosition'), variant['ref'], variant['alt'],
-            variant.get('hgvs'), variant.get('consequence'),
-            variant.get('clinvar_significance'), variant.get('clinical_significance'),
-            variant.get('pmid'), variant.get('function_score'),
-            variant.get('pvalues'), variant.get('qvalues'),
-            variant.get('depletion_group'), variant.get('gnomad_ac'),
-            variant.get('gnomad_hom'), variant.get('aou_ac'),
-            variant.get('aou_hom'), variant.get('ukbb_ac'),
-            variant.get('ukbb_hom'), variant.get('cadd_score'),
-            variant.get('zygosity'), variant.get('cohort')
-        ))
+        """,
+            (
+                variant["id"],
+                variant["geneId"],
+                variant["position"],
+                variant.get("nucleotidePosition"),
+                variant["ref"],
+                variant["alt"],
+                variant.get("hgvs"),
+                variant.get("consequence"),
+                variant.get("clinvar_significance"),
+                variant.get("clinical_significance"),
+                variant.get("pmid"),
+                variant.get("function_score"),
+                variant.get("pvalues"),
+                variant.get("qvalues"),
+                variant.get("depletion_group"),
+                variant.get("gnomad_ac"),
+                variant.get("gnomad_hom"),
+                variant.get("aou_ac"),
+                variant.get("aou_hom"),
+                variant.get("ukbb_ac"),
+                variant.get("ukbb_hom"),
+                variant.get("cadd_score"),
+                variant.get("zygosity"),
+                variant.get("cohort"),
+            ),
+        )
 
     conn.commit()
     conn.close()
 
 
-def insert_literature(literature_data: List[Dict[str, Any]], 
-                     literature_gene_associations: Optional[List[Dict[str, str]]] = None) -> None:
+def insert_literature(literature_data: List[Dict[str, Any]]) -> None:
     """Insert literature into the database
-    
+
     Args:
         literature_data: List of literature dictionaries with keys:
-            pmid, title, authors, journal, year, doi, abstract
-        literature_gene_associations: Optional list of associations with keys:
-            pmid, gene_id
+            id, title, authors, journal, year, doi
     """
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     # Insert literature
     for lit in literature_data:
-        cursor.execute("""
-            INSERT OR REPLACE INTO literature (pmid, title, authors, journal, year, doi, abstract)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            lit['pmid'], lit['title'], lit['authors'], lit['journal'],
-            lit['year'], lit.get('doi'), lit['abstract']
-        ))
-    
-    # Insert literature-gene associations
-    if literature_gene_associations:
-        for assoc in literature_gene_associations:
-            cursor.execute("""
-                INSERT OR REPLACE INTO literature_genes (pmid, gene_id)
-                VALUES (?, ?)
-            """, (assoc['pmid'], assoc['gene_id']))
-    
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO literature (id, title, authors, journal, year, doi)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """,
+            (
+                lit["id"],
+                lit["title"],
+                lit["authors"],
+                lit["journal"],
+                lit["year"],
+                lit["doi"],
+            ),
+        )
+
+    conn.commit()
+    conn.close()
+
+
+def insert_literature_counts(literature_counts_data: List[Dict[str, Any]]) -> None:
+    """Insert literature counts into the database
+
+    Args:
+        literature_counts_data: List of literature count dictionaries with keys:
+            variant_id, literature_id, counts
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Insert literature counts
+    for count in literature_counts_data:
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO literature_counts (variant_id, literature_id, counts)
+            VALUES (?, ?, ?)
+        """,
+            (
+                count["variant_id"],
+                count["literature_id"],
+                count["counts"],
+            ),
+        )
+
     conn.commit()
     conn.close()
 
 
 def insert_structures(structures_data: List[Dict[str, Any]]) -> None:
     """Insert RNA structures into the database
-    
+
     Args:
         structures_data: List of structure dictionaries with keys:
             id, geneId, nucleotides, basePairs, annotations
     """
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     for structure in structures_data:
         # Insert structure
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO rna_structures (id, geneId)
             VALUES (?, ?)
-        """, (structure['id'], structure['geneId']))
-        
-        structure_id = structure['id']
-        
+        """,
+            (structure["id"], structure["geneId"]),
+        )
+
+        structure_id = structure["id"]
+
         # Insert nucleotides
-        for nucleotide in structure.get('nucleotides', []):
-            cursor.execute("""
+        for nucleotide in structure.get("nucleotides", []):
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO nucleotides (id, structure_id, base, x, y)
                 VALUES (?, ?, ?, ?, ?)
-            """, (
-                nucleotide['id'], structure_id, nucleotide['base'],
-                nucleotide['x'], nucleotide['y']
-            ))
-        
+            """,
+                (
+                    nucleotide["id"],
+                    structure_id,
+                    nucleotide["base"],
+                    nucleotide["x"],
+                    nucleotide["y"],
+                ),
+            )
+
         # Insert base pairs
-        for base_pair in structure.get('basePairs', []):
-            cursor.execute("""
+        for base_pair in structure.get("basePairs", []):
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO base_pairs (structure_id, from_pos, to_pos)
                 VALUES (?, ?, ?)
-            """, (structure_id, base_pair['from'], base_pair['to']))
-        
+            """,
+                (structure_id, base_pair["from"], base_pair["to"]),
+            )
+
         # Insert annotations
-        for annotation in structure.get('annotations', []):
-            cursor.execute("""
+        for annotation in structure.get("annotations", []):
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO annotations (id, structure_id, text, x, y, fontSize, color)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                annotation['id'], structure_id, annotation['text'],
-                annotation['x'], annotation['y'], annotation['fontSize'],
-                annotation.get('color')
-            ))
+            """,
+                (
+                    annotation["id"],
+                    structure_id,
+                    annotation["text"],
+                    annotation["x"],
+                    annotation["y"],
+                    annotation["fontSize"],
+                    annotation.get("color"),
+                ),
+            )
 
         # Insert structural features
-        for feature in structure.get('structuralFeatures', []):
+        for feature in structure.get("structuralFeatures", []):
             import json
-            nucleotide_ids_json = json.dumps(feature['nucleotideIds'])
 
-            cursor.execute("""
+            nucleotide_ids_json = json.dumps(feature["nucleotideIds"])
+
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO structural_features (
                     id, structure_id, feature_type, nucleotide_ids,
                     label_text, label_x, label_y, label_font_size, label_color,
                     description, color
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                feature['id'], structure_id, feature['featureType'], nucleotide_ids_json,
-                feature['label']['text'], feature['label']['x'], feature['label']['y'],
-                feature['label']['fontSize'], feature['label'].get('color'),
-                feature.get('description'), feature.get('color')
-            ))
+            """,
+                (
+                    feature["id"],
+                    structure_id,
+                    feature["featureType"],
+                    nucleotide_ids_json,
+                    feature["label"]["text"],
+                    feature["label"]["x"],
+                    feature["label"]["y"],
+                    feature["label"]["fontSize"],
+                    feature["label"].get("color"),
+                    feature.get("description"),
+                    feature.get("color"),
+                ),
+            )
 
     conn.commit()
     conn.close()
@@ -360,15 +440,18 @@ def insert_variant_links(links_data: List[Dict[str, str]]) -> None:
 
     for link in links_data:
         # Ensure variant_id_1 < variant_id_2 to satisfy CHECK constraint
-        vid1 = link['variant_id_1']
-        vid2 = link['variant_id_2']
+        vid1 = link["variant_id_1"]
+        vid2 = link["variant_id_2"]
         if vid1 > vid2:
             vid1, vid2 = vid2, vid1
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO variant_links (variant_id_1, variant_id_2)
             VALUES (?, ?)
-        """, (vid1, vid2))
+        """,
+            (vid1, vid2),
+        )
 
     conn.commit()
     conn.close()
@@ -387,17 +470,22 @@ def get_linked_variants(variant_id: str) -> List[str]:
     cursor = conn.cursor()
 
     # Query both directions since we store ordered pairs
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT variant_id_2 FROM variant_links WHERE variant_id_1 = ?
         UNION
         SELECT variant_id_1 FROM variant_links WHERE variant_id_2 = ?
-    """, (variant_id, variant_id))
+    """,
+        (variant_id, variant_id),
+    )
 
     rows = cursor.fetchall()
     conn.close()
 
-    return [row['variant_id_2'] if 'variant_id_2' in row.keys() else row['variant_id_1']
-            for row in rows]
+    return [
+        row["variant_id_2"] if "variant_id_2" in row.keys() else row["variant_id_1"]
+        for row in rows
+    ]
 
 
 if __name__ == "__main__":

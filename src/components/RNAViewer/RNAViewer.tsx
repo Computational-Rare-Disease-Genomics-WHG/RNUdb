@@ -22,12 +22,6 @@ interface RNAViewerProps {
   onNucleotideHover?: (nucleotide: Nucleotide | null) => void;
   overlayMode?: 'none' | 'clinvar' | 'gnomad' | 'function_score' | 'depletion_group';
   onCycleOverlay?: () => void;
-  variantStats?: {
-    pathogenic: number;
-    benign: number;
-    vus: number;
-    total: number;
-  };
   variantData?: Variant[];
   gnomadVariants?: Variant[];
   selectedNucleotide?: Nucleotide | null;
@@ -122,6 +116,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
     if (overlayMode === 'clinvar') {
       // ClinVar coloring: colorblind-friendly palette
       if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC;      // red for pathogenic
+      if (value === 0.75) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC; // darker red for likely pathogenic
       if (value === 0.5) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN;        // green for benign
       if (value === 0.25) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS;          // amber for VUS
       return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
@@ -578,12 +573,12 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <span>Pathogenic</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN }}></div>
-                  <span>Benign</span>
+                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC }}></div>
+                  <span>Likely Pathogenic</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS }}></div>
-                  <span>VUS</span>
+                  <span>Uncertain Significance</span>
                 </div>
               </>
             ) : overlayMode === 'gnomad' ? (

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+
 class SnRNAGene(BaseModel):
     id: str
     name: str
@@ -42,14 +43,18 @@ class Variant(BaseModel):
 
 
 class Literature(BaseModel):
-    pmid: str
+    id: str
     title: str
     authors: str
     journal: str
     year: str
-    doi: Optional[str] = None
-    abstract: str
-    associatedGenes: List[str]
+    doi: str
+
+
+class LiteratureCounts(BaseModel):
+    variant_id: str
+    literature_id: str
+    counts: int
 
 
 class Nucleotide(BaseModel):

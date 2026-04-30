@@ -5,6 +5,7 @@ from ..models import Literature
 
 router = APIRouter()
 
+
 @router.get("/literature", response_model=List[Literature])
 async def get_all_literature():
     """Get all literature"""
@@ -12,22 +13,15 @@ async def get_all_literature():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get literature with associated genes
+        # Get all literature
         cursor.execute("""
-            SELECT l.*, GROUP_CONCAT(lg.gene_id) as gene_ids
-            FROM literature l
-            LEFT JOIN literature_genes lg ON l.pmid = lg.pmid
-            GROUP BY l.pmid
+            SELECT * FROM literature
         """)
         rows = cursor.fetchall()
 
         literature = []
         for row in rows:
-            row_dict = dict(row)
-            gene_ids = row_dict.pop("gene_ids", "")
-            associated_genes = gene_ids.split(",") if gene_ids else []
-            row_dict["associatedGenes"] = associated_genes
-            literature.append(Literature(**row_dict))
+            literature.append(Literature(**dict(row)))
 
         conn.close()
         return literature

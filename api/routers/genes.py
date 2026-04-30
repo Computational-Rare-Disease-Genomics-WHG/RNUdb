@@ -68,7 +68,8 @@ async def get_gene_variants(gene_id: str):
         cursor = conn.cursor()
 
         # Get variants with linked variant IDs
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT v.*,
                    GROUP_CONCAT(DISTINCT vl1.variant_id_2) as linked_ids_1,
                    GROUP_CONCAT(DISTINCT vl2.variant_id_1) as linked_ids_2
@@ -77,7 +78,9 @@ async def get_gene_variants(gene_id: str):
             LEFT JOIN variant_links vl2 ON v.id = vl2.variant_id_2
             WHERE v.geneId = ?
             GROUP BY v.id
-        """, (gene_id,))
+        """,
+            (gene_id,),
+        )
         rows = cursor.fetchall()
 
         variants = []
@@ -86,16 +89,16 @@ async def get_gene_variants(gene_id: str):
 
             # Combine linked variant IDs from both directions
             linked_ids = []
-            if row_dict.get('linked_ids_1'):
-                linked_ids.extend(row_dict['linked_ids_1'].split(','))
-            if row_dict.get('linked_ids_2'):
-                linked_ids.extend(row_dict['linked_ids_2'].split(','))
+            if row_dict.get("linked_ids_1"):
+                linked_ids.extend(row_dict["linked_ids_1"].split(","))
+            if row_dict.get("linked_ids_2"):
+                linked_ids.extend(row_dict["linked_ids_2"].split(","))
 
             # Remove the aggregated columns and add linkedVariantIds
-            row_dict.pop('linked_ids_1', None)
-            row_dict.pop('linked_ids_2', None)
+            row_dict.pop("linked_ids_1", None)
+            row_dict.pop("linked_ids_2", None)
             if linked_ids:
-                row_dict['linkedVariantIds'] = linked_ids
+                row_dict["linkedVariantIds"] = linked_ids
 
             variants.append(Variant(**row_dict))
 
@@ -107,31 +110,17 @@ async def get_gene_variants(gene_id: str):
 
 @router.get("/genes/{gene_id}/literature", response_model=List[Literature])
 async def get_gene_literature(gene_id: str):
-    """Get literature associated with a specific gene"""
+    """Get all literature (gene associations removed)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
-            SELECT l.*, GROUP_CONCAT(lg2.gene_id) as gene_ids
-            FROM literature l
-            JOIN literature_genes lg ON l.pmid = lg.pmid
-            LEFT JOIN literature_genes lg2 ON l.pmid = lg2.pmid
-            WHERE lg.gene_id = ?
-            GROUP BY l.pmid
-        """,
-            (gene_id,),
-        )
+        cursor.execute("SELECT * FROM literature")
         rows = cursor.fetchall()
 
         literature = []
         for row in rows:
-            row_dict = dict(row)
-            gene_ids = row_dict.pop("gene_ids", "")
-            associated_genes = gene_ids.split(",") if gene_ids else []
-            row_dict["associatedGenes"] = associated_genes
-            literature.append(Literature(**row_dict))
+            literature.append(Literature(**dict(row)))
 
         conn.close()
         return literature
