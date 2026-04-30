@@ -8,8 +8,8 @@ FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend-builder
 WORKDIR /app
 
 # Install dependencies
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci --legacy-peer-deps
 
 # Copy frontend source
 COPY src ./src
@@ -17,7 +17,7 @@ COPY public ./public
 COPY index.html tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts ./
 
 # Build frontend
-RUN yarn build
+RUN npm run build
 
 # --------------------------------------------------
 # Stage 2: Backend builder (Python + uv)
@@ -38,12 +38,12 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy uv binary from official image
+# Copy uv binary from official multi-platform image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy Python project files
 COPY pyproject.toml uv.lock* ./
-COPY api.py ./
+COPY api/ ./api/
 COPY rnudb_utils ./rnudb_utils
 
 # Create venv using Python 3.11
@@ -63,7 +63,7 @@ WORKDIR /app
 COPY --from=backend-builder --chown=nonroot:nonroot /app/.venv /app/.venv
 
 # Copy backend code
-COPY --from=backend-builder --chown=nonroot:nonroot /app/api.py /app/
+COPY --from=backend-builder --chown=nonroot:nonroot /app/api /app/api
 COPY --from=backend-builder --chown=nonroot:nonroot /app/rnudb_utils /app/rnudb_utils
 
 # Copy built frontend
