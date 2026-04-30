@@ -1,11 +1,10 @@
-
 services:
   rnudb:
-    build: .
+    image: ghcr.io/computational-rare-disease-genomics-whg/rnudb:latest
     ports:
-      - "8000:8000"  # Host:8000 → Container:8000
+      - "8000:8000"
     volumes:
-      - ./data:/app/data  # Mount the data directory (contains database.db)
+      - ./data:/app/data
     restart: unless-stopped
     environment:
       - NODE_ENV=production
