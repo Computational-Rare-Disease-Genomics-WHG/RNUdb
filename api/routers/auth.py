@@ -209,10 +209,10 @@ async def auth_callback(response: Response, code: str):
         )
         user = get_user(login)
 
-    # Issue JWT cookie
-    create_jwt_cookie(response, login)
-
-    return RedirectResponse(url=f"{FRONTEND_URL}/")
+    # Issue JWT cookie on the redirect response
+    redirect_response = RedirectResponse(url=f"{FRONTEND_URL}/")
+    create_jwt_cookie(redirect_response, login)
+    return redirect_response
 
 
 @router.post("/logout")
@@ -220,6 +220,17 @@ async def auth_logout(response: Response):
     """Clear the session cookie."""
     clear_jwt_cookie(response)
     return {"message": "Logged out"}
+
+
+@router.get("/debug/cookie")
+async def debug_cookie(request: Request):
+    """Debug endpoint to check cookie state."""
+    token = request.cookies.get(JWT_COOKIE_NAME)
+    return {
+        "cookie_present": bool(token),
+        "cookie_value_preview": token[:20] + "..." if token else None,
+        "all_cookies": list(request.cookies.keys()),
+    }
 
 
 @router.get("/me", response_model=UserResponse)
