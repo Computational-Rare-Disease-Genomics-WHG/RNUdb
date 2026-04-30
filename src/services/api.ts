@@ -1,11 +1,10 @@
 import type { SnRNAGene, Variant, Literature, LiteratureCounts, RNAStructure, PDBStructure } from '../types';
 
-// Default API base URL (hardcoded to localhost backend mounted at /api)
 const API_BASE_URL = '/api';
 
 class ApiService {
 
-  private async fetchFromApi(endpoint: string): Promise {
+  private async fetchFromApi<T>(endpoint: string): Promise<T> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         credentials: 'include'
@@ -15,59 +14,56 @@ class ApiService {
       }
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('application/json') || contentType.includes('application/vnd.api+json')) {
-        return await response.json();
+        return await response.json() as T;
       }
-      // Fallback to plain text (e.g., PDB data or other text responses)
-      return (await response.text()) as unknown;
+      return (await response.text()) as unknown as T;
     } catch (error) {
       console.error(`API Error for ${endpoint}:`, error);
       throw error;
     }
   }
-  // Gene endpoints
-  async getAllGenes(): Promise {
-    return this.fetchFromApi('/genes');
+
+  async getAllGenes(): Promise<SnRNAGene[]> {
+    return this.fetchFromApi<SnRNAGene[]>('/genes');
   }
 
-  async getGene(geneId: string): Promise {
-    return this.fetchFromApi(`/genes/${geneId}`);
+  async getGene(geneId: string): Promise<SnRNAGene> {
+    return this.fetchFromApi<SnRNAGene>(`/genes/${geneId}`);
   }
 
-  // Variant endpoints
-  async getGeneVariants(geneId: string): Promise {
-    return this.fetchFromApi(`/genes/${geneId}/variants`);
+  async getGeneVariants(geneId: string): Promise<Variant[]> {
+    return this.fetchFromApi<Variant[]>(`/genes/${geneId}/variants`);
   }
 
-  async getVariant(variantId: string): Promise {
-    return this.fetchFromApi(`/variants/${variantId}`);
+  async getVariant(variantId: string): Promise<Variant> {
+    return this.fetchFromApi<Variant>(`/variants/${variantId}`);
   }
 
-  // Literature endpoints
-  async getAllLiterature(): Promise {
-    return this.fetchFromApi('/literature');
+  async getAllLiterature(): Promise<Literature[]> {
+    return this.fetchFromApi<Literature[]>('/literature');
   }
 
-  async getGeneLiterature(geneId: string): Promise {
-    return this.fetchFromApi(`/genes/${geneId}/literature`);
+  async getGeneLiterature(geneId: string): Promise<Literature[]> {
+    return this.fetchFromApi<Literature[]>(`/genes/${geneId}/literature`);
   }
 
-  // Structure endpoints
-  async getGeneStructure(geneId: string): Promise {
-    return this.fetchFromApi(`/genes/${geneId}/structure`);
+  async getGeneStructure(geneId: string): Promise<RNAStructure> {
+    return this.fetchFromApi<RNAStructure>(`/genes/${geneId}/structure`);
   }
 
-  async getGenePDB(geneId: string): Promise {
-    return this.fetchFromApi(`/genes/${geneId}/pdb`);
+  async getGenePDB(geneId: string): Promise<PDBStructure> {
+    return this.fetchFromApi<PDBStructure>(`/genes/${geneId}/pdb`);
   }
 
-  async getLiteratureCounts(): Promise {
-    return this.fetchFromApi('/literature-counts');
+  async getLiteratureCounts(): Promise<LiteratureCounts[]> {
+    return this.fetchFromApi<LiteratureCounts[]>('/literature-counts');
   }
 
-
+  async getMe(): Promise<any> {
+    return this.fetchFromApi<any>('/auth/me');
+  }
 }
 
-// Create and export a singleton instance
 export const apiService = new ApiService();
 
 export const getAllGenes = () => apiService.getAllGenes();
@@ -79,5 +75,5 @@ export const getGeneLiterature = (geneId: string) => apiService.getGeneLiteratur
 export const getGeneStructure = (geneId: string) => apiService.getGeneStructure(geneId);
 export const getGenePDB = (geneId: string) => apiService.getGenePDB(geneId);
 export const getLiteratureCounts = () => apiService.getLiteratureCounts();
-export const getMe = () => apiService.fetchFromApi('/auth/me');
+export const getMe = () => apiService.getMe();
 export const logout = () => fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });

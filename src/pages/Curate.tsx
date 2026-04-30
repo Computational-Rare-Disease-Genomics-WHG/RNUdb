@@ -15,7 +15,7 @@ const Curate: React.FC = () => {
   const [genes, setGenes] = useState([]);
   const [variants, setVariants] = useState([]);
   const [literature, setLiterature] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
 
