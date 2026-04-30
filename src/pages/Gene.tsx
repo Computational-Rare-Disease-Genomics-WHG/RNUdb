@@ -9,12 +9,14 @@ import { getLiterature } from '../data/literature';
 import { getRNAStructure } from '../data/structures';
 import { getPDBStructure } from '../data/structures';
 import { getLiteratureCounts } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import type { OverlayData, SnRNAGene, Variant, Literature, LiteratureCounts, RNAStructure, PDBStructure } from '../types';
 import { COLORBLIND_FRIENDLY_PALETTE } from '../lib/colors';
 
 const Gene: React.FC = () => {
   const { geneId } = useParams<{ geneId: string }>();
   const navigate = useNavigate();
+  const { isCurator } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSnRNA, setSelectedSnRNA] = useState(geneId || 'RNU4-2');
   const [searchResults, setSearchResults] = useState<null | SnRNAGene[]>(null);
@@ -343,7 +345,31 @@ const Gene: React.FC = () => {
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
-      
+
+      {isCurator && currentData && (
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 flex items-center justify-between">
+            <div className="text-sm font-medium text-teal-800">
+              Curator Mode
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate('/curate')}
+                className="text-sm px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                Edit Gene
+              </button>
+              <button
+                onClick={() => navigate(`/editor?geneId=${currentData.name}`)}
+                className="text-sm px-4 py-2 bg-white text-teal-700 border border-teal-300 rounded-lg hover:bg-teal-50 transition-colors"
+              >
+                Edit Structure
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MainContent
         currentData={currentData}
         rnaStructureData={rnaStructureData}
