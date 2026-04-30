@@ -3,12 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import os
 import uvicorn
-import logging
 
 from .routers import genes, variants, literature
-
-logging.basicConfig(level=logging.INFO)
+from .routers.auth import router as auth_router
 
 app = FastAPI(
     title="RNUdb API",
@@ -16,16 +15,21 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
+# CORS: locked origin with credentials for cookie-based auth
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://rnudb.rarediseasegenomics.org")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_origins=[FRONTEND_URL],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
+# Mount routers
 app.include_router(genes.router, prefix="/api")
 app.include_router(variants.router, prefix="/api")
 app.include_router(literature.router, prefix="/api")
+app.include_router(auth_router, prefix="/api/auth")
 
 # Serve frontend static files
 dist_path = Path(__file__).resolve().parent.parent / "dist"

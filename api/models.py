@@ -51,6 +51,22 @@ class Literature(BaseModel):
     doi: str
 
 
+class UserResponse(BaseModel):
+    github_login: str
+    name: str
+    email: str
+    avatar_url: Optional[str] = None
+    role: str
+
+
+class UserResponse(BaseModel):
+    github_login: str
+    name: str
+    email: str
+    avatar_url: Optional[str] = None
+    role: str
+
+
 class LiteratureCounts(BaseModel):
     variant_id: str
     literature_id: str

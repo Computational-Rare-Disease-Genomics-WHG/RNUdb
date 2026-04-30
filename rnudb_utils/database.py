@@ -2,7 +2,8 @@
 
 import sqlite3
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+import os
 
 
 def get_database_path() -> Path:
@@ -178,6 +179,31 @@ def create_database() -> sqlite3.Connection:
     """)
 
     conn.commit()
+
+    # migrations helper: create users, audit_log if not exist
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        github_login TEXT PRIMARY KEY,
+        name TEXT,
+        email TEXT,
+        avatar_url TEXT,
+        role TEXT CHECK(role IN ('guest','pending','curator','admin')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        table_name TEXT NOT NULL,
+        record_id TEXT,
+        action TEXT CHECK(action IN ('CREATE','UPDATE','DELETE')),
+        old_values JSON,
+        new_values JSON,
+        user_login TEXT NOT NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
     return conn
 
 
@@ -486,6 +512,73 @@ def get_linked_variants(variant_id: str) -> List[str]:
         row["variant_id_2"] if "variant_id_2" in row.keys() else row["variant_id_1"]
         for row in rows
     ]
+
+
+def get_user(github_login: str) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE github_login = ?", (github_login,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def create_user(github_login: str, name: str, email: str, avatar_url: str, role: str) -> None:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO users (github_login, name, email, avatar_url, role)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (github_login, name, email, avatar_url, role),
+    )
+    conn.commit()
+    conn.close()
+
+
+def update_user_role(github_login: str, role: str) -> None:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE github_login = ?",
+        (role, github_login),
+    )
+    conn.commit()
+    conn.close()
+
+
+def list_pending_users() -> List[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE role = 'pending' ORDER BY created_at DESC")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def list_all_users(limit: int = 100) -> List[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users ORDER BY created_at DESC LIMIT ?", (limit,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def audit_log(table_name: str, record_id: str, action: str, old_values: Any, new_values: Any, user_login: str) -> None:
+    import json
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO audit_log (table_name, record_id, action, old_values, new_values, user_login)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (table_name, record_id, action, json.dumps(old_values) if old_values else None, json.dumps(new_values) if new_values else None, user_login),
+    )
+    conn.commit()
+    conn.close()
 
 
 if __name__ == "__main__":
