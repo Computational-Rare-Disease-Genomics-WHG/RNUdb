@@ -1,7 +1,7 @@
 import type { SnRNAGene, Variant, Literature, LiteratureCounts, RNAStructure, PDBStructure } from '../types';
 
 // Default API base URL (hardcoded to localhost backend mounted at /api)
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = '/api';
 
 class ApiService {
 
