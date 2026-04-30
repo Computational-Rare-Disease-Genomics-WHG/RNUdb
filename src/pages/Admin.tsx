@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Shield, CheckCircle, XCircle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 interface UserRecord {
   github_login: string;
@@ -73,7 +75,8 @@ const Admin: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <Header showSearch={false} />
+      <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="h-8 w-8 text-teal-600" />
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -200,6 +203,7 @@ const Admin: React.FC = () => {
           </>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
