@@ -43,7 +43,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy Python project files
 COPY pyproject.toml uv.lock* ./
-COPY api/ ./api/
+COPY api ./api
 COPY rnudb_utils ./rnudb_utils
 
 # Create venv using Python 3.11
