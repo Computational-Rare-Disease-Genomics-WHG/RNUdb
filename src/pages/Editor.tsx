@@ -361,8 +361,6 @@ const Editor: React.FC = () => {
           onCancel={handleFeatureCancel}
         />
       )}
-      </div>
-      <Footer />
     </div>
   );
 };
