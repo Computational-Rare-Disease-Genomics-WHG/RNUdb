@@ -82,11 +82,13 @@ def create_jwt_cookie(response: Response, github_login: str) -> None:
         JWT_SECRET_KEY,
         algorithm=JWT_ALGORITHM,
     )
+    # Use secure=False for local HTTP dev, True for HTTPS production
+    is_secure = FRONTEND_URL.startswith("https://")
     response.set_cookie(
         key=JWT_COOKIE_NAME,
         value=token,
         httponly=True,
-        secure=True,
+        secure=is_secure,
         samesite="lax",
         max_age=int(timedelta(days=JWT_EXPIRE_DAYS).total_seconds()),
     )
@@ -94,7 +96,8 @@ def create_jwt_cookie(response: Response, github_login: str) -> None:
 
 def clear_jwt_cookie(response: Response) -> None:
     """Clear the session JWT cookie."""
-    response.delete_cookie(key=JWT_COOKIE_NAME, httponly=True, secure=True)
+    is_secure = FRONTEND_URL.startswith("https://")
+    response.delete_cookie(key=JWT_COOKIE_NAME, httponly=True, secure=is_secure)
 
 
 def get_current_user_from_cookie(request: Request) -> Optional[dict]:
