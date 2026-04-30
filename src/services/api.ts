@@ -5,9 +5,11 @@ const API_BASE_URL = '/api';
 
 class ApiService {
 
-  private async fetchFromApi<T>(endpoint: string): Promise<T> {
+  private async fetchFromApi(endpoint: string): Promise {
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`);
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
@@ -16,50 +18,50 @@ class ApiService {
         return await response.json();
       }
       // Fallback to plain text (e.g., PDB data or other text responses)
-      return (await response.text()) as unknown as T;
+      return (await response.text()) as unknown;
     } catch (error) {
       console.error(`API Error for ${endpoint}:`, error);
       throw error;
     }
   }
   // Gene endpoints
-  async getAllGenes(): Promise<SnRNAGene[]> {
-    return this.fetchFromApi<SnRNAGene[]>('/genes');
+  async getAllGenes(): Promise {
+    return this.fetchFromApi('/genes');
   }
 
-  async getGene(geneId: string): Promise<SnRNAGene> {
-    return this.fetchFromApi<SnRNAGene>(`/genes/${geneId}`);
+  async getGene(geneId: string): Promise {
+    return this.fetchFromApi(`/genes/${geneId}`);
   }
 
   // Variant endpoints
-  async getGeneVariants(geneId: string): Promise<Variant[]> {
-    return this.fetchFromApi<Variant[]>(`/genes/${geneId}/variants`);
+  async getGeneVariants(geneId: string): Promise {
+    return this.fetchFromApi(`/genes/${geneId}/variants`);
   }
 
-  async getVariant(variantId: string): Promise<Variant> {
-    return this.fetchFromApi<Variant>(`/variants/${variantId}`);
+  async getVariant(variantId: string): Promise {
+    return this.fetchFromApi(`/variants/${variantId}`);
   }
 
   // Literature endpoints
-  async getAllLiterature(): Promise<Literature[]> {
-    return this.fetchFromApi<Literature[]>('/literature');
+  async getAllLiterature(): Promise {
+    return this.fetchFromApi('/literature');
   }
 
-  async getGeneLiterature(geneId: string): Promise<Literature[]> {
-    return this.fetchFromApi<Literature[]>(`/genes/${geneId}/literature`);
+  async getGeneLiterature(geneId: string): Promise {
+    return this.fetchFromApi(`/genes/${geneId}/literature`);
   }
 
   // Structure endpoints
-  async getGeneStructure(geneId: string): Promise<RNAStructure> {
-    return this.fetchFromApi<RNAStructure>(`/genes/${geneId}/structure`);
+  async getGeneStructure(geneId: string): Promise {
+    return this.fetchFromApi(`/genes/${geneId}/structure`);
   }
 
-  async getGenePDB(geneId: string): Promise<PDBStructure> {
-    return this.fetchFromApi<PDBStructure>(`/genes/${geneId}/pdb`);
+  async getGenePDB(geneId: string): Promise {
+    return this.fetchFromApi(`/genes/${geneId}/pdb`);
   }
 
-  async getLiteratureCounts(): Promise<LiteratureCounts[]> {
-    return this.fetchFromApi<LiteratureCounts[]>('/literature-counts');
+  async getLiteratureCounts(): Promise {
+    return this.fetchFromApi('/literature-counts');
   }
 
 
@@ -77,3 +79,5 @@ export const getGeneLiterature = (geneId: string) => apiService.getGeneLiteratur
 export const getGeneStructure = (geneId: string) => apiService.getGeneStructure(geneId);
 export const getGenePDB = (geneId: string) => apiService.getGenePDB(geneId);
 export const getLiteratureCounts = () => apiService.getLiteratureCounts();
+export const getMe = () => apiService.fetchFromApi('/auth/me');
+export const logout = () => fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });

@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Dna, Menu, X, Database } from 'lucide-react';
+import { Dna, Menu, X, Database, LogIn, LogOut, Shield, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getAllSnRNAIds, getGeneData } from '../data/genes';
+import { useAuth } from '../context/AuthContext';
 import type { SnRNAGene } from '@/types';
 
 interface HeaderProps {
@@ -26,6 +27,7 @@ const Header: React.FC<HeaderProps> = ({
   setIsMobileMenuOpen
 }) => {
   const navigate = useNavigate();
+  const { user, isLoading: authLoading, isLoggedIn, isAdmin, login, logout } = useAuth();
 
   const handleSearch = async () => {
     if (searchTerm.trim()) {
@@ -129,6 +131,49 @@ const Header: React.FC<HeaderProps> = ({
               </div>
             )}
           </nav>
+
+          {/* Auth buttons */}
+          <div className="flex items-center gap-3">
+            {authLoading ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600" />
+            ) : isLoggedIn && user ? (
+              <div className="flex items-center gap-3">
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/admin')}
+                    className="text-teal-600"
+                  >
+                    <Shield className="h-4 w-4 mr-1" />
+                    Admin
+                  </Button>
+                )}
+                <div className="flex items-center gap-2">
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt={user.name} className="w-8 h-8 rounded-full" />
+                  ) : (
+                    <User className="h-5 w-5 text-gray-500" />
+                  )}
+                  <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                </div>
+                <Button variant="outline" size="sm" onClick={logout}>
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={login}
+                className="border-teal-600 text-teal-600 hover:bg-teal-50"
+              >
+                <LogIn className="h-4 w-4 mr-1" />
+                Sign In
+              </Button>
+            )}
+          </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
