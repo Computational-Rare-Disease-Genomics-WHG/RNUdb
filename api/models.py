@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 class SnRNAGene(BaseModel):
@@ -205,3 +205,62 @@ class RNAStructure(BaseModel):
     basePairs: List[BasePair]
     annotations: Optional[List[AnnotationLabel]] = []
     structuralFeatures: Optional[List[StructuralFeature]] = []
+
+
+# Import-related models
+
+class VariantBatchImportRequest(BaseModel):
+    geneId: str
+    variants: List[Dict[str, Any]]
+    field_mapping: Optional[Dict[str, str]] = None
+    skip_invalid: bool = True
+
+
+class StructureImportRequest(BaseModel):
+    geneId: str
+    structure: Dict[str, Any]
+    set_primary: bool = False
+
+
+class BEDTrackImportRequest(BaseModel):
+    geneId: str
+    track_name: str
+    intervals: List[Dict[str, Any]]
+    color: Optional[str] = None
+
+
+class ValidationErrorModel(BaseModel):
+    row: int
+    field: str
+    message: str
+    value: Any = None
+
+
+class ValidationReportResponse(BaseModel):
+    valid: bool
+    errors: List[ValidationErrorModel]
+    warnings: List[ValidationErrorModel]
+    valid_count: int
+    total_count: int
+
+
+class ImportResult(BaseModel):
+    success: bool
+    imported_count: int
+    skipped_count: int
+    errors: List[ValidationErrorModel]
+    warnings: List[ValidationErrorModel]
+
+
+class BEDTrack(BaseModel):
+    id: int
+    geneId: str
+    track_name: str
+    chrom: str
+    interval_start: int
+    interval_end: int
+    label: Optional[str] = None
+    score: Optional[float] = None
+    color: Optional[str] = None
+    created_at: str
+    created_by: str
