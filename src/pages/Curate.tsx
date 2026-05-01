@@ -393,7 +393,7 @@ const Curate: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header showSearch={false} />
-        <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
+        <div className="max-w-7xl mx-auto px-4 py-6 pt-12">
           <div className="space-y-4">
             <Skeleton className="h-12 w-64" />
             <Skeleton className="h-10 w-full max-w-xl" />
@@ -408,10 +408,10 @@ const Curate: React.FC = () => {
   if (!isCurator) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header showSearch={false} />
       
-      <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
+      <div className="max-w-7xl mx-auto px-4 py-6 pt-12 flex-1 w-full">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -960,7 +960,7 @@ const Curate: React.FC = () => {
       {/* Literature Add/Edit Modal */}
       <Dialog open={showLiteratureForm} onOpenChange={setShowLiteratureForm}>
         <DialogContent className="sm:max-w-[600px]">
-          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 -mx-0">
+          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 rounded-t-xl">
             <DialogTitle className="text-xl font-bold text-white">{editingLiterature ? 'Edit Literature' : 'Add Literature'}</DialogTitle>
           </div>
           <div className="px-8 pb-8 pt-4">
@@ -979,7 +979,7 @@ const Curate: React.FC = () => {
       {/* Gene Create/Edit Modal */}
       <Dialog open={showGeneForm} onOpenChange={setShowGeneForm}>
         <DialogContent className="sm:max-w-[650px]">
-          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 -mx-0">
+          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 rounded-t-xl">
             <DialogTitle className="text-xl font-bold text-white">{editingGene ? 'Edit Gene' : 'Add New Gene'}</DialogTitle>
           </div>
           <div className="px-8 pb-8 pt-4">
@@ -998,7 +998,7 @@ const Curate: React.FC = () => {
       {/* Variant Create/Edit Modal */}
       <Dialog open={showVariantForm} onOpenChange={setShowVariantForm}>
         <DialogContent className="sm:max-w-[650px]">
-          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 -mx-0">
+          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 rounded-t-xl">
             <DialogTitle className="text-xl font-bold text-white">{editingVariant ? 'Edit Variant' : 'Add Variant'}</DialogTitle>
           </div>
           <div className="px-8 pb-8 pt-4">

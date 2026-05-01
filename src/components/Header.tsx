@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Dna, Menu, X, Database, LogIn, LogOut, Shield, User } from 'lucide-react';
+import { Dna, Menu, X, Database, LogIn, LogOut, Shield, User, FileCode, Edit3 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -91,15 +91,26 @@ const Header: React.FC<HeaderProps> = ({
                   </Button>
                 )}
                 {(user.role === 'curator' || user.role === 'admin') && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/curate')}
-                    className="text-teal-600 hover:bg-teal-50"
-                  >
-                    <Database className="h-4 w-4 mr-1" />
-                    Curate
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/curate')}
+                      className="text-teal-600 hover:bg-teal-50"
+                    >
+                      <Database className="h-4 w-4 mr-1" />
+                      Curate
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/editor')}
+                      className="text-teal-600 hover:bg-teal-50"
+                    >
+                      <Edit3 className="h-4 w-4 mr-1" />
+                      Editor
+                    </Button>
+                  </>
                 )}
               </div>
             )}
@@ -119,6 +130,15 @@ const Header: React.FC<HeaderProps> = ({
                   className="h-12 px-6 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
                 >
                   Search
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/api-docs')}
+                  className="text-teal-600 hover:bg-teal-50 shrink-0"
+                >
+                  <FileCode className="h-4 w-4 mr-1" />
+                  API
                 </Button>
               </div>
             )}

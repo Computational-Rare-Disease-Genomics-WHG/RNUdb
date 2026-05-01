@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Database, Edit, Dna } from 'lucide-react';
+import { Database, Dna } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AdvancedSearch from '../components/AdvancedSearch';
@@ -116,26 +116,7 @@ const Home: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* RNA Editor Card */}
-          <Card className="hover:shadow-lg transition-shadow border-slate-200 bg-white/95 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Edit className="h-6 w-6 text-teal-600" />
-                RNA Editor
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Create and edit RNA structures with our interactive WYSIWYG editor.
-              </p>
-              <Button
-                onClick={() => navigate('/editor')}
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white"
-              >
-                Open Editor
-              </Button>
-            </CardContent>
-          </Card>
+
         </div>
       </div>
       
