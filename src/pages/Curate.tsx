@@ -35,6 +35,8 @@ import LiteratureForm from '../components/Curate/LiteratureForm';
 import GeneForm from '../components/Curate/GeneForm';
 import VariantForm from '../components/Curate/VariantForm';
 import { VariantTable } from '../components/Curate/VariantTable';
+import { GnomADViewer } from '../components/Curate/GnomADViewer';
+import { BEDTrackViewer } from '../components/Curate/BEDTrackViewer';
 import {
   Dialog,
   DialogContent,
@@ -617,6 +619,13 @@ const Curate: React.FC = () => {
 
               {/* Variants Tab */}
               <TabsContent value="variants" className="mt-0">
+                {selectedGene && variants.length > 0 && (
+                  <GnomADViewer
+                    variants={variants}
+                    geneStart={selectedGene.start}
+                    geneEnd={selectedGene.end}
+                  />
+                )}
                 <Card className="border-slate-200 shadow-sm">
                   <div className="p-6 border-b border-slate-100">
                     <div className="flex items-center justify-between">
@@ -855,7 +864,6 @@ const Curate: React.FC = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
-
               {/* BED Tracks Tab */}
               <TabsContent value="bedtracks" className="mt-0">
                 <Card className="border-slate-200 shadow-sm">
@@ -896,7 +904,13 @@ const Curate: React.FC = () => {
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-6">
+                        <BEDTrackViewer
+                          tracks={bedTracks}
+                          geneStart={selectedGene?.start || 0}
+                          geneEnd={selectedGene?.end || 0}
+                        />
+                        <div className="space-y-3">
                         {bedTracks.map((track: any) => (
                           <div key={track.id} className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-sm transition-all">
                             <div className="flex items-center justify-between mb-3">
@@ -923,6 +937,7 @@ const Curate: React.FC = () => {
                             </div>
                           </div>
                         ))}
+                        </div>
                       </div>
                     )}
                   </CardContent>

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Database, Dna } from 'lucide-react';
+import { Dna } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AdvancedSearch from '../components/AdvancedSearch';
 import { getAllSnRNAIds } from '../data/genes';
 import type { SnRNAGene } from '@/types';
-import { Button } from '@/components/ui/button';
 
 const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,35 +87,7 @@ const Home: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-          <Card className="hover:shadow-lg transition-shadow border-slate-200 bg-white/95 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-6 w-6 text-teal-600" />
-                Browse RNA Database
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Explore our comprehensive collection of RNA structures, variants, and annotations.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {availableSnRNAs.map(snrnaId => (
-                  <Button 
-                    key={snrnaId}
-                    variant="outline" 
-                    onClick={() => navigate(`/gene/${snrnaId}`)}
-                    className="border-teal-600 text-teal-600 hover:bg-teal-50"
-                  >
-                    View {snrnaId}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
-
-        </div>
       </div>
       
       <Footer />
