@@ -262,8 +262,8 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
                     <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                   </div>
                 ) : (
-                  <div className="p-2 bg-red-100 rounded-full">
-                    <AlertCircle className="h-6 w-6 text-red-600" />
+                  <div className="p-2 bg-amber-100 rounded-full">
+                    <AlertCircle className="h-6 w-6 text-amber-600" />
                   </div>
                 )}
                 <div>
@@ -284,7 +284,7 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
                       Errors ({validationResult.errors.length})
                     </h4>
                   </div>
-                  <div className="divide-y divide-red-100">
+                  <div className="divide-y divide-red-100 max-h-48 overflow-y-auto">
                     {validationResult.errors.map((e: any, i: number) => (
                       <div key={i} className="px-4 py-3">
                         <p className="text-sm text-red-700">
@@ -304,7 +304,7 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
                       Warnings ({validationResult.warnings.length})
                     </h4>
                   </div>
-                  <div className="divide-y divide-amber-100">
+                  <div className="divide-y divide-amber-100 max-h-32 overflow-y-auto">
                     {validationResult.warnings.map((w: any, i: number) => (
                       <div key={i} className="px-4 py-3">
                         <p className="text-sm text-amber-700">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -54,7 +55,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Variant ID</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Variant ID</Label>
           <Input
             value={formData.id}
             onChange={(e) => setFormData({ ...formData, id: e.target.value })}
@@ -64,7 +65,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Gene ID</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Gene ID</Label>
           <Input
             value={formData.geneId}
             onChange={(e) => setFormData({ ...formData, geneId: e.target.value })}
@@ -76,7 +77,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Genomic Position</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Genomic Position</Label>
           <Input
             type="number"
             value={formData.position}
@@ -85,7 +86,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Ref</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Ref</Label>
           <Input
             value={formData.ref}
             onChange={(e) => setFormData({ ...formData, ref: e.target.value })}
@@ -94,7 +95,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Alt</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Alt</Label>
           <Input
             value={formData.alt}
             onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
@@ -106,7 +107,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">HGVS</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">HGVS</Label>
           <Input
             value={formData.hgvs}
             onChange={(e) => setFormData({ ...formData, hgvs: e.target.value })}
@@ -114,7 +115,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Consequence</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Consequence</Label>
           <Input
             value={formData.consequence}
             onChange={(e) => setFormData({ ...formData, consequence: e.target.value })}
@@ -125,7 +126,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Clinical Significance</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Clinical Significance</Label>
           <Select
             value={formData.clinical_significance}
             onValueChange={(value) => setFormData({ ...formData, clinical_significance: value })}
@@ -143,7 +144,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
           </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">ClinVar Significance</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">ClinVar Significance</Label>
           <Input
             value={formData.clinvar_significance}
             onChange={(e) => setFormData({ ...formData, clinvar_significance: e.target.value })}
@@ -153,7 +154,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Function Score</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Function Score</Label>
           <Input
             type="number"
             step="0.001"
@@ -162,7 +163,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Depletion Group</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Depletion Group</Label>
           <Select
             value={formData.depletion_group}
             onValueChange={(value) => setFormData({ ...formData, depletion_group: value })}
@@ -181,7 +182,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">gnomAD AC</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">gnomAD AC</Label>
           <Input
             type="number"
             value={formData.gnomad_ac}
@@ -189,7 +190,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">gnomAD Hom</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">gnomAD Hom</Label>
           <Input
             type="number"
             value={formData.gnomad_hom}
@@ -199,7 +200,7 @@ const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormPro
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">PMID</label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">PMID</Label>
         <Input
           value={formData.pmid}
           onChange={(e) => setFormData({ ...formData, pmid: e.target.value })}

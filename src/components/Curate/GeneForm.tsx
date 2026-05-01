@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -59,7 +60,7 @@ const GeneForm = (props: GeneFormProps) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Gene ID</label>
+          <Label className="block text-sm font-medium text-slate-700 mb-1">Gene ID</Label>
           <Input
             value={formData.id}
             onChange={(e) => handleChange('id', e.target.value)}
@@ -69,7 +70,7 @@ const GeneForm = (props: GeneFormProps) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Name</label>
+          <Label className="block text-sm font-medium text-slate-700 mb-1">Name</Label>
           <Input
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
@@ -80,7 +81,7 @@ const GeneForm = (props: GeneFormProps) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">Full Name</label>
+        <Label className="block text-sm font-medium text-slate-700 mb-1">Full Name</Label>
         <Input
           value={formData.fullName}
           onChange={(e) => handleChange('fullName', e.target.value)}
@@ -91,7 +92,7 @@ const GeneForm = (props: GeneFormProps) => {
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Chromosome</label>
+          <Label className="block text-sm font-medium text-slate-700 mb-1">Chromosome</Label>
           <Input
             value={formData.chromosome}
             onChange={(e) => handleChange('chromosome', e.target.value)}
@@ -100,7 +101,7 @@ const GeneForm = (props: GeneFormProps) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Start</label>
+          <Label className="block text-sm font-medium text-slate-700 mb-1">Start</Label>
           <Input
             type="number"
             value={formData.start}
@@ -110,7 +111,7 @@ const GeneForm = (props: GeneFormProps) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">End</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">End</Label>
           <Input
             type="number"
             value={formData.end}
@@ -122,7 +123,7 @@ const GeneForm = (props: GeneFormProps) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">Strand</label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Strand</Label>
         <Select
           value={formData.strand}
           onValueChange={(value) => handleChange('strand', value)}
@@ -138,7 +139,7 @@ const GeneForm = (props: GeneFormProps) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">Sequence</label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Sequence</Label>
         <Textarea
           value={formData.sequence}
           onChange={(e) => handleChange('sequence', e.target.value)}
@@ -149,7 +150,7 @@ const GeneForm = (props: GeneFormProps) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">Description</label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Description</Label>
         <Textarea
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}

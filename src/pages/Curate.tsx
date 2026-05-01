@@ -5,15 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -42,10 +34,10 @@ import BEDTrackImportWizard from '../components/Curate/BEDTrackImportWizard';
 import LiteratureForm from '../components/Curate/LiteratureForm';
 import GeneForm from '../components/Curate/GeneForm';
 import VariantForm from '../components/Curate/VariantForm';
+import { VariantTable } from '../components/Curate/VariantTable';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 
@@ -260,13 +252,7 @@ const Curate: React.FC = () => {
     setSelectedVariants(next);
   };
 
-  const toggleAllVariants = () => {
-    if (selectedVariants.size === variants.length) {
-      setSelectedVariants(new Set());
-    } else {
-      setSelectedVariants(new Set(variants.map((v: any) => v.id)));
-    }
-  };
+
 
   const handleEditGene = async () => {
     if (!selectedGene) return;
@@ -700,66 +686,13 @@ const Curate: React.FC = () => {
                         </Button>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-slate-100/80 hover:bg-slate-100/80 border-b-2 border-slate-200">
-                              <TableHead className="w-12 px-6 py-3 border-b-2 border-slate-200">
-                                <Checkbox
-                                  checked={selectedVariants.size === variants.length && variants.length > 0}
-                                  onCheckedChange={toggleAllVariants}
-                                />
-                              </TableHead>
-                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Variant ID</TableHead>
-                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Position</TableHead>
-                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Change</TableHead>
-                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Clinical Significance</TableHead>
-                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">HGVS</TableHead>
-                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Cohort</TableHead>
-                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider w-16 py-3 border-b-2 border-slate-200">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {variants.map((variant: any, index: number) => (
-                              <TableRow key={variant.id} className={`group transition-colors border-b border-slate-100 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} hover:bg-teal-50/40`}>
-                                <TableCell className="px-6 py-3">
-                                  <Checkbox
-                                    checked={selectedVariants.has(variant.id)}
-                                    onCheckedChange={() => toggleVariantSelection(variant.id)}
-                                  />
-                                </TableCell>
-                                <TableCell className="font-mono text-sm text-slate-700 py-3">{variant.id}</TableCell>
-                                <TableCell className="text-sm text-slate-600 font-medium py-3">{variant.position.toLocaleString()}</TableCell>
-                                <TableCell className="text-sm py-3">
-                                  <span className="font-mono text-slate-700">{variant.ref}</span>
-                                  <span className="text-slate-400 mx-1">→</span>
-                                  <span className="font-mono text-slate-700">{variant.alt}</span>
-                                </TableCell>
-                                <TableCell className="py-3">
-                                  {variant.clinical_significance && (
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border shadow-sm ${getClinicalSigColor(variant.clinical_significance)}`}>
-                                      <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-60"></span>
-                                      {variant.clinical_significance}
-                                    </span>
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-sm text-slate-500 font-mono py-3">{variant.hgvs}</TableCell>
-                                <TableCell className="text-sm text-slate-500 py-3">{variant.cohort}</TableCell>
-                                <TableCell className="py-3">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEditVariant(variant)}
-                                    className="text-slate-400 hover:text-teal-600 hover:bg-teal-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                      <VariantTable
+                        data={variants}
+                        selectedVariants={selectedVariants}
+                        onToggleVariant={toggleVariantSelection}
+                        onEdit={handleEditVariant}
+                        getClinicalSigColor={getClinicalSigColor}
+                      />
                     )}
                   </CardContent>
                 </Card>
@@ -1027,10 +960,10 @@ const Curate: React.FC = () => {
       {/* Literature Add/Edit Modal */}
       <Dialog open={showLiteratureForm} onOpenChange={setShowLiteratureForm}>
         <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>{editingLiterature ? 'Edit Literature' : 'Add Literature'}</DialogTitle>
-          </DialogHeader>
-          <div className="px-8 pb-8">
+          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 -mx-0">
+            <DialogTitle className="text-xl font-bold text-white">{editingLiterature ? 'Edit Literature' : 'Add Literature'}</DialogTitle>
+          </div>
+          <div className="px-8 pb-8 pt-4">
             <LiteratureForm
               initialData={editingLiterature}
               onSubmit={editingLiterature ? handleUpdateLiterature : handleCreateLiterature}
@@ -1046,10 +979,10 @@ const Curate: React.FC = () => {
       {/* Gene Create/Edit Modal */}
       <Dialog open={showGeneForm} onOpenChange={setShowGeneForm}>
         <DialogContent className="sm:max-w-[650px]">
-          <DialogHeader>
-            <DialogTitle>{editingGene ? 'Edit Gene' : 'Add New Gene'}</DialogTitle>
-          </DialogHeader>
-          <div className="px-8 pb-8">
+          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 -mx-0">
+            <DialogTitle className="text-xl font-bold text-white">{editingGene ? 'Edit Gene' : 'Add New Gene'}</DialogTitle>
+          </div>
+          <div className="px-8 pb-8 pt-4">
             <GeneForm
               initialData={editingGene}
               onSubmit={editingGene ? handleUpdateGene : handleCreateGene}
@@ -1065,10 +998,10 @@ const Curate: React.FC = () => {
       {/* Variant Create/Edit Modal */}
       <Dialog open={showVariantForm} onOpenChange={setShowVariantForm}>
         <DialogContent className="sm:max-w-[650px]">
-          <DialogHeader>
-            <DialogTitle>{editingVariant ? 'Edit Variant' : 'Add Variant'}</DialogTitle>
-          </DialogHeader>
-          <div className="px-8 pb-8">
+          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 -mx-0">
+            <DialogTitle className="text-xl font-bold text-white">{editingVariant ? 'Edit Variant' : 'Add Variant'}</DialogTitle>
+          </div>
+          <div className="px-8 pb-8 pt-4">
             <VariantForm
               geneId={selectedGene?.id}
               initialData={editingVariant}

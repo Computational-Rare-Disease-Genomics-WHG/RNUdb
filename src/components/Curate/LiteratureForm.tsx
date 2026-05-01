@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Save, X } from 'lucide-react';
 
 interface LiteratureFormProps {
@@ -27,7 +28,7 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">Literature ID</label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Literature ID</Label>
         <Input
           value={formData.id}
           onChange={(e) => setFormData({ ...formData, id: e.target.value })}
@@ -38,7 +39,7 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">Title</label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Title</Label>
         <Input
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -48,7 +49,7 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">Authors</label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Authors</Label>
         <Input
           value={formData.authors}
           onChange={(e) => setFormData({ ...formData, authors: e.target.value })}
@@ -59,7 +60,7 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Journal</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Journal</Label>
           <Input
             value={formData.journal}
             onChange={(e) => setFormData({ ...formData, journal: e.target.value })}
@@ -68,7 +69,7 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Year</label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Year</Label>
           <Input
             value={formData.year}
             onChange={(e) => setFormData({ ...formData, year: e.target.value })}
@@ -79,7 +80,7 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted-foreground mb-1">DOI</label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">DOI</Label>
         <Input
           value={formData.doi}
           onChange={(e) => setFormData({ ...formData, doi: e.target.value })}
