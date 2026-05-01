@@ -301,7 +301,7 @@ const Gene: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
           <div className="text-lg text-muted-foreground">Loading gene data...</div>
@@ -312,7 +312,7 @@ const Gene: React.FC = () => {
   
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-lg mb-4">Error loading gene data</div>
           <div className="text-muted-foreground mb-4">{error}</div>
@@ -328,14 +328,14 @@ const Gene: React.FC = () => {
   
   if (!currentData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center text-muted-foreground">Gene not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100">
       <Header
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -346,47 +346,51 @@ const Gene: React.FC = () => {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
-      {isCurator && currentData && (
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 flex items-center justify-between">
-            <div className="text-sm font-medium text-teal-800">
-              Curator Mode
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => navigate('/curate')}
-                className="text-sm bg-teal-600 hover:bg-teal-700 text-white"
-              >
-                Edit Gene
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate(`/editor?geneId=${currentData.name}`)}
-                className="text-sm border-teal-300 text-teal-700 hover:bg-teal-50"
-              >
-                Edit Structure
-              </Button>
+      <div className="flex-1">
+      <div className="flex-1">
+        {isCurator && currentData && (
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 flex items-center justify-between">
+              <div className="text-sm font-medium text-teal-800">
+                Curator Mode
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => navigate('/curate')}
+                  className="text-sm bg-teal-600 hover:bg-teal-700 text-white"
+                >
+                  Edit Gene
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/editor?geneId=${currentData.name}`)}
+                  className="text-sm border-teal-300 text-teal-700 hover:bg-teal-50"
+                >
+                  Edit Structure
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <MainContent
-        currentData={currentData}
-        rnaStructureData={rnaStructureData}
-        pdbStructureData={pdbData}
-        paperData={paperData}
-        literatureCounts={literatureCounts}
-        variantData={variantData}
-        gnomadVariants={gnomadVariants}
-        overlayMode={overlayMode}
-        getCurrentOverlayData={getCurrentOverlayData}
-        cycleOverlayMode={cycleOverlayMode}
-        functionScoreTrackData={functionScoreTrackData}
-        depletionGroupTrackData={depletionGroupTrackData}
-        caddScoreTrackData={caddScoreTrackData}
-        aouVariants={aouVariants}
-      />
+        <MainContent
+          currentData={currentData}
+          rnaStructureData={rnaStructureData}
+          pdbStructureData={pdbData}
+          paperData={paperData}
+          literatureCounts={literatureCounts}
+          variantData={variantData}
+          gnomadVariants={gnomadVariants}
+          overlayMode={overlayMode}
+          getCurrentOverlayData={getCurrentOverlayData}
+          cycleOverlayMode={cycleOverlayMode}
+          functionScoreTrackData={functionScoreTrackData}
+          depletionGroupTrackData={depletionGroupTrackData}
+          caddScoreTrackData={caddScoreTrackData}
+          aouVariants={aouVariants}
+        />
+      </div>
+      </div>
       
       <Footer />
     </div>

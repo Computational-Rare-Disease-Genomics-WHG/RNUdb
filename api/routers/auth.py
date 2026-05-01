@@ -1,10 +1,9 @@
-"""GitHub OAuth2 authentication router."""
-
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Response, Request, Depends
+from fastapi import APIRouter, HTTPException, Response, Request
 from fastapi.responses import RedirectResponse
 import httpx
 import jwt
@@ -17,7 +16,7 @@ router = APIRouter()
 # Config from environment
 GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
 GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
-JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "development-secret-change-me")
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://rnudb.rarediseasegenomics.org")
 ADMIN_GITHUB_LOGINS = [
     u.strip().lower()
@@ -78,7 +77,7 @@ def create_jwt_cookie(response: Response, github_login: str) -> None:
     """Set the session JWT cookie."""
     expire = datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRE_DAYS)
     token = jwt.encode(
-        {"sub": github_login, "exp": expire, "iat": datetime.now(timezone.utc)},
+        {"sub": github_login, "exp": expire, "iat": datetime.now(timezone.utc), "jti": secrets.token_hex(16)},
         JWT_SECRET_KEY,
         algorithm=JWT_ALGORITHM,
     )
@@ -148,27 +147,48 @@ def require_admin(request: Request) -> dict:
     return user
 
 
+# In-memory state storage (use Redis in production)
+_state_storage: dict = {}
+
 @router.get("/github")
 async def auth_github():
     """Redirect to GitHub OAuth authorize URL."""
     if not GITHUB_CLIENT_ID:
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured")
+    
+    # Generate CSRF state token
+    state = secrets.token_urlsafe(32)
+    _state_storage[state] = datetime.now(timezone.utc)
+    
     redirect_uri = f"{FRONTEND_URL}/api/auth/callback"
     url = (
         "https://github.com/login/oauth/authorize"
         f"?client_id={GITHUB_CLIENT_ID}"
         f"&redirect_uri={redirect_uri}"
         f"&scope=user:email"
+        f"&state={state}"
     )
     return RedirectResponse(url=url)
 
 
 @router.get("/callback")
-async def auth_callback(response: Response, code: str):
+async def auth_callback(response: Response, code: str, state: str = ""):
     """Handle GitHub OAuth callback, issue JWT cookie."""
     if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured")
-
+    
+    # Validate CSRF state token
+    if not state or state not in _state_storage:
+        raise HTTPException(status_code=400, detail="Invalid or missing state parameter")
+    
+    # Clean up used state
+    del _state_storage[state]
+    # Remove expired states (> 10 minutes)
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
+    expired = [k for k, v in _state_storage.items() if v < cutoff]
+    for k in expired:
+        del _state_storage[k]
+    
     # Exchange code for token
     token_data = _github_access_token(code)
     access_token = token_data.get("access_token")
@@ -220,17 +240,6 @@ async def auth_logout(response: Response):
     """Clear the session cookie."""
     clear_jwt_cookie(response)
     return {"message": "Logged out"}
-
-
-@router.get("/debug/cookie")
-async def debug_cookie(request: Request):
-    """Debug endpoint to check cookie state."""
-    token = request.cookies.get(JWT_COOKIE_NAME)
-    return {
-        "cookie_present": bool(token),
-        "cookie_value_preview": token[:20] + "..." if token else None,
-        "all_cookies": list(request.cookies.keys()),
-    }
 
 
 @router.get("/me", response_model=UserResponse)

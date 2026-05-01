@@ -6,7 +6,6 @@ import Footer from '../components/Footer';
 import AdvancedSearch from '../components/AdvancedSearch';
 import { getAllSnRNAIds } from '../data/genes';
 import type { SnRNAGene } from '@/types';
-
 const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SnRNAGene[] | null>(null);
@@ -27,20 +26,15 @@ const Home: React.FC = () => {
     
     loadSnRNAIds();
   }, []);
-
-  // No longer needed - AdvancedSearch handles this
-  // const handleSearch = () => {
   //   if (searchTerm.trim()) {
   //     navigate(`/gene/${searchTerm}`);
   //   }
   // };
-
   const handleGeneSelect = (geneName: string) => {
     navigate(`/gene/${geneName}`);
   };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100">
       <Header
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -65,14 +59,12 @@ const Home: React.FC = () => {
             A comprehensive database for RNA structure visualization and analysis.
             Explore RNA sequences, variants, and clinical data with interactive tools.
           </p>
-
           <div className="max-w-2xl mx-auto mb-8">
             <AdvancedSearch
               className="w-full"
               placeholder="Search genes, variants, HGVS notation, clinical significance..."
             />
           </div>
-
           {/* Search Examples */}
           <div className="text-center mb-8">
             <p className="text-sm text-muted-foreground mb-3">Try searching for:</p>
@@ -81,18 +73,14 @@ const Home: React.FC = () => {
               <span className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm">c.34A&gt;G</span>
             </div>
           </div>
-
           <p className="text-sm text-muted-foreground mb-8">
             Available genes: {availableSnRNAs.join(', ')}
           </p>
         </div>
-
-
       </div>
       
       <Footer />
     </div>
   );
 };
-
 export default Home;

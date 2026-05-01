@@ -99,9 +99,9 @@ const Admin: React.FC = () => {
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header showSearch={false} />
-      <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
+      <div className="max-w-7xl mx-auto px-4 py-6 pt-12 flex-1 w-full">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="h-8 w-8 text-teal-600" />
           <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>

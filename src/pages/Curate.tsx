@@ -35,8 +35,8 @@ import LiteratureForm from '../components/Curate/LiteratureForm';
 import GeneForm from '../components/Curate/GeneForm';
 import VariantForm from '../components/Curate/VariantForm';
 import { VariantTable } from '../components/Curate/VariantTable';
-import { GnomADViewer } from '../components/Curate/GnomADViewer';
 import { BEDTrackViewer } from '../components/Curate/BEDTrackViewer';
+import { GnomADVariantViewer } from '../components/Curate/GnomADVariantViewer';
 import {
   Dialog,
   DialogContent,
@@ -620,10 +620,11 @@ const Curate: React.FC = () => {
               {/* Variants Tab */}
               <TabsContent value="variants" className="mt-0">
                 {selectedGene && variants.length > 0 && (
-                  <GnomADViewer
+                  <GnomADVariantViewer
                     variants={variants}
                     geneStart={selectedGene.start}
                     geneEnd={selectedGene.end}
+                    geneName={selectedGene.name}
                   />
                 )}
                 <Card className="border-slate-200 shadow-sm">
