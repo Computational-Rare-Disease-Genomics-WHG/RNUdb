@@ -13,13 +13,38 @@ from fastapi.testclient import TestClient
 from rnudb_utils.database import create_database, get_db_connection
 
 
-@pytest.fixture
-def test_db():
-    """Create an in-memory SQLite database with full schema for testing."""
-    # Override the database path to use in-memory
-    original_path = Path(__file__).parent.parent / "data" / "database.db"
+# Mock authentication for tests
+@pytest.fixture(autouse=True)
+def mock_auth():
+    """Override authentication dependencies for testing."""
+    from api.routers.auth import require_curator, require_admin
     
-    conn = sqlite3.connect(":memory:")
+    test_user = {
+        "github_login": "test_curator",
+        "name": "Test Curator",
+        "email": "test@example.com",
+        "avatar_url": None,
+        "role": "curator"
+    }
+    
+    # Store original dependencies
+    original_curator = require_curator
+    original_admin = require_admin
+    
+    # Override with mock
+    app.dependency_overrides[require_curator] = lambda: test_user
+    app.dependency_overrides[require_admin] = lambda: test_user
+    
+    yield
+    
+    # Restore original dependencies
+    app.dependency_overrides.pop(require_curator, None)
+    app.dependency_overrides.pop(require_admin, None)
+
+
+def create_test_db(db_path=":memory:"):
+    """Create an in-memory SQLite database with full schema for testing."""
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -214,17 +239,59 @@ def test_db():
     )
     
     conn.commit()
-    yield conn
-    conn.close()
+    return conn
 
 
 @pytest.fixture
-def test_client(test_db):
+def test_client():
     """Create a FastAPI test client with the test database."""
-    # We'll need to monkeypatch the database functions
-    # For now, return a basic client
     from fastapi.testclient import TestClient
-    return TestClient(app)
+    import tempfile
+    import rnudb_utils.database as db_module
+    import api.routers.imports as imports_module
+    import api.routers.bed_tracks as bed_tracks_module
+    import api.routers.genes as genes_module
+    import api.routers.variants as variants_module
+    import api.routers.literature as literature_module
+    
+    # Create temporary file database
+    db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    db_path = db_file.name
+    db_file.close()
+    
+    # Create schema in temp database
+    test_db = create_test_db(db_path)
+    test_db.close()
+    
+    # Monkeypatch get_db_connection to use temp file
+    original_get_db = db_module.get_db_connection
+    
+    def mock_get_db():
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+    
+    db_module.get_db_connection = mock_get_db
+    imports_module.get_db_connection = mock_get_db
+    bed_tracks_module.get_db_connection = mock_get_db
+    genes_module.get_db_connection = mock_get_db
+    variants_module.get_db_connection = mock_get_db
+    literature_module.get_db_connection = mock_get_db
+    
+    client = TestClient(app)
+    yield client
+    
+    # Restore
+    db_module.get_db_connection = original_get_db
+    imports_module.get_db_connection = original_get_db
+    bed_tracks_module.get_db_connection = original_get_db
+    genes_module.get_db_connection = original_get_db
+    variants_module.get_db_connection = original_get_db
+    literature_module.get_db_connection = original_get_db
+    
+    # Clean up temp file
+    import os
+    os.unlink(db_path)
 
 
 @pytest.fixture
