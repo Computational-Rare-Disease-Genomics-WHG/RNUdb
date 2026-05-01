@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Save, X } from 'lucide-react';
 
 interface GeneFormProps {
@@ -14,12 +22,14 @@ interface GeneFormProps {
     strand: string;
     sequence: string;
     description: string;
-  };
+  } | null | undefined;
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }
 
-const GeneForm: React.FC<GeneFormProps> = ({ initialData, onSubmit, onCancel }) => {
+const GeneForm = (props: GeneFormProps) => {
+  const { initialData, onSubmit, onCancel } = props;
+
   const [formData, setFormData] = useState({
     id: initialData?.id || '',
     name: initialData?.name || '',
@@ -49,7 +59,7 @@ const GeneForm: React.FC<GeneFormProps> = ({ initialData, onSubmit, onCancel }) 
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Gene ID</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Gene ID</label>
           <Input
             value={formData.id}
             onChange={(e) => handleChange('id', e.target.value)}
@@ -59,7 +69,7 @@ const GeneForm: React.FC<GeneFormProps> = ({ initialData, onSubmit, onCancel }) 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Name</label>
           <Input
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
@@ -70,7 +80,7 @@ const GeneForm: React.FC<GeneFormProps> = ({ initialData, onSubmit, onCancel }) 
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+        <label className="block text-sm font-medium text-muted-foreground mb-1">Full Name</label>
         <Input
           value={formData.fullName}
           onChange={(e) => handleChange('fullName', e.target.value)}
@@ -81,7 +91,7 @@ const GeneForm: React.FC<GeneFormProps> = ({ initialData, onSubmit, onCancel }) 
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Chromosome</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Chromosome</label>
           <Input
             value={formData.chromosome}
             onChange={(e) => handleChange('chromosome', e.target.value)}
@@ -90,7 +100,7 @@ const GeneForm: React.FC<GeneFormProps> = ({ initialData, onSubmit, onCancel }) 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Start</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Start</label>
           <Input
             type="number"
             value={formData.start}
@@ -100,7 +110,7 @@ const GeneForm: React.FC<GeneFormProps> = ({ initialData, onSubmit, onCancel }) 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">End</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">End</label>
           <Input
             type="number"
             value={formData.end}
@@ -112,37 +122,39 @@ const GeneForm: React.FC<GeneFormProps> = ({ initialData, onSubmit, onCancel }) 
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Strand</label>
-        <select
+        <label className="block text-sm font-medium text-muted-foreground mb-1">Strand</label>
+        <Select
           value={formData.strand}
-          onChange={(e) => handleChange('strand', e.target.value)}
-          className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+          onValueChange={(value) => handleChange('strand', value)}
         >
-          <option value="+">+ (Forward)</option>
-          <option value="-">- (Reverse)</option>
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select strand" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="+">+ (Forward)</SelectItem>
+            <SelectItem value="-">- (Reverse)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Sequence</label>
-        <textarea
+        <label className="block text-sm font-medium text-muted-foreground mb-1">Sequence</label>
+        <Textarea
           value={formData.sequence}
           onChange={(e) => handleChange('sequence', e.target.value)}
           placeholder="RNA sequence"
           rows={3}
-          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea
+        <label className="block text-sm font-medium text-muted-foreground mb-1">Description</label>
+        <Textarea
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
           placeholder="Gene description"
           rows={2}
-          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
           required
         />
       </div>

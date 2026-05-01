@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Shield, CheckCircle, XCircle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -19,8 +31,8 @@ interface UserRecord {
 const Admin: React.FC = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const [pendingUsers, setPendingUsers] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState<UserRecord[]>([]);
+  const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,6 +83,19 @@ const Admin: React.FC = () => {
     }
   };
 
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">{role}</Badge>;
+      case 'curator':
+        return <Badge className="bg-teal-100 text-teal-800 hover:bg-teal-100">{role}</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{role}</Badge>;
+      default:
+        return <Badge variant="secondary">{role}</Badge>;
+    }
+  };
+
   if (!isAdmin) return null;
 
   return (
@@ -79,127 +104,127 @@ const Admin: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="h-8 w-8 text-teal-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-4"></div>
-            <div className="text-gray-600">Loading users...</div>
+          <div className="space-y-8">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-48 w-full" />
           </div>
         ) : (
           <>
             {/* Pending Approvals */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
-              <div className="flex items-center gap-2 mb-6">
-                <Users className="h-5 w-5 text-yellow-600" />
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Pending Approvals {pendingUsers.length > 0 && (
-                    <span className="text-yellow-600 ml-2">({pendingUsers.length})</span>
+            <Card className="shadow-sm border-slate-200 mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-yellow-600" />
+                  Pending Approvals
+                  {pendingUsers.length > 0 && (
+                    <Badge className="ml-2 bg-yellow-100 text-yellow-800">{pendingUsers.length}</Badge>
                   )}
-                </h2>
-              </div>
-
-              {pendingUsers.length === 0 ? (
-                <p className="text-gray-500 py-4">No pending approval requests.</p>
-              ) : (
-                <div className="space-y-4">
-                  {pendingUsers.map((user: UserRecord) => (
-                    <div
-                      key={user.github_login}
-                      className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl border border-yellow-200"
-                    >
-                      <div className="flex items-center gap-4">
-                        {user.avatar_url && (
-                          <img src={user.avatar_url} alt={user.name} className="w-10 h-10 rounded-full" />
-                        )}
-                        <div>
-                          <div className="font-semibold text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-600">
-                            @{user.github_login} · {user.email}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Requested: {new Date(user.created_at).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => approveUser(user.github_login)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => rejectUser(user.github_login)}
-                          className="border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* All Users */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">All Users ({allUsers.length})</h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">User</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Role</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Joined</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Last Updated</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allUsers.map((user: UserRecord) => (
-                      <tr key={user.github_login} className="border-b border-slate-100">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            {user.avatar_url && (
-                              <img src={user.avatar_url} alt={user.name} className="w-8 h-8 rounded-full" />
-                            )}
-                            <div>
-                              <div className="font-medium text-gray-900">{user.name}</div>
-                              <div className="text-sm text-gray-600">@{user.github_login}</div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingUsers.length === 0 ? (
+                  <p className="text-muted-foreground py-4">No pending approval requests.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingUsers.map((user: UserRecord) => (
+                      <div
+                        key={user.github_login}
+                        className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl border border-yellow-200"
+                      >
+                        <div className="flex items-center gap-4">
+                          {user.avatar_url && (
+                            <Avatar>
+                              <AvatarImage src={user.avatar_url} alt={user.name} />
+                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                          )}
+                          <div>
+                            <div className="font-semibold text-foreground">{user.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              @{user.github_login} · {user.email}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Requested: {new Date(user.created_at).toLocaleDateString()}
                             </div>
                           </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            user.role === 'admin' 
-                              ? 'bg-purple-100 text-purple-800'
-                              : user.role === 'curator'
-                              ? 'bg-teal-100 text-teal-800'
-                              : user.role === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">
-                          {new Date(user.updated_at).toLocaleDateString()}
-                        </td>
-                      </tr>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => approveUser(user.github_login)}
+                            className="bg-teal-600 hover:bg-teal-700 text-white"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => rejectUser(user.github_login)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* All Users */}
+            <Card className="shadow-sm border-slate-200">
+              <CardHeader>
+                <CardTitle>All Users ({allUsers.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead>Last Updated</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allUsers.map((user: UserRecord) => (
+                      <TableRow key={user.github_login}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {user.avatar_url && (
+                              <Avatar size="sm">
+                                <AvatarImage src={user.avatar_url} alt={user.name} />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                            )}
+                            <div>
+                              <div className="font-medium text-foreground">{user.name}</div>
+                              <div className="text-sm text-muted-foreground">@{user.github_login}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(user.updated_at).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </>
         )}
       </div>

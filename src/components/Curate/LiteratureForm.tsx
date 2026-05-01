@@ -4,12 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Save, X } from 'lucide-react';
 
 interface LiteratureFormProps {
-  initialData?: any;
+  initialData?: any | null;
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }
 
-const LiteratureForm: React.FC<LiteratureFormProps> = ({ initialData, onSubmit, onCancel }) => {
+const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps) => {
   const [formData, setFormData] = useState({
     id: initialData?.id || '',
     title: initialData?.title || '',
@@ -27,7 +27,7 @@ const LiteratureForm: React.FC<LiteratureFormProps> = ({ initialData, onSubmit, 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Literature ID</label>
+        <label className="block text-sm font-medium text-muted-foreground mb-1">Literature ID</label>
         <Input
           value={formData.id}
           onChange={(e) => setFormData({ ...formData, id: e.target.value })}
@@ -38,7 +38,7 @@ const LiteratureForm: React.FC<LiteratureFormProps> = ({ initialData, onSubmit, 
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+        <label className="block text-sm font-medium text-muted-foreground mb-1">Title</label>
         <Input
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -48,7 +48,7 @@ const LiteratureForm: React.FC<LiteratureFormProps> = ({ initialData, onSubmit, 
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Authors</label>
+        <label className="block text-sm font-medium text-muted-foreground mb-1">Authors</label>
         <Input
           value={formData.authors}
           onChange={(e) => setFormData({ ...formData, authors: e.target.value })}
@@ -59,7 +59,7 @@ const LiteratureForm: React.FC<LiteratureFormProps> = ({ initialData, onSubmit, 
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Journal</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Journal</label>
           <Input
             value={formData.journal}
             onChange={(e) => setFormData({ ...formData, journal: e.target.value })}
@@ -68,7 +68,7 @@ const LiteratureForm: React.FC<LiteratureFormProps> = ({ initialData, onSubmit, 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Year</label>
           <Input
             value={formData.year}
             onChange={(e) => setFormData({ ...formData, year: e.target.value })}
@@ -79,7 +79,7 @@ const LiteratureForm: React.FC<LiteratureFormProps> = ({ initialData, onSubmit, 
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">DOI</label>
+        <label className="block text-sm font-medium text-muted-foreground mb-1">DOI</label>
         <Input
           value={formData.doi}
           onChange={(e) => setFormData({ ...formData, doi: e.target.value })}

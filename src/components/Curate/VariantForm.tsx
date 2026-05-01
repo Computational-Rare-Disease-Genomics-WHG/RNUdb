@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Save, X } from 'lucide-react';
 
 interface VariantFormProps {
   geneId?: string;
-  initialData?: any;
+  initialData?: any | null;
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }
 
-const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit, onCancel }) => {
+const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormProps) => {
   const [formData, setFormData] = useState({
     id: initialData?.id || '',
     geneId: initialData?.geneId || geneId || '',
@@ -47,7 +54,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Variant ID</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Variant ID</label>
           <Input
             value={formData.id}
             onChange={(e) => setFormData({ ...formData, id: e.target.value })}
@@ -57,7 +64,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Gene ID</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Gene ID</label>
           <Input
             value={formData.geneId}
             onChange={(e) => setFormData({ ...formData, geneId: e.target.value })}
@@ -69,7 +76,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Genomic Position</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Genomic Position</label>
           <Input
             type="number"
             value={formData.position}
@@ -78,7 +85,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Ref</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Ref</label>
           <Input
             value={formData.ref}
             onChange={(e) => setFormData({ ...formData, ref: e.target.value })}
@@ -87,7 +94,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Alt</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Alt</label>
           <Input
             value={formData.alt}
             onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
@@ -99,7 +106,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">HGVS</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">HGVS</label>
           <Input
             value={formData.hgvs}
             onChange={(e) => setFormData({ ...formData, hgvs: e.target.value })}
@@ -107,7 +114,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Consequence</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Consequence</label>
           <Input
             value={formData.consequence}
             onChange={(e) => setFormData({ ...formData, consequence: e.target.value })}
@@ -118,22 +125,25 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Clinical Significance</label>
-          <select
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Clinical Significance</label>
+          <Select
             value={formData.clinical_significance}
-            onChange={(e) => setFormData({ ...formData, clinical_significance: e.target.value })}
-            className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+            onValueChange={(value) => setFormData({ ...formData, clinical_significance: value })}
           >
-            <option value="">Select...</option>
-            <option value="Pathogenic">Pathogenic</option>
-            <option value="Likely Pathogenic">Likely Pathogenic</option>
-            <option value="VUS">VUS</option>
-            <option value="Likely Benign">Likely Benign</option>
-            <option value="Benign">Benign</option>
-          </select>
+            <SelectTrigger>
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Pathogenic">Pathogenic</SelectItem>
+              <SelectItem value="Likely Pathogenic">Likely Pathogenic</SelectItem>
+              <SelectItem value="VUS">VUS</SelectItem>
+              <SelectItem value="Likely Benign">Likely Benign</SelectItem>
+              <SelectItem value="Benign">Benign</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ClinVar Significance</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">ClinVar Significance</label>
           <Input
             value={formData.clinvar_significance}
             onChange={(e) => setFormData({ ...formData, clinvar_significance: e.target.value })}
@@ -143,7 +153,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Function Score</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Function Score</label>
           <Input
             type="number"
             step="0.001"
@@ -152,23 +162,26 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Depletion Group</label>
-          <select
+          <label className="block text-sm font-medium text-muted-foreground mb-1">Depletion Group</label>
+          <Select
             value={formData.depletion_group}
-            onChange={(e) => setFormData({ ...formData, depletion_group: e.target.value })}
-            className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+            onValueChange={(value) => setFormData({ ...formData, depletion_group: value })}
           >
-            <option value="">Select...</option>
-            <option value="strong">Strong</option>
-            <option value="moderate">Moderate</option>
-            <option value="normal">Normal</option>
-          </select>
+            <SelectTrigger>
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="strong">Strong</SelectItem>
+              <SelectItem value="moderate">Moderate</SelectItem>
+              <SelectItem value="normal">Normal</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">gnomAD AC</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">gnomAD AC</label>
           <Input
             type="number"
             value={formData.gnomad_ac}
@@ -176,7 +189,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">gnomAD Hom</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-1">gnomAD Hom</label>
           <Input
             type="number"
             value={formData.gnomad_hom}
@@ -186,7 +199,7 @@ const VariantForm: React.FC<VariantFormProps> = ({ geneId, initialData, onSubmit
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">PMID</label>
+        <label className="block text-sm font-medium text-muted-foreground mb-1">PMID</label>
         <Input
           value={formData.pmid}
           onChange={(e) => setFormData({ ...formData, pmid: e.target.value })}

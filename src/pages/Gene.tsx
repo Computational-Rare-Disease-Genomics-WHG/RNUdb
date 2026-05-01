@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import MainContent from '../components/MainContent';
 import Footer from '../components/Footer';
+import { Button } from '@/components/ui/button';
 import { getGeneData } from '../data/genes';
 import { getVariants } from '../data/variants';
 import { getLiterature } from '../data/literature';
@@ -300,10 +301,10 @@ const Gene: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-600">Loading gene data...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <div className="text-lg text-muted-foreground">Loading gene data...</div>
         </div>
       </div>
     );
@@ -311,16 +312,15 @@ const Gene: React.FC = () => {
   
   if (error) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-lg mb-4">Error loading gene data</div>
-          <div className="text-gray-600 mb-4">{error}</div>
-          <button 
+          <div className="text-muted-foreground mb-4">{error}</div>
+          <Button 
             onClick={() => window.location.reload()} 
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -328,14 +328,14 @@ const Gene: React.FC = () => {
   
   if (!currentData) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
-        <div className="text-center text-gray-600">Gene not found</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
+        <div className="text-center text-muted-foreground">Gene not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-stone-50 to-neutral-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100">
       <Header
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -353,18 +353,19 @@ const Gene: React.FC = () => {
               Curator Mode
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
                 onClick={() => navigate('/curate')}
-                className="text-sm px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="text-sm bg-teal-600 hover:bg-teal-700 text-white"
               >
                 Edit Gene
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => navigate(`/editor?geneId=${currentData.name}`)}
-                className="text-sm px-4 py-2 bg-white text-teal-700 border border-teal-300 rounded-lg hover:bg-teal-50 transition-colors"
+                className="text-sm border-teal-300 text-teal-700 hover:bg-teal-50"
               >
                 Edit Structure
-              </button>
+              </Button>
             </div>
           </div>
         </div>

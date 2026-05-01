@@ -3,6 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Edit, Trash2, Dna, BookOpen, FileText } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -14,18 +24,15 @@ const Curate: React.FC = () => {
   const navigate = useNavigate();
   const { isCurator, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('genes');
-  const [genes, setGenes] = useState([]);
-  const [variants, setVariants] = useState([]);
-  const [literature, setLiterature] = useState([]);
+  const [genes, setGenes] = useState<any[]>([]);
+  const [variants, setVariants] = useState<any[]>([]);
+  const [literature, setLiterature] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<any>(undefined);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking role
     if (isLoading) return;
-    
-    console.log('Curate page - isCurator:', isCurator);
     if (!isCurator) {
       navigate('/login');
       return;
@@ -36,28 +43,14 @@ const Curate: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      console.log('Fetching data...');
       const [genesRes, variantsRes, litRes] = await Promise.all([
         fetch('/api/genes', { credentials: 'include' }),
         fetch('/api/variants', { credentials: 'include' }),
         fetch('/api/literature', { credentials: 'include' }),
       ]);
-      console.log('Responses:', { genesRes: genesRes.status, variantsRes: variantsRes.status, litRes: litRes.status });
-      if (genesRes.ok) {
-        const genesData = await genesRes.json();
-        console.log('Genes data:', genesData);
-        setGenes(genesData);
-      }
-      if (variantsRes.ok) {
-        const variantsData = await variantsRes.json();
-        console.log('Variants data:', variantsData);
-        setVariants(variantsData);
-      }
-      if (litRes.ok) {
-        const litData = await litRes.json();
-        console.log('Literature data:', litData);
-        setLiterature(litData);
-      }
+      if (genesRes.ok) setGenes(await genesRes.json());
+      if (variantsRes.ok) setVariants(await variantsRes.json());
+      if (litRes.ok) setLiterature(await litRes.json());
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -142,13 +135,27 @@ const Curate: React.FC = () => {
     }
   };
 
+  const getFormComponent = () => {
+    if (activeTab === 'genes') {
+      return <GeneForm initialData={editingItem} onSubmit={handleCreateGene} onCancel={() => setShowForm(false)} />;
+    } else if (activeTab === 'variants') {
+      return <VariantForm initialData={editingItem} onSubmit={handleCreateVariant} onCancel={() => setShowForm(false)} />;
+    } else {
+      return <LiteratureForm initialData={editingItem} onSubmit={handleCreateLiterature} onCancel={() => setShowForm(false)} />;
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-600">Checking permissions...</div>
+      <div className="min-h-screen bg-slate-50">
+        <Header showSearch={false} />
+        <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4" />
+            <div className="text-lg text-muted-foreground">Checking permissions...</div>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -160,7 +167,7 @@ const Curate: React.FC = () => {
       <Header showSearch={false} />
       <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Curator Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">Curator Dashboard</h1>
           <Button
             onClick={() => {
               setEditingItem(null);
@@ -174,39 +181,21 @@ const Curate: React.FC = () => {
         </div>
 
         {loading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-4"></div>
-            <div className="text-gray-600">Loading data...</div>
+          <div className="space-y-4 mb-8">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-64 w-full" />
           </div>
         )}
 
         {showForm && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4">
-              {editingItem ? 'Edit' : 'Create'} {activeTab.slice(0, -1)}
-            </h2>
-            {activeTab === 'genes' && (
-              <GeneForm
-                initialData={editingItem}
-                onSubmit={handleCreateGene}
-                onCancel={() => setShowForm(false)}
-              />
-            )}
-            {activeTab === 'variants' && (
-              <VariantForm
-                initialData={editingItem}
-                onSubmit={handleCreateVariant}
-                onCancel={() => setShowForm(false)}
-              />
-            )}
-            {activeTab === 'literature' && (
-              <LiteratureForm
-                initialData={editingItem}
-                onSubmit={handleCreateLiterature}
-                onCancel={() => setShowForm(false)}
-              />
-            )}
-          </div>
+          <Card className="mb-8 shadow-sm border-slate-200">
+            <CardHeader>
+              <CardTitle>
+                {editingItem ? 'Edit' : 'Create'} {activeTab}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>{getFormComponent()}</CardContent>
+          </Card>
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -226,107 +215,128 @@ const Curate: React.FC = () => {
           </TabsList>
 
           <TabsContent value="genes">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <table className="min-w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">ID</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Name</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Chromosome</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Card className="shadow-sm border-slate-200 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Chromosome</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {genes.length === 0 && !loading && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No genes found.
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {genes.map((gene: any) => (
-                    <tr key={gene.id} className="border-b border-slate-100">
-                      <td className="py-3 px-4 font-mono text-sm">{gene.id}</td>
-                      <td className="py-3 px-4">{gene.name}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{gene.chromosome}:{gene.start}-{gene.end}</td>
-                      <td className="py-3 px-4">
+                    <TableRow key={gene.id}>
+                      <TableCell className="font-mono text-sm">{gene.id}</TableCell>
+                      <TableCell>{gene.name}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{gene.chromosome}:{gene.start}-{gene.end}</TableCell>
+                      <TableCell>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => { setEditingItem(gene); setShowForm(true); }}>
                             <Edit className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="outline" className="text-red-600" onClick={() => handleDelete('genes', gene.id)}>
+                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDelete('genes', gene.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           </TabsContent>
 
           <TabsContent value="variants">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <table className="min-w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">ID</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Gene</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Change</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Card className="shadow-sm border-slate-200 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Gene</TableHead>
+                    <TableHead>Change</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {variants.length === 0 && !loading && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No variants found.
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {variants.map((variant: any) => (
-                    <tr key={variant.id} className="border-b border-slate-100">
-                      <td className="py-3 px-4 font-mono text-sm">{variant.id}</td>
-                      <td className="py-3 px-4 text-sm">{variant.geneId}</td>
-                      <td className="py-3 px-4 text-sm">
+                    <TableRow key={variant.id}>
+                      <TableCell className="font-mono text-sm">{variant.id}</TableCell>
+                      <TableCell className="text-sm">{variant.geneId}</TableCell>
+                      <TableCell className="text-sm">
                         {variant.ref}→{variant.alt} at {variant.position}
-                      </td>
-                      <td className="py-3 px-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => { setEditingItem(variant); setShowForm(true); }}>
                             <Edit className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="outline" className="text-red-600" onClick={() => handleDelete('variants', variant.id)}>
+                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDelete('variants', variant.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           </TabsContent>
 
           <TabsContent value="literature">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <table className="min-w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">ID</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Title</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Year</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Card className="shadow-sm border-slate-200 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Year</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {literature.length === 0 && !loading && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No literature found.
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {literature.map((lit: any) => (
-                    <tr key={lit.id} className="border-b border-slate-100">
-                      <td className="py-3 px-4 font-mono text-sm">{lit.id}</td>
-                      <td className="py-3 px-4 text-sm">{lit.title}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{lit.year}</td>
-                      <td className="py-3 px-4">
+                    <TableRow key={lit.id}>
+                      <TableCell className="font-mono text-sm">{lit.id}</TableCell>
+                      <TableCell className="text-sm">{lit.title}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{lit.year}</TableCell>
+                      <TableCell>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => { setEditingItem(lit); setShowForm(true); }}>
                             <Edit className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="outline" className="text-red-600" onClick={() => handleDelete('literature', lit.id)}>
+                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDelete('literature', lit.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

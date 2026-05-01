@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Dna, Menu, X, Database, LogIn, LogOut, Shield, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAllSnRNAIds, getGeneData } from '../data/genes';
 import { useAuth } from '../context/AuthContext';
 import type { SnRNAGene } from '@/types';
@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-teal-600 tracking-tight">
-                  RNU<span className="text-teal-600">db</span>
+                  RNUdb
                 </h1>
               </div>
             </Link>
@@ -97,41 +97,9 @@ const Header: React.FC<HeaderProps> = ({
                   </Button>
                 </div>
                 
-                {searchResults && (
-                  <div className="mt-4">
-                    {searchResults.length > 0 ? (
-                      <div className="space-y-3">
-                        <p className="text-sm text-gray-600">Found {searchResults.length} result(s):</p>
-                        {searchResults.map((result) => (
-                          <Alert key={result.name} className="border-teal-200 bg-teal-50/80 rounded-xl shadow-sm">
-                            <Database className="h-4 w-4 text-teal-600" />
-                            <AlertDescription>
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <strong className="text-teal-800">{result.name}</strong> - {result.fullName}
-                                  <br />
-                                  <span className="text-sm text-gray-600">
-                                    Chr {result.chromosome}:{result.start.toLocaleString()}-{result.end.toLocaleString()} | {(result.end - result.start + 1)} bp
-                                  </span>
-                                </div>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => navigate(`/gene/${result.name}`)}
-                                  className="ml-4"
-                                >
-                                  Select
-                                </Button>
-                              </div>
-                            </AlertDescription>
-                          </Alert>
-                        ))}
-                      </div>
-                    ) : (
-                      <Alert className="border-yellow-200 bg-yellow-50">
-                        <AlertDescription>No results found for "{searchTerm}"</AlertDescription>
-                      </Alert>
-                    )}
+                {searchResults && searchResults.length === 0 && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    No results found for "{searchTerm}"
                   </div>
                 )}
               </>
@@ -167,12 +135,11 @@ const Header: React.FC<HeaderProps> = ({
                   </Button>
                 )}
                 <div className="flex items-center gap-2">
-                  {user.avatar_url ? (
-                    <img src={user.avatar_url} alt={user.name} className="w-8 h-8 rounded-full" />
-                  ) : (
-                    <User className="h-5 w-5 text-gray-500" />
-                  )}
-                  <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                  <Avatar size="sm">
+                    {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
+                    <AvatarFallback><User className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-foreground">{user.name}</span>
                 </div>
                 <Button variant="outline" size="sm" onClick={logout}>
                   <LogOut className="h-4 w-4 mr-1" />
@@ -206,7 +173,7 @@ const Header: React.FC<HeaderProps> = ({
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
+          <div className="md:hidden py-4 border-t border-slate-200">
             <nav className="flex flex-col space-y-2">
             </nav>
           </div>

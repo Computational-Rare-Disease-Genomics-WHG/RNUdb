@@ -60,10 +60,10 @@ const Home: React.FC = () => {
               <Dna className="h-12 w-12 text-white" />
             </div>
             <h1 className="text-6xl font-bold text-teal-600 tracking-tight">
-              RNU<span className="text-teal-600">db</span>
+              RNUdb
             </h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             A comprehensive database for RNA structure visualization and analysis.
             Explore RNA sequences, variants, and clinical data with interactive tools.
           </p>
@@ -77,14 +77,14 @@ const Home: React.FC = () => {
 
           {/* Search Examples */}
           <div className="text-center mb-8">
-            <p className="text-sm text-gray-500 mb-3">Try searching for:</p>
+            <p className="text-sm text-muted-foreground mb-3">Try searching for:</p>
             <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
-              <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">RNU4-2</span>
-              <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">c.34A&gt;G</span>
+              <span className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm">RNU4-2</span>
+              <span className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm">c.34A&gt;G</span>
             </div>
           </div>
 
-          <p className="text-sm text-gray-500 mb-8">
+          <p className="text-sm text-muted-foreground mb-8">
             Available genes: {availableSnRNAs.join(', ')}
           </p>
         </div>
@@ -98,7 +98,7 @@ const Home: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 Explore our comprehensive collection of RNA structures, variants, and annotations.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -116,8 +116,6 @@ const Home: React.FC = () => {
             </CardContent>
           </Card>
 
-         
-
           {/* RNA Editor Card */}
           <Card className="hover:shadow-lg transition-shadow border-slate-200 bg-white/95 backdrop-blur-sm">
             <CardHeader>
@@ -127,15 +125,15 @@ const Home: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 Create and edit RNA structures with our interactive WYSIWYG editor.
               </p>
-              <button
+              <Button
                 onClick={() => navigate('/editor')}
-                className="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white"
               >
                 Open Editor
-              </button>
+              </Button>
             </CardContent>
           </Card>
         </div>
