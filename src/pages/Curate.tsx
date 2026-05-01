@@ -703,53 +703,54 @@ const Curate: React.FC = () => {
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
-                            <TableRow className="bg-slate-50 hover:bg-slate-50">
-                              <TableHead className="w-12 px-6">
+                            <TableRow className="bg-slate-100/80 hover:bg-slate-100/80 border-b-2 border-slate-200">
+                              <TableHead className="w-12 px-6 py-3 border-b-2 border-slate-200">
                                 <Checkbox
                                   checked={selectedVariants.size === variants.length && variants.length > 0}
                                   onCheckedChange={toggleAllVariants}
                                 />
                               </TableHead>
-                              <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Variant ID</TableHead>
-                              <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Position</TableHead>
-                              <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Change</TableHead>
-                              <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Clinical Significance</TableHead>
-                              <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider">HGVS</TableHead>
-                              <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cohort</TableHead>
-                              <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">Actions</TableHead>
+                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Variant ID</TableHead>
+                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Position</TableHead>
+                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Change</TableHead>
+                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Clinical Significance</TableHead>
+                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">HGVS</TableHead>
+                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider py-3 border-b-2 border-slate-200">Cohort</TableHead>
+                              <TableHead className="text-xs font-bold text-slate-600 uppercase tracking-wider w-16 py-3 border-b-2 border-slate-200">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {variants.map((variant: any) => (
-                              <TableRow key={variant.id} className="hover:bg-teal-50/30 transition-colors">
-                                <TableCell className="px-6">
+                            {variants.map((variant: any, index: number) => (
+                              <TableRow key={variant.id} className={`group transition-colors border-b border-slate-100 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} hover:bg-teal-50/40`}>
+                                <TableCell className="px-6 py-3">
                                   <Checkbox
                                     checked={selectedVariants.has(variant.id)}
                                     onCheckedChange={() => toggleVariantSelection(variant.id)}
                                   />
                                 </TableCell>
-                                <TableCell className="font-mono text-sm text-slate-700">{variant.id}</TableCell>
-                                <TableCell className="text-sm text-slate-600 font-medium">{variant.position.toLocaleString()}</TableCell>
-                                <TableCell className="text-sm">
+                                <TableCell className="font-mono text-sm text-slate-700 py-3">{variant.id}</TableCell>
+                                <TableCell className="text-sm text-slate-600 font-medium py-3">{variant.position.toLocaleString()}</TableCell>
+                                <TableCell className="text-sm py-3">
                                   <span className="font-mono text-slate-700">{variant.ref}</span>
                                   <span className="text-slate-400 mx-1">→</span>
                                   <span className="font-mono text-slate-700">{variant.alt}</span>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="py-3">
                                   {variant.clinical_significance && (
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getClinicalSigColor(variant.clinical_significance)}`}>
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border shadow-sm ${getClinicalSigColor(variant.clinical_significance)}`}>
+                                      <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-60"></span>
                                       {variant.clinical_significance}
                                     </span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-sm text-slate-500 font-mono">{variant.hgvs}</TableCell>
-                                <TableCell className="text-sm text-slate-500">{variant.cohort}</TableCell>
-                                <TableCell>
+                                <TableCell className="text-sm text-slate-500 font-mono py-3">{variant.hgvs}</TableCell>
+                                <TableCell className="text-sm text-slate-500 py-3">{variant.cohort}</TableCell>
+                                <TableCell className="py-3">
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleEditVariant(variant)}
-                                    className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+                                    className="text-slate-400 hover:text-teal-600 hover:bg-teal-50 opacity-0 group-hover:opacity-100 transition-opacity"
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </Button>

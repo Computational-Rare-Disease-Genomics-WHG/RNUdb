@@ -22,7 +22,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({
   searchTerm = '',
   setSearchTerm = () => {},
-  searchResults = null,
+  searchResults: _searchResults = null,
   setSearchResults = () => {},
   isMobileMenuOpen = false,
   setIsMobileMenuOpen = () => {},
@@ -76,48 +76,15 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            {showSearch && (
-              <>
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <Input
-                      placeholder="Search snRNA (e.g., RNU4-2, RNU1-1, RNU2-1)"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      className="pl-4 h-12 border-slate-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 rounded-xl bg-white shadow-sm transition-all duration-200"
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleSearch} 
-                    className="h-12 px-8 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
-                  >
-                    Search
-                  </Button>
-                </div>
-                
-                {searchResults && searchResults.length === 0 && (
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    No results found for "{searchTerm}"
-                  </div>
-                )}
-              </>
-            )}
-          </nav>
-
-          {/* Auth buttons */}
-          <div className="flex items-center gap-3">
-            {authLoading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600" />
-            ) : isLoggedIn && user ? (
-              <div className="flex items-center gap-3">
+          <nav className="hidden md:flex items-center space-x-4 flex-1 mx-4">
+            {isLoggedIn && user && (
+              <div className="flex items-center gap-1">
                 {isAdmin && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate('/admin')}
-                    className="text-teal-600"
+                    className="text-teal-600 hover:bg-teal-50"
                   >
                     <Shield className="h-4 w-4 mr-1" />
                     Admin
@@ -128,12 +95,41 @@ const Header: React.FC<HeaderProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate('/curate')}
-                    className="text-teal-600"
+                    className="text-teal-600 hover:bg-teal-50"
                   >
                     <Database className="h-4 w-4 mr-1" />
                     Curate
                   </Button>
                 )}
+              </div>
+            )}
+            {showSearch && (
+              <div className="flex gap-2 flex-1 max-w-xl">
+                <div className="relative flex-1">
+                  <Input
+                    placeholder="Search snRNA (e.g., RNU4-2, RNU1-1, RNU2-1)"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="pl-4 h-12 border-slate-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 rounded-xl bg-white shadow-sm transition-all duration-200"
+                  />
+                </div>
+                <Button 
+                  onClick={handleSearch} 
+                  className="h-12 px-6 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+                >
+                  Search
+                </Button>
+              </div>
+            )}
+          </nav>
+
+          {/* Auth buttons */}
+          <div className="flex items-center gap-3">
+            {authLoading ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600" />
+            ) : isLoggedIn && user ? (
+              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Avatar size="sm">
                     {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
