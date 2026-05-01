@@ -354,3 +354,35 @@ async def get_gene_structure(gene_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/genes/{gene_id}/structures/{structure_id}")
+async def delete_gene_structure(gene_id: str, structure_id: str, request: Request):
+    """Delete a specific RNA structure (curator only)"""
+    user = require_curator(request)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM rna_structures WHERE id = ? AND geneId = ?", (structure_id, gene_id))
+        existing = cursor.fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Structure not found")
+
+        old_values = dict(existing)
+
+        cursor.execute("DELETE FROM structural_features WHERE structure_id = ?", (structure_id,))
+        cursor.execute("DELETE FROM annotations WHERE structure_id = ?", (structure_id,))
+        cursor.execute("DELETE FROM base_pairs WHERE structure_id = ?", (structure_id,))
+        cursor.execute("DELETE FROM nucleotides WHERE structure_id = ?", (structure_id,))
+        cursor.execute("DELETE FROM rna_structures WHERE id = ? AND geneId = ?", (structure_id, gene_id))
+        conn.commit()
+
+        audit_log("rna_structures", structure_id, "DELETE", old_values, None, user["github_login"])
+
+        conn.close()
+        return {"message": f"Structure {structure_id} deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

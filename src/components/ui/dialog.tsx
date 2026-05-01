@@ -61,16 +61,20 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-0 rounded-xl border-2 border-slate-200 bg-white shadow-2xl duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg overflow-hidden",
+          "fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-0 rounded-xl border-2 border-slate-200 bg-white p-0 shadow-2xl duration-200 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+          "max-h-[92vh] max-w-[92vw] overflow-hidden",
+          "sm:max-w-lg",
           className
         )}
         {...props}
       >
-        {children}
+        <div className="overflow-y-auto max-h-[92vh]">
+          {children}
+        </div>
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute top-4 right-4 rounded-full p-2 bg-white/90 text-slate-500 opacity-100 shadow-sm border border-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:pointer-events-none"
+            className="absolute right-4 top-4 rounded-full p-2 bg-white/90 text-slate-500 opacity-100 shadow-sm border border-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:pointer-events-none z-10"
           >
             <XIcon className="h-4 w-4" />
             <span className="sr-only">Close</span>
