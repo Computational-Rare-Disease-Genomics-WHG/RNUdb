@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -11,25 +12,53 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Edit, Trash2, Dna, BookOpen, FileText } from 'lucide-react';
+
+import {
+  Dna,
+  BookOpen,
+  FileText,
+  Layers,
+  Upload,
+  Trash2,
+  Search,
+  ChevronDown,
+  AlertCircle,
+  CheckCircle2
+} from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import GeneForm from '../components/Curate/GeneForm';
-import VariantForm from '../components/Curate/VariantForm';
-import LiteratureForm from '../components/Curate/LiteratureForm';
+import VariantImportWizard from '../components/Curate/VariantImportWizard';
+import StructureImportWizard from '../components/Curate/StructureImportWizard';
+import BEDTrackImportWizard from '../components/Curate/BEDTrackImportWizard';
+
+interface Gene {
+  id: string;
+  name: string;
+  chromosome: string;
+  start: number;
+  end: number;
+}
 
 const Curate: React.FC = () => {
   const navigate = useNavigate();
   const { isCurator, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState('genes');
-  const [genes, setGenes] = useState<any[]>([]);
+  const [selectedGene, setSelectedGene] = useState<Gene | null>(null);
+  const [genes, setGenes] = useState<Gene[]>([]);
+  const [geneSearch, setGeneSearch] = useState('');
+  const [showGeneDropdown, setShowGeneDropdown] = useState(false);
+  const [activeTab, setActiveTab] = useState('variants');
   const [variants, setVariants] = useState<any[]>([]);
   const [literature, setLiterature] = useState<any[]>([]);
+  const [structures, setStructures] = useState<any[]>([]);
+  const [bedTracks, setBedTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(undefined);
-  const [showForm, setShowForm] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set());
+  const [showVariantImport, setShowVariantImport] = useState(false);
+  const [showStructureImport, setShowStructureImport] = useState(false);
+  const [showBEDImport, setShowBEDImport] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -37,111 +66,93 @@ const Curate: React.FC = () => {
       navigate('/login');
       return;
     }
-    loadData();
+    loadGenes();
   }, [isCurator, isLoading, navigate]);
 
-  const loadData = async () => {
+  useEffect(() => {
+    if (selectedGene) {
+      loadGeneData(selectedGene.id);
+    }
+  }, [selectedGene]);
+
+  const loadGenes = async () => {
+    try {
+      const res = await fetch('/api/genes', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setGenes(data);
+      }
+    } catch (error) {
+      console.error('Error loading genes:', error);
+    }
+  };
+
+  const loadGeneData = async (geneId: string) => {
     setLoading(true);
     try {
-      const [genesRes, variantsRes, litRes] = await Promise.all([
-        fetch('/api/genes', { credentials: 'include' }),
-        fetch('/api/variants', { credentials: 'include' }),
-        fetch('/api/literature', { credentials: 'include' }),
+      const [variantsRes, litRes, structRes, bedRes] = await Promise.all([
+        fetch(`/api/genes/${geneId}/variants`, { credentials: 'include' }),
+        fetch(`/api/genes/${geneId}/literature`, { credentials: 'include' }),
+        fetch(`/api/genes/${geneId}/structure`, { credentials: 'include' }).catch(() => null),
+        fetch(`/api/genes/${geneId}/bed-tracks`, { credentials: 'include' }).catch(() => null),
       ]);
-      if (genesRes.ok) setGenes(await genesRes.json());
       if (variantsRes.ok) setVariants(await variantsRes.json());
       if (litRes.ok) setLiterature(await litRes.json());
+      if (structRes?.ok) {
+        const s = await structRes.json();
+        setStructures(Array.isArray(s) ? s : [s]);
+      } else {
+        setStructures([]);
+      }
+      if (bedRes?.ok) setBedTracks(await bedRes.json());
+      else setBedTracks([]);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading gene data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateGene = async (data: any) => {
+  const filteredGenes = genes.filter(g =>
+    g.name.toLowerCase().includes(geneSearch.toLowerCase()) ||
+    g.id.toLowerCase().includes(geneSearch.toLowerCase())
+  );
+
+  const handleSelectGene = (gene: Gene) => {
+    setSelectedGene(gene);
+    setShowGeneDropdown(false);
+    setGeneSearch('');
+    setSelectedVariants(new Set());
+  };
+
+  const handleDeleteVariants = async () => {
+    if (!selectedGene || selectedVariants.size === 0) return;
+    if (!confirm(`Delete ${selectedVariants.size} variants?`)) return;
+    
     try {
-      const res = await fetch('/api/genes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        setShowForm(false);
-        await loadData();
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to create gene');
-      }
+      const promises = Array.from(selectedVariants).map(id =>
+        fetch(`/api/variants/${id}`, { method: 'DELETE', credentials: 'include' })
+      );
+      await Promise.all(promises);
+      setSelectedVariants(new Set());
+      await loadGeneData(selectedGene.id);
     } catch (error) {
-      alert('Network error');
+      alert('Failed to delete variants');
     }
   };
 
-  const handleCreateVariant = async (data: any) => {
-    try {
-      const res = await fetch('/api/variants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        setShowForm(false);
-        await loadData();
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to create variant');
-      }
-    } catch (error) {
-      alert('Network error');
-    }
+  const toggleVariantSelection = (id: string) => {
+    const next = new Set(selectedVariants);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedVariants(next);
   };
 
-  const handleCreateLiterature = async (data: any) => {
-    try {
-      const res = await fetch('/api/literature', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        setShowForm(false);
-        await loadData();
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to create literature');
-      }
-    } catch (error) {
-      alert('Network error');
-    }
-  };
-
-  const handleDelete = async (type: string, id: string) => {
-    if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
-    try {
-      const res = await fetch(`/api/${type}/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        await loadData();
-      } else {
-        alert('Failed to delete');
-      }
-    } catch (error) {
-      alert('Network error');
-    }
-  };
-
-  const getFormComponent = () => {
-    if (activeTab === 'genes') {
-      return <GeneForm initialData={editingItem} onSubmit={handleCreateGene} onCancel={() => setShowForm(false)} />;
-    } else if (activeTab === 'variants') {
-      return <VariantForm initialData={editingItem} onSubmit={handleCreateVariant} onCancel={() => setShowForm(false)} />;
+  const toggleAllVariants = () => {
+    if (selectedVariants.size === variants.length) {
+      setSelectedVariants(new Set());
     } else {
-      return <LiteratureForm initialData={editingItem} onSubmit={handleCreateLiterature} onCancel={() => setShowForm(false)} />;
+      setSelectedVariants(new Set(variants.map((v: any) => v.id)));
     }
   };
 
@@ -151,8 +162,8 @@ const Curate: React.FC = () => {
         <Header showSearch={false} />
         <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4" />
-            <div className="text-lg text-muted-foreground">Checking permissions...</div>
+            <Skeleton className="h-12 w-64 mx-auto mb-4" />
+            <Skeleton className="h-8 w-48 mx-auto" />
           </div>
         </div>
         <Footer />
@@ -165,181 +176,351 @@ const Curate: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header showSearch={false} />
+      
       <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Curator Dashboard</h1>
-          <Button
-            onClick={() => {
-              setEditingItem(null);
-              setShowForm(true);
-            }}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add New
-          </Button>
+        {/* Gene Selector */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-4">Curator Dashboard</h1>
+          
+          <div className="relative max-w-xl">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search and select a gene..."
+                value={selectedGene ? `${selectedGene.name} (${selectedGene.chromosome}:${selectedGene.start}-${selectedGene.end})` : geneSearch}
+                onChange={(e) => {
+                  setGeneSearch(e.target.value);
+                  setShowGeneDropdown(true);
+                  if (selectedGene) setSelectedGene(null);
+                }}
+                onFocus={() => setShowGeneDropdown(true)}
+                className="pl-10 h-12"
+              />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </div>
+            
+            {showGeneDropdown && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {filteredGenes.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-muted-foreground">No genes found</div>
+                ) : (
+                  filteredGenes.map(gene => (
+                    <button
+                      key={gene.id}
+                      onClick={() => handleSelectGene(gene)}
+                      className="w-full px-4 py-3 text-left hover:bg-slate-50 flex items-center gap-3"
+                    >
+                      <Dna className="h-4 w-4 text-teal-600" />
+                      <div>
+                        <div className="font-medium">{gene.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {gene.chromosome}:{gene.start.toLocaleString()}-{gene.end.toLocaleString()}
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {loading && (
-          <div className="space-y-4 mb-8">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        )}
-
-        {showForm && (
-          <Card className="mb-8 shadow-sm border-slate-200">
-            <CardHeader>
-              <CardTitle>
-                {editingItem ? 'Edit' : 'Create'} {activeTab}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>{getFormComponent()}</CardContent>
+        {!selectedGene ? (
+          <Card className="p-12 text-center">
+            <Dna className="h-12 w-12 text-teal-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">Select a Gene</h2>
+            <p className="text-muted-foreground">Search and select a gene above to start curating variants, structures, literature, and BED tracks.</p>
           </Card>
+        ) : (
+          <>
+            {/* Gene Context Bar */}
+            <div className="flex items-center gap-4 mb-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+              <div className="p-2 bg-teal-100 rounded-lg">
+                <Dna className="h-5 w-5 text-teal-700" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">{selectedGene.name}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {selectedGene.chromosome}:{selectedGene.start.toLocaleString()}-{selectedGene.end.toLocaleString()} | 
+                  {variants.length} variants | {structures.length} structures | {literature.length} literature | {bedTracks.length} BED tracks
+                </p>
+              </div>
+            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-6">
+                <TabsTrigger value="variants">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Variants ({variants.length})
+                </TabsTrigger>
+                <TabsTrigger value="structures">
+                  <Layers className="h-4 w-4 mr-2" />
+                  Structures ({structures.length})
+                </TabsTrigger>
+                <TabsTrigger value="literature">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Literature ({literature.length})
+                </TabsTrigger>
+                <TabsTrigger value="bedtracks">
+                  <Dna className="h-4 w-4 mr-2" />
+                  BED Tracks ({bedTracks.length})
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Variants Tab */}
+              <TabsContent value="variants">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Variants</CardTitle>
+                      <div className="flex gap-2">
+                        {selectedVariants.size > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleDeleteVariants}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete {selectedVariants.size}
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          onClick={() => setShowVariantImport(true)}
+                          className="bg-teal-600 hover:bg-teal-700 text-white"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import Variants
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <div className="space-y-2">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                      </div>
+                    ) : variants.length === 0 ? (
+                      <div className="text-center py-12">
+                        <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-muted-foreground">No variants for this gene.</p>
+                        <Button
+                          variant="link"
+                          onClick={() => setShowVariantImport(true)}
+                          className="text-teal-600"
+                        >
+                          Import variants
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-10">
+                                <Checkbox
+                                  checked={selectedVariants.size === variants.length && variants.length > 0}
+                                  onCheckedChange={toggleAllVariants}
+                                />
+                              </TableHead>
+                              <TableHead>ID</TableHead>
+                              <TableHead>Position</TableHead>
+                              <TableHead>Change</TableHead>
+                              <TableHead>Clinical Significance</TableHead>
+                              <TableHead>HGVS</TableHead>
+                              <TableHead>Cohort</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {variants.map((variant: any) => (
+                              <TableRow key={variant.id}>
+                                <TableCell>
+                                  <Checkbox
+                                    checked={selectedVariants.has(variant.id)}
+                                    onCheckedChange={() => toggleVariantSelection(variant.id)}
+                                  />
+                                </TableCell>
+                                <TableCell className="font-mono text-sm">{variant.id}</TableCell>
+                                <TableCell>{variant.position}</TableCell>
+                                <TableCell>{variant.ref}→{variant.alt}</TableCell>
+                                <TableCell>
+                                  {variant.clinical_significance && (
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                      variant.clinical_significance === 'Pathogenic' ? 'bg-red-100 text-red-800' :
+                                      variant.clinical_significance === 'Likely Pathogenic' ? 'bg-red-50 text-red-700' :
+                                      variant.clinical_significance === 'VUS' ? 'bg-amber-100 text-amber-800' :
+                                      'bg-emerald-100 text-emerald-800'
+                                    }`}>
+                                      {variant.clinical_significance}
+                                    </span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">{variant.hgvs}</TableCell>
+                                <TableCell className="text-sm text-muted-foreground">{variant.cohort}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Structures Tab */}
+              <TabsContent value="structures">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>RNA Structures</CardTitle>
+                      <Button
+                        size="sm"
+                        onClick={() => setShowStructureImport(true)}
+                        className="bg-teal-600 hover:bg-teal-700 text-white"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Import Structure
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <Skeleton className="h-32 w-full" />
+                    ) : structures.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Layers className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-muted-foreground">No structures for this gene.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {structures.map((structure: any) => (
+                          <div key={structure.id} className="p-4 border rounded-lg bg-slate-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="font-semibold">{structure.id}</h3>
+                              <CheckCircle2 className="h-5 w-5 text-teal-600" />
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {structure.nucleotides?.length || 0} nucleotides | 
+                              {structure.basePairs?.length || 0} base pairs
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Literature Tab */}
+              <TabsContent value="literature">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Literature</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <Skeleton className="h-32 w-full" />
+                    ) : literature.length === 0 ? (
+                      <div className="text-center py-12">
+                        <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-muted-foreground">No literature for this gene.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {literature.map((paper: any) => (
+                          <div key={paper.id} className="p-4 border rounded-lg">
+                            <h3 className="font-medium text-sm mb-1">{paper.title}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              {paper.authors} | {paper.journal} ({paper.year})
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* BED Tracks Tab */}
+              <TabsContent value="bedtracks">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>BED Tracks</CardTitle>
+                      <Button
+                        size="sm"
+                        onClick={() => setShowBEDImport(true)}
+                        className="bg-teal-600 hover:bg-teal-700 text-white"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Import BED Track
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <Skeleton className="h-32 w-full" />
+                    ) : bedTracks.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Dna className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-muted-foreground">No BED tracks for this gene.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {bedTracks.map((track: any) => (
+                          <div key={track.id} className="p-4 border rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="font-semibold">{track.track_name}</h3>
+                              {track.color && (
+                                <div
+                                  className="w-4 h-4 rounded-full border"
+                                  style={{ backgroundColor: track.color }}
+                                />
+                              )}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {track.chrom}:{track.interval_start.toLocaleString()}-{track.interval_end.toLocaleString()}
+                              {track.score && ` | Score: ${track.score}`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </>
         )}
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="genes">
-              <Dna className="h-4 w-4 mr-2" />
-              Genes ({genes.length})
-            </TabsTrigger>
-            <TabsTrigger value="variants">
-              <FileText className="h-4 w-4 mr-2" />
-              Variants ({variants.length})
-            </TabsTrigger>
-            <TabsTrigger value="literature">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Literature ({literature.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="genes">
-            <Card className="shadow-sm border-slate-200 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Chromosome</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {genes.length === 0 && !loading && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        No genes found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {genes.map((gene: any) => (
-                    <TableRow key={gene.id}>
-                      <TableCell className="font-mono text-sm">{gene.id}</TableCell>
-                      <TableCell>{gene.name}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{gene.chromosome}:{gene.start}-{gene.end}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => { setEditingItem(gene); setShowForm(true); }}>
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDelete('genes', gene.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="variants">
-            <Card className="shadow-sm border-slate-200 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Gene</TableHead>
-                    <TableHead>Change</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {variants.length === 0 && !loading && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        No variants found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {variants.map((variant: any) => (
-                    <TableRow key={variant.id}>
-                      <TableCell className="font-mono text-sm">{variant.id}</TableCell>
-                      <TableCell className="text-sm">{variant.geneId}</TableCell>
-                      <TableCell className="text-sm">
-                        {variant.ref}→{variant.alt} at {variant.position}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => { setEditingItem(variant); setShowForm(true); }}>
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDelete('variants', variant.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="literature">
-            <Card className="shadow-sm border-slate-200 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Year</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {literature.length === 0 && !loading && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        No literature found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {literature.map((lit: any) => (
-                    <TableRow key={lit.id}>
-                      <TableCell className="font-mono text-sm">{lit.id}</TableCell>
-                      <TableCell className="text-sm">{lit.title}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{lit.year}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => { setEditingItem(lit); setShowForm(true); }}>
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDelete('literature', lit.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </div>
+
+      {/* Import Wizards */}
+      {selectedGene && (
+        <>
+          <VariantImportWizard
+            geneId={selectedGene.id}
+            open={showVariantImport}
+            onClose={() => setShowVariantImport(false)}
+            onSuccess={() => loadGeneData(selectedGene.id)}
+          />
+          <StructureImportWizard
+            geneId={selectedGene.id}
+            open={showStructureImport}
+            onClose={() => setShowStructureImport(false)}
+            onSuccess={() => loadGeneData(selectedGene.id)}
+          />
+          <BEDTrackImportWizard
+            geneId={selectedGene.id}
+            open={showBEDImport}
+            onClose={() => setShowBEDImport(false)}
+            onSuccess={() => loadGeneData(selectedGene.id)}
+          />
+        </>
+      )}
+
       <Footer />
     </div>
   );
