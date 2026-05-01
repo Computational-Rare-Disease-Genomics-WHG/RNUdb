@@ -204,6 +204,22 @@ def create_database() -> sqlite3.Connection:
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS bed_tracks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        geneId TEXT NOT NULL,
+        track_name TEXT NOT NULL,
+        chrom TEXT NOT NULL,
+        interval_start INTEGER NOT NULL,
+        interval_end INTEGER NOT NULL,
+        label TEXT,
+        score REAL,
+        color TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by TEXT NOT NULL,
+        FOREIGN KEY (geneId) REFERENCES genes(id)
+    )
+    """)
     return conn
 
 
