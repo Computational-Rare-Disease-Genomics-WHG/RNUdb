@@ -107,6 +107,21 @@ export const getClinvarColor = (significance: string): string => {
   return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS;
 };
 
+export const getScoreColor = (score: number | null | undefined, baseColor?: string): string => {
+  if (score === null || score === undefined) {
+    return baseColor || COLORBLIND_FRIENDLY_PALETTE.PRIMARY;
+  }
+  const clampedScore = Math.max(0, Math.min(1000, score));
+  const intensity = clampedScore / 1000;
+  const base = baseColor || '#0d9488';
+  const r = parseInt(base.slice(1, 3), 16);
+  const g = parseInt(base.slice(3, 5), 16);
+  const b = parseInt(base.slice(5, 7), 16);
+  const minOpacity = 0.3;
+  const opacity = minOpacity + intensity * (1 - minOpacity);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
 
 export const getFunctionScoreColor = (score: number): string => {
   if (score === 0) return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;

@@ -271,6 +271,28 @@ const Curate: React.FC = () => {
     }
   };
 
+  const handleDeleteBedTrack = async (trackId: string) => {
+    if (!confirm(`Delete this BED track? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/bed-tracks/${trackId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok && selectedGene) {
+        await loadGeneData(selectedGene.id);
+      } else if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || 'Failed to delete BED track');
+      }
+    } catch (error) {
+      alert('Network error');
+    }
+  };
+
+  const handleAnnotateInterval = async (trackId: string, interval: any, annotation: string) => {
+    console.log(`Annotate track ${trackId} interval at ${interval.start}-${interval.end} with "${annotation}"`);
+  };
+
   const toggleVariantSelection = (id: string) => {
     const next = new Set(selectedVariants);
     if (next.has(id)) next.delete(id);
@@ -931,41 +953,13 @@ const Curate: React.FC = () => {
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-6">
-                        <BEDTrackViewer
-                          tracks={nestedBedTracks}
-                          geneStart={selectedGene?.start || 0}
-                          geneEnd={selectedGene?.end || 0}
-                        />
-                        <div className="space-y-3">
-                        {bedTracks.map((track: any) => (
-                          <div key={track.id} className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-sm transition-all">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                {track.color && (
-                                  <div
-                                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                                    style={{ backgroundColor: track.color }}
-                                  />
-                                )}
-                                <h4 className="font-semibold text-slate-900">{track.track_name}</h4>
-                              </div>
-                              <Badge variant="outline" className="text-xs">
-                                {track.interval_end - track.interval_start} bp
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-slate-500">
-                              {track.chrom}:{track.interval_start.toLocaleString()}-{track.interval_end.toLocaleString()}
-                              {track.score !== null && track.score !== undefined && (
-                                <span className="ml-3 px-2 py-0.5 bg-slate-100 rounded text-xs font-medium">
-                                  Score: {track.score}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                        </div>
-                      </div>
+                      <BEDTrackViewer
+                        tracks={nestedBedTracks}
+                        geneStart={selectedGene?.start || 0}
+                        geneEnd={selectedGene?.end || 0}
+                        onDeleteTrack={handleDeleteBedTrack}
+                        onAnnotateInterval={handleAnnotateInterval}
+                      />
                     )}
                   </CardContent>
                 </Card>
