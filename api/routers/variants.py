@@ -143,3 +143,51 @@ async def get_literature_counts():
         return literature_counts
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/variants/disease-types")
+async def get_distinct_disease_types():
+    """Get all distinct disease types from variants"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT DISTINCT disease_type FROM variants
+            WHERE disease_type IS NOT NULL AND disease_type != ''
+            ORDER BY disease_type
+            """
+        )
+        rows = cursor.fetchall()
+
+        disease_types = [row["disease_type"] for row in rows]
+
+        conn.close()
+        return disease_types
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/variants/clinical-significances")
+async def get_distinct_clinical_significances():
+    """Get all distinct clinical significances from variants"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT DISTINCT clinical_significance FROM variants
+            WHERE clinical_significance IS NOT NULL AND clinical_significance != ''
+            ORDER BY clinical_significance
+            """
+        )
+        rows = cursor.fetchall()
+
+        significances = [row["clinical_significance"] for row in rows]
+
+        conn.close()
+        return significances
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

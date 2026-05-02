@@ -25,6 +25,7 @@ class Variant(BaseModel):
     consequence: Optional[str] = None
     clinvar_significance: Optional[str] = None
     clinical_significance: Optional[str] = None
+    disease_type: Optional[str] = None
     pmid: Optional[str] = None
     function_score: Optional[float] = None
     pvalues: Optional[float] = None
@@ -131,6 +132,7 @@ class VariantCreate(BaseModel):
     consequence: Optional[str] = None
     clinvar_significance: Optional[str] = None
     clinical_significance: Optional[str] = None
+    disease_type: Optional[str] = None
     pmid: Optional[str] = None
     function_score: Optional[float] = None
     pvalues: Optional[float] = None
@@ -156,6 +158,7 @@ class VariantUpdate(BaseModel):
     consequence: Optional[str] = None
     clinvar_significance: Optional[str] = None
     clinical_significance: Optional[str] = None
+    disease_type: Optional[str] = None
     pmid: Optional[str] = None
     function_score: Optional[float] = None
     pvalues: Optional[float] = None

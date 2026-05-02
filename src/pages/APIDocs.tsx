@@ -334,6 +334,46 @@ const categories = [...new Set(ENDPOINTS.map(e => e.category))];
               v1.0
             </Badge>
           </div>
+          <svg className="mt-6 w-full max-w-2xl mx-auto" viewBox="0 0 500 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="apiFlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#10b981" />
+                <stop offset="50%" stopColor="#3b82f6" />
+                <stop offset="100%" stopColor="#8b5cf6" />
+              </linearGradient>
+            </defs>
+            <g transform="translate(30, 40)">
+              <rect width="70" height="50" rx="6" fill="#f0fdf4" stroke="#22c55e" strokeWidth="1.5"/>
+              <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#166534">Client</text>
+              <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#166534">Application</text>
+            </g>
+            <path d="M100 65 L150 65" stroke="url(#apiFlowGrad)" strokeWidth="2"/>
+            <polygon points="150,60 160,65 150,70" fill="#10b981"/>
+            <text x="125" y="55" textAnchor="middle" fontSize="8" fill="#64748b">HTTP Request</text>
+            
+            <g transform="translate(160, 40)">
+              <rect width="70" height="50" rx="6" fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.5"/>
+              <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#1e40af">RNUdb</text>
+              <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#1e40af">API</text>
+            </g>
+            <path d="M230 65 L280 65" stroke="url(#apiFlowGrad)" strokeWidth="2"/>
+            <polygon points="280,60 290,65 280,70" fill="#3b82f6"/>
+            <text x="255" y="55" textAnchor="middle" fontSize="8" fill="#64748b">JSON Response</text>
+            
+            <g transform="translate(290, 40)">
+              <rect width="70" height="50" rx="6" fill="#faf5ff" stroke="#8b5cf6" strokeWidth="1.5"/>
+              <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#6d28d9">Postgres</text>
+              <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#6d28d9">Database</text>
+            </g>
+            
+            <g transform="translate(380, 40)">
+              <rect width="70" height="50" rx="6" fill="#fef3c7" stroke="#f59e0b" strokeWidth="1.5"/>
+              <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#92400e">gnomAD</text>
+              <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#92400e">External</text>
+            </g>
+            <path d="M360 65 L380 65" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="3 2"/>
+            <polygon points="380,60 390,65 380,70" fill="#cbd5e1"/>
+          </svg>
         </div>
       </div>
 

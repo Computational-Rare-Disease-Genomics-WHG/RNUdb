@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, CheckCircle, XCircle, Users, Clock, FileText, Database } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Users, Clock, FileText, Database, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -37,7 +37,7 @@ const Admin: React.FC = () => {
   const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
-  const { listChanges, reviewChange, loading: approvalLoading } = useApprovals();
+  const { listChanges, reviewChange, applyChange, loading: approvalLoading } = useApprovals();
 
   useEffect(() => {
     if (!isAdmin) {
@@ -81,6 +81,11 @@ const Admin: React.FC = () => {
 
   const handleApproveChange = async (id: number) => {
     await reviewChange(id, 'approved');
+    await loadData();
+  };
+
+  const handleApplyChange = async (id: number) => {
+    await applyChange(id);
     await loadData();
   };
 
@@ -189,6 +194,17 @@ const Admin: React.FC = () => {
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Approve
                             </Button>
+                            {change.status === 'approved' && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleApplyChange(change.id)}
+                                disabled={approvalLoading}
+                                className="bg-teal-600 hover:bg-teal-700 text-white"
+                              >
+                                <PlayCircle className="h-4 w-4 mr-1" />
+                                Apply
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="outline"

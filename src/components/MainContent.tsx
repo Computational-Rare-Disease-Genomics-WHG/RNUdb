@@ -4,8 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import InfoPanel from './InfoPanel';
 import RNAViewer from './RNAViewer';
 import GenomeBrowser from './GenomeBrowser';
-import VariantsSection from './VariantsSection';
-import LiteratureSection from './LiteratureSection';
+import VariantLiteratureCard from './VariantLiteratureCard';
 import type { OverlayData, Literature, Variant, SnRNAGene, RNAStructure, Nucleotide, PDBStructure, LiteratureCounts } from '../types';
 
 interface MainContentProps {
@@ -178,20 +177,14 @@ const MainContent: React.FC<MainContentProps> = ({
           </Card>
         </div>
 
-        {/* Third Row: Literature and Variants */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-          <div>
-            <LiteratureSection 
-              paperData={paperData}
-              currentGene={currentData.name}
-            />
-          </div>
-          <div>
-            <VariantsSection 
-              variantData={variantData}
-              currentGene={currentData.name}
-            />
-          </div>
+        {/* Third Row: Combined Variant-Literature Table */}
+        <div className="w-full">
+          <VariantLiteratureCard
+            variantData={variantData}
+            paperData={paperData}
+            literatureCounts={literatureCounts}
+            currentGene={currentData.name}
+          />
         </div>
       </div>
     </main>

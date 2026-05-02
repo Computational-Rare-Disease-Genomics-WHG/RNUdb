@@ -7,79 +7,90 @@ interface CuratorVariantTrackProps {
   title?: string;
 }
 
-export const CuratorVariantTrack: React.FC<CuratorVariantTrackProps> = ({
+const CuratorVariantTrack: React.FC<CuratorVariantTrackProps> = ({
   variants,
-  title = 'Clinical Variants'
+  title = 'ClinVar'
 }) => {
-  console.log('[CuratorVariantTrack] Received variants:', variants);
-  console.log('[CuratorVariantTrack] Variants count:', variants?.length);
-  
-  const trackVariants = React.useMemo(() => {
-    if (!variants || variants.length === 0) {
-      console.log('[CuratorVariantTrack] No variants to process');
-      return [];
-    }
-    
-    console.log('[CuratorVariantTrack] Processing variants, input length:', variants.length);
-    
-    const processed = variants
-      .filter(variant => {
-        if (!variant) {
-          console.log('[CuratorVariantTrack] Filtered out: null/undefined variant');
-          return false;
-        }
-        const pos = variant.position;
-        if (pos === undefined || pos === null || pos === '') {
-          console.log('[CuratorVariantTrack] Filtered out: invalid position', pos, 'for variant', variant.id);
-          return false;
-        }
-        const numPos = Number(pos);
-        if (isNaN(numPos)) {
-          console.log('[CuratorVariantTrack] Filtered out: position is NaN', pos, 'for variant', variant.id);
-          return false;
-        }
-        return true;
-      })
-      .map((variant, index) => {
-        const sig = variant.clinical_significance || 'VUS';
-        const transformed = {
-          variant_id: `clinvar-${variant.id || index}`,
-          pos: Number(variant.position),
-          ref: variant.ref || '',
-          alt: variant.alt || '',
-          allele_freq: (variant.gnomad_ac || 0) / 1000000,
-          consequence: variant.consequence || 'unknown',
-          clinical_significance: sig,
-          isHighlighted: sig === 'Pathogenic' || sig === 'Likely Pathogenic' || sig === 'LP' || sig === 'PATH'
-        };
-        console.log('[CuratorVariantTrack] Transformed variant:', transformed);
-        return transformed;
-      });
-    
-    console.log('[CuratorVariantTrack] Processed variants count:', processed.length);
-    return processed;
-  }, [variants]);
+  const clinvarVariants = variants
+    .filter(variant =>
+      variant?.position &&
+      typeof variant.position === 'number' &&
+      variant.clinical_significance
+    )
+    .map((variant, index) => ({
+      variant_id: `clinvar-${variant.id}-${index}`,
+      pos: variant.position,
+      ref: variant.ref || '',
+      alt: variant.alt || '',
+      allele_freq: (variant.gnomad_ac || 0) / 1000000,
+      consequence: variant.consequence || 'unknown',
+      clinical_significance: variant.clinical_significance || 'VUS',
+      isHighlighted: ['Pathogenic', 'Likely Pathogenic', 'LP', 'PATH'].includes(variant.clinical_significance)
+    }));
 
-  console.log('[CuratorVariantTrack] trackVariants length:', trackVariants.length);
-  console.log('[CuratorVariantTrack] First few trackVariants:', trackVariants.slice(0, 3));
+  const gnomadVariants = variants
+    .filter(variant =>
+      variant?.position &&
+      typeof variant.position === 'number' &&
+      (variant.gnomad_ac ?? 0) > 0
+    )
+    .map((variant, index) => ({
+      variant_id: `gnomad-${variant.id}-${index}`,
+      pos: variant.position,
+      ref: variant.ref || '',
+      alt: variant.alt || '',
+      allele_freq: (variant.gnomad_ac || 0) / 1000000,
+      consequence: variant.consequence || 'unknown',
+      isHighlighted: false
+    }));
 
-  if (trackVariants.length === 0) {
-    console.log('[CuratorVariantTrack] Returning null - no track variants');
+  const aouVariants = variants
+    .filter(variant =>
+      variant?.position &&
+      typeof variant.position === 'number' &&
+      (variant.aou_ac ?? 0) > 0
+    )
+    .map((variant, index) => ({
+      variant_id: `aou-${variant.id}-${index}`,
+      pos: variant.position,
+      ref: variant.ref || '',
+      alt: variant.alt || '',
+      allele_freq: (variant.aou_ac || 0) / 1000000,
+      consequence: variant.consequence || 'unknown',
+      isHighlighted: false
+    }));
+
+  if (clinvarVariants.length === 0 && gnomadVariants.length === 0 && aouVariants.length === 0) {
     return null;
   }
 
   return (
-    <div className="w-full">
-      <VariantTrack
-        title={`${title} (${trackVariants.length})`}
-        height={60}
-        variants={trackVariants}
-        variantColor={(variant: any) => {
-          console.log('[CuratorVariantTrack] variantColor called for:', variant);
-          return getClinvarColor(variant.clinical_significance || 'VUS');
-        }}
-      />
-    </div>
+    <>
+      {gnomadVariants.length > 0 && (
+        <VariantTrack
+          title={`gnomAD (${gnomadVariants.length})`}
+          height={30}
+          variants={gnomadVariants}
+          variantColor={() => '#2563EB'}
+        />
+      )}
+      {aouVariants.length > 0 && (
+        <VariantTrack
+          title={`All of Us (${aouVariants.length})`}
+          height={30}
+          variants={aouVariants}
+          variantColor={() => '#7C3AED'}
+        />
+      )}
+      {clinvarVariants.length > 0 && (
+        <VariantTrack
+          title={`${title} (${clinvarVariants.length})`}
+          height={60}
+          variants={clinvarVariants}
+          variantColor={(variant) => getClinvarColor(variant.clinical_significance || 'VUS')}
+        />
+      )}
+    </>
   );
 };
 

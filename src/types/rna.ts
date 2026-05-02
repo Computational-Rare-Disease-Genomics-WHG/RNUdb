@@ -24,6 +24,7 @@ export interface Variant {
   consequence?: string;         // Variant consequence type
   clinvar_significance?: string;// ClinVar pathogenicity
   clinical_significance?: string; // Clinical interpretation
+  disease_type?: string;       // Disease association (e.g., "ReNU Syndrome", "Retinitis Pigmentosa")
   pmid?: string;               // PubMed ID for evidence
 
   // Functional analysis fields (nullable)

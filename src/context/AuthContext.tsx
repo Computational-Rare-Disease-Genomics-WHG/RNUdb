@@ -53,6 +53,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/api/auth/github';
   };
 
+  /**
+   * Signs out the current user by calling the logout endpoint.
+   * 
+   * KNOWN ISSUE: Sign-out timing problem
+   * -----------------------------------
+   * The fetch to /api/auth/logout is asynchronous and immediately returns.
+   * The window.location.href redirect happens before the server confirms
+   * the cookie was cleared. If the page navigates before the cookie is 
+   * cleared server-side, the browser may still have the old cookie state.
+   * 
+   * Additionally, GitHub OAuth may have its own session/cookie that persists,
+   * causing automatic re-authentication on subsequent visits to the login page.
+   * 
+   * This is a documented issue - see docs/AUTH_ISSUE.md for details.
+   * Possible fixes include:
+   * 1. Await logout request completion before redirect
+   * 2. Use window.location.replace() for hard navigation
+   * 3. Clear OAuth state before initiating login
+   */
   const logout = async () => {
     await fetch('/api/auth/logout', {
       method: 'POST',

@@ -220,6 +220,63 @@ const SpliceosomeDiagram: React.FC = () => (
   </svg>
 );
 
+const ClassificationWorkflow: React.FC = () => (
+  <svg viewBox="0 0 500 180" className="w-full max-w-2xl mx-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="workflowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#0d9488" />
+        <stop offset="100%" stopColor="#0f766e" />
+      </linearGradient>
+    </defs>
+    
+    <g transform="translate(20, 60)">
+      <rect width="80" height="60" rx="8" fill="#f0fdf4" stroke="#22c55e" strokeWidth="2"/>
+      <text x="40" y="25" textAnchor="middle" fontSize="11" fontWeight="600" fill="#166534">Variant</text>
+      <text x="40" y="42" textAnchor="middle" fontSize="10" fill="#166534">Identified</text>
+    </g>
+    
+    <path d="M100 90 L130 90" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 2"/>
+    <polygon points="130,85 140,90 130,95" fill="#cbd5e1"/>
+    
+    <g transform="translate(140, 60)">
+      <rect width="80" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2"/>
+      <text x="40" y="25" textAnchor="middle" fontSize="11" fontWeight="600" fill="#92400e">Evidence</text>
+      <text x="40" y="42" textAnchor="middle" fontSize="10" fill="#92400e">Collection</text>
+    </g>
+    
+    <path d="M220 90 L250 90" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 2"/>
+    <polygon points="250,85 260,90 250,95" fill="#cbd5e1"/>
+    
+    <g transform="translate(260, 60)">
+      <rect width="80" height="60" rx="8" fill="#eff6ff" stroke="#3b82f6" strokeWidth="2"/>
+      <text x="40" y="25" textAnchor="middle" fontSize="11" fontWeight="600" fill="#1e40af">Criteria</text>
+      <text x="40" y="42" textAnchor="middle" fontSize="10" fill="#1e40af">Applied</text>
+    </g>
+    
+    <path d="M340 90 L370 90" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 2"/>
+    <polygon points="370,85 380,90 370,95" fill="#cbd5e1"/>
+    
+    <g transform="translate(380, 60)">
+      <rect width="90" height="60" rx="8" fill="url(#workflowGrad)"/>
+      <text x="45" y="25" textAnchor="middle" fontSize="11" fontWeight="600" fill="white">Classification</text>
+      <text x="45" y="42" textAnchor="middle" fontSize="10" fill="#e0f2f1">Final Result</text>
+    </g>
+    
+    <g transform="translate(50, 140)">
+      <circle cx="8" cy="8" r="4" fill="#22c55e"/>
+      <text x="20" y="12" fontSize="9" fill="#64748b">Population data</text>
+    </g>
+    <g transform="translate(150, 140)">
+      <circle cx="8" cy="8" r="4" fill="#f59e0b"/>
+      <text x="20" y="12" fontSize="9" fill="#64748b">Literature, functional</text>
+    </g>
+    <g transform="translate(280, 140)">
+      <circle cx="8" cy="8" r="4" fill="#3b82f6"/>
+      <text x="20" y="12" fontSize="9" fill="#64748b">ACMG codes assigned</text>
+    </g>
+  </svg>
+);
+
 const ClinicalInterpretation: React.FC = () => {
   const [selectedExample, setSelectedExample] = useState(0);
 
@@ -308,6 +365,21 @@ const ClinicalInterpretation: React.FC = () => {
                       </ul>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Stethoscope className="h-5 w-5 text-teal-600" />
+                    Classification Workflow
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-slate-600 leading-relaxed">
+                    Clinical variant classification follows a structured workflow using ACMG/ACMG guidelines adapted for snRNAs.
+                  </p>
+                  <ClassificationWorkflow />
                 </CardContent>
               </Card>
 

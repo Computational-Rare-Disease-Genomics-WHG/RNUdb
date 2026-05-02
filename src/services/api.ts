@@ -62,6 +62,14 @@ class ApiService {
   async getMe(): Promise<any> {
     return this.fetchFromApi<any>('/auth/me');
   }
+
+  async getDistinctDiseaseTypes(): Promise<string[]> {
+    return this.fetchFromApi<string[]>('/variants/disease-types');
+  }
+
+  async getDistinctClinicalSignificances(): Promise<string[]> {
+    return this.fetchFromApi<string[]>('/variants/clinical-significances');
+  }
 }
 
 export const apiService = new ApiService();
@@ -77,3 +85,5 @@ export const getGenePDB = (geneId: string) => apiService.getGenePDB(geneId);
 export const getLiteratureCounts = () => apiService.getLiteratureCounts();
 export const getMe = () => apiService.getMe();
 export const logout = () => fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+export const getDistinctDiseaseTypes = () => apiService.getDistinctDiseaseTypes();
+export const getDistinctClinicalSignificances = () => apiService.getDistinctClinicalSignificances();

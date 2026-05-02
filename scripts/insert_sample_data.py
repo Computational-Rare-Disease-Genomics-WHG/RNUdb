@@ -48,6 +48,12 @@ def insert_sample_variants():
 
     print("Querying All of Us variants...")
     aou_variants = query_all_of_us_variants("12", 120291759, 120291903)
+    
+    if len(aou_variants) == 0:
+        print("Note: No All of Us variants retrieved (API may require authentication).")
+        print("To get All of Us data:")
+        print("  1. Use the All of Us Researcher Workbench")
+        print("  2. Export data and import locally via CSV")
 
     # Load SGE data
     print("Loading SGE data...")

@@ -1,18 +1,24 @@
 // src/components/RNAViewer/RNAViewer.tsx
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import PDBViewer from './PDBViewer';
 import type { RNAData, Nucleotide, OverlayData, Variant } from '../../types';
 import { findNucleotideById } from '../../lib/rnaUtils';
 import { COLORBLIND_FRIENDLY_PALETTE, generateGnomadColorWithAlpha, getFunctionScoreColor } from '../../lib/colors';
-import { getOverlayValue } from '../../lib/overlayUtils';
 import NucleotideComponent from './NucleotideComponent';
 import BasePairBond from './BasePairBond';
-import domtoimage from 'dom-to-image-more';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Switch } from '@/components/ui/switch';
 import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage, Database, BarChart3 } from 'lucide-react';
 import './RNAViewer.css';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getDistinctDiseaseTypes, getDistinctClinicalSignificances } from '@/services/api';
 
 interface RNAViewerProps {
   rnaData: RNAData;
@@ -56,8 +62,134 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
-  const svgRef = useRef<SVGSVGElement>(null);
+const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const [show3D, setShow3D] = useState(false);
+  const [showStructuralFeatures, setShowStructuralFeatures] = useState(true);
+
+  const [diseaseTypes, setDiseaseTypes] = useState<string[]>([]);
+  const [clinicalSignificances, setClinicalSignificances] = useState<string[]>([]);
+  const [selectedDiseaseType, setSelectedDiseaseType] = useState<string>('all');
+  const [selectedClinicalSig, setSelectedClinicalSig] = useState<string>('all');
+  const [selectedPopulationSource, setSelectedPopulationSource] = useState<string>('all');
+
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const [diseases, significances] = await Promise.all([
+          getDistinctDiseaseTypes(),
+          getDistinctClinicalSignificances()
+        ]);
+        setDiseaseTypes(diseases);
+        setClinicalSignificances(significances);
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+      }
+    };
+    fetchFilterOptions();
+  }, []);
+
+  const getFilteredOverlayValue = useCallback((nucleotideId: number): { value: number; variant?: Variant } => {
+    if (overlayMode === 'none') {
+      return { value: 0 };
+    }
+
+    if (overlayMode === 'clinvar') {
+      const filteredVariants = variantData.filter(variant => {
+        if (!variant.position) return false;
+        
+        let nucleotidePos: number;
+        if (variant.nucleotidePosition !== undefined && variant.nucleotidePosition !== null) {
+          nucleotidePos = variant.nucleotidePosition;
+        } else {
+          if (geneData.strand === '-') {
+            nucleotidePos = geneData.end - variant.position + 1;
+          } else {
+            nucleotidePos = variant.position - geneData.start + 1;
+          }
+        }
+        
+        if (nucleotidePos !== nucleotideId) return false;
+        
+        if (!variant.clinical_significance) return false;
+        
+        if (selectedDiseaseType !== 'all' && variant.disease_type !== selectedDiseaseType) return false;
+        
+        if (selectedClinicalSig !== 'all' && variant.clinical_significance !== selectedClinicalSig) return false;
+        
+        return true;
+      });
+
+      if (filteredVariants.length === 0) return { value: 0 };
+
+      const maxSignificance = filteredVariants.reduce((max, v) => {
+        const significanceOrder: Record<string, number> = {
+          'Pathogenic': 4,
+          'Likely Pathogenic': 3,
+          'VUS': 2,
+          'Likely Benign': 1,
+          'Benign': 0
+        };
+        const order = significanceOrder[v.clinical_significance!] ?? -1;
+        const maxOrder = significanceOrder[max.clinical_significance!] ?? -1;
+        return order > maxOrder ? v : max;
+      }, filteredVariants[0]);
+
+      const valueMap: Record<string, number> = {
+        'Pathogenic': 1,
+        'Likely Pathogenic': 0.75,
+        'VUS': 0.25,
+        'Likely Benign': 0.125,
+        'Benign': 0
+      };
+
+      return { value: valueMap[maxSignificance.clinical_significance!] ?? 0, variant: maxSignificance };
+    }
+
+    if (overlayMode === 'gnomad') {
+      const filteredVariants = variantData.filter(variant => {
+        if (!variant.position) return false;
+        
+        let nucleotidePos: number;
+        if (variant.nucleotidePosition !== undefined && variant.nucleotidePosition !== null) {
+          nucleotidePos = variant.nucleotidePosition;
+        } else {
+          if (geneData.strand === '-') {
+            nucleotidePos = geneData.end - variant.position + 1;
+          } else {
+            nucleotidePos = variant.position - geneData.start + 1;
+          }
+        }
+        
+        if (nucleotidePos !== nucleotideId) return false;
+        
+        if (selectedPopulationSource === 'gnomad') {
+          return (variant.gnomad_ac ?? 0) > 0;
+        } else if (selectedPopulationSource === 'aou') {
+          return (variant.aou_ac ?? 0) > 0;
+        } else {
+          return (variant.gnomad_ac ?? 0) > 0 || (variant.aou_ac ?? 0) > 0;
+        }
+      });
+
+      if (filteredVariants.length === 0) return { value: 0 };
+
+      const totalAc = filteredVariants.reduce((sum, v) => {
+        if (selectedPopulationSource === 'gnomad') {
+          return sum + (v.gnomad_ac ?? 0);
+        } else if (selectedPopulationSource === 'aou') {
+          return sum + (v.aou_ac ?? 0);
+        } else {
+          return sum + (v.gnomad_ac ?? 0) + (v.aou_ac ?? 0);
+        }
+      }, 0);
+
+      return { value: Math.log10(totalAc + 1) / 10, variant: filteredVariants[0] };
+    }
+
+    return { value: 0 };
+  }, [overlayMode, variantData, geneData, selectedDiseaseType, selectedClinicalSig, selectedPopulationSource]);
 
   const handleNucleotideClick = useCallback((nucleotide: Nucleotide) => {
     onNucleotideClick?.(nucleotide);
@@ -69,20 +201,14 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   }, [onNucleotideHover]);
 
   const getVariantInfoForNucleotide = useCallback((nucleotideId: number) => {
-    // Find variants that affect this nucleotide position
     const relevantVariants = variantData.filter(variant => {
-      // Handle both clinical variants (with position) and SGE variants (with nucleotidePosition)
       if (variant.nucleotidePosition !== undefined && variant.nucleotidePosition !== null) {
-        // SGE variant - direct nucleotide mapping
         return variant.nucleotidePosition === nucleotideId;
       } else if (variant.position) {
-        // Clinical variant - convert genomic position to nucleotide (strand-aware)
         let nucleotidePos: number;
         if (geneData.strand === '-') {
-          // Reverse strand: nucleotide_pos = gene_end - genomic_pos + 1
           nucleotidePos = geneData.end - variant.position + 1;
         } else {
-          // Forward strand: nucleotide_pos = genomic_pos - gene_start + 1
           nucleotidePos = variant.position - geneData.start + 1;
         }
         return nucleotidePos === nucleotideId;
@@ -91,13 +217,10 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
     });
 
     const relevantGnomadVariants = gnomadVariants.filter(variant => {
-      // gnomAD variants also use genomic positions, convert to nucleotide (strand-aware)
       let nucleotidePos: number;
       if (geneData.strand === '-') {
-        // Reverse strand: nucleotide_pos = gene_end - genomic_pos + 1
         nucleotidePos = geneData.end - variant.position + 1;
       } else {
-        // Forward strand: nucleotide_pos = genomic_pos - gene_start + 1
         nucleotidePos = variant.position - geneData.start + 1;
       }
       return nucleotidePos === nucleotideId;
@@ -110,27 +233,24 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   }, [variantData, gnomadVariants, geneData]);
 
   const getOverlayColor = (nucleotide: Nucleotide): string => {
-    const value = getOverlayValue(overlayData, nucleotide.id);
+    const { value } = getFilteredOverlayValue(nucleotide.id);
     if (!value) return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
     
     if (overlayMode === 'clinvar') {
-      // ClinVar coloring: colorblind-friendly palette
-      if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC;      // red for pathogenic
-      if (value === 0.75) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC; // darker red for likely pathogenic
-      if (value === 0.5) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN;        // green for benign
-      if (value === 0.25) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS;          // amber for VUS
+      if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC;
+      if (value === 0.75) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC;
+      if (value === 0.125) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN;
+      if (value === 0.5) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN;
+      if (value === 0.25) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS;
       return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
     } else if (overlayMode === 'gnomad') {
-      // Continuous color scale for gnomAD (colorblind-friendly blue gradient)
       return generateGnomadColorWithAlpha(value);
     } else if (overlayMode === 'function_score') {
-      // Function score coloring: continuous color scale
       return getFunctionScoreColor(value);
     } else if (overlayMode === 'depletion_group') {
-      // Depletion group coloring: discrete categories
-      if (value === 3) return COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG;       // strong = 3
-      if (value === 2) return COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE;     // moderate = 2
-      if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL;       // normal = 1
+      if (value === 3) return COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG;
+      if (value === 2) return COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE;
+      if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL;
       return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
     }
     
@@ -188,22 +308,44 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   }, []);
 
   const saveAsPNG = useCallback(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !svgRef.current) return;
     
-    domtoimage.toPng(containerRef.current)
-      .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = 'rna-structure.png';
-        link.click();
-      })
-      .catch((error) => {
-        console.error('Error generating PNG:', error);
-      });
+    const svgElement = svgRef.current;
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgElement);
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const img = new Image();
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    
+    img.onload = () => {
+      const viewBox = svgElement.viewBox.baseVal;
+      const svgWidth = viewBox.width || 1000;
+      const svgHeight = viewBox.height || 1000;
+      
+      canvas.width = svgWidth * 2;
+      canvas.height = svgHeight * 2;
+      ctx.scale(2, 2);
+      
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+      
+      URL.revokeObjectURL(url);
+      
+      const pngUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = 'rna-structure.png';
+      link.href = pngUrl;
+      link.click();
+    };
+    
+    img.src = url;
   }, []);
-
-  const [show3D, setShow3D] = useState(false);
-  const [showStructuralFeatures, setShowStructuralFeatures] = useState(true);
 
   return (
     <div className="rna-viewer space-y-4">
@@ -273,15 +415,53 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
               <ToggleGroupItem value="clinvar" className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-blue-50 data-[state=on]:border-blue-200 data-[state=on]:text-blue-700">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                  Variants
+                  <span>Clinical Variants</span>
                 </div>
               </ToggleGroupItem>
+              {overlayMode === 'clinvar' && diseaseTypes.length > 0 && (
+                <>
+                  <Select value={selectedDiseaseType} onValueChange={setSelectedDiseaseType}>
+                    <SelectTrigger className="h-8 w-[140px] text-xs border-slate-200">
+                      <SelectValue placeholder="Disease Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Diseases</SelectItem>
+                      {diseaseTypes.map(disease => (
+                        <SelectItem key={disease} value={disease}>{disease}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedClinicalSig} onValueChange={setSelectedClinicalSig}>
+                    <SelectTrigger className="h-8 w-[120px] text-xs border-slate-200">
+                      <SelectValue placeholder="Significance" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {clinicalSignificances.map(sig => (
+                        <SelectItem key={sig} value={sig}>{sig}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
               <ToggleGroupItem value="gnomad" className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-indigo-50 data-[state=on]:border-indigo-200 data-[state=on]:text-indigo-700">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                  gnomAD
+                  <span>Population Variants</span>
                 </div>
               </ToggleGroupItem>
+              {overlayMode === 'gnomad' && (
+                <Select value={selectedPopulationSource} onValueChange={setSelectedPopulationSource}>
+                  <SelectTrigger className="h-8 w-[140px] text-xs border-slate-200">
+                    <SelectValue placeholder="Source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sources</SelectItem>
+                    <SelectItem value="gnomad">gnomAD v4.1</SelectItem>
+                    <SelectItem value="aou">All of Us</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <ToggleGroupItem value="function_score" className="h-9 px-3 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 data-[state=on]:bg-emerald-50 data-[state=on]:border-emerald-200 data-[state=on]:text-emerald-700">
                 <div className="flex items-center gap-1.5">
                   <BarChart3 className="h-3 w-3" />

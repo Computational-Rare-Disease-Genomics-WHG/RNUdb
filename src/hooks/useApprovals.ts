@@ -103,5 +103,28 @@ export function useApprovals() {
     }
   }, []);
 
-  return { submitChange, listChanges, reviewChange, loading, error };
+  const applyChange = useCallback(async (
+    changeId: number
+  ): Promise<PendingChange | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/approvals/${changeId}/apply`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Failed to apply change');
+      }
+      return await res.json();
+    } catch (err: any) {
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { submitChange, listChanges, reviewChange, applyChange, loading, error };
 }

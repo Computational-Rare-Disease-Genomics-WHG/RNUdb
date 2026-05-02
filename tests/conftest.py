@@ -75,6 +75,7 @@ def create_test_db(db_path=":memory:"):
         consequence TEXT,
         clinvar_significance TEXT,
         clinical_significance TEXT,
+        disease_type TEXT,
         pmid TEXT,
         function_score REAL,
         pvalues REAL,

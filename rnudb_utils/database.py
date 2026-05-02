@@ -57,6 +57,7 @@ def create_database() -> sqlite3.Connection:
         consequence TEXT,
         clinvar_significance TEXT,
         clinical_significance TEXT,
+        disease_type TEXT,
         pmid TEXT,
         function_score REAL,
         pvalues REAL,
@@ -282,7 +283,7 @@ def insert_variants(variants_data: List[Dict[str, Any]]) -> None:
     Args:
         variants_data: List of variant dictionaries with keys:
             id, geneId, position, nucleotidePosition, ref, alt, hgvs, consequence,
-            clinvar_significance, clinical_significance, pmid, function_score,
+            clinvar_significance, clinical_significance, disease_type, pmid, function_score,
             pvalues, qvalues, depletion_group, gnomad_ac, gnomad_hom,
             aou_ac, aou_hom, ukbb_ac, ukbb_hom, cadd_score, zygosity, cohort
     """
@@ -294,10 +295,10 @@ def insert_variants(variants_data: List[Dict[str, Any]]) -> None:
             """
             INSERT OR REPLACE INTO variants (
                 id, geneId, position, nucleotidePosition, ref, alt, hgvs, consequence,
-                clinvar_significance, clinical_significance, pmid, function_score,
+                clinvar_significance, clinical_significance, disease_type, pmid, function_score,
                 pvalues, qvalues, depletion_group, gnomad_ac, gnomad_hom,
                 aou_ac, aou_hom, ukbb_ac, ukbb_hom, cadd_score, zygosity, cohort
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 variant["id"],
@@ -310,6 +311,7 @@ def insert_variants(variants_data: List[Dict[str, Any]]) -> None:
                 variant.get("consequence"),
                 variant.get("clinvar_significance"),
                 variant.get("clinical_significance"),
+                variant.get("disease_type"),
                 variant.get("pmid"),
                 variant.get("function_score"),
                 variant.get("pvalues"),

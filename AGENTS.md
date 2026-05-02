@@ -63,3 +63,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+
+## Important guidelines
+
+- Ensure to run python scripts through `uv run` etc. for tests and running what not. 
+- You can run the server using `npm run dev`
+- Before committing, run `npm run build` to ensure the frontend builds successfully
+- After any code changes, run `uv run pytest` to ensure all tests pass
+- Commit regularly after creating a new feature or a fulfilling a request
+- Ensure before commiting to update the documentation in README, `docs/` and the API page in `src/pages/APIDocs.tsx` (this is only applicable to publically available unauthenticated APIs, don't update for private or unauthenticated and restricted APIs)
+- Ensure to use a consistent design system, here we use font Barlow, ensure to check components for consistency across the application, components need to be polymorphic where applicable.

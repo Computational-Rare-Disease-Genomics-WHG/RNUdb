@@ -23,6 +23,52 @@ import {
   Settings
 } from 'lucide-react';
 
+const NavigationFlow: React.FC = () => (
+  <svg viewBox="0 0 500 120" className="w-full max-w-2xl mx-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#0d9488" />
+        <stop offset="25%" stopColor="#0d9488" />
+        <stop offset="50%" stopColor="#3b82f6" />
+        <stop offset="75%" stopColor="#3b82f6" />
+        <stop offset="100%" stopColor="#8b5cf6" />
+      </linearGradient>
+    </defs>
+    
+    <g transform="translate(30, 35)">
+      <rect width="70" height="50" rx="6" fill="#f0fdf4" stroke="#22c55e" strokeWidth="1.5"/>
+      <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#166534">Home</text>
+      <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#166534">Gene List</text>
+    </g>
+    <path d="M100 60 L130 60" stroke="url(#navGrad)" strokeWidth="2"/>
+    <polygon points="130,55 140,60 130,65" fill="#0d9488"/>
+    
+    <g transform="translate(140, 35)">
+      <rect width="70" height="50" rx="6" fill="#d1fae5" stroke="#22c55e" strokeWidth="1.5"/>
+      <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#166534">Gene Page</text>
+      <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#166534">Structure</text>
+    </g>
+    <path d="M210 60 L240 60" stroke="url(#navGrad)" strokeWidth="2"/>
+    <polygon points="240,55 250,60 240,65" fill="#0d9488"/>
+    
+    <g transform="translate(250, 35)">
+      <rect width="70" height="50" rx="6" fill="#dbeafe" stroke="#3b82f6" strokeWidth="1.5"/>
+      <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#1e40af">Variant</text>
+      <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#1e40af">Details</text>
+    </g>
+    <path d="M320 60 L350 60" stroke="url(#navGrad)" strokeWidth="2"/>
+    <polygon points="350,55 360,60 350,65" fill="#3b82f6"/>
+    
+    <g transform="translate(360, 35)">
+      <rect width="70" height="50" rx="6" fill="#ede9fe" stroke="#8b5cf6" strokeWidth="1.5"/>
+      <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#6d28d9">Literature</text>
+      <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#6d28d9">References</text>
+    </g>
+    
+    <text x="250" y="105" textAnchor="middle" fontSize="9" fill="#64748b">Browse genes → View structure → Select variant → Read papers</text>
+  </svg>
+);
+
 const HowToUse: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -438,7 +484,22 @@ const HowToUse: React.FC = () => {
             <div className="space-y-6">
               <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Main Navigation</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Navigation className="h-5 w-5 text-teal-600" />
+                    Site Navigation Flow
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-slate-600">
+                    RNUdb follows a consistent navigation pattern from gene selection to variant analysis.
+                  </p>
+                  <NavigationFlow />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Page Routes</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">

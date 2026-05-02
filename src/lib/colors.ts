@@ -25,6 +25,15 @@ export const COLORBLIND_FRIENDLY_PALETTE = {
     HIGH: '#1E3A8A',     // Very dark blue
   },
   
+  // All of Us frequency colors (purple gradient - colorblind safe, distinct from gnomAD)
+  ALLOFUS: {
+    LOW: '#EDE9FE',      // Very light purple
+    MEDIUM_LOW: '#C4B5FD', // Light purple
+    MEDIUM: '#8B5CF6',    // Purple
+    MEDIUM_HIGH: '#6D28D9', // Dark purple
+    HIGH: '#4C1D95',     // Very dark purple
+  },
+  
   // DNA bases (colorblind-friendly with good contrast)
   DNA_BASES: {
     A: '#E11D48',  // Rose - red family but distinguishable
