@@ -1,0 +1,16 @@
+{
+  "id": "rnu4-2-test",
+  "geneId": "RNU4-2",
+  "name": "RNU4-2 Test Structure",
+  "nucleotides": [
+    {"id": 1, "base": "A", "x": 100.0, "y": 100.0},
+    {"id": 2, "base": "U", "x": 110.0, "y": 100.0},
+    {"id": 3, "base": "G", "x": 120.0, "y": 100.0},
+    {"id": 4, "base": "C", "x": 130.0, "y": 100.0}
+  ],
+  "basePairs": [
+    {"from": 1, "to": 4}
+  ],
+  "annotations": [],
+  "structuralFeatures": []
+}

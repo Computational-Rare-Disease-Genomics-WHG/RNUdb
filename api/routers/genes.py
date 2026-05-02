@@ -1,10 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pathlib import Path
-from typing import List
-from rnudb_utils.database import get_db_connection
+from typing import List, Optional
+from rnudb_utils.database import get_db_connection, audit_log
+from api.routers.auth import require_admin
 from ..models import (
     SnRNAGene,
+    GeneCreate,
+    GeneUpdate,
     Variant,
     Literature,
     RNAStructure,
@@ -54,6 +57,118 @@ async def get_gene(gene_id: str):
         gene = SnRNAGene(**dict(row))
         conn.close()
         return gene
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/genes", response_model=SnRNAGene)
+async def create_gene(gene: GeneCreate, request: Request):
+    """Create a new gene (curator only)"""
+    user = require_admin(request)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if gene already exists
+        cursor.execute("SELECT id FROM genes WHERE id = ?", (gene.id,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=409, detail=f"Gene {gene.id} already exists")
+
+        cursor.execute(
+            """
+            INSERT INTO genes (id, name, fullName, chromosome, start, end, strand, sequence, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (gene.id, gene.name, gene.fullName, gene.chromosome, gene.start, gene.end, gene.strand, gene.sequence, gene.description),
+        )
+        conn.commit()
+
+        # Log audit
+        audit_log("genes", gene.id, "CREATE", None, gene.dict(), user["github_login"])
+
+        conn.close()
+        return SnRNAGene(**gene.dict())
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/genes/{gene_id}", response_model=SnRNAGene)
+async def update_gene(gene_id: str, gene: GeneUpdate, request: Request):
+    """Update an existing gene (curator only)"""
+    user = require_admin(request)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if gene exists
+        cursor.execute("SELECT * FROM genes WHERE id = ?", (gene_id,))
+        existing = cursor.fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Gene not found")
+
+        old_values = dict(existing)
+
+        # Build update query dynamically
+        updates = []
+        params = []
+        for field, value in gene.dict(exclude_unset=True).items():
+            updates.append(f"{field} = ?")
+            params.append(value)
+        if not updates:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        params.append(gene_id)
+        cursor.execute(
+            f"UPDATE genes SET {', '.join(updates)} WHERE id = ?",
+            params,
+        )
+        conn.commit()
+
+        # Log audit
+        audit_log("genes", gene_id, "UPDATE", old_values, gene.dict(exclude_unset=True), user["github_login"])
+
+        # Fetch updated gene
+        cursor.execute("SELECT * FROM genes WHERE id = ?", (gene_id,))
+        updated = cursor.fetchone()
+        conn.close()
+        return SnRNAGene(**dict(updated))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/genes/{gene_id}")
+async def delete_gene(gene_id: str, request: Request):
+    """Delete a gene and all associated data (curator only)"""
+    user = require_admin(request)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if gene exists
+        cursor.execute("SELECT * FROM genes WHERE id = ?", (gene_id,))
+        existing = cursor.fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Gene not found")
+
+        old_values = dict(existing)
+
+        # Delete associated data
+        cursor.execute("DELETE FROM variants WHERE geneId = ?", (gene_id,))
+        cursor.execute("DELETE FROM rna_structures WHERE geneId = ?", (gene_id,))
+        cursor.execute("DELETE FROM genes WHERE id = ?", (gene_id,))
+        conn.commit()
+
+        # Log audit
+        audit_log("genes", gene_id, "DELETE", old_values, None, user["github_login"])
+
+        conn.close()
+        return {"message": f"Gene {gene_id} deleted"}
     except HTTPException:
         raise
     except Exception as e:
@@ -235,6 +350,38 @@ async def get_gene_structure(gene_id: str):
 
         conn.close()
         return structure
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/genes/{gene_id}/structures/{structure_id}")
+async def delete_gene_structure(gene_id: str, structure_id: str, request: Request):
+    """Delete a specific RNA structure (curator only)"""
+    user = require_admin(request)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM rna_structures WHERE id = ? AND geneId = ?", (structure_id, gene_id))
+        existing = cursor.fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Structure not found")
+
+        old_values = dict(existing)
+
+        cursor.execute("DELETE FROM structural_features WHERE structure_id = ?", (structure_id,))
+        cursor.execute("DELETE FROM annotations WHERE structure_id = ?", (structure_id,))
+        cursor.execute("DELETE FROM base_pairs WHERE structure_id = ?", (structure_id,))
+        cursor.execute("DELETE FROM nucleotides WHERE structure_id = ?", (structure_id,))
+        cursor.execute("DELETE FROM rna_structures WHERE id = ? AND geneId = ?", (structure_id, gene_id))
+        conn.commit()
+
+        audit_log("rna_structures", structure_id, "DELETE", old_values, None, user["github_login"])
+
+        conn.close()
+        return {"message": f"Structure {structure_id} deleted"}
     except HTTPException:
         raise
     except Exception as e:

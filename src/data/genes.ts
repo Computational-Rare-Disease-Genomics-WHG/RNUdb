@@ -4,8 +4,8 @@ import type { SnRNAGene } from '../types';
 
 export const getAllSnRNAIds = async (): Promise<string[]> => {
   try {
-    const genes = await getAllGenes();
-    return genes.map(gene => gene.id);
+    const genes: SnRNAGene[] = await getAllGenes();
+    return genes.map((gene: SnRNAGene) => gene.id);
   } catch (error) {
     console.error('Error fetching gene IDs:', error);
     return ['RNU4-2']; // Fallback
