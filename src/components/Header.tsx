@@ -78,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4 flex-1 mx-4">
             {isLoggedIn && user && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 {isAdmin && (
                   <Button
                     variant="ghost"
@@ -131,21 +131,23 @@ const Header: React.FC<HeaderProps> = ({
                 >
                   Search
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate('/api-docs')}
-                  className="text-teal-600 hover:bg-teal-50 shrink-0"
-                >
-                  <FileCode className="h-4 w-4 mr-1" />
-                  API
-                </Button>
               </div>
             )}
           </nav>
 
-          {/* Auth buttons */}
-          <div className="flex items-center gap-3">
+          {/* Right side: API + Auth */}
+          <div className="hidden md:flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/api-docs')}
+              className="text-teal-600 hover:bg-teal-50"
+            >
+              <FileCode className="h-4 w-4 mr-1" />
+              API
+            </Button>
+            
+            {/* Auth buttons */}
             {authLoading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600" />
             ) : isLoggedIn && user ? (
@@ -155,7 +157,7 @@ const Header: React.FC<HeaderProps> = ({
                     {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
                     <AvatarFallback><User className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-foreground">{user.name}</span>
+                  <span className="text-sm font-medium text-foreground hidden lg:block">{user.name}</span>
                 </div>
                 <Button variant="outline" size="sm" onClick={logout}>
                   <LogOut className="h-4 w-4 mr-1" />
@@ -191,6 +193,56 @@ const Header: React.FC<HeaderProps> = ({
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-slate-200">
             <nav className="flex flex-col space-y-2">
+              <Button
+                variant="ghost"
+                onClick={() => { navigate('/'); setIsMobileMenuOpen(false); }}
+                className="justify-start"
+              >
+                <Dna className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+              {isLoggedIn && user && (
+                <>
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/admin'); setIsMobileMenuOpen(false); }}
+                      className="justify-start"
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin
+                    </Button>
+                  )}
+                  {(user.role === 'curator' || user.role === 'admin') && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        onClick={() => { navigate('/curate'); setIsMobileMenuOpen(false); }}
+                        className="justify-start"
+                      >
+                        <Database className="h-4 w-4 mr-2" />
+                        Curate
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => { navigate('/editor'); setIsMobileMenuOpen(false); }}
+                        className="justify-start"
+                      >
+                        <Edit3 className="h-4 w-4 mr-2" />
+                        Editor
+                      </Button>
+                    </>
+                  )}
+                </>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => { navigate('/api-docs'); setIsMobileMenuOpen(false); }}
+                className="justify-start"
+              >
+                <FileCode className="h-4 w-4 mr-2" />
+                API Docs
+              </Button>
             </nav>
           </div>
         )}

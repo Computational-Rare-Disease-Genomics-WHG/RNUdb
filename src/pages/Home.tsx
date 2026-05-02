@@ -45,17 +45,17 @@ const Home: React.FC = () => {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
       
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center space-x-4 mb-6">
-            <div className="p-4 bg-teal-600 rounded-xl shadow-lg">
-              <Dna className="h-12 w-12 text-white" />
+      <div className="container mx-auto px-4 py-16 flex-1">
+        <div className="text-center mb-8 sm:mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+            <div className="p-3 sm:p-4 bg-teal-600 rounded-xl shadow-lg">
+              <Dna className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
             </div>
-            <h1 className="text-6xl font-bold text-teal-600 tracking-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-teal-600 tracking-tight">
               RNUdb
             </h1>
           </div>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
             A comprehensive database for RNA structure visualization and analysis.
             Explore RNA sequences, variants, and clinical data with interactive tools.
           </p>
