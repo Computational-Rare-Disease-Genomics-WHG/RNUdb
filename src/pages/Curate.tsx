@@ -63,6 +63,30 @@ const Curate: React.FC = () => {
   const [literature, setLiterature] = useState<any[]>([]);
   const [structures, setStructures] = useState<any[]>([]);
   const [bedTracks, setBedTracks] = useState<any[]>([]);
+
+  // Transform flat BED API rows into nested tracks for BEDTrackViewer
+  const nestedBedTracks = React.useMemo(() => {
+    const grouped = new Map<string, { id: string; geneId: string; name: string; intervals: any[] }>();
+    for (const row of bedTracks) {
+      if (!grouped.has(row.track_name)) {
+        grouped.set(row.track_name, {
+          id: row.id,
+          geneId: row.geneId,
+          name: row.track_name,
+          intervals: [],
+        });
+      }
+      grouped.get(row.track_name)!.intervals.push({
+        chrom: row.chrom,
+        start: row.interval_start,
+        end: row.interval_end,
+        name: row.label,
+        score: row.score,
+        strand: undefined,
+      });
+    }
+    return Array.from(grouped.values());
+  }, [bedTracks]);
   const [loading, setLoading] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set());
   const [showVariantImport, setShowVariantImport] = useState(false);
@@ -619,13 +643,7 @@ const Curate: React.FC = () => {
 
               {/* Variants Tab */}
               <TabsContent value="variants" className="mt-0">
-                {selectedGene && variants.length > 0 && (
-                  <CuratorVariantTrack
-                    variants={variants}
-                    title={`${selectedGene.name} Variants`}
-                  />
-                )}
-                <Card className="border-slate-200 shadow-sm">
+                <Card className="bg-white border border-slate-200 shadow-sm">
                   <div className="p-6 border-b border-slate-100">
                     <div className="flex items-center justify-between">
                       <div>
@@ -669,6 +687,14 @@ const Curate: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  {selectedGene && variants.length > 0 && (
+                    <div className="border-b border-slate-100">
+                      <CuratorVariantTrack
+                        variants={variants}
+                        title={`${selectedGene.name} Variants`}
+                      />
+                    </div>
+                  )}
                   <CardContent className="p-0">
                     {loading ? (
                       <div className="p-6 space-y-3">
@@ -694,13 +720,15 @@ const Curate: React.FC = () => {
                         </Button>
                       </div>
                     ) : (
-                      <VariantTable
-                        data={variants}
-                        selectedVariants={selectedVariants}
-                        onToggleVariant={toggleVariantSelection}
-                        onEdit={handleEditVariant}
-                        getClinicalSigColor={getClinicalSigColor}
-                      />
+                      <div className="p-4 sm:p-6">
+                        <VariantTable
+                          data={variants}
+                          selectedVariants={selectedVariants}
+                          onToggleVariant={toggleVariantSelection}
+                          onEdit={handleEditVariant}
+                          getClinicalSigColor={getClinicalSigColor}
+                        />
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -708,7 +736,7 @@ const Curate: React.FC = () => {
 
               {/* Structures Tab */}
               <TabsContent value="structures" className="mt-0">
-                <Card className="border-slate-200 shadow-sm">
+                <Card className="bg-white border border-slate-200 shadow-sm">
                   <div className="p-6 border-b border-slate-100">
                     <div className="flex items-center justify-between">
                       <div>
@@ -782,7 +810,7 @@ const Curate: React.FC = () => {
 
               {/* Literature Tab */}
               <TabsContent value="literature" className="mt-0">
-                <Card className="border-slate-200 shadow-sm">
+                <Card className="bg-white border border-slate-200 shadow-sm">
                   <div className="p-6 border-b border-slate-100">
                     <div className="flex items-center justify-between">
                       <div>
@@ -865,7 +893,7 @@ const Curate: React.FC = () => {
               </TabsContent>
               {/* BED Tracks Tab */}
               <TabsContent value="bedtracks" className="mt-0">
-                <Card className="border-slate-200 shadow-sm">
+                <Card className="bg-white border border-slate-200 shadow-sm">
                   <div className="p-6 border-b border-slate-100">
                     <div className="flex items-center justify-between">
                       <div>
@@ -905,7 +933,7 @@ const Curate: React.FC = () => {
                     ) : (
                       <div className="space-y-6">
                         <BEDTrackViewer
-                          tracks={bedTracks}
+                          tracks={nestedBedTracks}
                           geneStart={selectedGene?.start || 0}
                           geneEnd={selectedGene?.end || 0}
                         />

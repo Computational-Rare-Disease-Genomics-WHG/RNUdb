@@ -244,7 +244,7 @@ export function VariantTable({
   const clinicalSigs = ['Pathogenic', 'Likely Pathogenic', 'VUS', 'Likely Benign', 'Benign'];
 
   return (
-    <div className="space-y-4">
+    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 space-y-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1">
@@ -254,7 +254,7 @@ export function VariantTable({
               placeholder="Search variants..."
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-9 h-9 bg-white"
             />
           </div>
           <Select
@@ -263,10 +263,10 @@ export function VariantTable({
               table.getColumn('clinical_significance')?.setFilterValue(value === 'all' ? undefined : value)
             }
           >
-            <SelectTrigger className="w-[180px] h-9">
+            <SelectTrigger className="w-[180px] h-9 bg-white">
               <SelectValue placeholder="All Significance" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               <SelectItem value="all">All Significance</SelectItem>
               {clinicalSigs.map((sig) => (
                 <SelectItem key={sig} value={sig}>
@@ -304,13 +304,13 @@ export function VariantTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="border border-slate-200 rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-slate-100/80 border-b-2 border-slate-200">
+              <TableRow key={headerGroup.id} className="bg-slate-50 border-b border-slate-200">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="py-2 px-3 sm:py-3 sm:px-4 border-b-2 border-slate-200">
+                  <TableHead key={header.id} className="py-3 px-4 text-left font-semibold text-xs text-slate-600 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
                     <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                       {header.isPlaceholder
                         ? null
@@ -327,11 +327,11 @@ export function VariantTable({
                 <TableRow
                   key={row.id}
                   className={`group transition-colors border-b border-slate-100 ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
-                  } hover:bg-teal-50/40`}
+                    index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                  } hover:bg-teal-50`}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-2 px-3 sm:py-3 sm:px-4">
+                    <TableCell key={cell.id} className="py-3 px-4">
                       <div className="text-sm">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </div>
