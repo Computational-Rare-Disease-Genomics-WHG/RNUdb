@@ -36,7 +36,7 @@ import GeneForm from '../components/Curate/GeneForm';
 import VariantForm from '../components/Curate/VariantForm';
 import { VariantTable } from '../components/Curate/VariantTable';
 import { BEDTrackViewer } from '../components/Curate/BEDTrackViewer';
-import { GnomADVariantViewer } from '../components/Curate/GnomADVariantViewer';
+import { CuratorVariantTrack } from '../components/Curate/CuratorVariantTrack';
 import {
   Dialog,
   DialogContent,
