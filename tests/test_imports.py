@@ -200,7 +200,11 @@ class TestBEDTrackAPI:
         assert isinstance(data, list)
 
     def test_delete_nonexistent_track(self, test_client):
-        """DELETE non-existent track should return 404."""
+        """DELETE non-existent track returns 401 when unauthenticated (requires admin)."""
         response = test_client.delete("/api/bed-tracks/99999")
-        
-        assert response.status_code == 404
+        assert response.status_code == 401
+
+    def test_delete_bed_track_unauthenticated(self, test_client):
+        """DELETE bed track returns 401 when unauthenticated."""
+        response = test_client.delete("/api/bed-tracks/1")
+        assert response.status_code == 401
