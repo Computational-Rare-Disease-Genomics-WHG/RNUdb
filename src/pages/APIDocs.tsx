@@ -189,6 +189,52 @@ const ENDPOINTS: Endpoint[] = [
     exampleResponse: [
       { id: 'track-1', geneId: 'RNU4-2', track_name: 'Conservation', chrom: '12', interval_start: 120291760, interval_end: 120291800, score: 0.85, label: 'PhastCons' }
     ]
+  },
+  {
+    id: 'gene-pdb',
+    category: 'Genes',
+    method: 'GET',
+    path: '/api/genes/{geneId}/pdb',
+    description: 'Get PDB structure file for a gene. Returns structural data in PDB format for visualization. Currently available for RNU4-2. Public endpoint.',
+    parameters: [
+      { name: 'geneId', type: 'string', required: true, description: 'Gene ID (e.g., RNU4-2)' }
+    ],
+    exampleResponse: {
+      message: 'PDB file for RNU4-2 structural data'
+    }
+  },
+  {
+    id: 'gene-literature',
+    category: 'Genes',
+    method: 'GET',
+    path: '/api/genes/{geneId}/literature',
+    description: 'Get all literature entries associated with a specific gene. Returns research papers that cite variants in the specified gene. Public endpoint.',
+    parameters: [
+      { name: 'geneId', type: 'string', required: true, description: 'Gene ID' }
+    ],
+    exampleResponse: [
+      { id: 'lit-1', title: 'Pathogenic variants in RNU4-2 cause a syndrome', authors: 'Smith et al.', journal: 'Nature Genetics', year: '2024', doi: '10.1038/s41588-024-1234-5' }
+    ]
+  },
+  {
+    id: 'variants-disease-types',
+    category: 'Variants',
+    method: 'GET',
+    path: '/api/variants/disease-types',
+    description: 'Get all distinct disease type values from variants in the database. Useful for filtering variants by disease association. Public endpoint.',
+    exampleResponse: [
+      'ReNU syndrome', 'Retinitis Pigmentosa', 'NDD'
+    ]
+  },
+  {
+    id: 'variants-clinical-significances',
+    category: 'Variants',
+    method: 'GET',
+    path: '/api/variants/clinical-significances',
+    description: 'Get all distinct clinical significance values from variants. Returns ACMG classification categories (Pathogenic, Likely Pathogenic, VUS, etc.). Public endpoint.',
+    exampleResponse: [
+      'Pathogenic', 'Likely Pathogenic', 'VUS', 'Likely Benign', 'Benign'
+    ]
   }
 ];
 
@@ -293,24 +339,24 @@ const categories = [...new Set(ENDPOINTS.map(e => e.category))];
 
       <div className="max-w-7xl mx-auto px-4 py-8 w-full flex-1">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 bg-white border border-slate-200 p-1 rounded-xl">
+          <TabsList className="mb-6 bg-slate-100 p-1 rounded-lg">
             <TabsTrigger 
               value="endpoints"
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg px-4 py-2"
+              className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
             >
               <FileCode className="h-4 w-4 mr-2" />
               Endpoints
             </TabsTrigger>
             <TabsTrigger 
               value="guides"
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg px-4 py-2"
+              className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
             >
               <BookOpen className="h-4 w-4 mr-2" />
               Guides
             </TabsTrigger>
             <TabsTrigger 
               value="rate-limiting"
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg px-4 py-2"
+              className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
             >
               <Clock className="h-4 w-4 mr-2" />
               Rate Limits

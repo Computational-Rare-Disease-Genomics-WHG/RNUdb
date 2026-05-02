@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { RegionViewer, PositionAxisTrack } from '@gnomad/region-viewer';
+import '@/components/GenomeBrowser/GenomeBrowser.css';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,7 +38,7 @@ import GeneForm from '../components/Curate/GeneForm';
 import VariantForm from '../components/Curate/VariantForm';
 import { VariantTable } from '../components/Curate/VariantTable';
 import { BEDTrackViewer } from '../components/Curate/BEDTrackViewer';
-import { CuratorVariantTrack } from '../components/Curate/CuratorVariantTrack';
+import CuratorVariantTrack from '../components/Curate/CuratorVariantTrack';
 import {
   Dialog,
   DialogContent,
@@ -99,7 +101,20 @@ const Curate: React.FC = () => {
   const [editingGene, setEditingGene] = useState<any>(null);
   const [editingVariant, setEditingVariant] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const regionViewerRef = useRef<HTMLDivElement>(null);
+  const [regionViewerWidth, setRegionViewerWidth] = useState(800);
   const { submitChange } = useApprovals();
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (regionViewerRef.current) {
+        setRegionViewerWidth(regionViewerRef.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -530,10 +545,10 @@ const Curate: React.FC = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-6 bg-white border-2 border-slate-200 p-1.5 rounded-xl h-auto gap-1">
+              <TabsList className="mb-6 bg-slate-100 p-1 rounded-lg">
                 <TabsTrigger 
                   value="variants" 
-                  className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Variants
@@ -543,7 +558,7 @@ const Curate: React.FC = () => {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="structures"
-                  className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                 >
                   <Layers className="h-4 w-4 mr-2" />
                   Structures
@@ -553,7 +568,7 @@ const Curate: React.FC = () => {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="literature"
-                  className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                 >
                   <BookOpen className="h-4 w-4 mr-2" />
                   Literature
@@ -563,7 +578,7 @@ const Curate: React.FC = () => {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="bedtracks"
-                  className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                 >
                   <DnaIcon className="h-4 w-4 mr-2" />
                   BED Tracks
@@ -620,11 +635,24 @@ const Curate: React.FC = () => {
                     </div>
                   </div>
                   {selectedGene && variants.length > 0 && (
-                    <div className="px-6 pt-4">
-                      <CuratorVariantTrack
-                        variants={variants}
-                        title={`${selectedGene.name} Variants`}
-                      />
+                    <div className="px-6 pb-4">
+                      <div className="text-xs text-slate-500 mb-2 px-1">
+                        {selectedGene.name}: {selectedGene.start.toLocaleString()} – {selectedGene.end.toLocaleString()}
+                      </div>
+                      <div ref={regionViewerRef} className="genome-browser-viewer w-full">
+                        <RegionViewer
+                          regions={[{ start: selectedGene.start, stop: selectedGene.end }]}
+                          width={regionViewerWidth}
+                          leftPanelWidth={80}
+                          rightPanelWidth={0}
+                        >
+                          <PositionAxisTrack />
+                          <CuratorVariantTrack
+                            variants={variants}
+                            title={selectedGene.name}
+                          />
+                        </RegionViewer>
+                      </div>
                     </div>
                   )}
                   {loading ? (

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Dna, Menu, X, Database, LogIn, LogOut, Shield, User, FileCode, Edit3 } from 'lucide-react';
+import { Dna, Menu, X, Database, LogIn, LogOut, Shield, User, FileCode, Edit3, Stethoscope, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -135,8 +135,17 @@ const Header: React.FC<HeaderProps> = ({
             )}
           </nav>
 
-          {/* Right side: API + Auth */}
+          {/* Right side: API + Clinical + Auth */}
           <div className="hidden md:flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/clinical-interpretation')}
+              className="text-teal-600 hover:bg-teal-50"
+            >
+              <Stethoscope className="h-4 w-4 mr-1" />
+              Clinical Interpretation
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -145,6 +154,15 @@ const Header: React.FC<HeaderProps> = ({
             >
               <FileCode className="h-4 w-4 mr-1" />
               API
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/how-to-use')}
+              className="text-teal-600 hover:bg-teal-50"
+            >
+              <BookOpen className="h-4 w-4 mr-1" />
+              How to Use
             </Button>
             
             {/* Auth buttons */}
@@ -237,11 +255,27 @@ const Header: React.FC<HeaderProps> = ({
               )}
               <Button
                 variant="ghost"
+                onClick={() => { navigate('/clinical-interpretation'); setIsMobileMenuOpen(false); }}
+                className="justify-start"
+              >
+                <Stethoscope className="h-4 w-4 mr-2" />
+                Clinical Interpretation
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => { navigate('/api-docs'); setIsMobileMenuOpen(false); }}
                 className="justify-start"
               >
                 <FileCode className="h-4 w-4 mr-2" />
                 API Docs
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => { navigate('/how-to-use'); setIsMobileMenuOpen(false); }}
+                className="justify-start"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                How to Use
               </Button>
             </nav>
           </div>

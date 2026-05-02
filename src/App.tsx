@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import Admin from './pages/Admin';
 import Curate from './pages/Curate';
 import APIDocs from './pages/APIDocs';
+import ClinicalInterpretation from './pages/ClinicalInterpretation';
+import HowToUse from './pages/HowToUse';
 
 function ProtectedEditor() {
   const { isCurator, isLoading } = useAuth();
@@ -27,6 +29,8 @@ function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/curate" element={<Curate />} />
           <Route path="/api-docs" element={<APIDocs />} />
+          <Route path="/clinical-interpretation" element={<ClinicalInterpretation />} />
+          <Route path="/how-to-use" element={<HowToUse />} />
         </Routes>
       </Router>
     </AuthProvider>
