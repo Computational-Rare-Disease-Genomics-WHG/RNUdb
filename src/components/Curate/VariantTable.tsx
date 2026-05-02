@@ -244,7 +244,7 @@ export function VariantTable({
   const clinicalSigs = ['Pathogenic', 'Likely Pathogenic', 'VUS', 'Likely Benign', 'Benign'];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 space-y-4">
+    <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1">

@@ -107,7 +107,7 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header showSearch={false} />
 
       <div className="max-w-7xl mx-auto px-4 py-6 pt-12 flex-1 w-full">
@@ -122,15 +122,15 @@ const Admin: React.FC = () => {
         </div>
 
         <Tabs defaultValue="approvals">
-          <TabsList className="mb-6">
-            <TabsTrigger value="approvals" className="flex items-center gap-2">
+          <TabsList className="mb-6 bg-slate-100 p-1.5 rounded-xl">
+            <TabsTrigger value="approvals" className="px-5 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm transition-all">
               <Clock className="h-4 w-4" />
               Pending Approvals
               {pendingApprovals.length > 0 && (
                 <Badge variant="secondary" className="ml-1">{pendingApprovals.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
+            <TabsTrigger value="users" className="px-5 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm transition-all">
               <Users className="h-4 w-4" />
               Users
             </TabsTrigger>
@@ -159,7 +159,7 @@ const Admin: React.FC = () => {
                 ) : (
                   <div className="space-y-3">
                     {pendingApprovals.map((change) => (
-                      <div key={change.id} className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors">
+                      <div key={change.id} className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors shadow-sm">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">

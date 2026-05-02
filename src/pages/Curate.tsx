@@ -42,6 +42,7 @@ import {
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useApprovals } from '@/hooks/useApprovals';
 
 interface Gene {
   id: string;
@@ -98,6 +99,7 @@ const Curate: React.FC = () => {
   const [editingGene, setEditingGene] = useState<any>(null);
   const [editingVariant, setEditingVariant] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { submitChange } = useApprovals();
 
   useEffect(() => {
     if (isLoading) return;
@@ -188,35 +190,18 @@ const Curate: React.FC = () => {
     if (!selectedGene || selectedVariants.size === 0) return;
     if (!confirm(`Delete ${selectedVariants.size} selected variants? This action cannot be undone.`)) return;
     
-    try {
-      const promises = Array.from(selectedVariants).map(id =>
-        fetch(`/api/variants/${id}`, { method: 'DELETE', credentials: 'include' })
-      );
-      await Promise.all(promises);
-      setSelectedVariants(new Set());
-      await loadGeneData(selectedGene.id);
-    } catch (error) {
-      alert('Failed to delete variants');
+    for (const id of Array.from(selectedVariants)) {
+      await submitChange('variant', selectedGene.id, 'delete', { id }, id);
     }
+    setSelectedVariants(new Set());
+    alert('Delete request submitted for approval');
   };
 
   const handleCreateLiterature = async (data: any) => {
     try {
-      const res = await fetch('/api/literature', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        setShowLiteratureForm(false);
-        if (selectedGene) {
-          await loadGeneData(selectedGene.id);
-        }
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to create literature');
-      }
+      await submitChange('literature', selectedGene?.id || '', 'create', data);
+      setShowLiteratureForm(false);
+      alert('Literature submission submitted for approval');
     } catch (error) {
       alert('Network error');
     }
@@ -232,22 +217,10 @@ const Curate: React.FC = () => {
   const handleUpdateLiterature = async (data: any) => {
     if (!editingLiterature) return;
     try {
-      const res = await fetch(`/api/literature/${editingLiterature.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        setShowLiteratureForm(false);
-        setEditingLiterature(null);
-        if (selectedGene) {
-          await loadGeneData(selectedGene.id);
-        }
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to update literature');
-      }
+      await submitChange('literature', selectedGene?.id || '', 'update', data, editingLiterature.id);
+      setShowLiteratureForm(false);
+      setEditingLiterature(null);
+      alert('Literature update submitted for approval');
     } catch (error) {
       alert('Network error');
     }
@@ -256,16 +229,8 @@ const Curate: React.FC = () => {
   const handleDeleteStructure = async (structureId: string) => {
     if (!selectedGene || !confirm(`Are you sure you want to delete this structure?`)) return;
     try {
-      const res = await fetch(`/api/genes/${selectedGene.id}/structures/${structureId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        await loadGeneData(selectedGene.id);
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to delete structure');
-      }
+      await submitChange('structure', selectedGene.id, 'delete', { id: structureId }, structureId);
+      alert('Structure delete submitted for approval');
     } catch (error) {
       alert('Network error');
     }
@@ -274,16 +239,8 @@ const Curate: React.FC = () => {
   const handleDeleteBedTrack = async (trackId: string) => {
     if (!confirm(`Delete this BED track? This cannot be undone.`)) return;
     try {
-      const res = await fetch(`/api/bed-tracks/${trackId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (res.ok && selectedGene) {
-        await loadGeneData(selectedGene.id);
-      } else if (!res.ok) {
-        const err = await res.json();
-        alert(err.detail || 'Failed to delete BED track');
-      }
+      await submitChange('bed_track', selectedGene?.id || '', 'delete', { id: trackId }, trackId);
+      alert('BED track delete submitted for approval');
     } catch (error) {
       alert('Network error');
     }
@@ -321,27 +278,11 @@ const Curate: React.FC = () => {
   const handleUpdateGene = async (data: any) => {
     if (!editingGene) return;
     try {
-      const res = await fetch(`/api/genes/${editingGene.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        const updatedGene = await res.json();
-        setSelectedGene({
-          id: updatedGene.id,
-          name: updatedGene.name,
-          chromosome: updatedGene.chromosome,
-          start: updatedGene.start,
-          end: updatedGene.end,
-        });
+      const result = await submitChange('gene', editingGene.id, 'update', data, editingGene.id);
+      if (result) {
         setShowGeneForm(false);
         setEditingGene(null);
-        await loadGenes();
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to update gene');
+        alert('Gene update submitted for approval');
       }
     } catch (error) {
       alert('Network error');
@@ -350,27 +291,12 @@ const Curate: React.FC = () => {
 
   const handleCreateGene = async (data: any) => {
     try {
-      const res = await fetch('/api/genes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        const newGene = await res.json();
+      const result = await submitChange('gene', '', 'create', data);
+      if (result) {
         setShowGeneForm(false);
         setEditingGene(null);
         await loadGenes();
-        setSelectedGene({
-          id: newGene.id,
-          name: newGene.name,
-          chromosome: newGene.chromosome,
-          start: newGene.start,
-          end: newGene.end,
-        });
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to create gene');
+        alert('Gene creation submitted for approval');
       }
     } catch (error) {
       alert('Network error');
@@ -385,19 +311,11 @@ const Curate: React.FC = () => {
   const handleCreateVariant = async (data: any) => {
     if (!selectedGene) return;
     try {
-      const res = await fetch('/api/variants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ ...data, geneId: selectedGene.id }),
-      });
-      if (res.ok) {
+      const result = await submitChange('variant', selectedGene.id, 'create', { ...data, geneId: selectedGene.id });
+      if (result) {
         setShowVariantForm(false);
         setEditingVariant(null);
-        await loadGeneData(selectedGene.id);
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to create variant');
+        alert('Variant creation submitted for approval');
       }
     } catch (error) {
       alert('Network error');
@@ -407,19 +325,11 @@ const Curate: React.FC = () => {
   const handleUpdateVariant = async (data: any) => {
     if (!editingVariant || !selectedGene) return;
     try {
-      const res = await fetch(`/api/variants/${editingVariant.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
+      const result = await submitChange('variant', selectedGene.id, 'update', data, editingVariant.id);
+      if (result) {
         setShowVariantForm(false);
         setEditingVariant(null);
-        await loadGeneData(selectedGene.id);
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Failed to update variant');
+        alert('Variant update submitted for approval');
       }
     } catch (error) {
       alert('Network error');
@@ -710,49 +620,45 @@ const Curate: React.FC = () => {
                     </div>
                   </div>
                   {selectedGene && variants.length > 0 && (
-                    <div className="border-b border-slate-100">
+                    <div className="px-6 pt-4">
                       <CuratorVariantTrack
                         variants={variants}
                         title={`${selectedGene.name} Variants`}
                       />
                     </div>
                   )}
-                  <CardContent className="p-0">
-                    {loading ? (
-                      <div className="p-6 space-y-3">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Skeleton key={i} className="h-12 w-full" />
-                        ))}
+                  {loading ? (
+                    <div className="p-6 space-y-3">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Skeleton key={i} className="h-12 w-full" />
+                      ))}
+                    </div>
+                  ) : variants.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
+                        <FileText className="h-8 w-8 text-slate-400" />
                       </div>
-                    ) : variants.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
-                          <FileText className="h-8 w-8 text-slate-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">No variants yet</h3>
-                        <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                          This gene doesn't have any variants. Import a CSV file to add variants.
-                        </p>
-                        <Button
-                          onClick={() => setShowVariantImport(true)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white"
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Import Variants
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="p-4 sm:p-6">
-                        <VariantTable
-                          data={variants}
-                          selectedVariants={selectedVariants}
-                          onToggleVariant={toggleVariantSelection}
-                          onEdit={handleEditVariant}
-                          getClinicalSigColor={getClinicalSigColor}
-                        />
-                      </div>
-                    )}
-                  </CardContent>
+                      <h3 className="text-lg font-semibold text-slate-900 mb-2">No variants yet</h3>
+                      <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                        This gene doesn't have any variants. Import a CSV file to add variants.
+                      </p>
+                      <Button
+                        onClick={() => setShowVariantImport(true)}
+                        className="bg-teal-600 hover:bg-teal-700 text-white"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Import Variants
+                      </Button>
+                    </div>
+                  ) : (
+                    <VariantTable
+                      data={variants}
+                      selectedVariants={selectedVariants}
+                      onToggleVariant={toggleVariantSelection}
+                      onEdit={handleEditVariant}
+                      getClinicalSigColor={getClinicalSigColor}
+                    />
+                  )}
                 </Card>
               </TabsContent>
 

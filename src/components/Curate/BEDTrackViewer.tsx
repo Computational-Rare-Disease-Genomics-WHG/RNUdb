@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dna, Trash2, Tag } from 'lucide-react';
+import { Trash2, Tag, Palette } from 'lucide-react';
 import { getScoreColor } from '@/lib/colors';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +36,17 @@ interface BEDTrackViewerProps {
   onAnnotateInterval?: (trackId: string, interval: BEDInterval, annotation: string) => void;
 }
 
+const TRACK_PALETTES = [
+  { id: 'teal', name: 'Teal', color: '#0d9488' },
+  { id: 'blue', name: 'Blue', color: '#2563eb' },
+  { id: 'purple', name: 'Purple', color: '#7c3aed' },
+  { id: 'amber', name: 'Amber', color: '#f59e0b' },
+  { id: 'rose', name: 'Rose', color: '#e11d48' },
+  { id: 'emerald', name: 'Emerald', color: '#059669' },
+  { id: 'slate', name: 'Slate', color: '#64748b' },
+  { id: 'cyan', name: 'Cyan', color: '#06b6d4' },
+];
+
 export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
   tracks,
   geneStart,
@@ -45,6 +56,8 @@ export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
 }) => {
   const [annotating, setAnnotating] = useState<{ track: BEDTrack; interval: BEDInterval } | null>(null);
   const [annotationText, setAnnotationText] = useState('');
+  const [editingColor, setEditingColor] = useState<BEDTrack | null>(null);
+  const [selectedPalette, setSelectedPalette] = useState('');
 
   const handleAnnotate = (track: BEDTrack, interval: BEDInterval) => {
     setAnnotating({ track, interval });
@@ -59,114 +72,150 @@ export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
     setAnnotationText('');
   };
 
+  const handleEditColor = (track: BEDTrack) => {
+    setEditingColor(track);
+    setSelectedPalette(track.color || 'teal');
+  };
+
+  const handleSaveColor = () => {
+    if (editingColor) {
+      const palette = TRACK_PALETTES.find(p => p.id === selectedPalette);
+      if (palette && onAnnotateInterval) {
+        onAnnotateInterval(editingColor.id, { start: 0, end: 0, chrom: '' } as BEDInterval, `__color__:${palette.color}`);
+      }
+    }
+    setEditingColor(null);
+  };
+
   if (!tracks.length) return null;
 
   const geneLength = geneEnd - geneStart;
   const getScale = (pos: number) => ((pos - geneStart) / geneLength) * 100;
 
+  const hasScores = (intervals: BEDInterval[]) => intervals.some(i => i.score !== null && i.score !== undefined);
+
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Dna className="h-5 w-5 text-teal-600" />
-          <h3 className="text-lg font-semibold text-slate-900">BED Track Visualization</h3>
-        </div>
-        <div className="text-sm text-slate-500">
-          {tracks.length} track{tracks.length > 1 ? 's' : ''}
-        </div>
-      </div>
+    <div className="space-y-6">
+      {tracks.map((track) => {
+        const intervals = track.intervals ?? [];
+        if (!intervals.length) return null;
+        const trackColor = track.color || '#0d9488';
+        const hasScoreData = hasScores(intervals);
+        const scoreMin = hasScoreData ? Math.min(...intervals.filter(i => i.score != null).map(i => i.score!)) : 0;
+        const scoreMax = hasScoreData ? Math.max(...intervals.filter(i => i.score != null).map(i => i.score!)) : 1;
 
-      <div className="space-y-6">
-        {tracks.map((track) => {
-          const intervals = track.intervals ?? [];
-          if (!intervals.length) return null;
-          const trackColor = track.color || '#0d9488';
-
-          return (
-            <div key={track.id} className="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: trackColor }}
-                  />
-                  <span className="font-medium text-slate-900">{track.name}</span>
-                  <span className="text-xs text-slate-400">({intervals.length} intervals)</span>
-                </div>
+        return (
+          <div key={track.id} className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <span
+                  className="w-4 h-4 rounded-full shadow-sm"
+                  style={{ backgroundColor: trackColor }}
+                />
+                <span className="font-semibold text-slate-900 text-lg">{track.name}</span>
+                <span className="text-sm text-slate-400">({intervals.length} intervals)</span>
+                {hasScoreData && (
+                  <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-full">
+                    Score track
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditColor(track)}
+                  className="h-8 w-8 p-0 text-slate-400 hover:text-purple-600 hover:bg-purple-50"
+                  title="Change color"
+                >
+                  <Palette className="h-4 w-4" />
+                </Button>
                 {onDeleteTrack && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onDeleteTrack(track.id)}
                     className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                    title="Delete track"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
               </div>
-
-              <div className="relative h-16 bg-white rounded-lg overflow-hidden border border-slate-100">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="absolute left-0 right-0 h-1 bg-slate-200" />
-                </div>
-                <div className="absolute bottom-0 left-0 text-[10px] text-slate-400 px-1">
-                  {geneStart.toLocaleString()}
-                </div>
-                <div className="absolute bottom-0 right-0 text-[10px] text-slate-400 px-1">
-                  {geneEnd.toLocaleString()}
-                </div>
-
-                {intervals.map((interval, i) => {
-                  const startPct = getScale(interval.start);
-                  const endPct = getScale(interval.end);
-                  const width = Math.max(endPct - startPct, 0.5);
-                  const barColor = interval.score !== null && interval.score !== undefined
-                    ? getScoreColor(interval.score, trackColor)
-                    : trackColor;
-
-                  return (
-                    <div
-                      key={i}
-                      className="absolute h-8 top-4 rounded cursor-pointer hover:brightness-110 transition-all group"
-                      style={{
-                        left: `${startPct}%`,
-                        width: `${width}%`,
-                        backgroundColor: barColor,
-                      }}
-                      onClick={() => handleAnnotate(track, interval)}
-                      title={`${interval.chrom}:${interval.start.toLocaleString()}-${interval.end.toLocaleString()}${interval.score !== undefined ? ` (score: ${interval.score})` : ''}${interval.name ? ` - ${interval.name}` : ''}`}
-                    >
-                      {width > 5 && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-[9px] text-white font-medium truncate px-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {interval.score}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: trackColor, opacity: 0.4 }} />
-                  <span>Low score</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: trackColor, opacity: 0.7 }} />
-                  <span>Med score</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: trackColor, opacity: 1 }} />
-                  <span>High score</span>
-                </div>
-                <span className="ml-auto text-slate-400">Click bar to annotate</span>
-              </div>
             </div>
-          );
-        })}
-      </div>
+
+            <div className="relative h-20 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+              <div className="absolute inset-0 flex items-center">
+                <div className="absolute left-0 right-0 h-1 bg-slate-200" />
+              </div>
+              <div className="absolute bottom-0 left-0 text-[10px] text-slate-400 px-1">
+                {geneStart.toLocaleString()}
+              </div>
+              <div className="absolute bottom-0 right-0 text-[10px] text-slate-400 px-1">
+                {geneEnd.toLocaleString()}
+              </div>
+
+              {intervals.map((interval, i) => {
+                const startPct = getScale(interval.start);
+                const endPct = getScale(interval.end);
+                const width = Math.max(endPct - startPct, 0.5);
+                const barColor = interval.score !== null && interval.score !== undefined
+                  ? getScoreColor(interval.score, trackColor)
+                  : trackColor;
+
+                return (
+                  <div
+                    key={i}
+                    className="absolute h-10 top-5 rounded cursor-pointer hover:brightness-110 transition-all group"
+                    style={{
+                      left: `${startPct}%`,
+                      width: `${width}%`,
+                      backgroundColor: barColor,
+                    }}
+                    onClick={() => handleAnnotate(track, interval)}
+                    title={`${interval.chrom}:${interval.start.toLocaleString()}-${interval.end.toLocaleString()}${interval.score !== undefined ? ` (score: ${interval.score.toFixed(3)})` : ''}${interval.name ? ` - ${interval.name}` : ''}`}
+                  >
+                    {width > 5 && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[9px] text-white font-medium truncate px-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {interval.score?.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              {hasScoreData ? (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">Score range:</span>
+                    <span className="text-xs font-mono text-slate-700">{scoreMin.toFixed(2)} – {scoreMax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400">Low</span>
+                    <div className="w-24 h-2 rounded-full overflow-hidden flex">
+                      <div className="w-1/4" style={{ backgroundColor: trackColor, opacity: 0.3 }} />
+                      <div className="w-1/4" style={{ backgroundColor: trackColor, opacity: 0.5 }} />
+                      <div className="w-1/4" style={{ backgroundColor: trackColor, opacity: 0.75 }} />
+                      <div className="w-1/4" style={{ backgroundColor: trackColor, opacity: 1 }} />
+                    </div>
+                    <span className="text-xs text-slate-400">High</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-xs text-slate-400">
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: trackColor }} />
+                  <span>Track color</span>
+                </div>
+              )}
+              <span className="text-xs text-slate-400">Click bar to annotate</span>
+            </div>
+          </div>
+        );
+      })}
 
       <Dialog open={!!annotating} onOpenChange={() => setAnnotating(null)}>
         <DialogContent className="sm:max-w-[400px] bg-white">
@@ -203,6 +252,57 @@ export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
                   className="bg-teal-600 hover:bg-teal-700 text-white"
                 >
                   Save Annotation
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingColor} onOpenChange={() => setEditingColor(null)}>
+        <DialogContent className="sm:max-w-[400px] bg-white">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+              <Palette className="h-5 w-5 text-purple-600" />
+              Change Track Color
+            </DialogTitle>
+          </DialogHeader>
+          {editingColor && (
+            <div className="space-y-4 pt-2">
+              <div className="text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
+                <p><span className="font-medium">Track:</span> {editingColor.name}</p>
+              </div>
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-slate-700">Color Palette</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {TRACK_PALETTES.map((palette) => (
+                    <button
+                      key={palette.id}
+                      onClick={() => setSelectedPalette(palette.id)}
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        selectedPalette === palette.id
+                          ? 'border-teal-500 bg-teal-50'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div
+                        className="w-full h-8 rounded"
+                        style={{ backgroundColor: palette.color }}
+                      />
+                      <span className="text-xs text-slate-600 mt-1 block">{palette.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setEditingColor(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveColor}
+                  className="bg-teal-600 hover:bg-teal-700 text-white"
+                >
+                  Apply Color
                 </Button>
               </div>
             </div>

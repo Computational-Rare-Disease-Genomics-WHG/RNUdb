@@ -33,7 +33,7 @@ const ENDPOINTS: Endpoint[] = [
     category: 'Genes',
     method: 'GET',
     path: '/api/genes',
-    description: 'List all snRNA genes with their genomic coordinates',
+    description: 'List all snRNA genes with their genomic coordinates, names, and basic metadata. Returns an array of gene objects sorted alphabetically by gene ID.',
     exampleResponse: [
       { id: 'RNU4-2', name: 'RNU4-2', chromosome: '12', start: 120291759, end: 120291903 }
     ]
@@ -43,7 +43,7 @@ const ENDPOINTS: Endpoint[] = [
     category: 'Genes',
     method: 'GET',
     path: '/api/genes/{geneId}',
-    description: 'Get comprehensive details for a specific gene including sequence and metadata',
+    description: 'Get comprehensive details for a specific gene including full name, genomic coordinates, strand orientation, DNA sequence, and descriptive information about the gene function.',
     parameters: [
       { name: 'geneId', type: 'string', required: true, description: 'Gene ID (e.g., RNU4-2)' }
     ],
@@ -59,7 +59,7 @@ const ENDPOINTS: Endpoint[] = [
     category: 'Genes',
     method: 'GET',
     path: '/api/genes/{geneId}/variants',
-    description: 'Retrieve all variants associated with a gene',
+    description: 'Retrieve all variants associated with a specific gene. Returns variant data including genomic position, nucleotide changes, clinical significance annotations, gnomAD allele counts, and functional scores.',
     parameters: [
       { name: 'geneId', type: 'string', required: true, description: 'Gene ID' }
     ],
@@ -72,9 +72,43 @@ const ENDPOINTS: Endpoint[] = [
     category: 'Genes',
     method: 'GET',
     path: '/api/genes/{geneId}/structure',
-    description: 'Get RNA secondary structure data for a gene',
+    description: 'Get RNA secondary structure data for a gene, including nucleotide positions, base pairing information, and structural annotations. Data is returned in JSON format compatible with RNA structure visualization tools.',
     parameters: [
       { name: 'geneId', type: 'string', required: true, description: 'Gene ID' }
+    ],
+    exampleResponse: {
+      id: 'RNU4-2',
+      nucleotides: [
+        { id: 1, base: 'A', x: 0, y: 0 },
+        { id: 2, base: 'G', x: 1, y: 0 }
+      ],
+      basePairs: [
+        { nucleotide1: 1, nucleotide2: 144, type: 'canonical' }
+      ],
+      annotations: []
+    }
+  },
+  {
+    id: 'gene-bed-tracks',
+    category: 'Genes',
+    method: 'GET',
+    path: '/api/genes/{geneId}/bed-tracks',
+    description: 'Retrieve all BED annotation tracks associated with a gene. Each track contains genomic intervals with optional score values for visualization. Commonly used for conservation scores, regulatory elements, or experimental data.',
+    parameters: [
+      { name: 'geneId', type: 'string', required: true, description: 'Gene ID' }
+    ],
+    exampleResponse: [
+      { id: 'track-1', geneId: 'RNU4-2', track_name: 'Conservation', chrom: '12', interval_start: 120291760, interval_end: 120291800, score: 0.85, label: 'PhastCons' }
+    ]
+  },
+  {
+    id: 'variants-list',
+    category: 'Variants',
+    method: 'GET',
+    path: '/api/variants',
+    description: 'List all variants in the database across all genes. Returns comprehensive variant information including position, reference/alternate alleles, clinical significance, gnomAD allele counts, and functional annotations.',
+    exampleResponse: [
+      { id: 'chr12-120291785-T-C', geneId: 'RNU4-2', position: 120291785, ref: 'T', alt: 'C', clinical_significance: 'Pathogenic', gnomad_ac: 0 }
     ]
   },
   {
@@ -82,18 +116,106 @@ const ENDPOINTS: Endpoint[] = [
     category: 'Variants',
     method: 'GET',
     path: '/api/variants/{variantId}',
-    description: 'Get detailed information about a specific variant',
+    description: 'Get detailed information about a specific variant including genomic coordinates, nucleotide change, HGVS notation, consequence annotation, clinical significance from ClinVar, population allele counts from gnomAD, All of Us, and UK Biobank, as well as functional scores and p-values.',
     parameters: [
-      { name: 'variantId', type: 'string', required: true, description: 'Variant ID' }
-    ]
+      { name: 'variantId', type: 'string', required: true, description: 'Variant ID (e.g., chr12-120291785-T-C)' }
+    ],
+    exampleResponse: {
+      id: 'chr12-120291785-T-C',
+      geneId: 'RNU4-2',
+      position: 120291785,
+      ref: 'T',
+      alt: 'C',
+      hgvs: 'c.85T>C',
+      consequence: 'missense',
+      clinical_significance: 'Pathogenic',
+      gnomad_ac: 0,
+      gnomad_hom: 0,
+      function_score: -2.847,
+      cadd_score: 28.5
+    }
   },
   {
-    id: 'literature',
+    id: 'literature-list',
     category: 'Literature',
     method: 'GET',
     path: '/api/literature',
-    description: 'List all literature entries associated with variants'
+    description: 'List all literature entries in the database. Each entry includes title, authors, journal, publication year, and DOI linking to the full paper. Literature entries are associated with variants through the literature-counts endpoint.',
+    exampleResponse: [
+      { id: 'lit-1', title: 'Pathogenic variants in RNU4-2 cause a syndrome', authors: 'Smith et al.', journal: 'Nature Genetics', year: '2024', doi: '10.1038/s41588-024-1234-5' }
+    ]
   },
+  {
+    id: 'literature-detail',
+    category: 'Literature',
+    method: 'GET',
+    path: '/api/literature/{literatureId}',
+    description: 'Get detailed information about a specific literature entry by its unique identifier.',
+    parameters: [
+      { name: 'literatureId', type: 'string', required: true, description: 'Literature ID' }
+    ],
+    exampleResponse: {
+      id: 'lit-1',
+      title: 'Pathogenic variants in RNU4-2 cause a syndrome',
+      authors: 'Smith J, Johnson A, Williams B et al.',
+      journal: 'Nature Genetics',
+      year: '2024',
+      doi: '10.1038/s41588-024-1234-5'
+    }
+  },
+  {
+    id: 'literature-counts',
+    category: 'Literature',
+    method: 'GET',
+    path: '/api/literature-counts',
+    description: 'Get counts of literature links per variant. Returns variant-lit literature pairs with the number of times each literature entry is cited for that variant. Useful for understanding which variants have the most literature support.',
+    exampleResponse: [
+      { variant_id: 'chr12-120291785-T-C', literature_id: 'lit-1', counts: 3 }
+    ]
+  },
+  {
+    id: 'bed-tracks',
+    category: 'Annotation Tracks',
+    method: 'GET',
+    path: '/api/bed-tracks',
+    description: 'List all BED annotation tracks in the database. BED tracks contain genomic intervals with optional score values, useful for visualizing conservation scores, regulatory regions, or experimental data across the genome.',
+    exampleResponse: [
+      { id: 'track-1', geneId: 'RNU4-2', track_name: 'Conservation', chrom: '12', interval_start: 120291760, interval_end: 120291800, score: 0.85, label: 'PhastCons' }
+    ]
+  },
+  {
+    id: 'auth-github',
+    category: 'Authentication',
+    method: 'GET',
+    path: '/api/auth/github',
+    description: 'Initiate GitHub OAuth authentication flow. Redirects to GitHub for authorization. After the user authorizes, they are redirected back to the application with a code parameter.',
+    exampleResponse: { redirect: 'https://github.com/login/oauth/authorize?client_id=...' }
+  },
+  {
+    id: 'auth-callback',
+    category: 'Authentication',
+    method: 'GET',
+    path: '/api/auth/callback',
+    description: 'OAuth callback endpoint handling the response from GitHub after user authorization. Exchanges the authorization code for an access token and creates or updates the user session.',
+    parameters: [
+      { name: 'code', type: 'string', required: true, description: 'Authorization code from GitHub' },
+      { name: 'state', type: 'string', required: true, description: 'CSRF state parameter for security' }
+    ]
+  },
+  {
+    id: 'auth-me',
+    category: 'Authentication',
+    method: 'GET',
+    path: '/api/auth/me',
+    description: 'Get the currently authenticated user information. Returns the user\'s GitHub login, name, email, avatar URL, and role (admin, curator, or pending). Returns 401 if not authenticated.',
+    exampleResponse: {
+      github_login: 'exampleuser',
+      name: 'Example User',
+      email: 'user@example.com',
+      avatar_url: 'https://avatars.githubusercontent.com/u/12345',
+      role: 'curator'
+    }
+  }
 ];
 
 const methodColors: Record<string, { bg: string; text: string; border: string }> = {
