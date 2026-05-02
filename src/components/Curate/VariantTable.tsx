@@ -310,10 +310,12 @@ export function VariantTable({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-slate-100/80 border-b-2 border-slate-200">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="py-3 border-b-2 border-slate-200">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  <TableHead key={header.id} className="py-2 px-3 sm:py-3 sm:px-4 border-b-2 border-slate-200">
+                    <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </div>
                   </TableHead>
                 ))}
               </TableRow>
@@ -329,8 +331,10 @@ export function VariantTable({
                   } hover:bg-teal-50/40`}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    <TableCell key={cell.id} className="py-2 px-3 sm:py-3 sm:px-4">
+                      <div className="text-sm">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>
