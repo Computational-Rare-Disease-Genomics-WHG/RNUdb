@@ -563,7 +563,7 @@ const categories = [...new Set(ENDPOINTS.map(e => e.category))];
           <TabsContent value="guides">
             <div className="space-y-6">
               {/* Getting Started */}
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-teal-600" />
@@ -592,7 +592,7 @@ curl "https://rnudb.rarediseasegenomics.org/api/genes/RNU4-2/structure"`}
               </Card>
 
               {/* Usage Policies */}
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Scale className="h-5 w-5 text-teal-600" />
@@ -653,7 +653,7 @@ curl "https://rnudb.rarediseasegenomics.org/api/genes/RNU4-2/structure"`}
               </Card>
 
               {/* Bash Scripting Guide */}
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TerminalIcon className="h-5 w-5 text-teal-600" />
@@ -723,7 +723,7 @@ ls -la "\${OUTPUT_DIR}/\${GENE}_"*`}</pre>
               </Card>
 
               {/* Python Pipeline Guide */}
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Code className="h-5 w-5 text-teal-600" />
@@ -881,7 +881,7 @@ if __name__ == "__main__":
               </Card>
 
               {/* Data Format Guide */}
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-teal-600" />
@@ -967,7 +967,7 @@ if __name__ == "__main__":
               </Card>
 
               {/* R Integration Guide */}
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Code className="h-5 w-5 text-teal-600" />
@@ -1017,7 +1017,7 @@ print(paste("Found", nrow(pathogenic), "pathogenic variants"))`}</pre>
 
           <TabsContent value="rate-limiting">
             <div className="space-y-6">
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-teal-600" />
@@ -1051,9 +1051,12 @@ print(paste("Found", nrow(pathogenic), "pathogenic variants"))`}</pre>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Best Practices for API Usage</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-teal-600" />
+                    Best Practices for API Usage
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="bg-slate-950 rounded-lg p-4">
@@ -1089,9 +1092,12 @@ done`}</pre>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Response Headers</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Server className="h-5 w-5 text-teal-600" />
+                    Response Headers
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <table className="w-full text-sm">
@@ -1127,9 +1133,12 @@ done`}</pre>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Error Handling</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-teal-600" />
+                    Error Handling
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">

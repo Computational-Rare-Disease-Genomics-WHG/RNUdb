@@ -163,41 +163,6 @@ export function VariantTable({
       ),
     },
     {
-      accessorKey: 'cohort',
-      header: 'Cohort',
-      cell: ({ row }) => (
-        <span className="text-sm text-slate-500">{row.getValue('cohort') || '-'}</span>
-      ),
-    },
-    {
-      accessorKey: 'function_score',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="h-8 -ml-3 font-bold text-slate-600"
-        >
-          Function Score
-          {column.getIsSorted() === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> :
-           column.getIsSorted() === 'desc' ? <ArrowDown className="ml-1 h-3 w-3" /> :
-           <ArrowUpDown className="ml-1 h-3 w-3" />}
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const score = row.getValue('function_score') as number | null;
-        return (
-          <span className={`text-sm font-medium ${
-            score !== null && score !== undefined
-              ? score < 0 ? 'text-red-600' : score > 0 ? 'text-emerald-600' : 'text-slate-600'
-              : 'text-slate-400'
-          }`}>
-            {score !== null && score !== undefined ? score.toFixed(3) : '-'}
-          </span>
-        );
-      },
-    },
-    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (

@@ -122,16 +122,16 @@ const Admin: React.FC = () => {
         </div>
 
         <Tabs defaultValue="approvals">
-          <TabsList className="mb-6 bg-slate-100 p-1.5 rounded-xl">
-            <TabsTrigger value="approvals" className="px-5 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm transition-all">
-              <Clock className="h-4 w-4" />
+          <TabsList className="mb-6 bg-white border border-slate-200 p-1.5 rounded-xl h-auto gap-1">
+            <TabsTrigger value="approvals" className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+              <Clock className="h-4 w-4 mr-2" />
               Pending Approvals
               {pendingApprovals.length > 0 && (
-                <Badge variant="secondary" className="ml-1">{pendingApprovals.length}</Badge>
+                <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-600">{pendingApprovals.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="users" className="px-5 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm transition-all">
-              <Users className="h-4 w-4" />
+            <TabsTrigger value="users" className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+              <Users className="h-4 w-4 mr-2" />
               Users
             </TabsTrigger>
           </TabsList>

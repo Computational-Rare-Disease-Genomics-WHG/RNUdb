@@ -11,20 +11,38 @@ export const CuratorVariantTrack: React.FC<CuratorVariantTrackProps> = ({
   variants,
   title = 'Clinical Variants'
 }) => {
+  console.log('[CuratorVariantTrack] Received variants:', variants);
+  console.log('[CuratorVariantTrack] Variants count:', variants?.length);
+  
   const trackVariants = React.useMemo(() => {
-    if (!variants || variants.length === 0) return [];
+    if (!variants || variants.length === 0) {
+      console.log('[CuratorVariantTrack] No variants to process');
+      return [];
+    }
     
-    return variants
+    console.log('[CuratorVariantTrack] Processing variants, input length:', variants.length);
+    
+    const processed = variants
       .filter(variant => {
-        if (!variant) return false;
+        if (!variant) {
+          console.log('[CuratorVariantTrack] Filtered out: null/undefined variant');
+          return false;
+        }
         const pos = variant.position;
-        if (pos === undefined || pos === null || pos === '') return false;
+        if (pos === undefined || pos === null || pos === '') {
+          console.log('[CuratorVariantTrack] Filtered out: invalid position', pos, 'for variant', variant.id);
+          return false;
+        }
         const numPos = Number(pos);
-        return !isNaN(numPos);
+        if (isNaN(numPos)) {
+          console.log('[CuratorVariantTrack] Filtered out: position is NaN', pos, 'for variant', variant.id);
+          return false;
+        }
+        return true;
       })
       .map((variant, index) => {
         const sig = variant.clinical_significance || 'VUS';
-        return {
+        const transformed = {
           variant_id: `clinvar-${variant.id || index}`,
           pos: Number(variant.position),
           ref: variant.ref || '',
@@ -34,10 +52,21 @@ export const CuratorVariantTrack: React.FC<CuratorVariantTrackProps> = ({
           clinical_significance: sig,
           isHighlighted: sig === 'Pathogenic' || sig === 'Likely Pathogenic' || sig === 'LP' || sig === 'PATH'
         };
+        console.log('[CuratorVariantTrack] Transformed variant:', transformed);
+        return transformed;
       });
+    
+    console.log('[CuratorVariantTrack] Processed variants count:', processed.length);
+    return processed;
   }, [variants]);
 
-  if (trackVariants.length === 0) return null;
+  console.log('[CuratorVariantTrack] trackVariants length:', trackVariants.length);
+  console.log('[CuratorVariantTrack] First few trackVariants:', trackVariants.slice(0, 3));
+
+  if (trackVariants.length === 0) {
+    console.log('[CuratorVariantTrack] Returning null - no track variants');
+    return null;
+  }
 
   return (
     <div className="w-full">
@@ -45,7 +74,10 @@ export const CuratorVariantTrack: React.FC<CuratorVariantTrackProps> = ({
         title={`${title} (${trackVariants.length})`}
         height={60}
         variants={trackVariants}
-        variantColor={(variant: any) => getClinvarColor(variant.clinical_significance || 'VUS')}
+        variantColor={(variant: any) => {
+          console.log('[CuratorVariantTrack] variantColor called for:', variant);
+          return getClinvarColor(variant.clinical_significance || 'VUS');
+        }}
       />
     </div>
   );
