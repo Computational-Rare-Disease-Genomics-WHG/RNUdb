@@ -1,10 +1,9 @@
-"""BED track API endpoints."""
-
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from typing import List
 
 from api.models import BEDTrack
-from rnudb_utils.database import get_db_connection
+from api.routers.auth import require_admin
+from rnudb_utils.database import get_db_connection, audit_log
 
 router = APIRouter(tags=["bed-tracks"])
 
@@ -73,8 +72,9 @@ async def get_all_bed_tracks():
 
 
 @router.delete("/bed-tracks/{track_id}")
-async def delete_bed_track(track_id: int):
-    """Delete a BED track by ID."""
+async def delete_bed_track(track_id: int, request: Request):
+    """Delete a BED track by ID (admin only)."""
+    user = require_admin(request)
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -85,8 +85,12 @@ async def delete_bed_track(track_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail=f"BED track {track_id} not found")
     
+    old_values = dict(row)
     cursor.execute("DELETE FROM bed_tracks WHERE id = ?", (track_id,))
     conn.commit()
+    
+    audit_log("bed_tracks", track_id, "DELETE", old_values, None, user["github_login"])
+    
     conn.close()
     
     return {"success": True, "message": f"BED track {track_id} deleted"}

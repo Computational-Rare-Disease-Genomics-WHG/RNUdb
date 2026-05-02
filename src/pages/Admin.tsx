@@ -107,7 +107,7 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header showSearch={false} />
 
       <div className="max-w-7xl mx-auto px-4 py-6 pt-12 flex-1 w-full">

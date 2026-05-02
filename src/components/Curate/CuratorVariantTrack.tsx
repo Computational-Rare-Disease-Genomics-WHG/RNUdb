@@ -11,39 +11,43 @@ export const CuratorVariantTrack: React.FC<CuratorVariantTrackProps> = ({
   variants,
   title = 'Clinical Variants'
 }) => {
-  if (!variants?.length) return null;
+  const trackVariants = React.useMemo(() => {
+    if (!variants || variants.length === 0) return [];
+    
+    return variants
+      .filter(variant => {
+        if (!variant) return false;
+        const pos = variant.position;
+        if (pos === undefined || pos === null || pos === '') return false;
+        const numPos = Number(pos);
+        return !isNaN(numPos);
+      })
+      .map((variant, index) => {
+        const sig = variant.clinical_significance || 'VUS';
+        return {
+          variant_id: `clinvar-${variant.id || index}`,
+          pos: Number(variant.position),
+          ref: variant.ref || '',
+          alt: variant.alt || '',
+          allele_freq: (variant.gnomad_ac || 0) / 1000000,
+          consequence: variant.consequence || 'unknown',
+          clinical_significance: sig,
+          isHighlighted: sig === 'Pathogenic' || sig === 'Likely Pathogenic' || sig === 'LP' || sig === 'PATH'
+        };
+      });
+  }, [variants]);
 
-  const trackVariants = variants
-    .filter(variant =>
-      variant.position &&
-      typeof variant.position === 'number'
-    )
-    .map((variant, index) => {
-      const sig = variant.clinical_significance || 'unknown';
-      return {
-        variant_id: `curator-${variant.id}-${index}`,
-        pos: variant.position,
-        ref: variant.ref || '',
-        alt: variant.alt || '',
-        allele_freq: (variant.gnomad_ac || 0) / 1000000,
-        consequence: variant.consequence || 'unknown',
-        clinical_significance: sig,
-        isHighlighted: sig === 'Pathogenic' ||
-                     sig === 'Likely Pathogenic' ||
-                     sig === 'PATH' ||
-                     sig === 'LP'
-      };
-    });
-
-  if (!trackVariants.length) return null;
+  if (trackVariants.length === 0) return null;
 
   return (
-    <VariantTrack
-      title={`${title} (${trackVariants.length} variants)`}
-      height={60}
-      variants={trackVariants}
-      variantColor={(variant: any) => getClinvarColor(variant.clinical_significance || 'unknown')}
-    />
+    <div className="w-full">
+      <VariantTrack
+        title={`${title} (${trackVariants.length})`}
+        height={60}
+        variants={trackVariants}
+        variantColor={(variant: any) => getClinvarColor(variant.clinical_significance || 'VUS')}
+      />
+    </div>
   );
 };
 

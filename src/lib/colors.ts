@@ -111,14 +111,27 @@ export const getScoreColor = (score: number | null | undefined, baseColor?: stri
   if (score === null || score === undefined) {
     return baseColor || COLORBLIND_FRIENDLY_PALETTE.PRIMARY;
   }
-  const clampedScore = Math.max(0, Math.min(1000, score));
-  const intensity = clampedScore / 1000;
+  
   const base = baseColor || '#0d9488';
   const r = parseInt(base.slice(1, 3), 16);
   const g = parseInt(base.slice(3, 5), 16);
   const b = parseInt(base.slice(5, 7), 16);
+  
+  // If score is 0 or negative, use minimum opacity
+  if (score <= 0) {
+    return `rgba(${r}, ${g}, ${b}, 0.3)`;
+  }
+  
+  // For positive scores, normalize to 0.3-1.0 range using log scale for better visualization
   const minOpacity = 0.3;
-  const opacity = minOpacity + intensity * (1 - minOpacity);
+  const maxOpacity = 1.0;
+  
+  // Use log scale to handle potentially large score values
+  const logScore = Math.log10(score + 1);
+  const logMax = Math.log10(1000 + 1); // Normalize to a reference max of 1000
+  const intensity = Math.min(logScore / logMax, 1.0);
+  
+  const opacity = minOpacity + intensity * (maxOpacity - minOpacity);
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 

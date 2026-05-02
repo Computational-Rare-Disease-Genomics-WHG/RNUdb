@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
 from rnudb_utils.database import get_db_connection, audit_log
-from api.routers.auth import require_curator
+from api.routers.auth import require_admin
 from ..models import Variant, LiteratureCounts, VariantCreate, VariantUpdate
 
 router = APIRouter()
@@ -43,7 +43,7 @@ async def get_variant(variant_id: str):
 @router.post("/variants", response_model=Variant)
 async def create_variant(variant: VariantCreate, request: Request):
     """Create a new variant (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -77,7 +77,7 @@ async def create_variant(variant: VariantCreate, request: Request):
 @router.put("/variants/{variant_id}", response_model=Variant)
 async def update_variant(variant_id: str, variant: VariantUpdate, request: Request):
     """Update a variant (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -110,7 +110,7 @@ async def update_variant(variant_id: str, variant: VariantUpdate, request: Reque
 @router.delete("/variants/{variant_id}")
 async def delete_variant(variant_id: str, request: Request):
     """Delete a variant (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()

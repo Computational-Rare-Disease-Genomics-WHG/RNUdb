@@ -27,8 +27,8 @@ const Footer: React.FC = () => {
         </div>
         
         <div className="border-t border-slate-200 mt-3 pt-3 text-center">
-          <p className="text-xs text-muted-foreground">
-            &copy; 2024 Computational Rare Disease Genomics. All rights reserved.
+<p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Computational Rare Disease Genomics. All rights reserved.
           </p>
         </div>
       </div>

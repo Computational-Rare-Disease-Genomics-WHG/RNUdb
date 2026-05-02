@@ -331,7 +331,7 @@ export function VariantTable({
                   } hover:bg-teal-50`}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3 px-4">
+                    <TableCell key={cell.id} className="py-3 px-4 sm:px-6">
                       <div className="text-sm">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </div>

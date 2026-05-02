@@ -19,7 +19,7 @@ from api.services.validation import (
     validate_structure,
     validate_bed_intervals,
 )
-from api.routers.auth import require_curator
+from api.routers.auth import require_admin
 from rnudb_utils.database import (
     get_db_connection,
     insert_variants,
@@ -75,7 +75,7 @@ def _validation_report_to_response(report) -> ValidationReportResponse:
 @router.post("/imports/variants/validate", response_model=ValidationReportResponse)
 async def validate_variant_import(
     request: VariantBatchImportRequest,
-    user: dict = Depends(require_curator)
+    user: dict = Depends(require_admin)
 ):
     """Validate a batch of variants without importing."""
     gene = _get_gene(request.geneId)
@@ -90,7 +90,7 @@ async def validate_variant_import(
 @router.post("/imports/variants/batch", response_model=ImportResult)
 async def import_variant_batch(
     request: VariantBatchImportRequest,
-    user: dict = Depends(require_curator)
+    user: dict = Depends(require_admin)
 ):
     """Import a batch of validated variants."""
     gene = _get_gene(request.geneId)
@@ -174,7 +174,7 @@ async def import_variant_batch(
 @router.post("/imports/structures/validate", response_model=ValidationReportResponse)
 async def validate_structure_import(
     request: StructureImportRequest,
-    user: dict = Depends(require_curator)
+    user: dict = Depends(require_admin)
 ):
     """Validate an RNA structure without importing."""
     gene = _get_gene(request.geneId)
@@ -188,7 +188,7 @@ async def validate_structure_import(
 @router.post("/imports/structures", response_model=ImportResult)
 async def import_structure(
     request: StructureImportRequest,
-    user: dict = Depends(require_curator)
+    user: dict = Depends(require_admin)
 ):
     """Import an RNA structure for a gene."""
     gene = _get_gene(request.geneId)
@@ -241,7 +241,7 @@ async def import_structure(
 @router.post("/imports/bed-tracks/validate", response_model=ValidationReportResponse)
 async def validate_bed_import(
     request: BEDTrackImportRequest,
-    user: dict = Depends(require_curator)
+    user: dict = Depends(require_admin)
 ):
     """Validate BED track intervals without importing."""
     gene = _get_gene(request.geneId)
@@ -255,7 +255,7 @@ async def validate_bed_import(
 @router.post("/imports/bed-tracks", response_model=ImportResult)
 async def import_bed_track(
     request: BEDTrackImportRequest,
-    user: dict = Depends(require_curator)
+    user: dict = Depends(require_admin)
 ):
     """Import a BED track for a gene."""
     gene = _get_gene(request.geneId)

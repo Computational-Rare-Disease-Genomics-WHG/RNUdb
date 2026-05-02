@@ -261,13 +261,20 @@ class TestBEDValidation:
         assert "outside gene bounds" in report.errors[0].message
 
     def test_score_out_of_range(self, sample_gene):
-        """Score > 1000 should fail."""
+        """Score > 1000 should now pass validation - no score cap."""
         intervals = [{"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "score": 1500}]
         report = validate_bed_intervals(intervals, sample_gene)
         
+        assert report.valid is True
+        assert len(report.errors) == 0
+
+    def test_score_negative(self, sample_gene):
+        """Negative score should fail validation."""
+        intervals = [{"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "score": -5}]
+        report = validate_bed_intervals(intervals, sample_gene)
+        
         assert report.valid is False
-        assert len(report.errors) == 1
-        assert "between 0 and 1000" in report.errors[0].message
+        assert len(report.errors) >= 1
 
     def test_negative_start(self, sample_gene):
         """Negative start coordinate should fail."""

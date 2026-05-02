@@ -444,15 +444,16 @@ def validate_bed_intervals(
                     {"start": start, "end": end}
                 ))
         
-        # Validate score if present
+        # Validate score if present - scores can be any numeric value (positive, negative, or fractional)
         score = interval.get("score")
         if score is not None and score != "":
             try:
                 score_val = float(score)
-                if score_val < 0 or score_val > 1000:
+                # Scores should be non-negative
+                if score_val < 0:
                     row_errors.append(ValidationError(
                         i, "score",
-                        f"Score must be between 0 and 1000, got {score_val}",
+                        f"Score must be non-negative, got {score_val}",
                         score_val
                     ))
             except (ValueError, TypeError):

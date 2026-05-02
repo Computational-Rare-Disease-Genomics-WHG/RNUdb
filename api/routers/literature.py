@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from typing import List
 from rnudb_utils.database import get_db_connection, audit_log
-from api.routers.auth import require_curator
+from api.routers.auth import require_admin
 from ..models import Literature, LiteratureCounts, LiteratureCreate, LiteratureUpdate
 
 router = APIRouter()
@@ -43,7 +43,7 @@ async def get_literature(literature_id: str):
 @router.post("/literature", response_model=Literature)
 async def create_literature(lit: LiteratureCreate, request: Request):
     """Create new literature (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -67,7 +67,7 @@ async def create_literature(lit: LiteratureCreate, request: Request):
 @router.put("/literature/{literature_id}", response_model=Literature)
 async def update_literature(literature_id: str, lit: LiteratureUpdate, request: Request):
     """Update literature (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -100,7 +100,7 @@ async def update_literature(literature_id: str, lit: LiteratureUpdate, request: 
 @router.delete("/literature/{literature_id}")
 async def delete_literature(literature_id: str, request: Request):
     """Delete literature (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()

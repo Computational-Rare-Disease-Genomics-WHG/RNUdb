@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Tag, Palette } from 'lucide-react';
+import { Trash2, Tag, Palette, BarChart3, LineChart } from 'lucide-react';
 import { getScoreColor } from '@/lib/colors';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+type DisplayMode = 'bars' | 'line';
 
 interface BEDInterval {
   chrom: string;
@@ -58,6 +60,7 @@ export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
   const [annotationText, setAnnotationText] = useState('');
   const [editingColor, setEditingColor] = useState<BEDTrack | null>(null);
   const [selectedPalette, setSelectedPalette] = useState('');
+  const [displayMode, setDisplayMode] = useState<Record<string, DisplayMode>>({});
 
   const handleAnnotate = (track: BEDTrack, interval: BEDInterval) => {
     setAnnotating({ track, interval });
@@ -94,6 +97,110 @@ export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
 
   const hasScores = (intervals: BEDInterval[]) => intervals.some(i => i.score !== null && i.score !== undefined);
 
+  const renderBars = (track: BEDTrack, intervals: BEDInterval[], trackColor: string) => (
+    <div className="relative h-20 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+      <div className="absolute inset-0 flex items-center">
+        <div className="absolute left-0 right-0 h-1 bg-slate-200" />
+      </div>
+      <div className="absolute bottom-0 left-0 text-[10px] text-slate-400 px-1">
+        {geneStart.toLocaleString()}
+      </div>
+      <div className="absolute bottom-0 right-0 text-[10px] text-slate-400 px-1">
+        {geneEnd.toLocaleString()}
+      </div>
+
+      {intervals.map((interval, i) => {
+        const startPct = getScale(interval.start);
+        const endPct = getScale(interval.end);
+        const width = Math.max(endPct - startPct, 0.5);
+        const barColor = interval.score !== null && interval.score !== undefined
+          ? getScoreColor(interval.score, trackColor)
+          : trackColor;
+
+        return (
+          <div
+            key={i}
+            className="absolute h-10 top-5 rounded cursor-pointer hover:brightness-110 transition-all group"
+            style={{
+              left: `${startPct}%`,
+              width: `${width}%`,
+              backgroundColor: barColor,
+            }}
+            onClick={() => handleAnnotate(track, interval)}
+            title={`${interval.chrom}:${interval.start.toLocaleString()}-${interval.end.toLocaleString()}${interval.score !== undefined ? ` (score: ${interval.score.toFixed(3)})` : ''}${interval.name ? ` - ${interval.name}` : ''}`}
+          >
+            {width > 5 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[9px] text-white font-medium truncate px-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {interval.score?.toFixed(2)}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderLine = (track: BEDTrack, intervals: BEDInterval[], trackColor: string, scoreMin: number, scoreMax: number) => {
+    const scoreRange = scoreMax - scoreMin || 1;
+    const sortedIntervals = [...intervals].sort((a, b) => a.start - b.start);
+    const points = sortedIntervals.map(interval => {
+      const x = getScale(interval.start + (interval.end - interval.start) / 2);
+      const y = interval.score !== null && interval.score !== undefined
+        ? 100 - ((interval.score - scoreMin) / scoreRange) * 100
+        : 50;
+      return `${x},${y}`;
+    }).join(' ');
+
+    return (
+      <div className="relative h-20 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+        <div className="absolute inset-0 flex items-center">
+          <div className="absolute left-0 right-0 h-1 bg-slate-200" />
+        </div>
+        <div className="absolute bottom-0 left-0 text-[10px] text-slate-400 px-1">
+          {geneStart.toLocaleString()}
+        </div>
+        <div className="absolute bottom-0 right-0 text-[10px] text-slate-400 px-1">
+          {geneEnd.toLocaleString()}
+        </div>
+        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+          {points.length > 0 && (
+            <>
+              <polyline
+                points={points}
+                fill="none"
+                stroke={trackColor}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {sortedIntervals.map((interval, i) => {
+                const x = getScale(interval.start + (interval.end - interval.start) / 2);
+                const y = interval.score !== null && interval.score !== undefined
+                  ? 100 - ((interval.score - scoreMin) / scoreRange) * 100
+                  : 50;
+                return (
+                  <circle
+                    key={i}
+                    cx={x}
+                    cy={y}
+                    r={3}
+                    fill={interval.score !== null && interval.score !== undefined
+                      ? getScoreColor(interval.score, trackColor)
+                      : trackColor}
+                    className="cursor-pointer hover:r-[5px]"
+                    onClick={() => handleAnnotate(track, interval)}
+                  />
+                );
+              })}
+            </>
+          )}
+        </svg>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {tracks.map((track) => {
@@ -103,6 +210,7 @@ export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
         const hasScoreData = hasScores(intervals);
         const scoreMin = hasScoreData ? Math.min(...intervals.filter(i => i.score != null).map(i => i.score!)) : 0;
         const scoreMax = hasScoreData ? Math.max(...intervals.filter(i => i.score != null).map(i => i.score!)) : 1;
+        const mode = displayMode[track.id] || 'bars';
 
         return (
           <div key={track.id} className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm">
@@ -121,6 +229,24 @@ export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
                 )}
               </div>
               <div className="flex items-center gap-1">
+                {hasScoreData && (
+                  <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden mr-2">
+                    <button
+                      onClick={() => setDisplayMode(prev => ({ ...prev, [track.id]: 'bars' }))}
+                      className={`p-1.5 ${mode === 'bars' ? 'bg-teal-100 text-teal-700' : 'text-slate-400 hover:bg-slate-50'}`}
+                      title="Bar view"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setDisplayMode(prev => ({ ...prev, [track.id]: 'line' }))}
+                      className={`p-1.5 ${mode === 'line' ? 'bg-teal-100 text-teal-700' : 'text-slate-400 hover:bg-slate-50'}`}
+                      title="Line view"
+                    >
+                      <LineChart className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -144,48 +270,10 @@ export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
               </div>
             </div>
 
-            <div className="relative h-20 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
-              <div className="absolute inset-0 flex items-center">
-                <div className="absolute left-0 right-0 h-1 bg-slate-200" />
-              </div>
-              <div className="absolute bottom-0 left-0 text-[10px] text-slate-400 px-1">
-                {geneStart.toLocaleString()}
-              </div>
-              <div className="absolute bottom-0 right-0 text-[10px] text-slate-400 px-1">
-                {geneEnd.toLocaleString()}
-              </div>
-
-              {intervals.map((interval, i) => {
-                const startPct = getScale(interval.start);
-                const endPct = getScale(interval.end);
-                const width = Math.max(endPct - startPct, 0.5);
-                const barColor = interval.score !== null && interval.score !== undefined
-                  ? getScoreColor(interval.score, trackColor)
-                  : trackColor;
-
-                return (
-                  <div
-                    key={i}
-                    className="absolute h-10 top-5 rounded cursor-pointer hover:brightness-110 transition-all group"
-                    style={{
-                      left: `${startPct}%`,
-                      width: `${width}%`,
-                      backgroundColor: barColor,
-                    }}
-                    onClick={() => handleAnnotate(track, interval)}
-                    title={`${interval.chrom}:${interval.start.toLocaleString()}-${interval.end.toLocaleString()}${interval.score !== undefined ? ` (score: ${interval.score.toFixed(3)})` : ''}${interval.name ? ` - ${interval.name}` : ''}`}
-                  >
-                    {width > 5 && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[9px] text-white font-medium truncate px-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {interval.score?.toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            {hasScoreData && mode === 'line'
+              ? renderLine(track, intervals, trackColor, scoreMin, scoreMax)
+              : renderBars(track, intervals, trackColor)
+            }
 
             <div className="mt-3 flex items-center justify-between">
               {hasScoreData ? (

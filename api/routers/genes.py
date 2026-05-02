@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from typing import List, Optional
 from rnudb_utils.database import get_db_connection, audit_log
-from api.routers.auth import require_curator
+from api.routers.auth import require_admin
 from ..models import (
     SnRNAGene,
     GeneCreate,
@@ -66,7 +66,7 @@ async def get_gene(gene_id: str):
 @router.post("/genes", response_model=SnRNAGene)
 async def create_gene(gene: GeneCreate, request: Request):
     """Create a new gene (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -99,7 +99,7 @@ async def create_gene(gene: GeneCreate, request: Request):
 @router.put("/genes/{gene_id}", response_model=SnRNAGene)
 async def update_gene(gene_id: str, gene: GeneUpdate, request: Request):
     """Update an existing gene (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -145,7 +145,7 @@ async def update_gene(gene_id: str, gene: GeneUpdate, request: Request):
 @router.delete("/genes/{gene_id}")
 async def delete_gene(gene_id: str, request: Request):
     """Delete a gene and all associated data (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -359,7 +359,7 @@ async def get_gene_structure(gene_id: str):
 @router.delete("/genes/{gene_id}/structures/{structure_id}")
 async def delete_gene_structure(gene_id: str, structure_id: str, request: Request):
     """Delete a specific RNA structure (curator only)"""
-    user = require_curator(request)
+    user = require_admin(request)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
