@@ -36,7 +36,7 @@ import GeneForm from '../components/Curate/GeneForm';
 import VariantForm from '../components/Curate/VariantForm';
 import { VariantTable } from '../components/Curate/VariantTable';
 import { BEDTrackViewer } from '../components/Curate/BEDTrackViewer';
-import { VariantLollipopTrack } from '../components/Curate/VariantLollipopTrack';
+import { CuratorVariantTrack } from '../components/Curate/CuratorVariantTrack';
 import {
   Dialog,
   DialogContent,
@@ -620,11 +620,9 @@ const Curate: React.FC = () => {
               {/* Variants Tab */}
               <TabsContent value="variants" className="mt-0">
                 {selectedGene && variants.length > 0 && (
-                  <VariantLollipopTrack
+                  <CuratorVariantTrack
                     variants={variants}
-                    geneStart={selectedGene.start}
-                    geneEnd={selectedGene.end}
-                    geneName={selectedGene.name}
+                    title={`${selectedGene.name} Variants`}
                   />
                 )}
                 <Card className="border-slate-200 shadow-sm">

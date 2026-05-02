@@ -11,6 +11,7 @@ from .routers.auth import router as auth_router
 from .routers.users import router as users_router
 from .routers.imports import router as imports_router
 from .routers.bed_tracks import router as bed_tracks_router
+from .routers.approvals import router as approvals_router
 
 app = FastAPI(
     title="RNUdb API",
@@ -36,6 +37,7 @@ app.include_router(auth_router, prefix="/api/auth")
 app.include_router(users_router, prefix="/api")
 app.include_router(imports_router, prefix="/api")
 app.include_router(bed_tracks_router, prefix="/api")
+app.include_router(approvals_router, prefix="/api")
 
 # Serve frontend static files
 dist_path = Path(__file__).resolve().parent.parent / "dist"

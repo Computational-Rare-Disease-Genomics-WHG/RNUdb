@@ -229,6 +229,25 @@ def create_test_db(db_path=":memory:"):
     )
     """)
     
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS pending_changes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entity_type TEXT NOT NULL CHECK(entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),
+        entity_id TEXT,
+        gene_id TEXT NOT NULL,
+        action TEXT NOT NULL CHECK(action IN ('create', 'update', 'delete')),
+        payload JSON NOT NULL,
+        requested_by TEXT NOT NULL,
+        requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected')),
+        reviewed_by TEXT,
+        reviewed_at TIMESTAMP,
+        review_notes TEXT,
+        FOREIGN KEY (requested_by) REFERENCES users(github_login),
+        FOREIGN KEY (reviewed_by) REFERENCES users(github_login)
+    )
+    """)
+    
     # Insert test gene
     cursor.execute(
         """INSERT INTO genes (id, name, fullName, chromosome, start, end, strand, sequence, description)
@@ -253,6 +272,7 @@ def test_client():
     import api.routers.genes as genes_module
     import api.routers.variants as variants_module
     import api.routers.literature as literature_module
+    import api.routers.approvals as approvals_module
     
     # Create temporary file database
     db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
@@ -277,6 +297,7 @@ def test_client():
     genes_module.get_db_connection = mock_get_db
     variants_module.get_db_connection = mock_get_db
     literature_module.get_db_connection = mock_get_db
+    approvals_module.get_db_connection = mock_get_db
     
     client = TestClient(app)
     yield client
@@ -288,6 +309,7 @@ def test_client():
     genes_module.get_db_connection = original_get_db
     variants_module.get_db_connection = original_get_db
     literature_module.get_db_connection = original_get_db
+    approvals_module.get_db_connection = original_get_db
     
     # Clean up temp file
     import os

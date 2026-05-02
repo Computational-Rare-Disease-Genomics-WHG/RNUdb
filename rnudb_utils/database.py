@@ -220,6 +220,26 @@ def create_database() -> sqlite3.Connection:
         FOREIGN KEY (geneId) REFERENCES genes(id)
     )
     """)
+    
+    # Create pending_changes table for curator approval workflow
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS pending_changes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entity_type TEXT NOT NULL CHECK(entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),
+        entity_id TEXT,
+        gene_id TEXT NOT NULL,
+        action TEXT NOT NULL CHECK(action IN ('create', 'update', 'delete')),
+        payload JSON NOT NULL,
+        requested_by TEXT NOT NULL,
+        requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected')),
+        reviewed_by TEXT,
+        reviewed_at TIMESTAMP,
+        review_notes TEXT,
+        FOREIGN KEY (requested_by) REFERENCES users(github_login),
+        FOREIGN KEY (reviewed_by) REFERENCES users(github_login)
+    )
+    """)
     return conn
 
 
