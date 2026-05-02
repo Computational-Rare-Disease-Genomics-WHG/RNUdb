@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, CheckCircle, XCircle, Users } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Users, Clock, FileText, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -15,6 +15,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useApprovals, type PendingChange } from '@/hooks/useApprovals';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -33,17 +35,19 @@ const Admin: React.FC = () => {
   const { isAdmin } = useAuth();
   const [pendingUsers, setPendingUsers] = useState<UserRecord[]>([]);
   const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
+  const { listChanges, reviewChange, loading: approvalLoading } = useApprovals();
 
   useEffect(() => {
     if (!isAdmin) {
       navigate('/');
       return;
     }
-    loadUsers();
+    loadData();
   }, [isAdmin, navigate]);
 
-  const loadUsers = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
       const [pendingRes, allRes] = await Promise.all([
@@ -52,126 +56,150 @@ const Admin: React.FC = () => {
       ]);
       if (pendingRes.ok) setPendingUsers(await pendingRes.json());
       if (allRes.ok) setAllUsers(await allRes.json());
+      
+      const changes = await listChanges({ status: 'pending' });
+      setPendingApprovals(changes);
     } catch (error) {
-      console.error('Error loading users:', error);
+      console.error('Error loading admin data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const approveUser = async (login: string) => {
+  const handleApproveUser = async (github_login: string) => {
     try {
-      const res = await fetch(`/api/users/${login}/approve`, {
+      const res = await fetch(`/api/users/${github_login}/approve`, {
         method: 'POST',
         credentials: 'include',
       });
-      if (res.ok) await loadUsers();
+      if (!res.ok) throw new Error('Failed to approve user');
+      await loadData();
     } catch (error) {
       console.error('Error approving user:', error);
     }
   };
 
-  const rejectUser = async (login: string) => {
-    try {
-      const res = await fetch(`/api/users/${login}/reject`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (res.ok) await loadUsers();
-    } catch (error) {
-      console.error('Error rejecting user:', error);
+  const handleApproveChange = async (id: number) => {
+    await reviewChange(id, 'approved');
+    await loadData();
+  };
+
+  const handleRejectChange = async (id: number) => {
+    await reviewChange(id, 'rejected');
+    await loadData();
+  };
+
+  const getEntityIcon = (type: string) => {
+    switch (type) {
+      case 'variant': return <FileText className="h-4 w-4" />;
+      case 'gene': return <Database className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
     }
   };
 
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">{role}</Badge>;
-      case 'curator':
-        return <Badge className="bg-teal-100 text-teal-800 hover:bg-teal-100">{role}</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{role}</Badge>;
-      default:
-        return <Badge variant="secondary">{role}</Badge>;
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case 'create': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'update': return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'delete': return 'bg-red-50 text-red-700 border-red-200';
+      default: return '';
     }
   };
-
-  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header showSearch={false} />
+
       <div className="max-w-7xl mx-auto px-4 py-6 pt-12 flex-1 w-full">
         <div className="flex items-center gap-3 mb-8">
-          <Shield className="h-8 w-8 text-teal-600" />
-          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+          <div className="p-3 bg-teal-600 rounded-xl shadow-lg">
+            <Shield className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
+            <p className="text-slate-500">Manage users, approvals, and system settings</p>
+          </div>
         </div>
 
-        {loading ? (
-          <div className="space-y-8">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-48 w-full" />
-          </div>
-        ) : (
-          <>
-            {/* Pending Approvals */}
-            <Card className="shadow-sm border-slate-200 mb-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-yellow-600" />
-                  Pending Approvals
-                  {pendingUsers.length > 0 && (
-                    <Badge className="ml-2 bg-yellow-100 text-yellow-800">{pendingUsers.length}</Badge>
-                  )}
+        <Tabs defaultValue="approvals">
+          <TabsList className="mb-6">
+            <TabsTrigger value="approvals" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Pending Approvals
+              {pendingApprovals.length > 0 && (
+                <Badge variant="secondary" className="ml-1">{pendingApprovals.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="approvals">
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="border-b border-slate-100 pb-4">
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Clock className="h-5 w-5 text-teal-600" />
+                  Curator Change Requests
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {pendingUsers.length === 0 ? (
-                  <p className="text-muted-foreground py-4">No pending approval requests.</p>
+              <CardContent className="pt-4">
+                {loading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
+                ) : pendingApprovals.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500">
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
+                    <p>No pending approvals</p>
+                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    {pendingUsers.map((user: UserRecord) => (
-                      <div
-                        key={user.github_login}
-                        className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl border border-yellow-200"
-                      >
-                        <div className="flex items-center gap-4">
-                          {user.avatar_url && (
-                            <Avatar>
-                              <AvatarImage src={user.avatar_url} alt={user.name} />
-                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                          )}
-                          <div>
-                            <div className="font-semibold text-foreground">{user.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              @{user.github_login} · {user.email}
+                  <div className="space-y-3">
+                    {pendingApprovals.map((change) => (
+                      <div key={change.id} className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              {getEntityIcon(change.entity_type)}
+                              <span className="font-semibold capitalize">{change.entity_type}</span>
+                              <Badge variant="outline" className={getActionColor(change.action)}>
+                                {change.action}
+                              </Badge>
+                              <Badge variant="outline">{change.gene_id}</Badge>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Requested: {new Date(user.created_at).toLocaleDateString()}
-                            </div>
+                            <p className="text-sm text-slate-600 mb-1">
+                              Requested by <span className="font-medium">{change.requested_by}</span>
+                              {' '}
+                              {new Date(change.requested_at).toLocaleDateString()}
+                            </p>
+                            <pre className="text-xs bg-slate-50 p-2 rounded mt-2 overflow-x-auto">
+                              {JSON.stringify(change.payload, null, 2)}
+                            </pre>
                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => approveUser(user.github_login)}
-                            className="bg-teal-600 hover:bg-teal-700 text-white"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => rejectUser(user.github_login)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
+                          <div className="flex gap-2 ml-4">
+                            <Button
+                              size="sm"
+                              onClick={() => handleApproveChange(change.id)}
+                              disabled={approvalLoading}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRejectChange(change.id)}
+                              disabled={approvalLoading}
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -179,54 +207,116 @@ const Admin: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
 
-            {/* All Users */}
-            <Card className="shadow-sm border-slate-200">
-              <CardHeader>
-                <CardTitle>All Users ({allUsers.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead>Last Updated</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allUsers.map((user: UserRecord) => (
-                      <TableRow key={user.github_login}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            {user.avatar_url && (
-                              <Avatar size="sm">
-                                <AvatarImage src={user.avatar_url} alt={user.name} />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                            )}
-                            <div>
-                              <div className="font-medium text-foreground">{user.name}</div>
-                              <div className="text-sm text-muted-foreground">@{user.github_login}</div>
-                            </div>
+          <TabsContent value="users">
+            {/* Pending Approvals */}
+            {pendingUsers.length > 0 && (
+              <Card className="mb-6 bg-white border border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-100 pb-4">
+                  <CardTitle className="flex items-center gap-2 text-slate-900">
+                    <Users className="h-5 w-5 text-teal-600" />
+                    Pending User Approvals ({pendingUsers.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="space-y-3">
+                    {pendingUsers.map((user) => (
+                      <div key={user.github_login} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-4">
+                          <Avatar>
+                            {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
+                            <AvatarFallback>{user.name[0]}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold">{user.name}</p>
+                            <p className="text-sm text-slate-500">@{user.github_login}</p>
+                            <p className="text-sm text-slate-500">{user.email}</p>
                           </div>
-                        </TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(user.updated_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleApproveUser(user.github_login)}
+                          className="bg-teal-600 hover:bg-teal-700 text-white"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Approve
+                        </Button>
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* All Users Table */}
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="border-b border-slate-100 pb-4">
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Users className="h-5 w-5 text-teal-600" />
+                  All Users ({allUsers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {loading ? (
+                  <Skeleton className="h-64 w-full" />
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead>Last Updated</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allUsers.map((user) => (
+                        <TableRow key={user.github_login}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar size="sm">
+                                {user.avatar_url && (
+                                  <AvatarImage src={user.avatar_url} alt={user.name} />
+                                )}
+                                <AvatarFallback className="bg-teal-100 text-teal-700">
+                                  {user.name[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{user.name}</p>
+                                <p className="text-sm text-slate-500">@{user.github_login}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                user.role === 'admin'
+                                  ? 'default'
+                                  : user.role === 'curator'
+                                  ? 'secondary'
+                                  : 'outline'
+                              }
+                            >
+                              {user.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-slate-500">
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-slate-500">
+                            {new Date(user.updated_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
-          </>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
       <Footer />
     </div>
