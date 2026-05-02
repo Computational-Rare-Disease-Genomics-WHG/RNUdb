@@ -620,11 +620,9 @@ const Curate: React.FC = () => {
               {/* Variants Tab */}
               <TabsContent value="variants" className="mt-0">
                 {selectedGene && variants.length > 0 && (
-                  <GnomADVariantViewer
+                  <CuratorVariantTrack
                     variants={variants}
-                    geneStart={selectedGene.start}
-                    geneEnd={selectedGene.end}
-                    geneName={selectedGene.name}
+                    title={`${selectedGene.name} Variants`}
                   />
                 )}
                 <Card className="border-slate-200 shadow-sm">
