@@ -483,31 +483,47 @@ const Admin: React.FC = () => {
                         </div>
 
                         {/* Action / Status */}
-                        <div className="col-span-2 flex flex-wrap gap-2 mb-2 md:mb-0">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
-                              change.action === "create"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : change.action === "update"
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {change.action}
-                          </span>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
-                              change.status === "approved"
-                                ? "bg-teal-100 text-teal-700"
-                                : change.status === "rejected"
-                                  ? "bg-red-100 text-red-700"
-                                  : change.status === "applied"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-slate-200 text-slate-600"
-                            }`}
-                          >
-                            {change.status}
-                          </span>
+                        <div className="col-span-2 flex flex-col gap-1 mb-2 md:mb-0">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                change.action === "create"
+                                  ? "bg-emerald-500"
+                                  : change.action === "update"
+                                    ? "bg-amber-500"
+                                    : "bg-red-500"
+                              }`}
+                            />
+                            <span className="text-xs font-medium text-slate-600 capitalize">
+                              {change.action}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                change.status === "approved"
+                                  ? "bg-teal-500"
+                                  : change.status === "rejected"
+                                    ? "bg-red-500"
+                                    : change.status === "applied"
+                                      ? "bg-blue-500"
+                                      : "bg-slate-400"
+                              }`}
+                            />
+                            <span
+                              className={`text-xs font-medium capitalize ${
+                                change.status === "approved"
+                                  ? "text-teal-600"
+                                  : change.status === "rejected"
+                                    ? "text-red-600"
+                                    : change.status === "applied"
+                                      ? "text-blue-600"
+                                      : "text-slate-500"
+                              }`}
+                            >
+                              {change.status}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Entity */}
