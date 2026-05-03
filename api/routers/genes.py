@@ -1,253 +1,191 @@
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
+"""Gene-related API endpoints."""
+
+import json
 from pathlib import Path
-from typing import List, Optional
-from rnudb_utils.database import get_db_connection, audit_log
-from api.routers.auth import require_admin
-from ..models import (
-    SnRNAGene,
-    GeneCreate,
-    GeneUpdate,
-    Variant,
-    Literature,
-    RNAStructure,
-    Nucleotide,
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from api.models import (
+    Annotation,
+    AnnotationModel,
     BasePair,
-    AnnotationLabel,
+    BasePairModel,
+    BEDTrack,
+    BedTrack,
+    BedTrackPublic,
+    Gene,
+    GeneCreate,
+    GenePublic,
+    GeneUpdate,
+    Literature,
+    LiteraturePublic,
+    Nucleotide,
+    NucleotideModel,
+    RNAStructure,
+    RNAStructureCreate,
     StructuralFeature,
-    StructuralFeatureLabel,
+    StructuralFeatureModel,
+    Variant,
+    VariantPublic,
 )
+from api.routers.auth import require_admin
+from rnudb_utils.database import audit_log, get_db
 
 router = APIRouter()
 
+_ALLOWED_GENE_COLUMNS = {
+    "name",
+    "fullName",
+    "chromosome",
+    "start",
+    "end",
+    "strand",
+    "sequence",
+    "description",
+}
 
-@router.get("/genes", response_model=List[SnRNAGene])
-async def get_all_genes():
+
+@router.get("/genes", response_model=list[GenePublic])
+async def get_all_genes(db: Session = Depends(get_db)):
     """Get all genes"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT * FROM genes")
-        rows = cursor.fetchall()
-
-        genes = []
-        for row in rows:
-            genes.append(SnRNAGene(**dict(row)))
-
-        conn.close()
-        return genes
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    genes = db.execute(select(Gene)).scalars().all()
+    return [GenePublic.model_validate(g) for g in genes]
 
 
-@router.get("/genes/{gene_id}", response_model=SnRNAGene)
-async def get_gene(gene_id: str):
+@router.get("/genes/{gene_id}", response_model=GenePublic)
+async def get_gene(gene_id: str, db: Session = Depends(get_db)):
     """Get specific gene by ID"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT * FROM genes WHERE id = ?", (gene_id,))
-        row = cursor.fetchone()
-
-        if not row:
-            raise HTTPException(status_code=404, detail="Gene not found")
-
-        gene = SnRNAGene(**dict(row))
-        conn.close()
-        return gene
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    gene = db.get(Gene, gene_id)
+    if not gene:
+        raise HTTPException(status_code=404, detail="Gene not found")
+    return GenePublic.model_validate(gene)
 
 
-@router.post("/genes", response_model=SnRNAGene)
-async def create_gene(gene: GeneCreate, request: Request):
+@router.post("/genes", response_model=GenePublic)
+async def create_gene(
+    gene: GeneCreate, request: Request, db: Session = Depends(get_db)
+):
     """Create a new gene (curator only)"""
     user = require_admin(request)
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
 
-        # Check if gene already exists
-        cursor.execute("SELECT id FROM genes WHERE id = ?", (gene.id,))
-        if cursor.fetchone():
-            raise HTTPException(status_code=409, detail=f"Gene {gene.id} already exists")
+    if db.get(Gene, gene.id):
+        raise HTTPException(status_code=409, detail=f"Gene {gene.id} already exists")
 
-        cursor.execute(
-            """
-            INSERT INTO genes (id, name, fullName, chromosome, start, end, strand, sequence, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (gene.id, gene.name, gene.fullName, gene.chromosome, gene.start, gene.end, gene.strand, gene.sequence, gene.description),
-        )
-        conn.commit()
+    new_gene = Gene.model_validate(gene)
+    db.add(new_gene)
+    db.commit()
+    db.refresh(new_gene)
 
-        # Log audit
-        audit_log("genes", gene.id, "CREATE", None, gene.dict(), user["github_login"])
+    audit_log("genes", gene.id, "CREATE", None, gene.model_dump(), user["github_login"])
 
-        conn.close()
-        return SnRNAGene(**gene.dict())
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return GenePublic.model_validate(new_gene)
 
 
-@router.put("/genes/{gene_id}", response_model=SnRNAGene)
-async def update_gene(gene_id: str, gene: GeneUpdate, request: Request):
+@router.put("/genes/{gene_id}", response_model=GenePublic)
+async def update_gene(
+    gene_id: str, gene: GeneUpdate, request: Request, db: Session = Depends(get_db)
+):
     """Update an existing gene (curator only)"""
     user = require_admin(request)
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
 
-        # Check if gene exists
-        cursor.execute("SELECT * FROM genes WHERE id = ?", (gene_id,))
-        existing = cursor.fetchone()
-        if not existing:
-            raise HTTPException(status_code=404, detail="Gene not found")
+    existing = db.get(Gene, gene_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Gene not found")
 
-        old_values = dict(existing)
+    old_values = existing.model_dump()
 
-        # Build update query dynamically
-        updates = []
-        params = []
-        for field, value in gene.dict(exclude_unset=True).items():
-            updates.append(f"{field} = ?")
-            params.append(value)
-        if not updates:
-            raise HTTPException(status_code=400, detail="No fields to update")
+    for field, value in gene.model_dump(exclude_unset=True).items():
+        if field in _ALLOWED_GENE_COLUMNS:
+            setattr(existing, field, value)
 
-        params.append(gene_id)
-        cursor.execute(
-            f"UPDATE genes SET {', '.join(updates)} WHERE id = ?",
-            params,
-        )
-        conn.commit()
+    db.commit()
 
-        # Log audit
-        audit_log("genes", gene_id, "UPDATE", old_values, gene.dict(exclude_unset=True), user["github_login"])
+    audit_log(
+        "genes",
+        gene_id,
+        "UPDATE",
+        old_values,
+        gene.model_dump(exclude_unset=True),
+        user["github_login"],
+    )
 
-        # Fetch updated gene
-        cursor.execute("SELECT * FROM genes WHERE id = ?", (gene_id,))
-        updated = cursor.fetchone()
-        conn.close()
-        return SnRNAGene(**dict(updated))
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    updated = db.get(Gene, gene_id)
+    return GenePublic.model_validate(updated)
 
 
 @router.delete("/genes/{gene_id}")
-async def delete_gene(gene_id: str, request: Request):
+async def delete_gene(gene_id: str, request: Request, db: Session = Depends(get_db)):
     """Delete a gene and all associated data (curator only)"""
     user = require_admin(request)
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
 
-        # Check if gene exists
-        cursor.execute("SELECT * FROM genes WHERE id = ?", (gene_id,))
-        existing = cursor.fetchone()
-        if not existing:
-            raise HTTPException(status_code=404, detail="Gene not found")
+    existing = db.get(Gene, gene_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Gene not found")
 
-        old_values = dict(existing)
+    old_values = existing.model_dump()
 
-        # Delete associated data
-        cursor.execute("DELETE FROM variants WHERE geneId = ?", (gene_id,))
-        cursor.execute("DELETE FROM rna_structures WHERE geneId = ?", (gene_id,))
-        cursor.execute("DELETE FROM genes WHERE id = ?", (gene_id,))
-        conn.commit()
+    # Delete associated data
+    db.execute(
+        text("DELETE FROM variants WHERE geneId = :gene_id"), {"gene_id": gene_id}
+    )
+    db.execute(
+        text("DELETE FROM rna_structures WHERE geneId = :gene_id"), {"gene_id": gene_id}
+    )
+    db.delete(existing)
+    db.commit()
 
-        # Log audit
-        audit_log("genes", gene_id, "DELETE", old_values, None, user["github_login"])
+    audit_log("genes", gene_id, "DELETE", old_values, None, user["github_login"])
 
-        conn.close()
-        return {"message": f"Gene {gene_id} deleted"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"message": f"Gene {gene_id} deleted"}
 
 
-@router.get("/genes/{gene_id}/variants", response_model=List[Variant])
-async def get_gene_variants(gene_id: str):
+@router.get("/genes/{gene_id}/variants", response_model=list[VariantPublic])
+async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
     """Get all variants for a specific gene"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    # Use raw SQL for the complex GROUP_CONCAT query
+    sql = text("""
+        SELECT v.*,
+               GROUP_CONCAT(DISTINCT vl1.variant_id_2) as linked_ids_1,
+               GROUP_CONCAT(DISTINCT vl2.variant_id_1) as linked_ids_2
+        FROM variants v
+        LEFT JOIN variant_links vl1 ON v.id = vl1.variant_id_1
+        LEFT JOIN variant_links vl2 ON v.id = vl2.variant_id_2
+        WHERE v.geneId = :gene_id
+        GROUP BY v.id
+    """)
 
-        # Get variants with linked variant IDs
-        cursor.execute(
-            """
-            SELECT v.*,
-                   GROUP_CONCAT(DISTINCT vl1.variant_id_2) as linked_ids_1,
-                   GROUP_CONCAT(DISTINCT vl2.variant_id_1) as linked_ids_2
-            FROM variants v
-            LEFT JOIN variant_links vl1 ON v.id = vl1.variant_id_1
-            LEFT JOIN variant_links vl2 ON v.id = vl2.variant_id_2
-            WHERE v.geneId = ?
-            GROUP BY v.id
-        """,
-            (gene_id,),
-        )
-        rows = cursor.fetchall()
+    rows = db.execute(sql, {"gene_id": gene_id}).fetchall()
 
-        variants = []
-        for row in rows:
-            row_dict = dict(row)
+    variants = []
+    for row in rows:
+        row_dict = dict(row._mapping)
+        linked_ids = []
+        if row_dict.get("linked_ids_1"):
+            linked_ids.extend(row_dict["linked_ids_1"].split(","))
+        if row_dict.get("linked_ids_2"):
+            linked_ids.extend(row_dict["linked_ids_2"].split(","))
+        row_dict.pop("linked_ids_1", None)
+        row_dict.pop("linked_ids_2", None)
+        if linked_ids:
+            row_dict["linkedVariantIds"] = linked_ids
+        variants.append(VariantPublic(**row_dict))
 
-            # Combine linked variant IDs from both directions
-            linked_ids = []
-            if row_dict.get("linked_ids_1"):
-                linked_ids.extend(row_dict["linked_ids_1"].split(","))
-            if row_dict.get("linked_ids_2"):
-                linked_ids.extend(row_dict["linked_ids_2"].split(","))
-
-            # Remove the aggregated columns and add linkedVariantIds
-            row_dict.pop("linked_ids_1", None)
-            row_dict.pop("linked_ids_2", None)
-            if linked_ids:
-                row_dict["linkedVariantIds"] = linked_ids
-
-            variants.append(Variant(**row_dict))
-
-        conn.close()
-        return variants
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return variants
 
 
-@router.get("/genes/{gene_id}/literature", response_model=List[Literature])
-async def get_gene_literature(gene_id: str):
+@router.get("/genes/{gene_id}/literature", response_model=list[LiteraturePublic])
+async def get_gene_literature(gene_id: str, db: Session = Depends(get_db)):
     """Get all literature (gene associations removed)"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT * FROM literature")
-        rows = cursor.fetchall()
-
-        literature = []
-        for row in rows:
-            literature.append(Literature(**dict(row)))
-
-        conn.close()
-        return literature
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    literature = db.execute(select(Literature)).scalars().all()
+    return [LiteraturePublic.model_validate(lit) for lit in literature]
 
 
 @router.get("/genes/{gene_id}/pdb", response_class=JSONResponse)
 async def get_gene_pdb(gene_id: str):
     """Serve a static PDB file for a given gene (demo: rnu4-2 only)"""
-    print(f"Requesting PDB for gene: {gene_id}")
-    # For demo, only rnu4-2 is supported
     if gene_id != "RNU4-2":
         raise HTTPException(status_code=404, detail="PDB not found for this gene")
     pdb_path = Path(__file__).parent.parent.parent / "data" / "rnu4-2" / "structure.pdb"
@@ -259,130 +197,104 @@ async def get_gene_pdb(gene_id: str):
     }
 
 
-@router.get("/genes/{gene_id}/structure", response_model=RNAStructure)
-async def get_gene_structure(gene_id: str):
+@router.get("/genes/{gene_id}/structure", response_model=RNAStructureCreate)
+async def get_gene_structure(gene_id: str, db: Session = Depends(get_db)):
     """Get RNA structure for a specific gene"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    structure = db.execute(
+        select(RNAStructure).where(RNAStructure.geneId == gene_id)
+    ).scalar_one_or_none()
 
-        # Get structure info
-        cursor.execute("SELECT * FROM rna_structures WHERE geneId = ?", (gene_id,))
-        structure_row = cursor.fetchone()
+    if not structure:
+        raise HTTPException(status_code=404, detail="Structure not found")
 
-        if not structure_row:
-            raise HTTPException(status_code=404, detail="Structure not found")
+    # Query nucleotides
+    nucleotide_rows = db.execute(
+        select(Nucleotide).where(Nucleotide.structure_id == structure.id)
+    ).scalars().all()
+    nucleotides = [NucleotideModel.model_validate(row) for row in nucleotide_rows]
 
-        structure_id = structure_row["id"]
+    # Query base pairs
+    base_pair_rows = db.execute(
+        select(BasePair).where(BasePair.structure_id == structure.id)
+    ).scalars().all()
+    base_pairs = [BasePairModel(from_pos=row.from_pos, to_pos=row.to_pos) for row in base_pair_rows]
 
-        # Get nucleotides
-        cursor.execute(
-            "SELECT * FROM nucleotides WHERE structure_id = ? ORDER BY id",
-            (structure_id,),
-        )
-        nucleotide_rows = cursor.fetchall()
+    # Query annotations
+    annotation_rows = db.execute(
+        select(Annotation).where(Annotation.structure_id == structure.id)
+    ).scalars().all()
+    annotations = [AnnotationModel.model_validate(row) for row in annotation_rows]
 
-        nucleotides = []
-        for row in nucleotide_rows:
-            nucleotides.append(Nucleotide(**dict(row)))
+    # Query structural features
+    feature_rows = db.execute(
+        select(StructuralFeature).where(StructuralFeature.structure_id == structure.id)
+    ).scalars().all()
+    structural_features = []
+    for row in feature_rows:
+        feature = {
+            "id": row.id,
+            "feature_type": row.feature_type,
+            "nucleotide_ids": json.loads(row.nucleotide_ids) if row.nucleotide_ids else [],
+            "label_text": row.label_text,
+            "label_x": row.label_x,
+            "label_y": row.label_y,
+            "label_font_size": row.label_font_size,
+            "label_color": row.label_color,
+            "description": row.description,
+            "color": row.color,
+        }
+        structural_features.append(StructuralFeatureModel(**feature))
 
-        # Get base pairs
-        cursor.execute(
-            "SELECT * FROM base_pairs WHERE structure_id = ?", (structure_id,)
-        )
-        base_pair_rows = cursor.fetchall()
-
-        base_pairs = []
-        for row in base_pair_rows:
-            row_dict = dict(row)
-            base_pairs.append(
-                BasePair(from_=row_dict["from_pos"], to=row_dict["to_pos"])
-            )
-
-        # Get annotations
-        cursor.execute(
-            "SELECT * FROM annotations WHERE structure_id = ?", (structure_id,)
-        )
-        annotation_rows = cursor.fetchall()
-
-        annotations = []
-        for row in annotation_rows:
-            annotations.append(AnnotationLabel(**dict(row)))
-
-        # Get structural features
-        cursor.execute(
-            "SELECT * FROM structural_features WHERE structure_id = ?", (structure_id,)
-        )
-        feature_rows = cursor.fetchall()
-
-        structural_features = []
-        for row in feature_rows:
-            import json
-
-            row_dict = dict(row)
-            nucleotide_ids = json.loads(row_dict["nucleotide_ids"])
-
-            structural_features.append(
-                StructuralFeature(
-                    id=row_dict["id"],
-                    featureType=row_dict["feature_type"],
-                    nucleotideIds=nucleotide_ids,
-                    label=StructuralFeatureLabel(
-                        text=row_dict["label_text"],
-                        x=row_dict["label_x"],
-                        y=row_dict["label_y"],
-                        fontSize=row_dict["label_font_size"],
-                        color=row_dict.get("label_color"),
-                    ),
-                    description=row_dict.get("description"),
-                    color=row_dict.get("color"),
-                )
-            )
-
-        structure = RNAStructure(
-            id=structure_row["id"],
-            geneId=structure_row["geneId"],
-            nucleotides=nucleotides,
-            basePairs=base_pairs,
-            annotations=annotations,
-            structuralFeatures=structural_features,
-        )
-
-        conn.close()
-        return structure
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return RNAStructureCreate(
+        id=structure.id,
+        gene_id=structure.geneId,
+        nucleotides=nucleotides,
+        base_pairs=base_pairs,
+        annotations=annotations,
+        structural_features=structural_features,
+    )
 
 
 @router.delete("/genes/{gene_id}/structures/{structure_id}")
-async def delete_gene_structure(gene_id: str, structure_id: str, request: Request):
+async def delete_gene_structure(
+    gene_id: str, structure_id: str, request: Request, db: Session = Depends(get_db)
+):
     """Delete a specific RNA structure (curator only)"""
     user = require_admin(request)
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM rna_structures WHERE id = ? AND geneId = ?", (structure_id, gene_id))
-        existing = cursor.fetchone()
-        if not existing:
-            raise HTTPException(status_code=404, detail="Structure not found")
+    existing = db.execute(
+        select(RNAStructure).where(
+            RNAStructure.id == structure_id, RNAStructure.geneId == gene_id
+        )
+    ).scalar_one_or_none()
 
-        old_values = dict(existing)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Structure not found")
 
-        cursor.execute("DELETE FROM structural_features WHERE structure_id = ?", (structure_id,))
-        cursor.execute("DELETE FROM annotations WHERE structure_id = ?", (structure_id,))
-        cursor.execute("DELETE FROM base_pairs WHERE structure_id = ?", (structure_id,))
-        cursor.execute("DELETE FROM nucleotides WHERE structure_id = ?", (structure_id,))
-        cursor.execute("DELETE FROM rna_structures WHERE id = ? AND geneId = ?", (structure_id, gene_id))
-        conn.commit()
+    old_values = existing.model_dump()
 
-        audit_log("rna_structures", structure_id, "DELETE", old_values, None, user["github_login"])
+    # Delete related data
+    db.execute(
+        text("DELETE FROM structural_features WHERE structure_id = :sid"),
+        {"sid": structure_id},
+    )
+    db.execute(
+        text("DELETE FROM annotations WHERE structure_id = :sid"),
+        {"sid": structure_id},
+    )
+    db.execute(
+        text("DELETE FROM base_pairs WHERE structure_id = :sid"),
+        {"sid": structure_id},
+    )
+    db.execute(
+        text("DELETE FROM nucleotides WHERE structure_id = :sid"),
+        {"sid": structure_id},
+    )
+    db.delete(existing)
+    db.commit()
 
-        conn.close()
-        return {"message": f"Structure {structure_id} deleted"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    audit_log(
+        "rna_structures", structure_id, "DELETE", old_values, None, user["github_login"]
+    )
+
+    return {"message": f"Structure {structure_id} deleted"}
