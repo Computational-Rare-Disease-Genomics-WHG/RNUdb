@@ -11,6 +11,7 @@ interface VariantLollipopTrackProps {
   geneStart: number;
   geneEnd: number;
   geneName: string;
+  width?: number;
 }
 
 const getClinicalColor = (sig?: string): string => {
@@ -35,12 +36,13 @@ export const VariantLollipopTrack: React.FC<VariantLollipopTrackProps> = ({
   geneStart,
   geneEnd,
   geneName,
+  width: customWidth,
 }) => {
   if (!variants?.length) return null;
 
   const geneLength = geneEnd - geneStart;
   const padding = 40;
-  const svgWidth = 900;
+  const svgWidth = customWidth ?? 900;
   const svgHeight = 120;
   const trackY = 60;
 
