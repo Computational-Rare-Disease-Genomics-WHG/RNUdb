@@ -1,7 +1,6 @@
 """Tests for approval workflow (pending_changes table)."""
 
 import pytest
-from sqlalchemy import text
 
 
 class TestApprovalsAPI:
