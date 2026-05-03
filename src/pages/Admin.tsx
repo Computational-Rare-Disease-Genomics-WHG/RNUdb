@@ -422,7 +422,7 @@ const Admin: React.FC = () => {
               <CardHeader className="border-b border-slate-100 pb-4">
                 <CardTitle className="flex items-center gap-2 text-slate-900">
                   <Database className="h-5 w-5 text-teal-600" />
-                  Approval / Change Log
+                  Approval / Change Log ({changeLog.length} entries)
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
@@ -434,82 +434,131 @@ const Admin: React.FC = () => {
                     <p>No change history</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
+                    {/* Header Row */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                      <div className="col-span-1">ID</div>
+                      <div className="col-span-2">Action / Status</div>
+                      <div className="col-span-2">Entity</div>
+                      <div className="col-span-3">Payload</div>
+                      <div className="col-span-2">Users</div>
+                      <div className="col-span-2">Date / Notes</div>
+                    </div>
+
                     {changeLog.map((change) => (
                       <div
                         key={change.id}
-                        className="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors"
+                        className="block md:grid md:grid-cols-12 gap-4 p-4 bg-slate-50/50 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2 min-w-[100px]">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
-                                change.action === "create"
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : change.action === "update"
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-red-100 text-red-700"
-                              }`}
-                            >
-                              {change.action}
+                        {/* ID */}
+                        <div className="col-span-1 font-mono text-xs text-slate-500 mb-2 md:mb-0">
+                          #{change.id}
+                        </div>
+
+                        {/* Action / Status */}
+                        <div className="col-span-2 flex flex-wrap gap-2 mb-2 md:mb-0">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
+                              change.action === "create"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : change.action === "update"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {change.action}
+                          </span>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
+                              change.status === "approved"
+                                ? "bg-teal-100 text-teal-700"
+                                : change.status === "rejected"
+                                  ? "bg-red-100 text-red-700"
+                                  : change.status === "applied"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-slate-200 text-slate-600"
+                            }`}
+                          >
+                            {change.status}
+                          </span>
+                        </div>
+
+                        {/* Entity */}
+                        <div className="col-span-2 mb-2 md:mb-0">
+                          <Badge
+                            variant="outline"
+                            className="capitalize bg-white mb-1"
+                          >
+                            {change.entity_type}
+                          </Badge>
+                          <p className="text-sm text-slate-600">
+                            {change.entity_id || change.gene_id}
+                          </p>
+                        </div>
+
+                        {/* Payload Preview */}
+                        <div className="col-span-3 mb-2 md:mb-0">
+                          <pre className="text-xs bg-white p-2 rounded border border-slate-200 overflow-x-auto max-h-20 text-slate-600">
+                            {JSON.stringify(change.payload, null, 2).slice(
+                              0,
+                              200,
+                            )}
+                            {JSON.stringify(change.payload).length > 200
+                              ? "..."
+                              : ""}
+                          </pre>
+                        </div>
+
+                        {/* Users */}
+                        <div className="col-span-2 mb-2 md:mb-0">
+                          <div className="text-sm">
+                            <span className="text-slate-500">From: </span>
+                            <span className="font-medium text-slate-700">
+                              {change.requested_by}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="text-sm">
+                            <span className="text-slate-500">By: </span>
                             <span
-                              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
-                                change.status === "approved"
-                                  ? "bg-teal-100 text-teal-700"
-                                  : change.status === "rejected"
-                                    ? "bg-red-100 text-red-700"
-                                    : change.status === "applied"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-slate-200 text-slate-600"
+                              className={`font-medium ${
+                                change.reviewed_by
+                                  ? "text-slate-700"
+                                  : "text-slate-400"
                               }`}
                             >
-                              {change.status}
-                            </span>
-                          </div>
-                          <div className="hidden sm:block w-px h-8 bg-slate-200" />
-                          <div className="hidden sm:flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="capitalize bg-white"
-                            >
-                              {change.entity_type}
-                            </Badge>
-                            <span className="text-sm text-slate-500">
-                              {change.gene_id}
+                              {change.reviewed_by || "— pending —"}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right hidden md:block">
-                            <p className="text-sm font-medium text-slate-700">
-                              {change.requested_by}
-                            </p>
-                            <p className="text-xs text-slate-500">requested</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-medium text-slate-700">
-                              {change.reviewed_by || "—"}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {change.reviewed_by ? "reviewed" : "pending"}
-                            </p>
-                          </div>
-                          <div className="text-right min-w-[100px]">
-                            <p className="text-xs text-slate-500">
+
+                        {/* Date / Notes */}
+                        <div className="col-span-2">
+                          <p className="text-xs text-slate-500">
+                            Requested:{" "}
+                            {new Date(change.requested_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {new Date(change.requested_at).toLocaleTimeString(
+                              [],
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
+                          </p>
+                          {change.reviewed_at && (
+                            <p className="text-xs text-slate-500 mt-1">
+                              Reviewed:{" "}
                               {new Date(
-                                change.requested_at,
+                                change.reviewed_at,
                               ).toLocaleDateString()}
                             </p>
-                            <p className="text-xs text-slate-400">
-                              {new Date(change.requested_at).toLocaleTimeString(
-                                [],
-                                { hour: "2-digit", minute: "2-digit" },
-                              )}
+                          )}
+                          {change.review_notes && (
+                            <p className="text-xs text-teal-600 mt-1 italic">
+                              "{change.review_notes}"
                             </p>
-                          </div>
+                          )}
                         </div>
                       </div>
                     ))}
