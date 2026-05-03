@@ -59,7 +59,10 @@ class ApiService {
   }
 
   async getGeneStructure(geneId: string): Promise<RNAStructure> {
-    return this.fetchFromApi<RNAStructure>(`/genes/${geneId}/structure`);
+    const structures = await this.fetchFromApi<RNAStructure[]>(
+      `/genes/${geneId}/structures`,
+    );
+    return structures[0];
   }
 
   async getGenePDB(geneId: string): Promise<PDBStructure> {

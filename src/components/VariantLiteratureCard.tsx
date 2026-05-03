@@ -39,6 +39,17 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
   const [expandedVariant, setExpandedVariant] = useState<string | null>(null);
   const [selectedBiallelicLink, setSelectedBiallelicLink] = useState<string | null>(null);
   const [expandedPaper, setExpandedPaper] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   const clinicalVariants = useMemo(() =>
     variantData.filter(variant =>
@@ -104,6 +115,28 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
 
       return matchesSearch && matchesSig && matchesDisease && matchesZygosity;
     }).sort((a, b) => {
+      if (sortField) {
+        let aVal: any, bVal: any;
+        if (sortField === 'id') {
+          aVal = a.id || '';
+          bVal = b.id || '';
+        } else if (sortField === 'clinical_significance') {
+          aVal = a.clinical_significance || '';
+          bVal = b.clinical_significance || '';
+        } else if (sortField === 'zygosity') {
+          aVal = a.zygosity || '';
+          bVal = b.zygosity || '';
+        } else if (sortField === 'papers') {
+          aVal = getVariantLiterature(a.id).length;
+          bVal = getVariantLiterature(b.id).length;
+        }
+        
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
       if (zygosityFilter === 'biallelic') {
         const aBiallelic = a.zygosity === 'hom' || (a.linkedVariantIds?.length ?? 0) > 0 ? 1 : 0;
         const bBiallelic = b.zygosity === 'hom' || (b.linkedVariantIds?.length ?? 0) > 0 ? 1 : 0;
@@ -117,7 +150,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
       }
       return 0;
     });
-  }, [clinicalVariants, variantData, searchQuery, sigFilter, diseaseFilter, zygosityFilter, selectedBiallelicLink]);
+  }, [clinicalVariants, variantData, searchQuery, sigFilter, diseaseFilter, zygosityFilter, selectedBiallelicLink, sortField, sortDirection]);
 
   const filteredLiterature = useMemo(() => {
     const literatureWithCounts = paperData.map(paper => {
@@ -296,17 +329,6 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
             <span>·</span>
             <span>{paperData.length} papers</span>
           </div>
-
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase border-b border-slate-200 pb-2">
-            <span className="w-32">HGVS</span>
-            <span className="w-20">Position</span>
-            <span className="w-16">Change</span>
-            <span className="w-24">Classification</span>
-            <span className="w-24">Disease</span>
-            <span className="w-12">Zygosity</span>
-            <span className="w-16">Biallelic</span>
-            <span className="w-12">Papers</span>
-          </div>
         </div>
       </CardHeader>
 
@@ -320,188 +342,220 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
               <div className="text-sm font-medium">No variants found</div>
               <div className="text-xs text-slate-400">Try adjusting your filters</div>
             </div>
-          ) : (
-            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-              {filteredVariants.map((variant) => {
-                const isExpanded = expandedVariant === variant.id;
-                const variantLit = getVariantLiterature(variant.id);
-                const linkedVariants = getLinkedVariants(variant.id);
-                const isBiallelic = variant.zygosity === 'hom' || linkedVariants.length > 0;
-
-                return (
-                  <div key={variant.id} className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:border-slate-300 transition-colors">
-                    <div
-                      className="flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50"
-                      onClick={() => toggleExpand(variant.id)}
-                    >
-                      <button 
-                        className="text-slate-400 hover:text-slate-600"
-                        onClick={(e) => { e.stopPropagation(); toggleExpand(variant.id); }}
-                      >
-                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+) : (
+            <div className="overflow-auto max-h-[600px]">
+              <table className="w-full text-xs table-fixed border-collapse">
+                <colgroup>
+                  <col className="w-8" />
+                  <col className="w-40" />
+                  <col className="w-28" />
+                  <col className="w-28" />
+                  <col className="w-20" />
+                  <col className="w-32" />
+                  <col className="w-12" />
+                </colgroup>
+                <thead className="sticky top-0 bg-white z-10">
+                  <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider">
+                    <th className="py-2 px-2 text-left font-medium" />
+                    <th className="py-2 px-2 text-left font-medium">
+                      <button onClick={() => handleSort('id')} className="hover:text-slate-600">
+                        HGVS {sortField === 'id' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
                       </button>
+                    </th>
+                    <th className="py-2 px-2 text-left font-medium">
+                      <button onClick={() => handleSort('clinical_significance')} className="hover:text-slate-600">
+                        Classification {sortField === 'clinical_significance' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
+                      </button>
+                    </th>
+                    <th className="py-2 px-2 text-left font-medium normal-case">Disease</th>
+                    <th className="py-2 px-2 text-left font-medium normal-case">Inheritance</th>
+                    <th className="py-2 px-2 text-left font-medium">
+                      <button onClick={() => handleSort('zygosity')} className="hover:text-slate-600">
+                        Zygosity {sortField === 'zygosity' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
+                      </button>
+                    </th>
+                    <th className="py-2 px-2 text-left font-medium">
+                      <button onClick={() => handleSort('papers')} className="hover:text-slate-600">
+                        Papers {sortField === 'papers' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredVariants.map((variant) => {
+                    const isExpanded = expandedVariant === variant.id;
+                    const variantLit = getVariantLiterature(variant.id);
+                    const linkedVariants = getLinkedVariants(variant.id);
+                    const isBiallelic = variant.zygosity === 'hom' || linkedVariants.length > 0;
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="w-32 text-xs font-mono text-slate-600 truncate" title={variant.hgvs || variant.id}>{variant.hgvs || variant.id}</span>
-                          <span className="w-20 text-xs text-slate-500 font-mono">{variant.position?.toLocaleString()}</span>
-                          <span className="w-16 text-xs font-mono text-slate-700">{variant.ref}→{variant.alt}</span>
-                          <span className={`w-24 text-xs ${getClinicalBadge(variant.clinical_significance || '').replace('text-white', 'text-').replace('bg-slate-200', 'bg-slate-100 text-slate-700')}`}>
-                            {variant.clinical_significance || 'Unknown'}
-                          </span>
-                          <span className="w-24 text-xs text-teal-700 truncate">{variant.disease_type || ''}</span>
-                          <span className={`w-12 text-xs ${variant.zygosity === 'hom' ? 'text-purple-600 font-medium' : variant.zygosity === 'het' ? 'text-blue-600 font-medium' : 'text-slate-400'}`}>
-                            {variant.zygosity === 'hom' ? 'Hom' : variant.zygosity === 'het' ? 'Het' : ''}
-                          </span>
-                          <span className="w-16">
-                            {isBiallelic ? (
-                              linkedVariants.length > 0 ? (
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); handleBiallelicLinkClick(variant.id); }}
-                                  className={`text-xs font-medium hover:underline ${selectedBiallelicLink === variant.id ? 'text-indigo-700' : 'text-indigo-600'}`}
-                                >
-                                  {variant.zygosity === 'hom' ? 'Hom' : `${linkedVariants.length + 1} linked`}
-                                </button>
-                              ) : (
-                                <span className="text-xs text-slate-500">Hom</span>
-                              )
-                            ) : <span className="text-xs text-slate-400">—</span>}
-                          </span>
-                          <span className={`w-12 text-xs ${variantLit.length > 0 ? 'text-blue-600 font-medium' : 'text-slate-400'}`}>
-                            {variantLit.length}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-xs text-slate-500">
-                          {variant.gnomad_ac !== undefined && variant.gnomad_ac > 0 && (
-                            <span><span className="font-medium text-slate-600">gnomAD:</span> {variant.gnomad_ac.toLocaleString()}</span>
-                          )}
-                          {variant.aou_ac !== undefined && variant.aou_ac > 0 && (
-                            <span><span className="font-medium text-slate-600">AoU:</span> {variant.aou_ac.toLocaleString()}</span>
-                          )}
-                          {variant.function_score !== undefined && variant.function_score !== null && (
-                            <span><span className="font-medium text-slate-600">Score:</span> {variant.function_score.toFixed(3)}</span>
-                          )}
-                          {variant.consequence && (
-                            <span className="text-slate-600">{variant.consequence}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
-                        onClick={(e) => { e.stopPropagation(); toggleExpand(variant.id); }}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-
-                    {isExpanded && (
-                      <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-4">
-                        {linkedVariants.length > 0 && (
-                          <div>
-                            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-                              Linked Variants ({linkedVariants.length})
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                onClick={() => handleBiallelicLinkClick(variant.id)}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
-                                  selectedBiallelicLink === variant.id 
-                                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700' 
-                                    : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-200'
-                                }`}
+                    return (
+                      <>
+                        <tr
+                          key={variant.id}
+                          className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
+                          onClick={() => toggleExpand(variant.id)}
+                        >
+                          <td className="py-3 px-2 text-center">
+                            {isExpanded ? <ChevronDown className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
+                          </td>
+                          <td className="py-3 px-2 font-mono text-slate-700 truncate" title={variant.hgvs || variant.id}>
+                            {variant.hgvs || variant.id}
+                          </td>
+                          <td className="py-3 px-2">
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full text-center font-medium ${getClinicalBadge(variant.clinical_significance || '').replace('text-white', 'text-').replace('bg-slate-200', 'bg-slate-100 text-slate-700')}`}>
+                              {variant.clinical_significance || 'Unknown'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-2 text-slate-600 truncate">{variant.disease_type || '—'}</td>
+                          <td className="py-3 px-2">
+                            <span className="text-xs font-medium text-slate-700">
+                              {isBiallelic ? 'Biallelic' : 'Dominant'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-2">
+                            {isBiallelic && linkedVariants.length > 0 ? (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleBiallelicLinkClick(variant.id); }}
+                                className="text-xs font-medium hover:underline text-slate-700"
                               >
-                                <LinkIcon className="h-3 w-3 text-indigo-500" />
-                                <span className="text-xs font-mono">{variant.id}</span>
-                                <span className="text-xs text-slate-500">
-                                  ({variant.ref}→{variant.alt})
-                                </span>
+                                {variant.zygosity === 'hom' 
+                                  ? 'Hom' 
+                                  : `Het n.${[variant.hgvs || variant.id, ...linkedVariants.map(v => v.hgvs || v.id)].join(', ')}`}
                               </button>
-                              {linkedVariants.map(linkedVariant => (
-                                <button
-                                  key={linkedVariant.id}
-                                  onClick={() => handleBiallelicLinkClick(linkedVariant.id)}
-                                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
-                                    selectedBiallelicLink === linkedVariant.id 
-                                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700' 
-                                      : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-200'
-                                  }`}
-                                >
-                                  <LinkIcon className="h-3 w-3 text-indigo-500" />
-                                  <span className="text-xs font-mono">{linkedVariant.id}</span>
-                                  <span className="text-xs text-slate-500">
-                                    ({linkedVariant.ref}→{linkedVariant.alt})
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                            ) : (
+                              <span className="text-slate-700 font-medium">
+                                {variant.zygosity === 'hom' ? 'Hom' : variant.zygosity === 'het' ? 'Het' : '—'}
+                              </span>
+                            )}
+                          </td>
+                          <td className={`py-3 px-2 ${variantLit.length > 0 ? 'text-blue-600 font-medium' : 'text-slate-400'}`}>
+                            {variantLit.length}
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={7} className="bg-slate-50 p-4">
+                              <div className="space-y-4">
+                                <div className="flex items-center gap-4 text-xs text-slate-500">
+                                  {variant.gnomad_ac !== undefined && variant.gnomad_ac > 0 && (
+                                    <span><span className="font-medium text-slate-600">gnomAD AC:</span> {variant.gnomad_ac.toLocaleString()}</span>
+                                  )}
+                                  {variant.aou_ac !== undefined && variant.aou_ac > 0 && (
+                                    <span><span className="font-medium text-slate-600">AoU AC:</span> {variant.aou_ac.toLocaleString()}</span>
+                                  )}
+                                  {variant.ukbb_ac !== undefined && variant.ukbb_ac > 0 && (
+                                    <span><span className="font-medium text-slate-600">UKBB AC:</span> {variant.ukbb_ac.toLocaleString()}</span>
+                                  )}
+                                  {variant.function_score !== undefined && variant.function_score !== null && (
+                                    <span><span className="font-medium text-slate-600">Score:</span> {variant.function_score.toFixed(3)}</span>
+                                  )}
+                                  {variant.consequence && (
+                                    <span className="text-slate-600">{variant.consequence}</span>
+                                  )}
+                                </div>
 
-                        {variantLit.length > 0 ? (
-                          <div>
-                            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-                              Linked Literature ({variantLit.length})
-                            </div>
-                            <div className="space-y-2">
-                              {variantLit.map((paper: any, idx: number) => (
-                                <div key={idx} className="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200">
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-medium text-slate-900 leading-snug mb-1 line-clamp-2">
-                                      {paper.title}
-                                    </h4>
-                                    <p className="text-xs text-slate-600 mb-2">
-                                      <span className="text-slate-700 font-medium">{paper.authors}</span>
-                                      <span className="mx-1">·</span>
-                                      <span className="italic">{paper.journal}</span>
-                                      <span className="mx-1">·</span>
-                                      <span>{paper.year}</span>
-                                    </p>
-                                    <div className="flex items-center gap-3">
-                                      <Badge variant="outline" className="text-xs bg-white border-slate-300 text-slate-600 font-mono">
-                                        DOI: {paper.doi}
-                                      </Badge>
-                                      <span className="text-xs text-slate-500 flex items-center gap-1" title="Number of individuals with this variant assessed in published studies">
-                                        <Users className="h-3 w-3" />
-                                        {paper.count} individual{paper.count !== 1 ? 's' : ''} assessed
-                                      </span>
+                                {linkedVariants.length > 0 && (
+                                  <div>
+                                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
+                                      Linked Variants ({linkedVariants.length})
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      <button
+                                        onClick={() => handleBiallelicLinkClick(variant.id)}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
+                                          selectedBiallelicLink === variant.id 
+                                            ? 'bg-indigo-100 border-indigo-300 text-indigo-700' 
+                                            : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-200'
+                                        }`}
+                                      >
+                                        <LinkIcon className="h-3 w-3 text-indigo-500" />
+                                        <span className="text-xs font-mono">{variant.id}</span>
+                                        <span className="text-xs text-slate-500">
+                                          ({variant.ref}→{variant.alt})
+                                        </span>
+                                      </button>
+                                      {linkedVariants.map(linkedVariant => (
+                                        <button
+                                          key={linkedVariant.id}
+                                          onClick={() => handleBiallelicLinkClick(linkedVariant.id)}
+                                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
+                                            selectedBiallelicLink === linkedVariant.id 
+                                              ? 'bg-indigo-100 border-indigo-300 text-indigo-700' 
+                                              : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-200'
+                                          }`}
+                                        >
+                                          <LinkIcon className="h-3 w-3 text-indigo-500" />
+                                          <span className="text-xs font-mono">{linkedVariant.id}</span>
+                                          <span className="text-xs text-slate-500">
+                                            ({linkedVariant.ref}→{linkedVariant.alt})
+                                          </span>
+                                        </button>
+                                      ))}
                                     </div>
                                   </div>
-                                  <a
-                                    href={`https://doi.org/${paper.doi}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="shrink-0"
-                                  >
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-8 w-8 p-0 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-600"
-                                    >
-                                      <ExternalLink className="h-4 w-4" />
-                                    </Button>
-                                  </a>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-sm text-slate-400 text-center py-4">
-                            No literature linked to this variant
-                          </div>
+                                )}
+
+                                {variantLit.length > 0 ? (
+                                  <div>
+                                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
+                                      Linked Literature ({variantLit.length})
+                                    </div>
+                                    <div className="space-y-2">
+                                      {variantLit.map((paper: any, idx: number) => (
+                                        <div key={idx} className="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200">
+                                          <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-medium text-slate-900 leading-snug mb-1 line-clamp-2">
+                                              {paper.title}
+                                            </h4>
+                                            <p className="text-xs text-slate-600 mb-2">
+                                              <span className="text-slate-700 font-medium">{paper.authors}</span>
+                                              <span className="mx-1">·</span>
+                                              <span className="italic">{paper.journal}</span>
+                                              <span className="mx-1">·</span>
+                                              <span>{paper.year}</span>
+                                            </p>
+                                            <div className="flex items-center gap-3">
+                                              <Badge variant="outline" className="text-xs bg-white border-slate-300 text-slate-600 font-mono">
+                                                DOI: {paper.doi}
+                                              </Badge>
+                                              <span className="text-xs text-slate-500 flex items-center gap-1" title="Number of individuals with this variant assessed in published studies">
+                                                <Users className="h-3 w-3" />
+                                                {paper.count} individual{paper.count !== 1 ? 's' : ''} assessed
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <a
+                                            href={`https://doi.org/${paper.doi}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="shrink-0"
+                                          >
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="h-8 w-8 p-0 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-600"
+                                            >
+                                              <ExternalLink className="h-4 w-4" />
+                                            </Button>
+                                          </a>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="text-sm text-slate-400 text-center py-4">
+                                    No literature linked to this variant
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
                         )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      </>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )
         ) : (
