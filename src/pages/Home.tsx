@@ -67,36 +67,24 @@ const Home: React.FC = () => {
             />
           </div>
           {/* Search Examples */}
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-xl p-6">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-center sm:text-left">
-                  <p className="text-sm font-medium text-slate-700 mb-2">
-                    Try searching for:
-                  </p>
-                  <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-                    <button
-                      onClick={() => handleGeneSelect("RNU4-2")}
-                      className="px-3 py-1.5 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-sm font-medium hover:bg-teal-100 transition-colors"
-                    >
-                      RNU4-2
-                    </button>
-                    <button
-                      onClick={() => setSearchTerm("c.34A>G")}
-                      className="px-3 py-1.5 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-sm font-medium hover:bg-teal-100 transition-colors"
-                    >
-                      c.34A&gt;G
-                    </button>
-                  </div>
-                </div>
-                <div className="text-center sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-4 sm:pt-0 sm:pl-4">
-                  <p className="text-xs text-slate-500 mb-1">Available genes</p>
-                  <p className="text-sm font-semibold text-slate-700">
-                    {availableSnRNAs.join(", ")}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-wrap justify-center items-center gap-3 text-sm text-slate-500">
+            <span>Try:</span>
+            <button
+              onClick={() => handleGeneSelect("RNU4-2")}
+              className="text-teal-600 hover:text-teal-700 hover:underline underline-offset-2"
+            >
+              RNU4-2
+            </button>
+            <span className="text-slate-300">|</span>
+            <button
+              onClick={() => setSearchTerm("c.34A>G")}
+              className="text-teal-600 hover:text-teal-700 hover:underline underline-offset-2"
+            >
+              c.34A&gt;G
+            </button>
+            <span className="text-slate-300 ml-2">
+              · {availableSnRNAs.length} genes
+            </span>
           </div>
         </div>
       </div>
