@@ -159,7 +159,7 @@ async def import_variant_batch(
         }
         variants_data.append(variant)
 
-    insert_variants(variants_data)
+    insert_variants(variants_data, db)
 
     audit_log(
         "variants",
@@ -227,7 +227,7 @@ async def import_structure(
         }
     ]
 
-    insert_structures(structure_data)
+    insert_structures(structure_data, db)
 
     audit_log(
         "rna_structures",

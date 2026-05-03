@@ -885,7 +885,9 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                                 >
                                                   <Users className="h-3 w-3" />
                                                   {paper.count} individual
-                                                  {paper.count !== 1 ? "s" : ""}{" "}
+                                                  {paper.count !== 1
+                                                    ? "s"
+                                                    : ""}{" "}
                                                   assessed
                                                 </span>
                                               </div>

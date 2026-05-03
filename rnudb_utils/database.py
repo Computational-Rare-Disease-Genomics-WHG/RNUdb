@@ -136,9 +136,9 @@ def list_all_users(limit: int = 100) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def insert_variants(variants_data: list[dict]) -> None:
+def insert_variants(variants_data: list[dict], session=None) -> None:
     """Insert variants into the database (upsert with merge)."""
-    with SessionLocal() as session:
+    def _do_insert(sess):
         for v in variants_data:
             variant = Variant(
                 id=v["id"],
@@ -167,8 +167,14 @@ def insert_variants(variants_data: list[dict]) -> None:
                 zygosity=v.get("zygosity"),
                 cohort=v.get("cohort"),
             )
-            session.merge(variant)
-        session.commit()
+            sess.merge(variant)
+        sess.commit()
+
+    if session is not None:
+        _do_insert(session)
+    else:
+        with SessionLocal() as session:
+            _do_insert(session)
 
 
 # ---------------------------------------------------------------------------
@@ -210,12 +216,12 @@ def insert_literature_counts(counts_data: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def insert_structures(structures_data: list[dict]) -> None:
+def insert_structures(structures_data: list[dict], session=None) -> None:
     """Insert RNA structures into the database (upsert with merge)."""
-    with SessionLocal() as session:
+    def _do_insert(sess):
         for s in structures_data:
             structure = RNAStructure(id=s["id"], geneId=s["geneId"])
-            session.merge(structure)
+            sess.merge(structure)
             structure_id = s["id"]
 
             # Insert nucleotides
@@ -227,7 +233,7 @@ def insert_structures(structures_data: list[dict]) -> None:
                     x=n["x"],
                     y=n["y"],
                 )
-                session.merge(nucleotide)
+                sess.merge(nucleotide)
 
             # Insert base pairs (skip duplicates)
             seen_pairs = set()
@@ -243,7 +249,7 @@ def insert_structures(structures_data: list[dict]) -> None:
                     from_pos=from_pos,
                     to_pos=to_pos,
                 )
-                session.merge(base_pair)
+                sess.merge(base_pair)
 
             # Insert annotations
             for a in s.get("annotations", []):
@@ -256,7 +262,7 @@ def insert_structures(structures_data: list[dict]) -> None:
                     font_size=a["font_size"],
                     color=a.get("color"),
                 )
-                session.merge(annotation)
+                sess.merge(annotation)
 
             # Insert structural features
             for f in s.get("structural_features", []):
@@ -273,9 +279,15 @@ def insert_structures(structures_data: list[dict]) -> None:
                     description=f.get("description"),
                     color=f.get("color"),
                 )
-                session.merge(feature)
+                sess.merge(feature)
 
-        session.commit()
+        sess.commit()
+
+    if session is not None:
+        _do_insert(session)
+    else:
+        with SessionLocal() as session:
+            _do_insert(session)
 
 
 # ---------------------------------------------------------------------------
