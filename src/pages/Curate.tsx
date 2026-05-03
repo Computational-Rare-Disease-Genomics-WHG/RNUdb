@@ -17,7 +17,7 @@ import {
   ChevronRight,
   Pencil,
 } from "lucide-react";
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "@/components/GenomeBrowser/GenomeBrowser.css";
 
@@ -106,18 +106,16 @@ const Curate: React.FC = () => {
   const [regionViewerWidth, setRegionViewerWidth] = useState<number | null>(null);
   const { submitChange } = useApprovals();
 
-  useLayoutEffect(() => {
-    if (!regionViewerRef.current) return;
-    
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const width = Math.floor(entry.contentRect.width);
-        if (width > 0) setRegionViewerWidth(width);
+  useEffect(() => {
+    const updateWidth = () => {
+      if (regionViewerRef.current) {
+        setRegionViewerWidth(regionViewerRef.current.offsetWidth);
       }
-    });
-    
-    observer.observe(regionViewerRef.current);
-    return () => observer.disconnect();
+    };
+
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
   useEffect(() => {
@@ -756,8 +754,7 @@ const Curate: React.FC = () => {
                       </div>
                       <div
                         ref={regionViewerRef}
-                        className="genome-browser-viewer w-full"
-                        style={{ width: "100%", minWidth: "100%" }}
+                        className="genome-browser-viewer"
                       >
                         <RegionViewer
                           regions={[
