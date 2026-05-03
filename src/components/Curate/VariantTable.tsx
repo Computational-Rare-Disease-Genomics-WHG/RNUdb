@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,31 +9,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
   type ColumnDef,
-} from '@tanstack/react-table';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+} from "@tanstack/react-table";
 import {
   ChevronLeft,
   ChevronRight,
@@ -46,8 +21,33 @@ import {
   Search,
   SlidersHorizontal,
   Pencil,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+} from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface VariantTableProps {
   data: any[];
@@ -66,12 +66,12 @@ export function VariantTable({
 }: VariantTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [globalFilter, setGlobalFilter] = useState("");
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const columns: ColumnDef<any>[] = [
     {
-      id: 'select',
+      id: "select",
       header: ({ table }) => (
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
@@ -90,36 +90,42 @@ export function VariantTable({
       enableHiding: false,
     },
     {
-      accessorKey: 'id',
-      header: 'Variant ID',
+      accessorKey: "id",
+      header: "Variant ID",
       cell: ({ row }) => (
-        <span className="font-mono text-sm text-slate-700">{row.getValue('id')}</span>
-      ),
-    },
-    {
-      accessorKey: 'position',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="h-8 -ml-3 font-bold text-slate-600"
-        >
-          Position
-          {column.getIsSorted() === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> :
-           column.getIsSorted() === 'desc' ? <ArrowDown className="ml-1 h-3 w-3" /> :
-           <ArrowUpDown className="ml-1 h-3 w-3" />}
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <span className="text-sm text-slate-600 font-medium">
-          {(row.getValue('position') as number).toLocaleString()}
+        <span className="font-mono text-sm text-slate-700">
+          {row.getValue("id")}
         </span>
       ),
     },
     {
-      accessorKey: 'change',
-      header: 'Change',
+      accessorKey: "position",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 -ml-3 font-bold text-slate-600"
+        >
+          Position
+          {column.getIsSorted() === "asc" ? (
+            <ArrowUp className="ml-1 h-3 w-3" />
+          ) : column.getIsSorted() === "desc" ? (
+            <ArrowDown className="ml-1 h-3 w-3" />
+          ) : (
+            <ArrowUpDown className="ml-1 h-3 w-3" />
+          )}
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <span className="text-sm text-slate-600 font-medium">
+          {(row.getValue("position") as number).toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "change",
+      header: "Change",
       cell: ({ row }) => (
         <span className="text-sm">
           <span className="font-mono text-slate-700">{row.original.ref}</span>
@@ -129,10 +135,10 @@ export function VariantTable({
       ),
     },
     {
-      accessorKey: 'clinical_significance',
-      header: 'Clinical Significance',
+      accessorKey: "clinical_significance",
+      header: "Clinical Significance",
       cell: ({ row }) => {
-        const sig = row.getValue('clinical_significance') as string;
+        const sig = row.getValue("clinical_significance") as string;
         if (!sig) return null;
         return (
           <Badge
@@ -145,26 +151,30 @@ export function VariantTable({
         );
       },
       filterFn: (row, id, value) => {
-        return value === 'all' || row.getValue(id) === value;
+        return value === "all" || row.getValue(id) === value;
       },
     },
     {
-      accessorKey: 'hgvs',
-      header: 'HGVS',
+      accessorKey: "hgvs",
+      header: "HGVS",
       cell: ({ row }) => (
-        <span className="text-sm text-slate-500 font-mono">{row.getValue('hgvs') || '-'}</span>
+        <span className="text-sm text-slate-500 font-mono">
+          {row.getValue("hgvs") || "-"}
+        </span>
       ),
     },
     {
-      accessorKey: 'consequence',
-      header: 'Consequence',
+      accessorKey: "consequence",
+      header: "Consequence",
       cell: ({ row }) => (
-        <span className="text-sm text-slate-600">{row.getValue('consequence') || '-'}</span>
+        <span className="text-sm text-slate-600">
+          {row.getValue("consequence") || "-"}
+        </span>
       ),
     },
     {
-      id: 'actions',
-      header: 'Actions',
+      id: "actions",
+      header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
@@ -206,7 +216,13 @@ export function VariantTable({
     },
   });
 
-  const clinicalSigs = ['Pathogenic', 'Likely Pathogenic', 'VUS', 'Likely Benign', 'Benign'];
+  const clinicalSigs = [
+    "Pathogenic",
+    "Likely Pathogenic",
+    "VUS",
+    "Likely Benign",
+    "Benign",
+  ];
 
   return (
     <div className="space-y-4 px-6">
@@ -223,9 +239,15 @@ export function VariantTable({
             />
           </div>
           <Select
-            value={(table.getColumn('clinical_significance')?.getFilterValue() as string) ?? 'all'}
+            value={
+              (table
+                .getColumn("clinical_significance")
+                ?.getFilterValue() as string) ?? "all"
+            }
             onValueChange={(value) =>
-              table.getColumn('clinical_significance')?.setFilterValue(value === 'all' ? undefined : value)
+              table
+                .getColumn("clinical_significance")
+                ?.setFilterValue(value === "all" ? undefined : value)
             }
           >
             <SelectTrigger className="w-[180px] h-9 bg-white">
@@ -258,9 +280,11 @@ export function VariantTable({
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
-                    {column.id.replace(/_/g, ' ')}
+                    {column.id.replace(/_/g, " ")}
                   </DropdownMenuCheckboxItem>
                 ))}
             </DropdownMenuContent>
@@ -273,13 +297,22 @@ export function VariantTable({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-slate-50 border-b border-slate-200">
+              <TableRow
+                key={headerGroup.id}
+                className="bg-slate-50 border-b border-slate-200"
+              >
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="py-3 px-4 text-left font-semibold text-xs text-slate-600 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
+                  <TableHead
+                    key={header.id}
+                    className="py-3 px-4 text-left font-semibold text-xs text-slate-600 uppercase tracking-wider bg-slate-50 border-b border-slate-200"
+                  >
                     <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </div>
                   </TableHead>
                 ))}
@@ -292,13 +325,16 @@ export function VariantTable({
                 <TableRow
                   key={row.id}
                   className={`group transition-colors border-b border-slate-100 ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                    index % 2 === 0 ? "bg-white" : "bg-slate-50"
                   } hover:bg-teal-50`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-3 px-4 sm:px-6">
                       <div className="text-sm">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </div>
                     </TableCell>
                   ))}
@@ -306,7 +342,10 @@ export function VariantTable({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-slate-500">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-slate-500"
+                >
                   No variants found.
                 </TableCell>
               </TableRow>
@@ -320,7 +359,9 @@ export function VariantTable({
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <span>
             {selectedVariants.size > 0 ? (
-              <span className="font-medium text-teal-700">{selectedVariants.size} selected</span>
+              <span className="font-medium text-teal-700">
+                {selectedVariants.size} selected
+              </span>
             ) : (
               <span>{table.getFilteredRowModel().rows.length} variants</span>
             )}
@@ -330,7 +371,8 @@ export function VariantTable({
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <span>Page</span>
             <span className="font-medium text-slate-900">
-              {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+              {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
             </span>
           </div>
           <div className="flex items-center gap-1">

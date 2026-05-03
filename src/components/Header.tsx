@@ -1,12 +1,26 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Dna, Menu, X, Database, LogIn, LogOut, Shield, User, FileCode, Edit3, Stethoscope, BookOpen, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAllSnRNAIds, getGeneData } from '../data/genes';
-import { useAuth } from '../context/AuthContext';
-import type { SnRNAGene } from '@/types';
+import {
+  Dna,
+  Menu,
+  X,
+  Database,
+  LogIn,
+  LogOut,
+  Shield,
+  User,
+  FileCode,
+  Edit3,
+  Stethoscope,
+  BookOpen,
+  Search,
+} from "lucide-react";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { getAllSnRNAIds, getGeneData } from "../data/genes";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { SnRNAGene } from "@/types";
 
 interface HeaderProps {
   searchTerm?: string;
@@ -20,39 +34,48 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({
-  searchTerm = '',
+  searchTerm = "",
   setSearchTerm = () => {},
   searchResults: _searchResults = null,
   setSearchResults = () => {},
   isMobileMenuOpen = false,
   setIsMobileMenuOpen = () => {},
-  showSearch = true
+  showSearch = true,
 }) => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, isLoggedIn, isAdmin, login, logout } = useAuth();
+  const {
+    user,
+    isLoading: authLoading,
+    isLoggedIn,
+    isAdmin,
+    login,
+    logout,
+  } = useAuth();
 
   const handleSearch = async () => {
     if (searchTerm.trim()) {
       try {
         const geneIds = await getAllSnRNAIds();
         const results: SnRNAGene[] = [];
-        
+
         for (const geneId of geneIds) {
           const geneData = await getGeneData(geneId);
           if (geneData) {
-            if (geneData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                geneData.fullName.toLowerCase().includes(searchTerm.toLowerCase())) {
+            if (
+              geneData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              geneData.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+            ) {
               results.push(geneData);
             }
           }
         }
-        
+
         setSearchResults(results);
         if (results.length > 0) {
           navigate(`/gene/${results[0].name}`);
         }
       } catch (error) {
-        console.error('Error during search:', error);
+        console.error("Error during search:", error);
         setSearchResults([]);
       }
     }
@@ -70,35 +93,37 @@ const Header: React.FC<HeaderProps> = ({
               RNUdb
             </span>
           </Link>
-          
+
           <nav className="hidden lg:flex items-center gap-1">
-            {isLoggedIn && user && (user.role === 'curator' || user.role === 'admin') && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate('/curate')}
-                  className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
-                >
-                  <Database className="h-4 w-4 mr-1.5" />
-                  Curate
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate('/editor')}
-                  className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
-                >
-                  <Edit3 className="h-4 w-4 mr-1.5" />
-                  Editor
-                </Button>
-              </>
-            )}
+            {isLoggedIn &&
+              user &&
+              (user.role === "curator" || user.role === "admin") && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/curate")}
+                    className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+                  >
+                    <Database className="h-4 w-4 mr-1.5" />
+                    Curate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/editor")}
+                    className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+                  >
+                    <Edit3 className="h-4 w-4 mr-1.5" />
+                    Editor
+                  </Button>
+                </>
+              )}
             {isAdmin && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/admin')}
+                onClick={() => navigate("/admin")}
                 className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
               >
                 <Shield className="h-4 w-4 mr-1.5" />
@@ -109,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/clinical-interpretation')}
+              onClick={() => navigate("/clinical-interpretation")}
               className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
             >
               <Stethoscope className="h-4 w-4 mr-1.5" />
@@ -118,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/api-docs')}
+              onClick={() => navigate("/api-docs")}
               className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
             >
               <FileCode className="h-4 w-4 mr-1.5" />
@@ -127,7 +152,7 @@ const Header: React.FC<HeaderProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/how-to-use')}
+              onClick={() => navigate("/how-to-use")}
               className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
             >
               <BookOpen className="h-4 w-4 mr-1.5" />
@@ -143,7 +168,7 @@ const Header: React.FC<HeaderProps> = ({
                   placeholder="Search genes, variants..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   className="pl-9 h-10 border-slate-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg bg-slate-50"
                 />
               </div>
@@ -161,21 +186,27 @@ const Header: React.FC<HeaderProps> = ({
                 <Search className="h-5 w-5" />
               </Button>
             )}
-            
+
             {authLoading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600" />
             ) : isLoggedIn && user ? (
               <div className="flex items-center gap-2">
                 <div className="hidden sm:flex items-center gap-2">
                   <Avatar size="sm">
-                    {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
-                    <AvatarFallback><User className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
+                    {user.avatar_url && (
+                      <AvatarImage src={user.avatar_url} alt={user.name} />
+                    )}
+                    <AvatarFallback>
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-slate-700">{user.name}</span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {user.name}
+                  </span>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={logout}
                   className="text-slate-500 hover:text-slate-700"
                 >
@@ -193,14 +224,18 @@ const Header: React.FC<HeaderProps> = ({
                 <span className="hidden sm:inline">Sign In</span>
               </Button>
             )}
-            
+
             <Button
               variant="ghost"
               size="sm"
               className="lg:hidden text-slate-600"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
@@ -213,7 +248,7 @@ const Header: React.FC<HeaderProps> = ({
                 placeholder="Search genes, variants..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="pl-9 h-10 border-slate-200 focus:border-teal-500 rounded-lg bg-slate-50"
               />
             </div>
@@ -224,30 +259,41 @@ const Header: React.FC<HeaderProps> = ({
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-200 bg-white">
           <div className="px-4 py-4 space-y-2">
-            {isLoggedIn && user && (user.role === 'curator' || user.role === 'admin') && (
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={() => { navigate('/curate'); setIsMobileMenuOpen(false); }}
-                  className="w-full justify-start text-slate-700"
-                >
-                  <Database className="h-4 w-4 mr-2" />
-                  Curate
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => { navigate('/editor'); setIsMobileMenuOpen(false); }}
-                  className="w-full justify-start text-slate-700"
-                >
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Editor
-                </Button>
-              </>
-            )}
+            {isLoggedIn &&
+              user &&
+              (user.role === "curator" || user.role === "admin") && (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/curate");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-slate-700"
+                  >
+                    <Database className="h-4 w-4 mr-2" />
+                    Curate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/editor");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-slate-700"
+                  >
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Editor
+                  </Button>
+                </>
+              )}
             {isAdmin && (
               <Button
                 variant="ghost"
-                onClick={() => { navigate('/admin'); setIsMobileMenuOpen(false); }}
+                onClick={() => {
+                  navigate("/admin");
+                  setIsMobileMenuOpen(false);
+                }}
                 className="w-full justify-start text-slate-700"
               >
                 <Shield className="h-4 w-4 mr-2" />
@@ -257,7 +303,10 @@ const Header: React.FC<HeaderProps> = ({
             <div className="border-t border-slate-100 my-2" />
             <Button
               variant="ghost"
-              onClick={() => { navigate('/clinical-interpretation'); setIsMobileMenuOpen(false); }}
+              onClick={() => {
+                navigate("/clinical-interpretation");
+                setIsMobileMenuOpen(false);
+              }}
               className="w-full justify-start text-slate-700"
             >
               <Stethoscope className="h-4 w-4 mr-2" />
@@ -265,7 +314,10 @@ const Header: React.FC<HeaderProps> = ({
             </Button>
             <Button
               variant="ghost"
-              onClick={() => { navigate('/api-docs'); setIsMobileMenuOpen(false); }}
+              onClick={() => {
+                navigate("/api-docs");
+                setIsMobileMenuOpen(false);
+              }}
               className="w-full justify-start text-slate-700"
             >
               <FileCode className="h-4 w-4 mr-2" />
@@ -273,7 +325,10 @@ const Header: React.FC<HeaderProps> = ({
             </Button>
             <Button
               variant="ghost"
-              onClick={() => { navigate('/how-to-use'); setIsMobileMenuOpen(false); }}
+              onClick={() => {
+                navigate("/how-to-use");
+                setIsMobileMenuOpen(false);
+              }}
               className="w-full justify-start text-slate-700"
             >
               <BookOpen className="h-4 w-4 mr-2" />

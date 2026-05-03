@@ -1,5 +1,5 @@
-import React from 'react';
-import { BarChart3, Info } from 'lucide-react';
+import { BarChart3, Info } from "lucide-react";
+import React from "react";
 
 interface Variant {
   id: string;
@@ -35,20 +35,29 @@ export const GnomADVariantViewer: React.FC<GnomADVariantViewerProps> = ({
   };
 
   // Count variants by significance
-  const significanceCounts = variants.reduce((acc, variant) => {
-    const sig = variant.clinical_significance || 'Unknown';
-    acc[sig] = (acc[sig] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const significanceCounts = variants.reduce(
+    (acc, variant) => {
+      const sig = variant.clinical_significance || "Unknown";
+      acc[sig] = (acc[sig] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   const getClinicalColor = (sig?: string) => {
     switch (sig?.toLowerCase()) {
-      case 'pathogenic': return '#ef4444';
-      case 'likely pathogenic': return '#f97316';
-      case 'vus': return '#eab308';
-      case 'likely benign': return '#22c55e';
-      case 'benign': return '#16a34a';
-      default: return '#64748b';
+      case "pathogenic":
+        return "#ef4444";
+      case "likely pathogenic":
+        return "#f97316";
+      case "vus":
+        return "#eab308";
+      case "likely benign":
+        return "#22c55e";
+      case "benign":
+        return "#16a34a";
+      default:
+        return "#64748b";
     }
   };
 
@@ -82,7 +91,9 @@ export const GnomADVariantViewer: React.FC<GnomADVariantViewerProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-teal-600" />
-          <h3 className="text-lg font-semibold text-slate-900">Variant Track</h3>
+          <h3 className="text-lg font-semibold text-slate-900">
+            Variant Track
+          </h3>
           <span className="text-sm text-slate-500">{geneName}</span>
         </div>
         <div className="flex items-center gap-3 text-sm">
@@ -111,10 +122,22 @@ export const GnomADVariantViewer: React.FC<GnomADVariantViewerProps> = ({
           preserveAspectRatio="xMidYMid meet"
         >
           {/* Position labels */}
-          <text x={padding} y={chartHeight + 12} fontSize="4" fill="#94a3b8" textAnchor="start">
+          <text
+            x={padding}
+            y={chartHeight + 12}
+            fontSize="4"
+            fill="#94a3b8"
+            textAnchor="start"
+          >
             {geneStart.toLocaleString()}
           </text>
-          <text x={svgWidth - padding} y={chartHeight + 12} fontSize="4" fill="#94a3b8" textAnchor="end">
+          <text
+            x={svgWidth - padding}
+            y={chartHeight + 12}
+            fontSize="4"
+            fill="#94a3b8"
+            textAnchor="end"
+          >
             {geneEnd.toLocaleString()}
           </text>
 
@@ -171,14 +194,19 @@ export const GnomADVariantViewer: React.FC<GnomADVariantViewerProps> = ({
                     className="cursor-pointer hover:r-3"
                   >
                     <title>
-                      {variant.id}: {variant.position.toLocaleString()} ({variant.ref}→{variant.alt})
-                      {variant.clinical_significance ? `\nClinical: ${variant.clinical_significance}` : ''}
-                      {variant.gnomad_ac ? `\ngnomAD AC: ${variant.gnomad_ac}` : ''}
+                      {variant.id}: {variant.position.toLocaleString()} (
+                      {variant.ref}→{variant.alt})
+                      {variant.clinical_significance
+                        ? `\nClinical: ${variant.clinical_significance}`
+                        : ""}
+                      {variant.gnomad_ac
+                        ? `\ngnomAD AC: ${variant.gnomad_ac}`
+                        : ""}
                     </title>
                   </circle>
                 </g>
               );
-            })
+            }),
           )}
         </svg>
 
@@ -198,7 +226,9 @@ export const GnomADVariantViewer: React.FC<GnomADVariantViewerProps> = ({
         </div>
         <div className="flex items-center gap-1 text-slate-400">
           <Info className="h-3.5 w-3.5" />
-          <span className="text-xs">Hover over circles for variant details</span>
+          <span className="text-xs">
+            Hover over circles for variant details
+          </span>
         </div>
       </div>
     </div>

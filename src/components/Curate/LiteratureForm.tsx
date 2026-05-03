@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Save, X } from 'lucide-react';
+import { Save, X } from "lucide-react";
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface LiteratureFormProps {
   initialData?: any | null;
@@ -10,14 +10,18 @@ interface LiteratureFormProps {
   onCancel: () => void;
 }
 
-const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps) => {
+const LiteratureForm = ({
+  initialData,
+  onSubmit,
+  onCancel,
+}: LiteratureFormProps) => {
   const [formData, setFormData] = useState({
-    id: initialData?.id || '',
-    title: initialData?.title || '',
-    authors: initialData?.authors || '',
-    journal: initialData?.journal || '',
-    year: initialData?.year || '',
-    doi: initialData?.doi || '',
+    id: initialData?.id || "",
+    title: initialData?.title || "",
+    authors: initialData?.authors || "",
+    journal: initialData?.journal || "",
+    year: initialData?.year || "",
+    doi: initialData?.doi || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,7 +32,9 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label className="text-sm font-medium text-slate-700 mb-1">Literature ID</Label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">
+          Literature ID
+        </Label>
         <Input
           value={formData.id}
           onChange={(e) => setFormData({ ...formData, id: e.target.value })}
@@ -49,10 +55,14 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
       </div>
 
       <div>
-        <Label className="text-sm font-medium text-slate-700 mb-1">Authors</Label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">
+          Authors
+        </Label>
         <Input
           value={formData.authors}
-          onChange={(e) => setFormData({ ...formData, authors: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, authors: e.target.value })
+          }
           placeholder="Author list"
           required
         />
@@ -60,16 +70,22 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label className="text-sm font-medium text-slate-700 mb-1">Journal</Label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">
+            Journal
+          </Label>
           <Input
             value={formData.journal}
-            onChange={(e) => setFormData({ ...formData, journal: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, journal: e.target.value })
+            }
             placeholder="Journal name"
             required
           />
         </div>
         <div>
-          <Label className="text-sm font-medium text-slate-700 mb-1">Year</Label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">
+            Year
+          </Label>
           <Input
             value={formData.year}
             onChange={(e) => setFormData({ ...formData, year: e.target.value })}
@@ -90,9 +106,12 @@ const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps
       </div>
 
       <div className="flex gap-3 pt-4">
-        <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white">
+        <Button
+          type="submit"
+          className="bg-teal-600 hover:bg-teal-700 text-white"
+        >
           <Save className="h-4 w-4 mr-2" />
-          {initialData ? 'Update Literature' : 'Create Literature'}
+          {initialData ? "Update Literature" : "Create Literature"}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           <X className="h-4 w-4 mr-2" />

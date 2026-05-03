@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface VariantLollipopTrackProps {
   variants: Array<{
@@ -15,12 +15,18 @@ interface VariantLollipopTrackProps {
 
 const getClinicalColor = (sig?: string): string => {
   switch (sig?.toLowerCase()) {
-    case 'pathogenic': return '#dc2626';
-    case 'likely pathogenic': return '#ea580c';
-    case 'vus': return '#ca8a04';
-    case 'likely benign': return '#16a34a';
-    case 'benign': return '#15803d';
-    default: return '#64748b';
+    case "pathogenic":
+      return "#dc2626";
+    case "likely pathogenic":
+      return "#ea580c";
+    case "vus":
+      return "#ca8a04";
+    case "likely benign":
+      return "#16a34a";
+    case "benign":
+      return "#15803d";
+    default:
+      return "#64748b";
   }
 };
 
@@ -37,15 +43,15 @@ export const VariantLollipopTrack: React.FC<VariantLollipopTrackProps> = ({
   const svgWidth = 900;
   const svgHeight = 120;
   const trackY = 60;
-  
+
   const scale = (pos: number) => {
     const normalized = (pos - geneStart) / geneLength;
     return padding + normalized * (svgWidth - 2 * padding);
   };
 
   // Group variants by position to avoid overlap
-  const positionMap = new Map<number, Array<typeof variants[0]>>();
-  variants.forEach(v => {
+  const positionMap = new Map<number, Array<(typeof variants)[0]>>();
+  variants.forEach((v) => {
     if (!positionMap.has(v.position)) {
       positionMap.set(v.position, []);
     }
@@ -53,18 +59,25 @@ export const VariantLollipopTrack: React.FC<VariantLollipopTrackProps> = ({
   });
 
   // Calculate significance stats
-  const sigCounts = variants.reduce((acc, v) => {
-    const sig = v.clinical_significance || 'Unknown';
-    acc[sig] = (acc[sig] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const sigCounts = variants.reduce(
+    (acc, v) => {
+      const sig = v.clinical_significance || "Unknown";
+      acc[sig] = (acc[sig] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 mb-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-base sm:text-lg font-semibold text-slate-900">{geneName} Variants</h3>
-          <span className="text-sm text-slate-500">({variants.length} total)</span>
+          <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+            {geneName} Variants
+          </h3>
+          <span className="text-sm text-slate-500">
+            ({variants.length} total)
+          </span>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
           {Object.entries(sigCounts)
@@ -101,64 +114,88 @@ export const VariantLollipopTrack: React.FC<VariantLollipopTrackProps> = ({
           />
 
           {/* Gene start/end labels */}
-          <text x={padding} y={trackY + 25} fontSize="11" fill="#94a3b8" textAnchor="start">
+          <text
+            x={padding}
+            y={trackY + 25}
+            fontSize="11"
+            fill="#94a3b8"
+            textAnchor="start"
+          >
             {geneStart.toLocaleString()}
           </text>
-          <text x={svgWidth - padding} y={trackY + 25} fontSize="11" fill="#94a3b8" textAnchor="end">
+          <text
+            x={svgWidth - padding}
+            y={trackY + 25}
+            fontSize="11"
+            fill="#94a3b8"
+            textAnchor="end"
+          >
             {geneEnd.toLocaleString()}
           </text>
-          <text x={svgWidth / 2} y={trackY + 25} fontSize="10" fill="#cbd5e1" textAnchor="middle">
+          <text
+            x={svgWidth / 2}
+            y={trackY + 25}
+            fontSize="10"
+            fill="#cbd5e1"
+            textAnchor="middle"
+          >
             {geneLength.toLocaleString()} bp
           </text>
 
           {/* Variant lollipops */}
-          {Array.from(positionMap.entries()).map(([position, variantsAtPos]) => {
-            const x = scale(position);
-            const hasPathogenic = variantsAtPos.some(v => 
-              v.clinical_significance?.toLowerCase().includes('pathogenic')
-            );
-            const hasVUS = variantsAtPos.some(v =>
-              v.clinical_significance?.toLowerCase().includes('vus')
-            );
-            
-            // Stack multiple variants at same position
-            return variantsAtPos.map((variant, idx) => {
-              const yOffset = idx * 8;
-              const color = getClinicalColor(variant.clinical_significance);
-              const radius = hasPathogenic ? 5 : hasVUS ? 4 : 3;
-              
-              return (
-                <g key={`${variant.id}-${idx}`}>
-                  {/* Line */}
-                  <line
-                    x1={x}
-                    y1={trackY}
-                    x2={x}
-                    y2={trackY - 20 - yOffset}
-                    stroke={color}
-                    strokeWidth="1"
-                    opacity="0.6"
-                  />
-                  {/* Circle */}
-                  <circle
-                    cx={x}
-                    cy={trackY - 20 - yOffset}
-                    r={radius}
-                    fill={color}
-                    stroke="white"
-                    strokeWidth="1.5"
-                    className="hover:r-6 transition-all"
-                  >
-                    <title>
-                      {variant.id}: {variant.position.toLocaleString()}
-                      {variant.ref && variant.alt ? ` (${variant.ref}→${variant.alt})` : ''}
-                      {variant.clinical_significance ? `\n${variant.clinical_significance}` : ''}
-                    </title>
-                  </circle>
-                </g>
+          {Array.from(positionMap.entries()).map(
+            ([position, variantsAtPos]) => {
+              const x = scale(position);
+              const hasPathogenic = variantsAtPos.some((v) =>
+                v.clinical_significance?.toLowerCase().includes("pathogenic"),
               );
-            });
-          })}
+              const hasVUS = variantsAtPos.some((v) =>
+                v.clinical_significance?.toLowerCase().includes("vus"),
+              );
+
+              // Stack multiple variants at same position
+              return variantsAtPos.map((variant, idx) => {
+                const yOffset = idx * 8;
+                const color = getClinicalColor(variant.clinical_significance);
+                const radius = hasPathogenic ? 5 : hasVUS ? 4 : 3;
+
+                return (
+                  <g key={`${variant.id}-${idx}`}>
+                    {/* Line */}
+                    <line
+                      x1={x}
+                      y1={trackY}
+                      x2={x}
+                      y2={trackY - 20 - yOffset}
+                      stroke={color}
+                      strokeWidth="1"
+                      opacity="0.6"
+                    />
+                    {/* Circle */}
+                    <circle
+                      cx={x}
+                      cy={trackY - 20 - yOffset}
+                      r={radius}
+                      fill={color}
+                      stroke="white"
+                      strokeWidth="1.5"
+                      className="hover:r-6 transition-all"
+                    >
+                      <title>
+                        {variant.id}: {variant.position.toLocaleString()}
+                        {variant.ref && variant.alt
+                          ? ` (${variant.ref}→${variant.alt})`
+                          : ""}
+                        {variant.clinical_significance
+                          ? `\n${variant.clinical_significance}`
+                          : ""}
+                      </title>
+                    </circle>
+                  </g>
+                );
+              });
+            },
+          )}
         </svg>
       </div>
 
