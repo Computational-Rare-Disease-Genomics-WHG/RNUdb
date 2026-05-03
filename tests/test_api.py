@@ -1,7 +1,5 @@
 """Tests for API endpoints."""
 
-import pytest
-from sqlalchemy import text
 
 
 class TestGenesAPI:
