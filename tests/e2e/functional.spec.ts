@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { mockGuestAuth } from './utils/mock-auth';
 
 test.describe('Search Functionality', () => {
   test('should display search results after typing', async ({ page }) => {

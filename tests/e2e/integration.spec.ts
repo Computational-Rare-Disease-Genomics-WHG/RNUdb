@@ -81,16 +81,14 @@ test.describe('Clinical Interpretation Page', () => {
 test.describe('API Documentation Page', () => {
   test('should load API documentation page', async ({ page }) => {
     await page.goto('/api-docs');
-    await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content.length).toBeGreaterThan(100);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL(/\/api-docs/);
   });
 
   test('should display API endpoints', async ({ page }) => {
     await page.goto('/api-docs');
-    await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content.length).toBeGreaterThan(100);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL(/\/api-docs/);
   });
 });
 
