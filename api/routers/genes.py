@@ -193,62 +193,91 @@ async def get_gene_pdb(gene_id: str):
     }
 
 
-@router.get("/genes/{gene_id}/structure", response_model=RNAStructureCreate)
-async def get_gene_structure(gene_id: str, db: Session = Depends(get_db)):
-    """Get RNA structure for a specific gene"""
-    structure = db.execute(
-        select(RNAStructure).where(RNAStructure.geneId == gene_id)
-    ).scalar_one_or_none()
+@router.get("/genes/{gene_id}/structures", response_model=list[RNAStructureCreate])
+async def get_gene_structures(gene_id: str, db: Session = Depends(get_db)):
+    """Get all RNA structures for a specific gene"""
+    structures = (
+        db.execute(select(RNAStructure).where(RNAStructure.geneId == gene_id))
+        .scalars()
+        .all()
+    )
 
-    if not structure:
+    if not structures:
         raise HTTPException(status_code=404, detail="Structure not found")
 
-    # Query nucleotides
-    nucleotide_rows = db.execute(
-        select(Nucleotide).where(Nucleotide.structure_id == structure.id)
-    ).scalars().all()
-    nucleotides = [NucleotideModel.model_validate(row) for row in nucleotide_rows]
+    result = []
+    for structure in structures:
+        # Query nucleotides
+        nucleotide_rows = (
+            db.execute(
+                select(Nucleotide).where(Nucleotide.structure_id == structure.id)
+            )
+            .scalars()
+            .all()
+        )
+        nucleotides = [NucleotideModel.model_validate(row) for row in nucleotide_rows]
 
-    # Query base pairs
-    base_pair_rows = db.execute(
-        select(BasePair).where(BasePair.structure_id == structure.id)
-    ).scalars().all()
-    base_pairs = [BasePairModel(from_pos=row.from_pos, to_pos=row.to_pos) for row in base_pair_rows]
+        # Query base pairs
+        base_pair_rows = (
+            db.execute(select(BasePair).where(BasePair.structure_id == structure.id))
+            .scalars()
+            .all()
+        )
+        base_pairs = [
+            BasePairModel(from_pos=row.from_pos, to_pos=row.to_pos)
+            for row in base_pair_rows
+        ]
 
-    # Query annotations
-    annotation_rows = db.execute(
-        select(Annotation).where(Annotation.structure_id == structure.id)
-    ).scalars().all()
-    annotations = [AnnotationModel.model_validate(row) for row in annotation_rows]
+        # Query annotations
+        annotation_rows = (
+            db.execute(
+                select(Annotation).where(Annotation.structure_id == structure.id)
+            )
+            .scalars()
+            .all()
+        )
+        annotations = [AnnotationModel.model_validate(row) for row in annotation_rows]
 
-    # Query structural features
-    feature_rows = db.execute(
-        select(StructuralFeature).where(StructuralFeature.structure_id == structure.id)
-    ).scalars().all()
-    structural_features = []
-    for row in feature_rows:
-        feature = {
-            "id": row.id,
-            "feature_type": row.feature_type,
-            "nucleotide_ids": json.loads(row.nucleotide_ids) if row.nucleotide_ids else [],
-            "label_text": row.label_text,
-            "label_x": row.label_x,
-            "label_y": row.label_y,
-            "label_font_size": row.label_font_size,
-            "label_color": row.label_color,
-            "description": row.description,
-            "color": row.color,
-        }
-        structural_features.append(StructuralFeatureModel(**feature))
+        # Query structural features
+        feature_rows = (
+            db.execute(
+                select(StructuralFeature).where(
+                    StructuralFeature.structure_id == structure.id
+                )
+            )
+            .scalars()
+            .all()
+        )
+        structural_features = []
+        for row in feature_rows:
+            feature = {
+                "id": row.id,
+                "feature_type": row.feature_type,
+                "nucleotide_ids": (
+                    json.loads(row.nucleotide_ids) if row.nucleotide_ids else []
+                ),
+                "label_text": row.label_text,
+                "label_x": row.label_x,
+                "label_y": row.label_y,
+                "label_font_size": row.label_font_size,
+                "label_color": row.label_color,
+                "description": row.description,
+                "color": row.color,
+            }
+            structural_features.append(StructuralFeatureModel(**feature))
 
-    return RNAStructureCreate(
-        id=structure.id,
-        gene_id=structure.geneId,
-        nucleotides=nucleotides,
-        base_pairs=base_pairs,
-        annotations=annotations,
-        structural_features=structural_features,
-    )
+        result.append(
+            RNAStructureCreate(
+                id=structure.id,
+                gene_id=structure.geneId,
+                nucleotides=nucleotides,
+                base_pairs=base_pairs,
+                annotations=annotations,
+                structural_features=structural_features,
+            )
+        )
+
+    return result
 
 
 @router.delete("/genes/{gene_id}/structures/{structure_id}")

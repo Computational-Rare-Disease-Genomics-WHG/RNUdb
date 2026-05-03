@@ -14,23 +14,29 @@ router = APIRouter(tags=["bed-tracks"])
 @router.get("/genes/{gene_id}/bed-tracks", response_model=list[BedTrackPublic])
 async def get_gene_bed_tracks(gene_id: str, db: Session = Depends(get_db)):
     """Get all BED tracks for a specific gene."""
-    rows = db.execute(
-        select(BedTrack)
-        .where(BedTrack.geneId == gene_id)
-        .order_by(BedTrack.interval_start)
-    ).fetchall()
+    tracks = (
+        db.execute(
+            select(BedTrack)
+            .where(BedTrack.geneId == gene_id)
+            .order_by(BedTrack.interval_start)
+        )
+        .scalars()
+        .all()
+    )
 
-    return [BedTrackPublic.model_validate(dict(row._mapping)) for row in rows]
+    return [track.model_dump(mode="json") for track in tracks]
 
 
 @router.get("/bed-tracks", response_model=list[BedTrackPublic])
 async def get_all_bed_tracks(db: Session = Depends(get_db)):
     """Get all BED tracks across all genes."""
-    rows = db.execute(
-        select(BedTrack).order_by(BedTrack.geneId, BedTrack.interval_start)
-    ).fetchall()
+    tracks = (
+        db.execute(select(BedTrack).order_by(BedTrack.geneId, BedTrack.interval_start))
+        .scalars()
+        .all()
+    )
 
-    return [BedTrackPublic.model_validate(dict(row._mapping)) for row in rows]
+    return [track.model_dump(mode="json") for track in tracks]
 
 
 @router.delete("/bed-tracks/{track_id}")

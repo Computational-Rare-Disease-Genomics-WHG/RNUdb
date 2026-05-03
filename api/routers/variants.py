@@ -87,7 +87,9 @@ async def get_variant(variant_id: str, db: Session = Depends(get_db)):
 
 @router.post("/variants", response_model=VariantPublic)
 async def create_variant(
-    variant: VariantCreate, request: Request, db: Session = Depends(get_db),
+    variant: VariantCreate,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
     """Create a new variant (curator only)"""
     user = require_admin(request)

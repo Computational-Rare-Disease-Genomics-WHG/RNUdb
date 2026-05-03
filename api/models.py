@@ -460,7 +460,8 @@ class PendingChange(PendingChangeBase, table=True):
     __tablename__ = "pending_changes"
     __table_args__ = (
         CheckConstraint(
-            "entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')",
+            "entity_type IN ('gene', 'variant', 'literature', 'structure', "
+            "'bed_track')",
             name="check_entity_type",
         ),
         CheckConstraint(
@@ -574,7 +575,7 @@ class BasePairModel(SQLModel):
 
 
 class Config:
-        populate_by_name = True
+    populate_by_name = True
 
 
 class AnnotationModel(SQLModel):
@@ -626,29 +627,58 @@ class RNAStructureCreate(SQLModel):
 
 __all__ = [
     # Gene models
-    "Gene", "GeneCreate", "GeneUpdate", "GenePublic",
+    "Gene",
+    "GeneCreate",
+    "GeneUpdate",
+    "GenePublic",
     # Variant models
-    "Variant", "VariantCreate", "VariantUpdate", "VariantPublic",
+    "Variant",
+    "VariantCreate",
+    "VariantUpdate",
+    "VariantPublic",
     # Literature models
-    "Literature", "LiteratureCreate", "LiteratureUpdate", "LiteraturePublic",
+    "Literature",
+    "LiteratureCreate",
+    "LiteratureUpdate",
+    "LiteraturePublic",
     # LiteratureCount
     "LiteratureCount",
     # RNAStructure models
-    "RNAStructure", "Nucleotide", "BasePair", "Annotation", "StructuralFeature",
+    "RNAStructure",
+    "Nucleotide",
+    "BasePair",
+    "Annotation",
+    "StructuralFeature",
     # VariantLink
     "VariantLink",
     # User models
-    "User", "UserCreate", "UserPublic", "UserResponse",
+    "User",
+    "UserCreate",
+    "UserPublic",
+    "UserResponse",
     # AuditLog
     "AuditLog",
     # BedTrack models
-    "BedTrack", "BedTrackCreate", "BedTrackPublic", "BEDTrack",
+    "BedTrack",
+    "BedTrackCreate",
+    "BedTrackPublic",
+    "BEDTrack",
     # PendingChange models
-    "PendingChange", "PendingChangeCreate", "PendingChangePublic", "PendingChangeOut",
+    "PendingChange",
+    "PendingChangeCreate",
+    "PendingChangePublic",
+    "PendingChangeOut",
     # Import-related models
-    "VariantBatchImportRequest", "StructureImportRequest", "BEDTrackImportRequest",
-    "ValidationErrorModel", "ValidationReportResponse", "ImportResult",
+    "VariantBatchImportRequest",
+    "StructureImportRequest",
+    "BEDTrackImportRequest",
+    "ValidationErrorModel",
+    "ValidationReportResponse",
+    "ImportResult",
     # RNAStructure API models
-    "NucleotideModel", "BasePairModel", "AnnotationModel", "StructuralFeatureModel",
+    "NucleotideModel",
+    "BasePairModel",
+    "AnnotationModel",
+    "StructuralFeatureModel",
     "RNAStructureCreate",
 ]

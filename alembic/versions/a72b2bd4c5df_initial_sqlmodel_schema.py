@@ -1,7 +1,7 @@
 """initial_sqlmodel_schema
 
 Revision ID: a72b2bd4c5df
-Revises: 
+Revises:
 Create Date: 2026-05-03 02:59:45.213722
 
 """
