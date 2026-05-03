@@ -6,7 +6,7 @@ test.describe('Gene Page Interactions', () => {
     await page.goto('/gene/RNU4-2');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
-    
+
     // Page should load without crashing
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -16,7 +16,7 @@ test.describe('Gene Page Interactions', () => {
     await page.goto('/gene/RNU4-2');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
-    
+
     // Look for variant-related content
     const content = page.locator('body').textContent();
     expect(content).toBeTruthy();
@@ -26,7 +26,7 @@ test.describe('Gene Page Interactions', () => {
     await page.goto('/gene/RNU4-2');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
-    
+
     const content = page.locator('body').textContent();
     expect(content).toBeTruthy();
   });
@@ -35,7 +35,7 @@ test.describe('Gene Page Interactions', () => {
     await page.goto('/gene/NONEXISTENTGENE');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
-    
+
     // Should handle gracefully (either show error or redirect)
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -46,7 +46,7 @@ test.describe('Editor Page', () => {
   test('should load editor page', async ({ page }) => {
     await page.goto('/editor');
     await page.waitForLoadState('networkidle');
-    
+
     const body = page.locator('body');
     await expect(body).toBeVisible();
   });
@@ -55,7 +55,7 @@ test.describe('Editor Page', () => {
     await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
-    
+
     // Check for toolbar or canvas
     const content = page.locator('body').textContent();
     expect(content).toBeTruthy();
@@ -67,7 +67,7 @@ test.describe('Admin Dashboard', () => {
     mockAdminAuth(page);
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
-    
+
     // Should either show admin content or redirect
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -78,7 +78,7 @@ test.describe('Admin Dashboard', () => {
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
-    
+
     // Look for tabs or pending content
     const content = page.locator('body').textContent();
     expect(content).toBeTruthy();
@@ -89,7 +89,7 @@ test.describe('Admin Dashboard', () => {
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
-    
+
     const content = page.locator('body').textContent();
     expect(content).toBeTruthy();
   });
@@ -99,7 +99,7 @@ test.describe('Clinical Interpretation Page', () => {
   test('should load clinical interpretation page', async ({ page }) => {
     await page.goto('/clinical-interpretation');
     await page.waitForLoadState('networkidle');
-    
+
     const body = page.locator('body');
     await expect(body).toBeVisible();
   });
@@ -108,7 +108,7 @@ test.describe('Clinical Interpretation Page', () => {
     await page.goto('/clinical-interpretation');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
-    
+
     const content = page.locator('body').textContent();
     expect(content).toBeTruthy();
   });
@@ -118,7 +118,7 @@ test.describe('API Documentation Page', () => {
   test('should load API documentation page', async ({ page }) => {
     await page.goto('/api-docs');
     await page.waitForLoadState('networkidle');
-    
+
     const body = page.locator('body');
     await expect(body).toBeVisible();
   });
@@ -127,7 +127,7 @@ test.describe('API Documentation Page', () => {
     await page.goto('/api-docs');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
-    
+
     const content = page.locator('body').textContent();
     expect(content).toBeTruthy();
   });
@@ -137,7 +137,7 @@ test.describe('How To Use Page', () => {
   test('should load how to use page', async ({ page }) => {
     await page.goto('/how-to-use');
     await page.waitForLoadState('networkidle');
-    
+
     const body = page.locator('body');
     await expect(body).toBeVisible();
   });
@@ -146,7 +146,7 @@ test.describe('How To Use Page', () => {
     await page.goto('/how-to-use');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
-    
+
     const content = page.locator('body').textContent();
     expect(content).toBeTruthy();
   });
