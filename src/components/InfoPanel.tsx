@@ -177,7 +177,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 Coordinate
               </div>
               <div className="text-xs font-mono text-white leading-tight">
-                chr{currentData.chromosome}:{currentData.start}-{currentData.end}
+                chr{currentData.chromosome}:{currentData.start}-
+                {currentData.end}
               </div>
             </div>
             <div className="text-center p-2 bg-white/10 rounded-lg border border-white/20 shadow-sm backdrop-blur-sm">
@@ -351,10 +352,13 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                       )}
                                     </div>
                                     <div className="text-sm font-semibold text-slate-900 mb-0.5">
-                                      {variant.hgvs || `${variant.ref}>${variant.alt}`}
+                                      {variant.hgvs ||
+                                        `${variant.ref}>${variant.alt}`}
                                     </div>
                                     <button
-                                      onClick={() => handleVariantClick(variant)}
+                                      onClick={() =>
+                                        handleVariantClick(variant)
+                                      }
                                       className="text-xs text-slate-400 hover:text-slate-600 hover:underline"
                                     >
                                       {normalizeVariantId(variant.id)}
@@ -367,13 +371,19 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                     <span className="text-slate-500 font-medium">
                                       Compound Het:{" "}
                                     </span>
-                                    {linkedVariants.map((linked, linkedIndex) => (
-                                      <span key={linkedIndex} className="text-slate-700">
-                                        {linked.hgvs || `${linked.ref}>${linked.alt}`}
-                                        {linkedIndex < linkedVariants.length - 1 &&
-                                          ", "}
-                                      </span>
-                                    ))}
+                                    {linkedVariants.map(
+                                      (linked, linkedIndex) => (
+                                        <span
+                                          key={linkedIndex}
+                                          className="text-slate-700"
+                                        >
+                                          {linked.hgvs ||
+                                            `${linked.ref}>${linked.alt}`}
+                                          {linkedIndex <
+                                            linkedVariants.length - 1 && ", "}
+                                        </span>
+                                      ),
+                                    )}
                                   </div>
                                 )}
 
@@ -381,21 +391,27 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                   {variant.gnomad_ac !== undefined &&
                                     variant.gnomad_ac > 0 && (
                                       <span>
-                                        <span className="font-medium">gnomAD AC:</span>{" "}
+                                        <span className="font-medium">
+                                          gnomAD AC:
+                                        </span>{" "}
                                         {variant.gnomad_ac.toLocaleString()}
                                       </span>
                                     )}
                                   {variant.aou_ac !== undefined &&
                                     variant.aou_ac > 0 && (
                                       <span>
-                                        <span className="font-medium">AoU AC:</span>{" "}
+                                        <span className="font-medium">
+                                          AoU AC:
+                                        </span>{" "}
                                         {variant.aou_ac.toLocaleString()}
                                       </span>
                                     )}
                                   {variant.ukbb_ac !== undefined &&
                                     variant.ukbb_ac > 0 && (
                                       <span>
-                                        <span className="font-medium">UKBB AC:</span>{" "}
+                                        <span className="font-medium">
+                                          UKBB AC:
+                                        </span>{" "}
                                         {variant.ukbb_ac.toLocaleString()}
                                       </span>
                                     )}
@@ -456,7 +472,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                         `${variant.ref}>${variant.alt}`}
                                     </div>
                                     <button
-                                      onClick={() => handleVariantClick(variant)}
+                                      onClick={() =>
+                                        handleVariantClick(variant)
+                                      }
                                       className="text-xs text-slate-400 hover:text-slate-600"
                                     >
                                       {normalizeVariantId(variant.id)}

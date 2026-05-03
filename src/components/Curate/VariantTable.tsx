@@ -138,7 +138,9 @@ export function VariantTable({
         const sig = row.getValue("clinical_significance") as string;
         if (!sig) return <span className="text-slate-400">—</span>;
         return (
-          <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getClinicalSigColor(sig)}`}>
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getClinicalSigColor(sig)}`}
+          >
             {sig}
           </span>
         );
@@ -177,7 +179,15 @@ export function VariantTable({
       cell: ({ row }) => {
         const zyg = row.getValue("zygosity") as string;
         return (
-          <span className={zyg === "hom" ? "text-purple-600 font-medium" : zyg === "het" ? "text-blue-600 font-medium" : "text-slate-400"}>
+          <span
+            className={
+              zyg === "hom"
+                ? "text-purple-600 font-medium"
+                : zyg === "het"
+                  ? "text-blue-600 font-medium"
+                  : "text-slate-400"
+            }
+          >
             {zyg === "hom" ? "Hom" : zyg === "het" ? "Het" : "—"}
           </span>
         );

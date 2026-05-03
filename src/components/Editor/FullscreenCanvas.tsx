@@ -910,8 +910,12 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
             {/* Structural Features Layer */}
             {mode !== "add" &&
               rnaData.structural_features?.map((feature) => {
-                if (!feature.nucleotide_ids || feature.nucleotide_ids.length === 0) return null;
-                
+                if (
+                  !feature.nucleotide_ids ||
+                  feature.nucleotide_ids.length === 0
+                )
+                  return null;
+
                 const nucleotides = feature.nucleotide_ids
                   .map((id) => rnaData.nucleotides.find((n) => n.id === id))
                   .filter(Boolean) as typeof rnaData.nucleotides;

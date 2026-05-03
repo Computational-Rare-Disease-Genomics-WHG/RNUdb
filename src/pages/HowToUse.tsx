@@ -35,7 +35,7 @@ const HowToUse: React.FC = () => {
       label: "Guides",
       icon: <FileText className="h-4 w-4 inline mr-2" />,
     },
-    
+
     {
       value: "faq",
       label: "FAQ",
@@ -432,8 +432,6 @@ const HowToUse: React.FC = () => {
           </div>
         )}
 
-
-
         {activeTab === "faq" && (
           <div className="grid lg:grid-cols-2 gap-6">
             <Card className="bg-white border border-slate-200 shadow-sm rounded-lg">
@@ -490,7 +488,7 @@ const HowToUse: React.FC = () => {
                     q: "Can I edit existing variants?",
                     a: "Yes, click on a variant in the Curate dashboard to view and edit its details.",
                   },
-].map((item, idx) => (
+                ].map((item, idx) => (
                   <div
                     key={idx}
                     className="p-3 border border-slate-100 rounded-lg bg-slate-50"
@@ -504,7 +502,7 @@ const HowToUse: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-)}
+        )}
       </div>
 
       <Footer />

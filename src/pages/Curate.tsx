@@ -108,7 +108,7 @@ const Curate: React.FC = () => {
 
   useLayoutEffect(() => {
     if (!regionViewerRef.current) return;
-    
+
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const width = Math.floor(entry.contentRect.width);
@@ -117,7 +117,7 @@ const Curate: React.FC = () => {
         }
       }
     });
-    
+
     observer.observe(regionViewerRef.current);
     return () => observer.disconnect();
   });
