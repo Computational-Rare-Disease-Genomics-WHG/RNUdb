@@ -100,7 +100,9 @@ export const useNucleotideManager = (initialData: RNAData) => {
     setRnaData((prev) => ({
       ...prev,
       nucleotides: prev.nucleotides.filter((n) => n.id !== id),
-      base_pairs: prev.base_pairs.filter((bp) => bp.from_pos !== id && bp.to_pos !== id),
+      base_pairs: prev.base_pairs.filter(
+        (bp) => bp.from_pos !== id && bp.to_pos !== id,
+      ),
     }));
     setSelectedNucleotides((prev) => prev.filter((nId) => nId !== id));
     setCurrentNucleotide(null);
@@ -163,7 +165,10 @@ export const useNucleotideManager = (initialData: RNAData) => {
       );
 
       if (!exists) {
-        const newBasePair: BasePair = { from_pos: nucleotide1, to_pos: nucleotide2 };
+        const newBasePair: BasePair = {
+          from_pos: nucleotide1,
+          to_pos: nucleotide2,
+        };
         setRnaData((prev) => ({
           ...prev,
           base_pairs: [...prev.base_pairs, newBasePair],

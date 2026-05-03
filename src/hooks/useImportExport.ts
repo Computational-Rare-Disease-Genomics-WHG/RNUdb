@@ -104,7 +104,8 @@ export const useImportExport = () => {
         canvasWidth: parsed.canvasWidth,
         canvasHeight: parsed.canvasHeight,
         annotations: parsed.annotations || [],
-        structural_features: parsed.structural_features || parsed.structuralFeatures || [],
+        structural_features:
+          parsed.structural_features || parsed.structuralFeatures || [],
       };
     } catch (error) {
       console.error("Failed to import JSON:", error);
@@ -166,7 +167,8 @@ export const useImportExport = () => {
         canvasWidth: parsed.canvasWidth,
         canvasHeight: parsed.canvasHeight,
         annotations: parsed.annotations || [],
-        structural_features: parsed.structural_features || parsed.structuralFeatures || [],
+        structural_features:
+          parsed.structural_features || parsed.structuralFeatures || [],
       };
     } catch (error) {
       console.error("Failed to load from localStorage:", error);
