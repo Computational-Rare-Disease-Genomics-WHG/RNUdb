@@ -434,33 +434,16 @@ const Admin: React.FC = () => {
                     <p>No change history</p>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Entity</TableHead>
-                        <TableHead>Action</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Requested By</TableHead>
-                        <TableHead>Reviewed By</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Notes</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {changeLog.map((change) => (
-                        <TableRow key={change.id}>
-                          <TableCell className="font-mono text-xs">
-                            {change.id}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="capitalize">
-                              {change.entity_type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
+                  <div className="space-y-2">
+                    {changeLog.map((change) => (
+                      <div
+                        key={change.id}
+                        className="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 min-w-[100px]">
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${
+                              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
                                 change.action === "create"
                                   ? "bg-emerald-100 text-emerald-700"
                                   : change.action === "update"
@@ -470,38 +453,67 @@ const Admin: React.FC = () => {
                             >
                               {change.action}
                             </span>
-                          </TableCell>
-                          <TableCell>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${
+                              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
                                 change.status === "approved"
                                   ? "bg-teal-100 text-teal-700"
                                   : change.status === "rejected"
                                     ? "bg-red-100 text-red-700"
                                     : change.status === "applied"
                                       ? "bg-blue-100 text-blue-700"
-                                      : "bg-slate-100 text-slate-700"
+                                      : "bg-slate-200 text-slate-600"
                               }`}
                             >
                               {change.status}
                             </span>
-                          </TableCell>
-                          <TableCell className="text-slate-600">
-                            {change.requested_by}
-                          </TableCell>
-                          <TableCell className="text-slate-500">
-                            {change.reviewed_by || "—"}
-                          </TableCell>
-                          <TableCell className="text-slate-500 text-xs">
-                            {new Date(change.requested_at).toLocaleString()}
-                          </TableCell>
-                          <TableCell className="text-slate-500 text-xs max-w-[200px] truncate">
-                            {change.review_notes || "—"}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                          </div>
+                          <div className="hidden sm:block w-px h-8 bg-slate-200" />
+                          <div className="hidden sm:flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="capitalize bg-white"
+                            >
+                              {change.entity_type}
+                            </Badge>
+                            <span className="text-sm text-slate-500">
+                              {change.gene_id}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right hidden md:block">
+                            <p className="text-sm font-medium text-slate-700">
+                              {change.requested_by}
+                            </p>
+                            <p className="text-xs text-slate-500">requested</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-slate-700">
+                              {change.reviewed_by || "—"}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {change.reviewed_by ? "reviewed" : "pending"}
+                            </p>
+                          </div>
+                          <div className="text-right min-w-[100px]">
+                            <p className="text-xs text-slate-500">
+                              {new Date(
+                                change.requested_at,
+                              ).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {new Date(change.requested_at).toLocaleTimeString(
+                                [],
+                                { hour: "2-digit", minute: "2-digit" },
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
