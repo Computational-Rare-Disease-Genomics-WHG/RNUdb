@@ -1,9 +1,9 @@
 // Search service for genes and variants
-import { getAllGenes, getGeneVariants } from './api';
-import type { SnRNAGene, Variant } from '../types';
+import type { SnRNAGene, Variant } from "../types";
+import { getAllGenes, getGeneVariants } from "./api";
 
 export interface SearchResult {
-  type: 'gene' | 'variant';
+  type: "gene" | "variant";
   item: SnRNAGene | Variant;
   relevanceScore: number;
   matchedFields: string[];
@@ -40,7 +40,7 @@ class SearchService {
 
       this.initialized = true;
     } catch (error) {
-      console.error('Failed to initialize search service:', error);
+      console.error("Failed to initialize search service:", error);
       throw error;
     }
   }
@@ -50,8 +50,8 @@ class SearchService {
     options: SearchOptions = {
       includeGenes: true,
       includeVariants: true,
-      maxResults: 20
-    }
+      maxResults: 20,
+    },
   ): Promise<SearchResult[]> {
     await this.initialize();
 
@@ -92,24 +92,24 @@ class SearchService {
     const results = await this.search(query, {
       includeGenes: true,
       includeVariants: false,
-      maxResults: 10
+      maxResults: 10,
     });
 
     return results
-      .filter(result => result.type === 'gene')
-      .map(result => result.item as SnRNAGene);
+      .filter((result) => result.type === "gene")
+      .map((result) => result.item as SnRNAGene);
   }
 
   async searchVariants(query: string): Promise<Variant[]> {
     const results = await this.search(query, {
       includeGenes: false,
       includeVariants: true,
-      maxResults: 10
+      maxResults: 10,
     });
 
     return results
-      .filter(result => result.type === 'variant')
-      .map(result => result.item as Variant);
+      .filter((result) => result.type === "variant")
+      .map((result) => result.item as Variant);
   }
 
   private matchGene(gene: SnRNAGene, query: string): SearchResult | null {
@@ -118,47 +118,47 @@ class SearchService {
 
     // Exact ID match (highest priority)
     if (gene.id.toLowerCase() === query) {
-      matchedFields.push('id');
+      matchedFields.push("id");
       relevanceScore += 100;
     } else if (gene.id.toLowerCase().includes(query)) {
-      matchedFields.push('id');
+      matchedFields.push("id");
       relevanceScore += 50;
     }
 
     // Name match
     if (gene.name.toLowerCase() === query) {
-      matchedFields.push('name');
+      matchedFields.push("name");
       relevanceScore += 90;
     } else if (gene.name.toLowerCase().includes(query)) {
-      matchedFields.push('name');
+      matchedFields.push("name");
       relevanceScore += 40;
     }
 
     // Full name match
     if (gene.fullName.toLowerCase().includes(query)) {
-      matchedFields.push('fullName');
+      matchedFields.push("fullName");
       relevanceScore += 30;
     }
 
     // Description match
     if (gene.description.toLowerCase().includes(query)) {
-      matchedFields.push('description');
+      matchedFields.push("description");
       relevanceScore += 20;
     }
 
     // Chromosome match
     if (gene.chromosome.toLowerCase().includes(query)) {
-      matchedFields.push('chromosome');
+      matchedFields.push("chromosome");
       relevanceScore += 10;
     }
 
     if (matchedFields.length === 0) return null;
 
     return {
-      type: 'gene',
+      type: "gene",
       item: gene,
       relevanceScore,
-      matchedFields
+      matchedFields,
     };
   }
 
@@ -168,65 +168,80 @@ class SearchService {
 
     // Exact variant ID match
     if (variant.id.toLowerCase() === query) {
-      matchedFields.push('id');
+      matchedFields.push("id");
       relevanceScore += 100;
     } else if (variant.id.toLowerCase().includes(query)) {
-      matchedFields.push('id');
+      matchedFields.push("id");
       relevanceScore += 50;
     }
 
     // HGVS notation match
     if (variant.hgvs && variant.hgvs.toLowerCase().includes(query)) {
-      matchedFields.push('hgvs');
+      matchedFields.push("hgvs");
       relevanceScore += 80;
     }
 
     // Position match (for numeric queries)
     if (/^\d+$/.test(query)) {
       const position = parseInt(query);
-      if (variant.position === position || variant.nucleotidePosition === position) {
-        matchedFields.push('position');
+      if (
+        variant.position === position ||
+        variant.nucleotidePosition === position
+      ) {
+        matchedFields.push("position");
         relevanceScore += 70;
       }
     }
 
     // Clinical significance match
-    if (variant.clinical_significance && variant.clinical_significance.toLowerCase().includes(query)) {
-      matchedFields.push('clinical_significance');
+    if (
+      variant.clinical_significance &&
+      variant.clinical_significance.toLowerCase().includes(query)
+    ) {
+      matchedFields.push("clinical_significance");
       relevanceScore += 60;
     }
 
-    if (variant.clinvar_significance && variant.clinvar_significance.toLowerCase().includes(query)) {
-      matchedFields.push('clinvar_significance');
+    if (
+      variant.clinvar_significance &&
+      variant.clinvar_significance.toLowerCase().includes(query)
+    ) {
+      matchedFields.push("clinvar_significance");
       relevanceScore += 60;
     }
 
     // Allele match
-    if (variant.ref.toLowerCase() === query || variant.alt.toLowerCase() === query) {
-      matchedFields.push('allele');
+    if (
+      variant.ref.toLowerCase() === query ||
+      variant.alt.toLowerCase() === query
+    ) {
+      matchedFields.push("allele");
       relevanceScore += 40;
     }
 
     // Variant change match (e.g., "A>G", "del", "ins")
     const changePattern = `${variant.ref}>${variant.alt}`.toLowerCase();
     if (changePattern.includes(query) || query.includes(changePattern)) {
-      matchedFields.push('change');
+      matchedFields.push("change");
       relevanceScore += 50;
     }
 
     // Consequence match
-    if (variant.consequence && variant.consequence.toLowerCase().includes(query)) {
-      matchedFields.push('consequence');
+    if (
+      variant.consequence &&
+      variant.consequence.toLowerCase().includes(query)
+    ) {
+      matchedFields.push("consequence");
       relevanceScore += 30;
     }
 
     if (matchedFields.length === 0) return null;
 
     return {
-      type: 'variant',
+      type: "variant",
       item: variant,
       relevanceScore,
-      matchedFields
+      matchedFields,
     };
   }
 
@@ -255,7 +270,10 @@ class SearchService {
         if (variant.hgvs && variant.hgvs.toLowerCase().startsWith(queryLower)) {
           suggestions.add(variant.hgvs);
         }
-        if (variant.clinical_significance && variant.clinical_significance.toLowerCase().startsWith(queryLower)) {
+        if (
+          variant.clinical_significance &&
+          variant.clinical_significance.toLowerCase().startsWith(queryLower)
+        ) {
           suggestions.add(variant.clinical_significance);
         }
       }
@@ -269,9 +287,5 @@ class SearchService {
 export const searchService = new SearchService();
 
 // Convenience exports
-export const {
-  search,
-  searchGenes,
-  searchVariants,
-  getSuggestions
-} = searchService;
+export const { search, searchGenes, searchVariants, getSuggestions } =
+  searchService;

@@ -1,20 +1,31 @@
-import type { SnRNAGene, Variant, Literature, LiteratureCounts, RNAStructure, PDBStructure } from '../types';
+import type {
+  SnRNAGene,
+  Variant,
+  Literature,
+  LiteratureCounts,
+  RNAStructure,
+  PDBStructure,
+} from "../types";
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = "/api";
 
 class ApiService {
-
   private async fetchFromApi<T>(endpoint: string): Promise<T> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        credentials: 'include'
+        credentials: "include",
       });
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `API request failed: ${response.status} ${response.statusText}`,
+        );
       }
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json') || contentType.includes('application/vnd.api+json')) {
-        return await response.json() as T;
+      const contentType = response.headers.get("content-type") || "";
+      if (
+        contentType.includes("application/json") ||
+        contentType.includes("application/vnd.api+json")
+      ) {
+        return (await response.json()) as T;
       }
       return (await response.text()) as unknown as T;
     } catch (error) {
@@ -24,7 +35,7 @@ class ApiService {
   }
 
   async getAllGenes(): Promise<SnRNAGene[]> {
-    return this.fetchFromApi<SnRNAGene[]>('/genes');
+    return this.fetchFromApi<SnRNAGene[]>("/genes");
   }
 
   async getGene(geneId: string): Promise<SnRNAGene> {
@@ -40,7 +51,7 @@ class ApiService {
   }
 
   async getAllLiterature(): Promise<Literature[]> {
-    return this.fetchFromApi<Literature[]>('/literature');
+    return this.fetchFromApi<Literature[]>("/literature");
   }
 
   async getGeneLiterature(geneId: string): Promise<Literature[]> {
@@ -56,19 +67,19 @@ class ApiService {
   }
 
   async getLiteratureCounts(): Promise<LiteratureCounts[]> {
-    return this.fetchFromApi<LiteratureCounts[]>('/literature-counts');
+    return this.fetchFromApi<LiteratureCounts[]>("/literature-counts");
   }
 
   async getMe(): Promise<any> {
-    return this.fetchFromApi<any>('/auth/me');
+    return this.fetchFromApi<any>("/auth/me");
   }
 
   async getDistinctDiseaseTypes(): Promise<string[]> {
-    return this.fetchFromApi<string[]>('/variants/disease-types');
+    return this.fetchFromApi<string[]>("/variants/disease-types");
   }
 
   async getDistinctClinicalSignificances(): Promise<string[]> {
-    return this.fetchFromApi<string[]>('/variants/clinical-significances');
+    return this.fetchFromApi<string[]>("/variants/clinical-significances");
   }
 }
 
@@ -76,14 +87,24 @@ export const apiService = new ApiService();
 
 export const getAllGenes = () => apiService.getAllGenes();
 export const getGene = (geneId: string) => apiService.getGene(geneId);
-export const getGeneVariants = (geneId: string) => apiService.getGeneVariants(geneId);
-export const getVariant = (variantId: string) => apiService.getVariant(variantId);
+export const getGeneVariants = (geneId: string) =>
+  apiService.getGeneVariants(geneId);
+export const getVariant = (variantId: string) =>
+  apiService.getVariant(variantId);
 export const getAllLiterature = () => apiService.getAllLiterature();
-export const getGeneLiterature = (geneId: string) => apiService.getGeneLiterature(geneId);
-export const getGeneStructure = (geneId: string) => apiService.getGeneStructure(geneId);
+export const getGeneLiterature = (geneId: string) =>
+  apiService.getGeneLiterature(geneId);
+export const getGeneStructure = (geneId: string) =>
+  apiService.getGeneStructure(geneId);
 export const getGenePDB = (geneId: string) => apiService.getGenePDB(geneId);
 export const getLiteratureCounts = () => apiService.getLiteratureCounts();
 export const getMe = () => apiService.getMe();
-export const logout = () => fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
-export const getDistinctDiseaseTypes = () => apiService.getDistinctDiseaseTypes();
-export const getDistinctClinicalSignificances = () => apiService.getDistinctClinicalSignificances();
+export const logout = () =>
+  fetch(`${API_BASE_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+export const getDistinctDiseaseTypes = () =>
+  apiService.getDistinctDiseaseTypes();
+export const getDistinctClinicalSignificances = () =>
+  apiService.getDistinctClinicalSignificances();

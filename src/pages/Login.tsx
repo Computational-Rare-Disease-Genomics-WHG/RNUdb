@@ -1,9 +1,9 @@
-import React from 'react';
-import { useAuth } from '../context/AuthContext';
-import { LogIn, Github, Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { LogIn, Github, Mail } from "lucide-react";
+import React from "react";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import { useAuth } from "../context/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const Login: React.FC = () => {
   const { isLoading, isPending, isLoggedIn, user, login, logout } = useAuth();
@@ -27,9 +27,12 @@ const Login: React.FC = () => {
             <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Mail className="w-10 h-10 text-yellow-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Account Pending Approval</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Account Pending Approval
+            </h1>
             <p className="text-gray-600 mb-6">
-              Hi {user.name}, your GitHub account ({user.github_login}) is awaiting curator approval.
+              Hi {user.name}, your GitHub account ({user.github_login}) is
+              awaiting curator approval.
             </p>
             <p className="text-gray-600 mb-6">
               Please contact Nicky Whiffin to request access:
@@ -57,8 +60,12 @@ const Login: React.FC = () => {
       return (
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Welcome, {user.name}</h1>
-            <p className="text-gray-600 mb-6">You are signed in as a <strong>{user.role}</strong>.</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Welcome, {user.name}
+            </h1>
+            <p className="text-gray-600 mb-6">
+              You are signed in as a <strong>{user.role}</strong>.
+            </p>
             {user.avatar_url && (
               <img
                 src={user.avatar_url}
@@ -80,7 +87,9 @@ const Login: React.FC = () => {
           <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <LogIn className="w-10 h-10 text-teal-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Curator Sign In</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            Curator Sign In
+          </h1>
           <p className="text-gray-600 mb-8">
             Sign in with your GitHub account to access the curator dashboard.
           </p>
@@ -99,9 +108,7 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header showSearch={false} />
-      <main className="pt-20">
-        {renderContent()}
-      </main>
+      <main className="pt-20">{renderContent()}</main>
       <Footer />
     </div>
   );

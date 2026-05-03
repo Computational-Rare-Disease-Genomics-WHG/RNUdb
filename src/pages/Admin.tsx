@@ -1,8 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Shield, CheckCircle, XCircle, Users, Clock, FileText, Database, PlayCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import {
+  Shield,
+  CheckCircle,
+  XCircle,
+  Users,
+  Clock,
+  FileText,
+  Database,
+  PlayCircle,
+} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import { useAuth } from "../context/AuthContext";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -10,15 +25,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useApprovals, type PendingChange } from '@/hooks/useApprovals';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useApprovals, type PendingChange } from "@/hooks/useApprovals";
 
 interface UserRecord {
   github_login: string;
@@ -37,11 +46,16 @@ const Admin: React.FC = () => {
   const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
-  const { listChanges, reviewChange, applyChange, loading: approvalLoading } = useApprovals();
+  const {
+    listChanges,
+    reviewChange,
+    applyChange,
+    loading: approvalLoading,
+  } = useApprovals();
 
   useEffect(() => {
     if (!isAdmin) {
-      navigate('/');
+      navigate("/");
       return;
     }
     loadData();
@@ -51,16 +65,16 @@ const Admin: React.FC = () => {
     setLoading(true);
     try {
       const [pendingRes, allRes] = await Promise.all([
-        fetch('/api/users/pending', { credentials: 'include' }),
-        fetch('/api/users', { credentials: 'include' }),
+        fetch("/api/users/pending", { credentials: "include" }),
+        fetch("/api/users", { credentials: "include" }),
       ]);
       if (pendingRes.ok) setPendingUsers(await pendingRes.json());
       if (allRes.ok) setAllUsers(await allRes.json());
-      
-      const changes = await listChanges({ status: 'pending' });
+
+      const changes = await listChanges({ status: "pending" });
       setPendingApprovals(changes);
     } catch (error) {
-      console.error('Error loading admin data:', error);
+      console.error("Error loading admin data:", error);
     } finally {
       setLoading(false);
     }
@@ -69,18 +83,18 @@ const Admin: React.FC = () => {
   const handleApproveUser = async (github_login: string) => {
     try {
       const res = await fetch(`/api/users/${github_login}/approve`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
       });
-      if (!res.ok) throw new Error('Failed to approve user');
+      if (!res.ok) throw new Error("Failed to approve user");
       await loadData();
     } catch (error) {
-      console.error('Error approving user:', error);
+      console.error("Error approving user:", error);
     }
   };
 
   const handleApproveChange = async (id: number) => {
-    await reviewChange(id, 'approved');
+    await reviewChange(id, "approved");
     await loadData();
   };
 
@@ -90,24 +104,31 @@ const Admin: React.FC = () => {
   };
 
   const handleRejectChange = async (id: number) => {
-    await reviewChange(id, 'rejected');
+    await reviewChange(id, "rejected");
     await loadData();
   };
 
   const getEntityIcon = (type: string) => {
     switch (type) {
-      case 'variant': return <FileText className="h-4 w-4" />;
-      case 'gene': return <Database className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
+      case "variant":
+        return <FileText className="h-4 w-4" />;
+      case "gene":
+        return <Database className="h-4 w-4" />;
+      default:
+        return <Clock className="h-4 w-4" />;
     }
   };
 
   const getActionColor = (action: string) => {
     switch (action) {
-      case 'create': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'update': return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'delete': return 'bg-red-50 text-red-700 border-red-200';
-      default: return '';
+      case "create":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "update":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "delete":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "";
     }
   };
 
@@ -121,21 +142,36 @@ const Admin: React.FC = () => {
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-            <p className="text-slate-500">Manage users, approvals, and system settings</p>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Admin Dashboard
+            </h1>
+            <p className="text-slate-500">
+              Manage users, approvals, and system settings
+            </p>
           </div>
         </div>
 
         <Tabs defaultValue="approvals">
           <TabsList className="mb-6 bg-white border border-slate-200 p-1.5 rounded-xl h-auto gap-1">
-            <TabsTrigger value="approvals" className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+            <TabsTrigger
+              value="approvals"
+              className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <Clock className="h-4 w-4 mr-2" />
               Pending Approvals
               {pendingApprovals.length > 0 && (
-                <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-600">{pendingApprovals.length}</Badge>
+                <Badge
+                  variant="secondary"
+                  className="ml-1 bg-slate-100 text-slate-600"
+                >
+                  {pendingApprovals.length}
+                </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="users" className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+            <TabsTrigger
+              value="users"
+              className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <Users className="h-4 w-4 mr-2" />
               Users
             </TabsTrigger>
@@ -164,21 +200,33 @@ const Admin: React.FC = () => {
                 ) : (
                   <div className="space-y-3">
                     {pendingApprovals.map((change) => (
-                      <div key={change.id} className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors shadow-sm">
+                      <div
+                        key={change.id}
+                        className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors shadow-sm"
+                      >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               {getEntityIcon(change.entity_type)}
-                              <span className="font-semibold capitalize">{change.entity_type}</span>
-                              <Badge variant="outline" className={getActionColor(change.action)}>
+                              <span className="font-semibold capitalize">
+                                {change.entity_type}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={getActionColor(change.action)}
+                              >
                                 {change.action}
                               </Badge>
                               <Badge variant="outline">{change.gene_id}</Badge>
                             </div>
                             <p className="text-sm text-slate-600 mb-1">
-                              Requested by <span className="font-medium">{change.requested_by}</span>
-                              {' '}
-                              {new Date(change.requested_at).toLocaleDateString()}
+                              Requested by{" "}
+                              <span className="font-medium">
+                                {change.requested_by}
+                              </span>{" "}
+                              {new Date(
+                                change.requested_at,
+                              ).toLocaleDateString()}
                             </p>
                             <pre className="text-xs bg-slate-50 p-2 rounded mt-2 overflow-x-auto">
                               {JSON.stringify(change.payload, null, 2)}
@@ -194,7 +242,7 @@ const Admin: React.FC = () => {
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Approve
                             </Button>
-                            {change.status === 'approved' && (
+                            {change.status === "approved" && (
                               <Button
                                 size="sm"
                                 onClick={() => handleApplyChange(change.id)}
@@ -238,16 +286,28 @@ const Admin: React.FC = () => {
                 <CardContent className="pt-4">
                   <div className="space-y-3">
                     {pendingUsers.map((user) => (
-                      <div key={user.github_login} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
+                      <div
+                        key={user.github_login}
+                        className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100"
+                      >
                         <div className="flex items-center gap-4">
                           <Avatar>
-                            {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
+                            {user.avatar_url && (
+                              <AvatarImage
+                                src={user.avatar_url}
+                                alt={user.name}
+                              />
+                            )}
                             <AvatarFallback>{user.name[0]}</AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="font-semibold">{user.name}</p>
-                            <p className="text-sm text-slate-500">@{user.github_login}</p>
-                            <p className="text-sm text-slate-500">{user.email}</p>
+                            <p className="text-sm text-slate-500">
+                              @{user.github_login}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              {user.email}
+                            </p>
                           </div>
                         </div>
                         <Button
@@ -293,7 +353,10 @@ const Admin: React.FC = () => {
                             <div className="flex items-center gap-3">
                               <Avatar size="sm">
                                 {user.avatar_url && (
-                                  <AvatarImage src={user.avatar_url} alt={user.name} />
+                                  <AvatarImage
+                                    src={user.avatar_url}
+                                    alt={user.name}
+                                  />
                                 )}
                                 <AvatarFallback className="bg-teal-100 text-teal-700">
                                   {user.name[0]}
@@ -301,18 +364,20 @@ const Admin: React.FC = () => {
                               </Avatar>
                               <div>
                                 <p className="font-medium">{user.name}</p>
-                                <p className="text-sm text-slate-500">@{user.github_login}</p>
+                                <p className="text-sm text-slate-500">
+                                  @{user.github_login}
+                                </p>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <Badge
                               variant={
-                                user.role === 'admin'
-                                  ? 'default'
-                                  : user.role === 'curator'
-                                  ? 'secondary'
-                                  : 'outline'
+                                user.role === "admin"
+                                  ? "default"
+                                  : user.role === "curator"
+                                    ? "secondary"
+                                    : "outline"
                               }
                             >
                               {user.role}

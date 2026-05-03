@@ -1,702 +1,659 @@
-import React from 'react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BookOpen,
-  HelpCircle,
-  Users,
-  Database,
-  FileUp,
-  Navigation,
+  Search,
+  Dna,
+  Layers,
+  Download,
   CheckCircle2,
   AlertTriangle,
-  Lightbulb,
-  Search,
-  Layers,
-  Dna,
+  User,
+  Users,
+  Settings,
+  ChevronRight,
   FileText,
+  HelpCircle,
   ExternalLink,
-  Upload,
-  Download,
-  Settings
-} from 'lucide-react';
+  Key,
+} from "lucide-react";
+import React, { useState } from "react";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const NavigationFlow: React.FC = () => (
-  <svg viewBox="0 0 500 120" className="w-full max-w-2xl mx-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#0d9488" />
-        <stop offset="25%" stopColor="#0d9488" />
-        <stop offset="50%" stopColor="#3b82f6" />
-        <stop offset="75%" stopColor="#3b82f6" />
-        <stop offset="100%" stopColor="#8b5cf6" />
-      </linearGradient>
-    </defs>
-    
-    <g transform="translate(30, 35)">
-      <rect width="70" height="50" rx="6" fill="#f0fdf4" stroke="#22c55e" strokeWidth="1.5"/>
-      <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#166534">Home</text>
-      <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#166534">Gene List</text>
-    </g>
-    <path d="M100 60 L130 60" stroke="url(#navGrad)" strokeWidth="2"/>
-    <polygon points="130,55 140,60 130,65" fill="#0d9488"/>
-    
-    <g transform="translate(140, 35)">
-      <rect width="70" height="50" rx="6" fill="#d1fae5" stroke="#22c55e" strokeWidth="1.5"/>
-      <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#166534">Gene Page</text>
-      <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#166534">Structure</text>
-    </g>
-    <path d="M210 60 L240 60" stroke="url(#navGrad)" strokeWidth="2"/>
-    <polygon points="240,55 250,60 240,65" fill="#0d9488"/>
-    
-    <g transform="translate(250, 35)">
-      <rect width="70" height="50" rx="6" fill="#dbeafe" stroke="#3b82f6" strokeWidth="1.5"/>
-      <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#1e40af">Variant</text>
-      <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#1e40af">Details</text>
-    </g>
-    <path d="M320 60 L350 60" stroke="url(#navGrad)" strokeWidth="2"/>
-    <polygon points="350,55 360,60 350,65" fill="#3b82f6"/>
-    
-    <g transform="translate(360, 35)">
-      <rect width="70" height="50" rx="6" fill="#ede9fe" stroke="#8b5cf6" strokeWidth="1.5"/>
-      <text x="35" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="#6d28d9">Literature</text>
-      <text x="35" y="36" textAnchor="middle" fontSize="9" fill="#6d28d9">References</text>
-    </g>
-    
-    <text x="250" y="105" textAnchor="middle" fontSize="9" fill="#64748b">Browse genes → View structure → Select variant → Read papers</text>
-  </svg>
-);
+type TabValue = "getting-started" | "guides" | "navigation" | "faq";
 
 const HowToUse: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabValue>("getting-started");
+
+  const tabs: { value: TabValue; label: string; icon: React.ReactNode }[] = [
+    {
+      value: "getting-started",
+      label: "Getting Started",
+      icon: <BookOpen className="h-4 w-4 inline mr-2" />,
+    },
+    {
+      value: "guides",
+      label: "Guides",
+      icon: <FileText className="h-4 w-4 inline mr-2" />,
+    },
+    {
+      value: "navigation",
+      label: "Navigation",
+      icon: <Search className="h-4 w-4 inline mr-2" />,
+    },
+    {
+      value: "faq",
+      label: "FAQ",
+      icon: <HelpCircle className="h-4 w-4 inline mr-2" />,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header showSearch={false} />
 
-      <div className="bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-12 pt-24">
+      <div className="bg-gradient-to-br from-teal-700 via-teal-800 to-teal-900 text-white">
+        <div className="max-w-7xl mx-auto px-6 py-16 pt-24">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
-              <BookOpen className="h-6 w-6" />
-            </div>
+            <BookOpen className="h-8 w-8 text-teal-300" />
           </div>
           <h1 className="text-4xl font-bold mb-3">How to Use RNUdb</h1>
           <p className="text-teal-100 text-lg max-w-2xl">
-            A comprehensive guide to navigating RNUdb, importing variants, and using the curator workflow
+            A comprehensive guide to navigating RNUdb, searching for variants,
+            and managing data
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 w-full flex-1">
-        <Tabs defaultValue="getting-started" className="w-full">
-          <TabsList className="mb-6 bg-slate-100 p-1 rounded-lg">
-            <TabsTrigger
-              value="getting-started"
-              className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
+      <div className="max-w-7xl mx-auto px-6 py-10 w-full flex-1">
+        <div className="flex items-center gap-1 p-1.5 bg-slate-200 rounded-xl w-fit mb-10">
+          {tabs.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                activeTab === tab.value
+                  ? "bg-white text-teal-600 shadow-md"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              }`}
             >
-              <Lightbulb className="h-4 w-4 mr-2" />
-              Getting Started
-            </TabsTrigger>
-            <TabsTrigger
-              value="user-types"
-              className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              User Types
-            </TabsTrigger>
-            <TabsTrigger
-              value="importing"
-              className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-            >
-              <FileUp className="h-4 w-4 mr-2" />
-              Importing Variants
-            </TabsTrigger>
-            <TabsTrigger
-              value="navigation"
-              className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-            >
-              <Navigation className="h-4 w-4 mr-2" />
-              Site Navigation
-            </TabsTrigger>
-            <TabsTrigger
-              value="faq"
-              className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-            >
-              <HelpCircle className="h-4 w-4 mr-2" />
-              FAQ
-            </TabsTrigger>
-          </TabsList>
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          <TabsContent value="getting-started">
-            <div className="space-y-6">
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-teal-600" />
-                    What is RNUdb?
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-slate-600 leading-relaxed">
-                    RNUdb is a comprehensive database for spliceosomal small nuclear RNA (snRNA) variant visualization and analysis.
-                    It provides tools for exploring RNA sequences, variants, and clinical data with interactive visualizations.
+        {activeTab === "getting-started" && (
+          <div className="space-y-8">
+            <div className="grid lg:grid-cols-3 gap-6">
+              <Card className="bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center mb-5">
+                    <Search className="h-6 w-6 text-teal-600" />
+                  </div>
+                  <h3 className="font-semibold text-slate-800 text-xl mb-3">
+                    Search Genes
+                  </h3>
+                  <p className="text-slate-500 text-base leading-relaxed">
+                    Use the search bar on the home page to find snRNA genes by
+                    name or variant notation.
                   </p>
-                  <div className="grid md:grid-cols-3 gap-4 mt-4">
-                    <div className="p-4 bg-teal-50 rounded-lg border border-teal-200">
-                      <Dna className="h-8 w-8 text-teal-600 mb-2" />
-                      <h4 className="font-semibold text-teal-800 mb-1">snRNA Genes</h4>
-                      <p className="text-sm text-teal-700">Explore 22 spliceosomal snRNA genes with interactive structure visualization</p>
-                    </div>
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <FileText className="h-8 w-8 text-blue-600 mb-2" />
-                      <h4 className="font-semibold text-blue-800 mb-1">Variants</h4>
-                      <p className="text-sm text-blue-700">Browse disease-associated variants with literature evidence and clinical classifications</p>
-                    </div>
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                      <Layers className="h-8 w-8 text-purple-600 mb-2" />
-                      <h4 className="font-semibold text-purple-800 mb-1">Structures</h4>
-                      <p className="text-sm text-purple-700">View secondary and tertiary RNA structures with variant mapping</p>
-                    </div>
+                  <div className="mt-4 text-sm text-teal-600 font-mono bg-teal-50 px-3 py-2 rounded-lg inline-block">
+                    Try: RNU4-2, RNU2-2
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Quick Start Guide</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">1</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Search for a Gene</h4>
-                        <p className="text-sm text-slate-600">Use the search bar to find snRNA genes by name (e.g., RNU4-2, RNU2-1) or variant notation</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">2</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Explore the Gene Page</h4>
-                        <p className="text-sm text-slate-600">View the RNA structure, associated variants, and literature in the interactive visualization</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">3</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Overlay Data Layers</h4>
-                        <p className="text-sm text-slate-600">Toggle ClinVar, gnomAD, or function score overlays to see variant pathogenicity evidence</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">4</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Review Literature</h4>
-                        <p className="text-sm text-slate-600">Click on variants to see linked publications and external database references</p>
-                      </div>
-                    </div>
+              <Card className="bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center mb-5">
+                    <Dna className="h-6 w-6 text-teal-600" />
+                  </div>
+                  <h3 className="font-semibold text-slate-800 text-xl mb-3">
+                    View Structures
+                  </h3>
+                  <p className="text-slate-500 text-base leading-relaxed">
+                    Each gene page displays the RNA secondary structure. Hover
+                    over nucleotides to see associated variants.
+                  </p>
+                  <div className="mt-4 text-sm text-teal-600 bg-teal-50 px-3 py-2 rounded-lg inline-block">
+                    Interactive nucleotide-level detail
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-amber-50 border-amber-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-amber-800">
-                    <AlertTriangle className="h-5 w-5" />
-                    Important Note on Data Sources
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-amber-900">
-                  <p className="mb-2">
-                    RNUdb aggregates data from multiple sources including gnomAD, ClinVar, and published literature.
-                    Variant pathogenicity classifications reflect the current state of knowledge and may change as new evidence emerges.
-                  </p>
-                  <p className="text-sm">
-                    Always verify critical variant classifications against primary sources and consider the Clinical Interpretation guidelines
-                    when making clinical decisions.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="user-types">
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader className="bg-gradient-to-r from-teal-50 to-transparent">
-                  <CardTitle className="flex items-center gap-2">
-                    <Search className="h-5 w-5 text-teal-600" />
-                    Public Users
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-slate-600">
-                    Anyone can browse RNUdb without an account. Public users can:
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Search and browse all snRNA genes</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">View interactive RNA structures with variant overlays</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Browse variant literature and classifications</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Access Clinical Interpretation guidelines</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Use the public API for programmatic access</span>
-                    </li>
-                  </ul>
-                  <div className="pt-4 border-t border-slate-200">
-                    <p className="text-sm text-slate-500">
-                      <strong>No account required.</strong> Start exploring immediately.
-                    </p>
+              <Card className="bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center mb-5">
+                    <Layers className="h-6 w-6 text-teal-600" />
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-transparent">
-                  <CardTitle className="flex items-center gap-2">
-                    <Database className="h-5 w-5 text-blue-600" />
-                    Curators
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-slate-600">
-                    Curators contribute to the database by managing variants and literature:
+                  <h3 className="font-semibold text-slate-800 text-xl mb-3">
+                    Data Overlays
+                  </h3>
+                  <p className="text-slate-500 text-base leading-relaxed">
+                    Toggle ClinVar, gnomAD, or function score overlays to
+                    identify potentially pathogenic variants.
                   </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Import variants via CSV upload</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Edit variant classifications and metadata</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Link variants to literature and external databases</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Manage RNA structure annotations</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600">Create and manage BED tracks for visualization</span>
-                    </li>
-                  </ul>
-                  <div className="pt-4 border-t border-slate-200">
-                    <p className="text-sm text-slate-500">
-                      <strong>Requires sign-in.</strong> Contact an admin to request curator access.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border border-slate-200 shadow-sm lg:col-span-2">
-                <CardHeader className="bg-gradient-to-r from-purple-50 to-transparent">
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5 text-purple-600" />
-                    Administrators
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-slate-600">
-                    Admins have full control over the database content and user management:
-                  </p>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <ul className="space-y-2">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-600">Manage user accounts and permissions</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-600">Approve or reject curator access requests</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-600">Bulk import and export data</span>
-                      </li>
-                    </ul>
-                    <ul className="space-y-2">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-600">Configure system settings</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-600">View audit logs and activity reports</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-600">Manage API keys and rate limits</span>
-                      </li>
-                    </ul>
+                  <div className="mt-4 text-sm text-teal-600 bg-teal-50 px-3 py-2 rounded-lg inline-block">
+                    Multiple annotation layers
                   </div>
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
 
-          <TabsContent value="importing">
-            <div className="space-y-6">
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="h-5 w-5 text-teal-600" />
+            <Card className="bg-white border-l-4 border-l-teal-500 shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <AlertTriangle className="h-6 w-6 text-teal-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-slate-800 text-lg mb-2">
+                      Note on Data Sources
+                    </h4>
+                    <p className="text-slate-600 text-base">
+                      RNUdb aggregates data from gnomAD, ClinVar, and published
+                      literature. Variant classifications reflect current
+                      knowledge and may change as new evidence emerges.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === "guides" && (
+          <div className="space-y-6">
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-5 border-b border-slate-100">
+                <CardTitle className="flex items-center gap-3 text-xl font-semibold text-slate-800">
+                  <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
+                    <User className="h-5 w-5 text-teal-600" />
+                  </div>
+                  Public User Guide
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5 space-y-5">
+                <p className="text-slate-600 text-lg">
+                  Browse RNUdb without an account. Here&apos;s how to get
+                  started:
+                </p>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="p-5 border border-slate-200 rounded-xl hover:border-teal-200 transition-colors">
+                    <h4 className="font-semibold text-slate-800 text-lg mb-2 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm font-bold">
+                        1
+                      </span>
+                      Browse Genes
+                    </h4>
+                    <p className="text-slate-500 text-base">
+                      Use the home page search to find snRNA genes by name or
+                      variant notation.
+                    </p>
+                  </div>
+                  <div className="p-5 border border-slate-200 rounded-xl hover:border-teal-200 transition-colors">
+                    <h4 className="font-semibold text-slate-800 text-lg mb-2 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm font-bold">
+                        2
+                      </span>
+                      View Gene Page
+                    </h4>
+                    <p className="text-slate-500 text-base">
+                      Each gene page shows the RNA secondary structure with
+                      interactive detail.
+                    </p>
+                  </div>
+                  <div className="p-5 border border-slate-200 rounded-xl hover:border-teal-200 transition-colors">
+                    <h4 className="font-semibold text-slate-800 text-lg mb-2 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm font-bold">
+                        3
+                      </span>
+                      Access Literature
+                    </h4>
+                    <p className="text-slate-500 text-base">
+                      Click on variants to see linked research publications with
+                      citation counts.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-5 border-b border-slate-100">
+                <CardTitle className="flex items-center gap-3 text-xl font-semibold text-slate-800">
+                  <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-teal-600" />
+                  </div>
+                  Curator Guide
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5 space-y-6">
+                <p className="text-slate-600 text-lg">
+                  Curators manage variants and literature. Requires sign-in and
+                  curator permissions.
+                </p>
+
+                <div>
+                  <h4 className="font-semibold text-slate-800 text-lg mb-4 flex items-center gap-2">
+                    <Key className="h-5 w-5 text-teal-500" />
                     Importing Variants via CSV
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-slate-600">
-                    Curators can import variants in bulk using a CSV file. The CSV should contain one variant per row
-                    with the following columns:
-                  </p>
-                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 overflow-x-auto">
-                    <table className="w-full text-sm">
+                  </h4>
+                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                    <table className="w-full">
                       <thead>
-                        <tr className="border-b border-slate-200">
-                          <th className="text-left py-2 px-3 font-semibold">Column</th>
-                          <th className="text-left py-2 px-3 font-semibold">Required</th>
-                          <th className="text-left py-2 px-3 font-semibold">Description</th>
-                          <th className="text-left py-2 px-3 font-semibold">Example</th>
+                        <tr className="border-b border-slate-200 bg-slate-100">
+                          <th className="text-left py-4 px-5 font-semibold text-slate-700">
+                            Column
+                          </th>
+                          <th className="text-left py-4 px-5 font-semibold text-slate-700">
+                            Required
+                          </th>
+                          <th className="text-left py-4 px-5 font-semibold text-slate-700">
+                            Description
+                          </th>
+                          <th className="text-left py-4 px-5 font-semibold text-slate-700">
+                            Example
+                          </th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="text-slate-600">
                         <tr className="border-b border-slate-100">
-                          <td className="py-2 px-3 font-mono text-teal-600">gene_id</td>
-                          <td className="py-2 px-3"><CheckCircle2 className="h-4 w-4 text-green-600" /></td>
-                          <td className="py-2 px-3">snRNA gene name</td>
-                          <td className="py-2 px-3 font-mono">RNU4-2</td>
+                          <td className="py-4 px-5 font-mono text-base">
+                            gene_id
+                          </td>
+                          <td className="py-4 px-5">
+                            <CheckCircle2 className="h-5 w-5 text-teal-500" />
+                          </td>
+                          <td className="py-4 px-5 text-base">
+                            snRNA gene name
+                          </td>
+                          <td className="py-4 px-5 font-mono text-base">
+                            RNU4-2
+                          </td>
                         </tr>
                         <tr className="border-b border-slate-100">
-                          <td className="py-2 px-3 font-mono text-teal-600">position</td>
-                          <td className="py-2 px-3"><CheckCircle2 className="h-4 w-4 text-green-600" /></td>
-                          <td className="py-2 px-3">Genomic position (chr:pos)</td>
-                          <td className="py-2 px-3 font-mono">chr12:120291828</td>
+                          <td className="py-4 px-5 font-mono text-base">
+                            position
+                          </td>
+                          <td className="py-4 px-5">
+                            <CheckCircle2 className="h-5 w-5 text-teal-500" />
+                          </td>
+                          <td className="py-4 px-5 text-base">
+                            Genomic position (chr:pos)
+                          </td>
+                          <td className="py-4 px-5 font-mono text-base">
+                            chr12:120291828
+                          </td>
                         </tr>
                         <tr className="border-b border-slate-100">
-                          <td className="py-2 px-3 font-mono text-teal-600">ref</td>
-                          <td className="py-2 px-3"><CheckCircle2 className="h-4 w-4 text-green-600" /></td>
-                          <td className="py-2 px-3">Reference allele</td>
-                          <td className="py-2 px-3 font-mono">G</td>
+                          <td className="py-4 px-5 font-mono text-base">ref</td>
+                          <td className="py-4 px-5">
+                            <CheckCircle2 className="h-5 w-5 text-teal-500" />
+                          </td>
+                          <td className="py-4 px-5 text-base">
+                            Reference allele
+                          </td>
+                          <td className="py-4 px-5 font-mono text-base">G</td>
                         </tr>
                         <tr className="border-b border-slate-100">
-                          <td className="py-2 px-3 font-mono text-teal-600">alt</td>
-                          <td className="py-2 px-3"><CheckCircle2 className="h-4 w-4 text-green-600" /></td>
-                          <td className="py-2 px-3">Alternate allele</td>
-                          <td className="py-2 px-3 font-mono">A</td>
+                          <td className="py-4 px-5 font-mono text-base">alt</td>
+                          <td className="py-4 px-5">
+                            <CheckCircle2 className="h-5 w-5 text-teal-500" />
+                          </td>
+                          <td className="py-4 px-5 text-base">
+                            Alternate allele
+                          </td>
+                          <td className="py-4 px-5 font-mono text-base">A</td>
                         </tr>
-                        <tr className="border-b border-slate-100">
-                          <td className="py-2 px-3 font-mono text-teal-600">hgvs</td>
-                          <td className="py-2 px-3">Optional</td>
-                          <td className="py-2 px-3">HGVS notation</td>
-                          <td className="py-2 px-3 font-mono">n.76C&gt;T</td>
-                        </tr>
-                        <tr className="border-b border-slate-100">
-                          <td className="py-2 px-3 font-mono text-teal-600">clinical_significance</td>
-                          <td className="py-2 px-3">Optional</td>
-                          <td className="py-2 px-3">Variant classification</td>
-                          <td className="py-2 px-3 font-mono">Pathogenic</td>
+                        <tr>
+                          <td className="py-4 px-5 font-mono text-base text-slate-400">
+                            hgvs
+                          </td>
+                          <td className="py-4 px-5 text-slate-400">Optional</td>
+                          <td className="py-4 px-5 text-base">HGVS notation</td>
+                          <td className="py-4 px-5 font-mono text-base">
+                            n.76C&gt;T
+                          </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Step-by-Step Import Process</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">1</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Navigate to Curate</h4>
-                        <p className="text-sm text-slate-600">Click "Curate" in the navigation bar (visible after signing in)</p>
+                <div>
+                  <h4 className="font-semibold text-slate-800 text-lg mb-4">
+                    Import Process
+                  </h4>
+                  <div className="grid md:grid-cols-5 gap-3">
+                    {[
+                      {
+                        step: 1,
+                        title: "Navigate to Curate",
+                        desc: 'Click "Curate" in the navigation bar after signing in',
+                      },
+                      {
+                        step: 2,
+                        title: "Select Variants Tab",
+                        desc: 'Click on "Variants" to access the management interface',
+                      },
+                      {
+                        step: 3,
+                        title: 'Click "Import CSV"',
+                        desc: 'Locate the "Import CSV" button at the top of the section',
+                      },
+                      {
+                        step: 4,
+                        title: "Select Your CSV File",
+                        desc: "Choose the CSV file from your computer",
+                      },
+                      {
+                        step: 5,
+                        title: "Review and Confirm",
+                        desc: "Preview the imported variants and confirm",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.step}
+                        className="flex flex-col items-center text-center p-4 bg-slate-50 rounded-xl"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center font-bold text-lg mb-3">
+                          {item.step}
+                        </div>
+                        <h5 className="font-semibold text-slate-700 text-sm mb-1">
+                          {item.title}
+                        </h5>
+                        <p className="text-xs text-slate-500">{item.desc}</p>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">2</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Select the Variants Tab</h4>
-                        <p className="text-sm text-slate-600">Click on "Variants" to access the variant management interface</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">3</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Click "Import CSV"</h4>
-                        <p className="text-sm text-slate-600">Locate the "Import CSV" button at the top of the Variants section</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">4</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Select Your CSV File</h4>
-                        <p className="text-sm text-slate-600">Choose the CSV file from your computer. Ensure it follows the required format.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shrink-0">5</div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Review and Confirm</h4>
-                        <p className="text-sm text-slate-600">Preview the imported variants and confirm to add them to the database</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              <Card className="bg-green-50 border-green-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-800">
-                    <Download className="h-5 w-5" />
-                    Exporting Data
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-green-900">
-                  <p className="mb-2">
-                    You can also export existing variants to CSV format for backup or analysis.
-                    Use the "Export CSV" button in the Curate dashboard to download all variants.
+                <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <Download className="h-5 w-5 text-teal-500" />
+                  <p className="text-slate-600 text-base">
+                    Use "Export CSV" in the Curate dashboard to download
+                    variants.
                   </p>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+                </div>
+              </CardContent>
+            </Card>
 
-          <TabsContent value="navigation">
-            <div className="space-y-6">
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Navigation className="h-5 w-5 text-teal-600" />
-                    Site Navigation Flow
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-slate-600">
-                    RNUdb follows a consistent navigation pattern from gene selection to variant analysis.
-                  </p>
-                  <NavigationFlow />
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Page Routes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                      <h4 className="font-semibold text-slate-800 mb-2">Home Page</h4>
-                      <p className="text-sm text-slate-600 mb-2">Entry point with search functionality and gene overview</p>
-                      <code className="text-xs bg-slate-200 px-2 py-1 rounded">/</code>
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                      <h4 className="font-semibold text-slate-800 mb-2">Gene Page</h4>
-                      <p className="text-sm text-slate-600 mb-2">Interactive RNA structure visualization with variant overlay</p>
-                      <code className="text-xs bg-slate-200 px-2 py-1 rounded">/gene/:geneId</code>
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                      <h4 className="font-semibold text-slate-800 mb-2">API Documentation</h4>
-                      <p className="text-sm text-slate-600 mb-2">Developer documentation for programmatic access</p>
-                      <code className="text-xs bg-slate-200 px-2 py-1 rounded">/api-docs</code>
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                      <h4 className="font-semibold text-slate-800 mb-2">Clinical Interpretation</h4>
-                      <p className="text-sm text-slate-600 mb-2">Guidelines for variant classification in snRNA genes</p>
-                      <code className="text-xs bg-slate-200 px-2 py-1 rounded">/clinical-interpretation</code>
-                    </div>
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-5 border-b border-slate-100">
+                <CardTitle className="flex items-center gap-3 text-xl font-semibold text-slate-800">
+                  <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
+                    <Settings className="h-5 w-5 text-teal-600" />
                   </div>
-                </CardContent>
-              </Card>
+                  Admin Guide
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5">
+                <p className="text-slate-600 text-lg mb-5">
+                  Admins have full control over database content and user
+                  management.
+                </p>
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div className="p-5 border border-slate-200 rounded-xl bg-slate-50">
+                    <h4 className="font-semibold text-slate-800 text-lg mb-3">
+                      User Management
+                    </h4>
+                    <ul className="text-slate-500 text-base space-y-2">
+                      <li className="flex items-start gap-2">
+                        <ChevronRight className="h-4 w-4 text-teal-500 mt-1.5 shrink-0" />{" "}
+                        Manage user accounts and permissions
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <ChevronRight className="h-4 w-4 text-teal-500 mt-1.5 shrink-0" />{" "}
+                        Approve or reject curator access requests
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <ChevronRight className="h-4 w-4 text-teal-500 mt-1.5 shrink-0" />{" "}
+                        View user activity and audit logs
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="p-5 border border-slate-200 rounded-xl bg-slate-50">
+                    <h4 className="font-semibold text-slate-800 text-lg mb-3">
+                      Data Management
+                    </h4>
+                    <ul className="text-slate-500 text-base space-y-2">
+                      <li className="flex items-start gap-2">
+                        <ChevronRight className="h-4 w-4 text-teal-500 mt-1.5 shrink-0" />{" "}
+                        Bulk import and export data
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <ChevronRight className="h-4 w-4 text-teal-500 mt-1.5 shrink-0" />{" "}
+                        Configure system settings
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <ChevronRight className="h-4 w-4 text-teal-500 mt-1.5 shrink-0" />{" "}
+                        Manage API keys and rate limits
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Curator Features</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <h4 className="font-semibold text-blue-800 mb-2">Curate Dashboard</h4>
-                      <p className="text-sm text-blue-700 mb-2">Manage variants, structures, literature, and BED tracks</p>
-                      <code className="text-xs bg-blue-200 px-2 py-1 rounded text-blue-800">/curate</code>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Variants</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Structures</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Literature</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">BED Tracks</span>
+        {activeTab === "navigation" && (
+          <div className="space-y-6">
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-5 border-b border-slate-100">
+                <CardTitle className="text-xl font-semibold text-slate-800">
+                  Page Routes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5">
+                <div className="space-y-4">
+                  {[
+                    {
+                      route: "/",
+                      title: "Home Page",
+                      desc: "Entry point with search functionality and gene overview",
+                    },
+                    {
+                      route: "/gene/:geneId",
+                      title: "Gene Page",
+                      desc: "Interactive RNA structure visualization with variant overlay",
+                    },
+                    {
+                      route: "/curate",
+                      title: "Curate Dashboard",
+                      desc: "Manage variants, structures, literature, and BED tracks",
+                    },
+                    {
+                      route: "/api-docs",
+                      title: "API Documentation",
+                      desc: "Developer documentation for programmatic access",
+                    },
+                    {
+                      route: "/clinical-interpretation",
+                      title: "Clinical Interpretation",
+                      desc: "Guidelines for variant classification in snRNA genes",
+                    },
+                  ].map((page) => (
+                    <div
+                      key={page.route}
+                      className="flex items-center gap-5 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+                    >
+                      <code className="text-sm bg-teal-50 px-3 py-2 rounded-lg text-teal-700 font-mono shrink-0">
+                        {page.route}
+                      </code>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-800 text-lg">
+                          {page.title}
+                        </h4>
+                        <p className="text-slate-500 text-base">{page.desc}</p>
                       </div>
+                      <ExternalLink className="h-5 w-5 text-slate-400" />
                     </div>
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                      <h4 className="font-semibold text-purple-800 mb-2">Editor</h4>
-                      <p className="text-sm text-purple-700 mb-2">Interactive visualization editor for detailed variant analysis</p>
-                      <code className="text-xs bg-purple-200 px-2 py-1 rounded text-purple-800">/editor</code>
-                    </div>
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                      <h4 className="font-semibold text-amber-800 mb-2">Admin Panel</h4>
-                      <p className="text-sm text-amber-700 mb-2">User management and system configuration (admin only)</p>
-                      <code className="text-xs bg-amber-200 px-2 py-1 rounded text-amber-800">/admin</code>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Gene Page Features</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-teal-50 rounded-lg border border-teal-200">
-                        <h4 className="font-semibold text-teal-800 mb-2">RNA Structure Viewer</h4>
-                        <p className="text-sm text-teal-700">Interactive secondary structure with nucleotide resolution</p>
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-5 border-b border-slate-100">
+                <CardTitle className="text-xl font-semibold text-slate-800">
+                  Curate Dashboard Features
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5">
+                <div className="grid md:grid-cols-4 gap-4">
+                  {[
+                    {
+                      title: "Variants",
+                      desc: "Import, edit, and manage variant data",
+                      icon: Dna,
+                    },
+                    {
+                      title: "Structures",
+                      desc: "Manage RNA secondary structure annotations",
+                      icon: Layers,
+                    },
+                    {
+                      title: "Literature",
+                      desc: "Link papers to variants and genes",
+                      icon: BookOpen,
+                    },
+                    {
+                      title: "BED Tracks",
+                      desc: "Create custom genomic annotations",
+                      icon: FileText,
+                    },
+                  ].map((feature) => (
+                    <div
+                      key={feature.title}
+                      className="p-5 border border-slate-200 rounded-xl bg-slate-50 hover:border-teal-200 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center mb-3">
+                        <feature.icon className="h-5 w-5 text-teal-600" />
                       </div>
-                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <h4 className="font-semibold text-blue-800 mb-2">Variant Track</h4>
-                        <p className="text-sm text-blue-700">gnomAD variant frequency overlay using track-variants</p>
-                      </div>
-                      <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                        <h4 className="font-semibold text-purple-800 mb-2">Literature Panel</h4>
-                        <p className="text-sm text-purple-700">Linked publications with variant associations</p>
-                      </div>
-                      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                        <h4 className="font-semibold text-green-800 mb-2">Data Overlays</h4>
-                        <p className="text-sm text-green-700">Toggle ClinVar, gnomAD, and function score layers</p>
-                      </div>
+                      <h4 className="font-semibold text-slate-800 text-base mb-1">
+                        {feature.title}
+                      </h4>
+                      <p className="text-sm text-slate-500">{feature.desc}</p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-          <TabsContent value="faq">
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle>General Questions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <h4 className="font-semibold text-slate-800 mb-2">What are snRNAs?</h4>
-                    <p className="text-sm text-slate-600">
-                      Small nuclear RNAs (snRNAs) are RNA components of the spliceosome, a large complex that removes
-                      introns from RNA transcripts. They are essential for proper mRNA processing.
-                    </p>
+        {activeTab === "faq" && (
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-4 border-b border-slate-100">
+                <CardTitle className="text-lg font-semibold text-slate-800">
+                  General Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5 space-y-4">
+                {[
+                  {
+                    q: "What are snRNAs?",
+                    a: "Small nuclear RNAs are RNA components of the spliceosome, a complex that removes introns from RNA transcripts.",
+                  },
+                  {
+                    q: "How do I search for a specific variant?",
+                    a: "Use the search bar on the home page by gene name, HGVS notation, or genomic coordinates.",
+                  },
+                  {
+                    q: "Is RNUdb free to use?",
+                    a: "Yes, RNUdb is freely accessible for browsing. Curators and administrators require an account.",
+                  },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 border border-slate-100 rounded-xl bg-slate-50"
+                  >
+                    <h4 className="font-semibold text-slate-800 text-base mb-2">
+                      {item.q}
+                    </h4>
+                    <p className="text-slate-500 text-base">{item.a}</p>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <h4 className="font-semibold text-slate-800 mb-2">How do I search for a specific variant?</h4>
-                    <p className="text-sm text-slate-600">
-                      Use the search bar on the home page. You can search by gene name (e.g., RNU4-2),
-                      HGVS notation (e.g., n.76C&gt;T), or genomic coordinates.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <h4 className="font-semibold text-slate-800 mb-2">Is RNUdb free to use?</h4>
-                    <p className="text-sm text-slate-600">
-                      Yes, RNUdb is freely accessible for browsing. Curators and administrators require
-                      an account which can be requested by contacting the site administrators.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                ))}
+              </CardContent>
+            </Card>
 
-              <Card className="bg-white border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Curator Questions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-blue-800 mb-2">How do I get curator access?</h4>
-                    <p className="text-sm text-blue-700">
-                      Sign in to RNUdb and navigate to the Curate section. If you don't have curator
-                      permissions, you'll see an option to request access. An administrator will review your request.
-                    </p>
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-4 border-b border-slate-100">
+                <CardTitle className="text-lg font-semibold text-slate-800">
+                  Curator Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5 space-y-4">
+                {[
+                  {
+                    q: "How do I get curator access?",
+                    a: "Sign in and navigate to the Curate section. Request access if you don't have permissions.",
+                  },
+                  {
+                    q: "What format should my CSV be in?",
+                    a: "Headers should include: gene_id, position, ref, alt, and optionally hgvs.",
+                  },
+                  {
+                    q: "Can I edit existing variants?",
+                    a: "Yes, click on a variant in the Curate dashboard to view and edit its details.",
+                  },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 border border-slate-100 rounded-xl bg-slate-50"
+                  >
+                    <h4 className="font-semibold text-slate-800 text-base mb-2">
+                      {item.q}
+                    </h4>
+                    <p className="text-slate-500 text-base">{item.a}</p>
                   </div>
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-blue-800 mb-2">What format should my CSV be in?</h4>
-                    <p className="text-sm text-blue-700">
-                      The CSV should have headers matching the required columns: gene_id, position, ref, alt,
-                      and optionally hgvs and clinical_significance. See the Importing Variants tab for full details.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-blue-800 mb-2">Can I edit existing variants?</h4>
-                    <p className="text-sm text-blue-700">
-                      Yes, in the Curate dashboard, click on a variant to view its details and make edits.
-                      Changes are saved automatically and tracked in the audit log.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-blue-800 mb-2">What are BED tracks?</h4>
-                    <p className="text-sm text-blue-700">
-                      BED tracks allow you to display custom genomic regions on the RNA structure viewer.
-                      They're useful for showing conservation, regulatory elements, or other annotation data.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                ))}
+              </CardContent>
+            </Card>
 
-              <Card className="bg-white border border-slate-200 shadow-sm lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Technical Questions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-50 rounded-lg">
-                      <h4 className="font-semibold text-slate-800 mb-2">How do I use the API?</h4>
-                      <p className="text-sm text-slate-600 mb-2">
-                        See the API Documentation page for endpoints, authentication, and example code.
-                      </p>
-                      <a href="/api-docs" className="text-sm text-teal-600 hover:underline flex items-center gap-1">
-                        View API Docs <ExternalLink className="h-3 w-3" />
-                      </a>
+            <Card className="bg-white border border-slate-200 shadow-sm lg:col-span-2">
+              <CardHeader className="pb-4 border-b border-slate-100">
+                <CardTitle className="text-lg font-semibold text-slate-800">
+                  Technical Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-5">
+                <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      q: "How do I use the API?",
+                      a: "See /api-docs for endpoints and example code.",
+                    },
+                    {
+                      q: "Why don't some variants show up?",
+                      a: "Variants may not be indexed if not yet imported.",
+                    },
+                    {
+                      q: "How often is data updated?",
+                      a: "Data from gnomAD and ClinVar is refreshed periodically.",
+                    },
+                    {
+                      q: "Can I download the database?",
+                      a: "Use the public API or contact an admin for dataset exports.",
+                    },
+                  ].map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 border border-slate-100 rounded-xl bg-slate-50"
+                    >
+                      <h4 className="font-semibold text-slate-800 text-base mb-2">
+                        {item.q}
+                      </h4>
+                      <p className="text-slate-500 text-base">{item.a}</p>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-lg">
-                      <h4 className="font-semibold text-slate-800 mb-2">Why don't some variants show up in my search?</h4>
-                      <p className="text-sm text-slate-600">
-                        Variants may not be indexed if they haven't been imported yet. If you're a curator,
-                        try importing the variant via CSV. Otherwise, contact the team to request addition.
-                      </p>
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-lg">
-                      <h4 className="font-semibold text-slate-800 mb-2">How often is the data updated?</h4>
-                      <p className="text-sm text-slate-600">
-                        Variant data from gnomAD and ClinVar is refreshed periodically. Curators can add
-                        new variants at any time. Literature links are updated when new papers are published.
-                      </p>
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-lg">
-                      <h4 className="font-semibold text-slate-800 mb-2">Can I download the entire database?</h4>
-                      <p className="text-sm text-slate-600">
-                        For bulk data access, use the public API with appropriate rate limits, or contact
-                        an administrator for dataset exports. API documentation provides download endpoints.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       <Footer />
