@@ -33,7 +33,7 @@ test.describe('Home Page', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
-    
+
     const geneLink = page.locator('a[href*="/gene/"]').first();
     if (await geneLink.isVisible({ timeout: 3000 })) {
       await geneLink.click();

@@ -73,6 +73,7 @@ def mock_auth():
 @pytest.fixture
 def test_client(test_db):
     """Create a FastAPI test client with the test database."""
+
     # Override the get_db dependency
     def get_test_db():
         return test_db
@@ -84,6 +85,17 @@ def test_client(test_db):
 
     # Clean up
     app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.fixture
+def seed_gene(test_db, sample_gene):
+    """Insert sample gene into test database."""
+    from api.models import Gene
+
+    gene = Gene(**sample_gene)
+    test_db.add(gene)
+    test_db.commit()
+    return gene
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +114,7 @@ def sample_gene():
         "start": 120291759,
         "end": 120291903,
         "strand": "-",
-        "sequence": "tcagtctccgtagagactgtcaaaattgccaatgccgactatatttcaagtcgtcatggcgggttattgggaaaagttttcaattagcaataatcgcgcctcggataacctcattggctacgatactgccactgcgcaaagct",
+        "sequence": "tcagtctccgtagagactgtcaaaattgccaatgccgactatatttcaagtcgtcatggcgggttattgggaaaagttttcaattagcaataatcgcgcctcggataacctcattggctacgatactgccactgcgcaaagct",  # noqa: E501
         "description": "U4 small nuclear RNA involved in pre-mRNA splicing",
     }
 
@@ -206,9 +218,27 @@ def invalid_structure_data():
 def valid_bed_intervals():
     """Return valid BED intervals."""
     return [
-        {"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "name": "region1", "score": 500},
-        {"chrom": "12", "chromStart": 120291780, "chromEnd": 120291790, "name": "region2", "score": 800},
-        {"chrom": "12", "chromStart": 120291800, "chromEnd": 120291810, "name": "region3", "score": 200},
+        {
+            "chrom": "12",
+            "chromStart": 120291760,
+            "chromEnd": 120291770,
+            "name": "region1",
+            "score": 500,
+        },
+        {
+            "chrom": "12",
+            "chromStart": 120291780,
+            "chromEnd": 120291790,
+            "name": "region2",
+            "score": 800,
+        },
+        {
+            "chrom": "12",
+            "chromStart": 120291800,
+            "chromEnd": 120291810,
+            "name": "region3",
+            "score": 200,
+        },
     ]
 
 
@@ -217,7 +247,20 @@ def invalid_bed_intervals():
     """Return invalid BED intervals."""
     return [
         {"chrom": "12", "chromStart": 120291770, "chromEnd": 120291760},  # start > end
-        {"chrom": "11", "chromStart": 120291760, "chromEnd": 120291770},  # Wrong chromosome
-        {"chrom": "12", "chromStart": 120291000, "chromEnd": 120291010},  # Out of bounds
-        {"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "score": 1500},  # Score > 1000
+        {
+            "chrom": "11",
+            "chromStart": 120291760,
+            "chromEnd": 120291770,
+        },  # Wrong chromosome
+        {
+            "chrom": "12",
+            "chromStart": 120291000,
+            "chromEnd": 120291010,
+        },  # Out of bounds
+        {
+            "chrom": "12",
+            "chromStart": 120291760,
+            "chromEnd": 120291770,
+            "score": 1500,
+        },  # Score > 1000
     ]

@@ -21,7 +21,7 @@ test.describe('Editor Page', () => {
     mockCuratorAuth(page);
     await page.goto('/editor');
     await page.waitForLoadState('networkidle');
-    
+
     const header = page.locator('header');
     await expect(header.first()).toBeVisible({ timeout: 5000 });
   });
@@ -30,7 +30,7 @@ test.describe('Editor Page', () => {
     mockCuratorAuth(page);
     await page.goto('/editor');
     await page.waitForLoadState('networkidle');
-    
+
     const canvas = page.locator('canvas');
     await expect(canvas.first()).toBeVisible({ timeout: 10000 });
   });
@@ -40,10 +40,10 @@ test.describe('Editor Page', () => {
     await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
-    
+
     const selectButton = page.locator('button:has-text("Select")');
     const addButton = page.locator('button:has-text("Add")');
-    
+
     if (await selectButton.isVisible({ timeout: 3000 })) {
       await expect(selectButton).toBeVisible({ timeout: 5000 });
     }
@@ -57,11 +57,11 @@ test.describe('Editor Page', () => {
     await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
-    
+
     const zoomIn = page.locator('button:has-text("Zoom In")');
     const zoomOut = page.locator('button:has-text("Zoom Out")');
     const resetView = page.locator('button:has-text("Reset View")');
-    
+
     if (await zoomIn.isVisible({ timeout: 3000 })) {
       await expect(zoomIn).toBeVisible({ timeout: 5000 });
     }

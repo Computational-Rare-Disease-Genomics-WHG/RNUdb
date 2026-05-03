@@ -21,7 +21,7 @@ test.describe('Curate Page', () => {
     mockCuratorAuth(page);
     await page.goto('/curate');
     await page.waitForLoadState('networkidle');
-    
+
     const header = page.locator('h1:has-text("Curator Dashboard")');
     await expect(header).toBeVisible({ timeout: 10000 });
   });
@@ -30,7 +30,7 @@ test.describe('Curate Page', () => {
     mockCuratorAuth(page);
     await page.goto('/curate');
     await page.waitForLoadState('networkidle');
-    
+
     const searchInput = page.locator('input[placeholder*="Search"]');
     await expect(searchInput.first()).toBeVisible({ timeout: 5000 });
   });
@@ -39,7 +39,7 @@ test.describe('Curate Page', () => {
     mockCuratorAuth(page);
     await page.goto('/curate');
     await page.waitForLoadState('networkidle');
-    
+
     mockCuratorAuth(page);
     await page.route('/api/genes', (route) =>
       route.fulfill({
@@ -50,14 +50,14 @@ test.describe('Curate Page', () => {
         ]),
       })
     );
-    
+
     await page.waitForTimeout(500);
-    
+
     const variantsTab = page.locator('button[value="variants"]');
     const structuresTab = page.locator('button[value="structures"]');
     const literatureTab = page.locator('button[value="literature"]');
     const bedtracksTab = page.locator('button[value="bedtracks"]');
-    
+
     await expect(variantsTab).toBeVisible({ timeout: 5000 });
     await expect(structuresTab).toBeVisible({ timeout: 5000 });
     await expect(literatureTab).toBeVisible({ timeout: 5000 });
@@ -68,7 +68,7 @@ test.describe('Curate Page', () => {
     mockCuratorAuth(page);
     await page.goto('/curate');
     await page.waitForLoadState('networkidle');
-    
+
     const addGeneButton = page.locator('button:has-text("Add Gene")');
     await expect(addGeneButton).toBeVisible({ timeout: 5000 });
   });
@@ -77,7 +77,7 @@ test.describe('Curate Page', () => {
     mockCuratorAuth(page);
     await page.goto('/curate');
     await page.waitForLoadState('networkidle');
-    
+
     const selectPrompt = page.locator('text=Select a Gene to Begin');
     await expect(selectPrompt).toBeVisible({ timeout: 5000 });
   });
@@ -86,10 +86,10 @@ test.describe('Curate Page', () => {
     mockCuratorAuth(page);
     await page.goto('/curate');
     await page.waitForLoadState('networkidle');
-    
+
     const header = page.locator('header');
     const footer = page.locator('footer');
-    
+
     await expect(header.first()).toBeVisible({ timeout: 5000 });
     await expect(footer.first()).toBeVisible({ timeout: 5000 });
   });

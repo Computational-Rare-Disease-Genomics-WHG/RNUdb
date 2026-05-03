@@ -21,7 +21,7 @@ test.describe('Admin Page', () => {
     mockAdminAuth(page);
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
-    
+
     const header = page.locator('h1:has-text("Admin Dashboard")');
     await expect(header).toBeVisible({ timeout: 10000 });
   });
@@ -30,7 +30,7 @@ test.describe('Admin Page', () => {
     mockAdminAuth(page);
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
-    
+
     const approvalsTab = page.locator('button:has-text("Pending Approvals")');
     await expect(approvalsTab).toBeVisible({ timeout: 5000 });
   });
@@ -39,7 +39,7 @@ test.describe('Admin Page', () => {
     mockAdminAuth(page);
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
-    
+
     const usersTab = page.locator('button:has-text("Users")');
     await expect(usersTab).toBeVisible({ timeout: 5000 });
   });
@@ -48,11 +48,11 @@ test.describe('Admin Page', () => {
     mockAdminAuth(page);
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
-    
+
     const usersTab = page.locator('button:has-text("Users")');
     await usersTab.click();
     await page.waitForTimeout(300);
-    
+
     const allUsersHeader = page.locator('text=All Users');
     await expect(allUsersHeader).toBeVisible({ timeout: 5000 });
   });
@@ -61,7 +61,7 @@ test.describe('Admin Page', () => {
     mockAdminAuth(page);
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
-    
+
     const curatorSection = page.locator('text=Curator Change Requests');
     await expect(curatorSection.first()).toBeVisible({ timeout: 5000 });
   });

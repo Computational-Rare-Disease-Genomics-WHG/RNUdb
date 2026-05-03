@@ -39,7 +39,14 @@ class TestVariantValidation:
 
     def test_invalid_clinical_significance(self, sample_gene):
         """Unknown clinical significance should fail."""
-        rows = [{"position": 120291785, "ref": "G", "alt": "A", "clinical_significance": "Unknown"}]
+        rows = [
+            {
+                "position": 120291785,
+                "ref": "G",
+                "alt": "A",
+                "clinical_significance": "Unknown",
+            }
+        ]
         report = validate_variant_batch(rows, sample_gene)
 
         assert report.valid is False
@@ -81,13 +88,15 @@ class TestVariantValidation:
 
     def test_numeric_fields_validation(self, sample_gene):
         """Non-numeric values in numeric fields should fail."""
-        rows = [{
-            "position": 120291785,
-            "ref": "G",
-            "alt": "A",
-            "function_score": "not_a_number",
-            "cadd_score": "also_bad"
-        }]
+        rows = [
+            {
+                "position": 120291785,
+                "ref": "G",
+                "alt": "A",
+                "function_score": "not_a_number",
+                "cadd_score": "also_bad",
+            }
+        ]
         report = validate_variant_batch(rows, sample_gene)
 
         assert report.valid is False
@@ -97,12 +106,9 @@ class TestVariantValidation:
 
     def test_hgvs_warning(self, sample_gene):
         """Malformed HGVS should produce warning, not error."""
-        rows = [{
-            "position": 120291785,
-            "ref": "G",
-            "alt": "A",
-            "hgvs": "invalid_format"
-        }]
+        rows = [
+            {"position": 120291785, "ref": "G", "alt": "A", "hgvs": "invalid_format"}
+        ]
         report = validate_variant_batch(rows, sample_gene)
 
         assert report.valid is True
@@ -111,12 +117,14 @@ class TestVariantValidation:
 
     def test_clinical_sig_normalization(self, sample_gene):
         """Abbreviated clinical significance should be normalized."""
-        rows = [{
-            "position": 120291785,
-            "ref": "G",
-            "alt": "A",
-            "clinical_significance": "LP"
-        }]
+        rows = [
+            {
+                "position": 120291785,
+                "ref": "G",
+                "alt": "A",
+                "clinical_significance": "LP",
+            }
+        ]
         report = validate_variant_batch(rows, sample_gene)
 
         assert report.valid is True
@@ -124,12 +132,9 @@ class TestVariantValidation:
 
     def test_zygosity_warning(self, sample_gene):
         """Unexpected zygosity should produce warning."""
-        rows = [{
-            "position": 120291785,
-            "ref": "G",
-            "alt": "A",
-            "zygosity": "unknown_value"
-        }]
+        rows = [
+            {"position": 120291785, "ref": "G", "alt": "A", "zygosity": "unknown_value"}
+        ]
         report = validate_variant_batch(rows, sample_gene)
 
         assert report.valid is True
@@ -160,10 +165,8 @@ class TestStructureValidation:
         data = {
             "id": "test",
             "name": "Test",
-            "nucleotides": [
-                {"id": 1, "base": "X", "x": 0, "y": 0}
-            ],
-            "base_pairs": []
+            "nucleotides": [{"id": 1, "base": "X", "x": 0, "y": 0}],
+            "base_pairs": [],
         }
         report = validate_structure(data, sample_gene)
 
@@ -175,12 +178,10 @@ class TestStructureValidation:
         data = {
             "id": "test",
             "name": "Test",
-            "nucleotides": [
-                {"id": 1, "base": "A", "x": 0, "y": 0}
-            ],
+            "nucleotides": [{"id": 1, "base": "A", "x": 0, "y": 0}],
             "base_pairs": [
                 {"from_pos": 1, "to_pos": 99}  # 99 doesn't exist
-            ]
+            ],
         }
         report = validate_structure(data, sample_gene)
 
@@ -196,7 +197,7 @@ class TestStructureValidation:
                 {"id": 1, "base": "A", "x": 0, "y": 0},
                 {"id": 2, "base": "U", "x": 0, "y": 0},
             ],
-            "base_pairs": []
+            "base_pairs": [],
         }
         report = validate_structure(data, sample_gene)
 
@@ -212,7 +213,7 @@ class TestStructureValidation:
             "nucleotides": [
                 {"id": 1, "base": "A"}  # Missing x, y
             ],
-            "base_pairs": []
+            "base_pairs": [],
         }
         report = validate_structure(data, sample_gene)
 
@@ -260,7 +261,14 @@ class TestBEDValidation:
 
     def test_score_out_of_range(self, sample_gene):
         """Score > 1000 should now pass validation - no score cap."""
-        intervals = [{"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "score": 1500}]
+        intervals = [
+            {
+                "chrom": "12",
+                "chromStart": 120291760,
+                "chromEnd": 120291770,
+                "score": 1500,
+            }
+        ]
         report = validate_bed_intervals(intervals, sample_gene)
 
         assert report.valid is True
@@ -268,7 +276,9 @@ class TestBEDValidation:
 
     def test_score_negative(self, sample_gene):
         """Negative score should fail validation."""
-        intervals = [{"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "score": -5}]
+        intervals = [
+            {"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "score": -5}
+        ]
         report = validate_bed_intervals(intervals, sample_gene)
 
         assert report.valid is False
