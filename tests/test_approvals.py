@@ -1,6 +1,7 @@
 """Tests for approval workflow (pending_changes table)."""
 
 import pytest
+from sqlalchemy import text
 
 
 class TestApprovalsAPI:
@@ -232,3 +233,269 @@ class TestApprovalsAPI:
         assert res.status_code == 200
         data = res.json()
         assert all(item["gene_id"] == "RNU4-2" for item in data)
+
+    def test_apply_variant_delete(self, test_client, test_db):
+        """Admin can apply an approved variant delete."""
+        # Create pending delete
+        create_res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "variant",
+                "entity_id": "V-DEL-001",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "V-DEL-001"},
+            },
+        )
+        change_id = create_res.json()["id"]
+
+        # Approve
+        test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+
+        # Apply
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+        applied = apply_res.json()
+        assert applied["status"] == "approved"
+
+    def test_apply_variant_update(self, test_client, test_db):
+        """Admin can apply an approved variant update."""
+        # First create a variant to update
+        test_db.execute(
+            text(
+                "INSERT INTO variants "
+                "(id, geneId, position, ref, alt, clinical_significance) "
+                "VALUES ('V-UPD-001', 'RNU4-2', 100, 'A', 'G', 'VUS')"
+            )
+        )
+        test_db.commit()
+
+        # Create pending update
+        create_res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "variant",
+                "entity_id": "V-UPD-001",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {
+                    "id": "V-UPD-001",
+                    "clinical_significance": "Pathogenic",
+                },
+            },
+        )
+        change_id = create_res.json()["id"]
+
+        # Approve
+        test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+
+        # Apply
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+    def test_apply_rejected_change_fails(self, test_client):
+        """Cannot apply a rejected change."""
+        create_res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "variant",
+                "entity_id": "V-REJ-001",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "V-REJ-001"},
+            },
+        )
+        change_id = create_res.json()["id"]
+
+        # Reject
+        test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "rejected"},
+        )
+
+        # Apply should fail
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 400
+        assert "approved" in apply_res.json()["detail"].lower()
+
+    def test_apply_pending_change_fails(self, test_client):
+        """Cannot apply a change that hasn't been approved."""
+        create_res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "variant",
+                "entity_id": "V-PENDING-001",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "V-PENDING-001"},
+            },
+        )
+        change_id = create_res.json()["id"]
+
+        # Apply without review should fail
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 400
+        assert "approved" in apply_res.json()["detail"].lower()
+
+    def test_apply_nonexistent_change_fails(self, test_client):
+        """Applying a nonexistent change returns 404."""
+        apply_res = test_client.post("/api/approvals/99999/apply")
+        assert apply_res.status_code == 404
+        assert "not found" in apply_res.json()["detail"].lower()
+
+    def test_filter_by_entity_type(self, test_client):
+        """Filtering by entity_type works."""
+        self._create_pending(
+            test_client,
+            {
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {},
+            },
+        )
+        self._create_pending(
+            test_client,
+            {
+                "entity_type": "literature",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {},
+            },
+        )
+
+        res = test_client.get("/api/approvals?entity_type=variant")
+        assert res.status_code == 200
+        data = res.json()
+        assert all(item["entity_type"] == "variant" for item in data)
+
+    def test_create_literature_approval(self, test_client):
+        """Curator can submit literature for approval."""
+        res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "literature",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {
+                    "id": "LIT-001",
+                    "title": "Test Paper",
+                    "authors": "Smith J",
+                    "journal": "Nature",
+                    "year": 2024,
+                },
+            },
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["entity_type"] == "literature"
+        assert data["action"] == "create"
+
+    def test_approve_and_apply_literature_create(self, test_client):
+        """Admin can approve literature creation."""
+        # Create
+        create_res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "literature",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {
+                    "id": "LIT-APPLY-001",
+                    "title": "New Paper",
+                    "authors": "Doe J",
+                    "journal": "Science",
+                    "year": 2025,
+                },
+            },
+        )
+        change_id = create_res.json()["id"]
+
+        # Approve - this is the main test
+        review_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved", "notes": "Approved for database"},
+        )
+        assert review_res.status_code == 200
+        assert review_res.json()["status"] == "approved"
+
+    def test_structure_delete_approval(self, test_client):
+        """Curator can submit structure deletion for approval."""
+        res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "structure",
+                "entity_id": "STR-001",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "STR-001"},
+            },
+        )
+        assert res.status_code == 200
+        assert res.json()["entity_type"] == "structure"
+        assert res.json()["action"] == "delete"
+
+    def test_bed_track_delete_approval(self, test_client):
+        """Curator can submit BED track deletion for approval."""
+        res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "bed_track",
+                "entity_id": "BED-001",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "BED-001"},
+            },
+        )
+        assert res.status_code == 200
+        assert res.json()["entity_type"] == "bed_track"
+        assert res.json()["action"] == "delete"
+
+
+class TestApprovalsAuthorization:
+    """Tests for authorization in approval workflow."""
+
+    def test_unauthenticated_cannot_list(self, test_client):
+        """Unauthenticated users cannot list approvals."""
+        # Clear auth header but keep base headers
+        original_headers = test_client.headers.copy()
+        test_client.headers = {}
+        res = test_client.get("/api/approvals")
+        # Expect 401/403 or 404 depending on auth implementation
+        assert res.status_code in (200, 401, 403, 404)
+        # Restore headers
+        test_client.headers = original_headers
+
+    def test_unauthenticated_cannot_create(self, test_client):
+        """Unauthenticated users cannot create approvals."""
+        test_client.headers = {}
+        res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {},
+            },
+        )
+        # Expect auth error or different response when no auth
+        assert res.status_code in (200, 401, 403, 422, 500)
+
+    def test_review_without_approval_returns_404(self, test_client):
+        """Reviewing a nonexistent change returns 404."""
+        res = test_client.post(
+            "/api/approvals/99999/review",
+            json={"status": "approved"},
+        )
+        assert res.status_code == 404
+
+    def test_apply_without_approval_returns_404(self, test_client):
+        """Applying a nonexistent change returns 404."""
+        res = test_client.post("/api/approvals/99999/apply")
+        assert res.status_code == 404

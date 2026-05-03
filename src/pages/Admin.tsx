@@ -45,6 +45,7 @@ const Admin: React.FC = () => {
   const [pendingUsers, setPendingUsers] = useState<UserRecord[]>([]);
   const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<PendingChange[]>([]);
+  const [changeLog, setChangeLog] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
   const {
     listChanges,
@@ -73,6 +74,10 @@ const Admin: React.FC = () => {
 
       const changes = await listChanges({ status: "pending" });
       setPendingApprovals(changes);
+
+      // Load change log (all statuses)
+      const allChanges = await listChanges({});
+      setChangeLog(allChanges);
     } catch (error) {
       console.error("Error loading admin data:", error);
     } finally {
@@ -174,6 +179,13 @@ const Admin: React.FC = () => {
             >
               <Users className="h-4 w-4 mr-2" />
               Users
+            </TabsTrigger>
+            <TabsTrigger
+              value="changelog"
+              className="px-5 py-2.5 rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
+              <Database className="h-4 w-4 mr-2" />
+              Change Log
             </TabsTrigger>
           </TabsList>
 
@@ -388,6 +400,96 @@ const Admin: React.FC = () => {
                           </TableCell>
                           <TableCell className="text-slate-500">
                             {new Date(user.updated_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="changelog">
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="border-b border-slate-100 pb-4">
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Database className="h-5 w-5 text-teal-600" />
+                  Approval / Change Log
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {loading ? (
+                  <Skeleton className="h-64 w-full" />
+                ) : changeLog.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500">
+                    <FileText className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                    <p>No change history</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Entity</TableHead>
+                        <TableHead>Action</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Requested By</TableHead>
+                        <TableHead>Reviewed By</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {changeLog.map((change) => (
+                        <TableRow key={change.id}>
+                          <TableCell className="font-mono text-xs">
+                            {change.id}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {change.entity_type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                change.action === "create"
+                                  ? "default"
+                                  : change.action === "update"
+                                    ? "secondary"
+                                    : "destructive"
+                              }
+                              className="capitalize"
+                            >
+                              {change.action}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                change.status === "approved"
+                                  ? "default"
+                                  : change.status === "rejected"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                              className="capitalize"
+                            >
+                              {change.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-slate-600">
+                            {change.requested_by}
+                          </TableCell>
+                          <TableCell className="text-slate-500">
+                            {change.reviewed_by || "—"}
+                          </TableCell>
+                          <TableCell className="text-slate-500 text-xs">
+                            {new Date(change.requested_at).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-slate-500 text-xs max-w-[200px] truncate">
+                            {change.review_notes || "—"}
                           </TableCell>
                         </TableRow>
                       ))}
