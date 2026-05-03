@@ -1,2 +1,1 @@
 # Generating data for RNUdb
-
