@@ -1,7 +1,7 @@
 // src/components/RNAViewer/NucleotideComponent.tsx
-import React from 'react';
-import type { Nucleotide } from '../../types';
-import { COLORBLIND_FRIENDLY_PALETTE } from '../../lib/colors';
+import React from "react";
+import { COLORBLIND_FRIENDLY_PALETTE } from "../../lib/colors";
+import type { Nucleotide } from "../../types";
 
 interface NucleotideComponentProps {
   nucleotide: Nucleotide;
@@ -22,12 +22,12 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
   isSelected,
   isHighlighted = false,
   onHover,
-  onClick
+  onClick,
 }) => {
   // Determine visual state priority: selected > highlighted > hovered > default
   const getStrokeColor = () => {
     if (isSelected) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC;
-    if (isHighlighted) return '#6366f1'; // Indigo for linked variant highlight
+    if (isHighlighted) return "#6366f1"; // Indigo for linked variant highlight
     if (isHovered) return COLORBLIND_FRIENDLY_PALETTE.PRIMARY;
     return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.DARK_GRAY;
   };
@@ -60,7 +60,7 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
           opacity="0.3"
           pointerEvents="none"
           style={{
-            animation: 'pulse 2s ease-in-out infinite'
+            animation: "pulse 2s ease-in-out infinite",
           }}
         />
       )}
@@ -76,11 +76,11 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
         onMouseLeave={() => onHover(null)}
         onClick={() => onClick(nucleotide)}
         style={{
-          cursor: 'pointer',
-          transition: 'all 0.2s ease'
+          cursor: "pointer",
+          transition: "all 0.2s ease",
         }}
       />
-      
+
       <text
         x={nucleotide.x}
         y={nucleotide.y + 4}
@@ -92,8 +92,6 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
       >
         {nucleotide.base}
       </text>
-      
-     
     </g>
   );
 };

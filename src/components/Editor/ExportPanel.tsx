@@ -1,8 +1,8 @@
-import React from 'react';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Copy, Download } from 'lucide-react';
-import type { RNAData } from '../../types/rna';
+import { Copy, Download } from "lucide-react";
+import React from "react";
+import type { RNAData } from "../../types/rna";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 interface ExportPanelProps {
   rnaData: RNAData;
@@ -19,12 +19,13 @@ const ExportPanel: React.FC<ExportPanelProps> = ({ rnaData }) => {
 
   const downloadJSON = () => {
     const dataStr = exportToJSON();
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    const exportFileDefaultName = 'rna-structure.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
+    const dataUri =
+      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    const exportFileDefaultName = "rna-structure.json";
+
+    const linkElement = document.createElement("a");
+    linkElement.setAttribute("href", dataUri);
+    linkElement.setAttribute("download", exportFileDefaultName);
     linkElement.click();
   };
 
@@ -34,18 +35,11 @@ const ExportPanel: React.FC<ExportPanelProps> = ({ rnaData }) => {
         <CardTitle>Export</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button
-          onClick={copyToClipboard}
-          className="w-full"
-          variant="outline"
-        >
+        <Button onClick={copyToClipboard} className="w-full" variant="outline">
           <Copy className="h-4 w-4 mr-2" />
           Copy JSON
         </Button>
-        <Button
-          onClick={downloadJSON}
-          className="w-full"
-        >
+        <Button onClick={downloadJSON} className="w-full">
           <Download className="h-4 w-4 mr-2" />
           Download JSON
         </Button>
