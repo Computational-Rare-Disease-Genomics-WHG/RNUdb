@@ -1,8 +1,7 @@
 """Tests for approval workflow (pending_changes table)."""
 
+
 import pytest
-import json
-from tests.conftest import test_client, mock_auth
 
 
 class TestApprovalsAPI:
@@ -157,7 +156,7 @@ class TestApprovalsAPI:
             "entity_type": "variant", "gene_id": "RNU4-2",
             "action": "update", "payload": {"id": "V5"}
         })
-        r2 = self._create_pending(test_client, {
+        self._create_pending(test_client, {
             "entity_type": "variant", "gene_id": "RNU4-2",
             "action": "update", "payload": {"id": "V6"}
         })

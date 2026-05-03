@@ -1,11 +1,9 @@
 """Tests for validation services."""
 
-import pytest
 from api.services.validation import (
-    validate_variant_batch,
-    validate_structure,
     validate_bed_intervals,
-    VALID_CLINICAL_SIG,
+    validate_structure,
+    validate_variant_batch,
 )
 
 
@@ -15,7 +13,7 @@ class TestVariantValidation:
     def test_valid_variants_pass(self, sample_gene, valid_variant_rows):
         """All valid variants should pass validation."""
         report = validate_variant_batch(valid_variant_rows, sample_gene)
-        
+
         assert report.valid is True
         assert len(report.errors) == 0
         assert len(report.valid_rows) == 3
@@ -25,7 +23,7 @@ class TestVariantValidation:
         """Variants outside gene bounds should fail."""
         rows = [{"position": 120291000, "ref": "C", "alt": "T"}]
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 1
         assert "outside gene bounds" in report.errors[0].message
@@ -34,7 +32,7 @@ class TestVariantValidation:
         """Invalid nucleotide characters should fail."""
         rows = [{"position": 120291785, "ref": "X", "alt": "T"}]
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 1
         assert "Invalid reference allele" in report.errors[0].message
@@ -43,7 +41,7 @@ class TestVariantValidation:
         """Unknown clinical significance should fail."""
         rows = [{"position": 120291785, "ref": "G", "alt": "A", "clinical_significance": "Unknown"}]
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 1
         assert "Invalid clinical significance" in report.errors[0].message
@@ -55,7 +53,7 @@ class TestVariantValidation:
             {"position": 120291785, "ref": "G", "alt": "A"},  # Duplicate
         ]
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 1
         assert "Duplicate variant" in report.errors[0].message
@@ -65,7 +63,7 @@ class TestVariantValidation:
         existing = {"120291785_G_A"}
         rows = [{"position": 120291785, "ref": "G", "alt": "A"}]
         report = validate_variant_batch(rows, sample_gene, existing)
-        
+
         assert report.valid is True
         assert len(report.warnings) == 1
         assert "already exists" in report.warnings[0].message
@@ -74,7 +72,7 @@ class TestVariantValidation:
         """Missing required fields should fail."""
         rows = [{"position": 120291785}]  # Missing ref and alt
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 2
         error_fields = {e.field for e in report.errors}
@@ -91,7 +89,7 @@ class TestVariantValidation:
             "cadd_score": "also_bad"
         }]
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 2
         assert report.errors[0].field == "function_score"
@@ -106,7 +104,7 @@ class TestVariantValidation:
             "hgvs": "invalid_format"
         }]
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is True
         assert len(report.warnings) == 1
         assert "HGVS" in report.warnings[0].message
@@ -120,7 +118,7 @@ class TestVariantValidation:
             "clinical_significance": "LP"
         }]
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is True
         assert report.valid_rows[0]["clinical_significance"] == "Likely Pathogenic"
 
@@ -133,7 +131,7 @@ class TestVariantValidation:
             "zygosity": "unknown_value"
         }]
         report = validate_variant_batch(rows, sample_gene)
-        
+
         assert report.valid is True
         assert len(report.warnings) == 1
         assert "zygosity" in report.warnings[0].message
@@ -145,15 +143,15 @@ class TestStructureValidation:
     def test_valid_structure_passes(self, sample_gene, valid_structure_data):
         """A valid structure should pass validation."""
         report = validate_structure(valid_structure_data, sample_gene)
-        
+
         assert report.valid is True
         assert len(report.errors) == 0
 
     def test_missing_required_fields(self, sample_gene):
         """Missing id or name should fail."""
-        data = {"nucleotides": [], "basePairs": []}
+        data = {"nucleotides": [], "base_pairs": []}
         report = validate_structure(data, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) >= 2
 
@@ -165,10 +163,10 @@ class TestStructureValidation:
             "nucleotides": [
                 {"id": 1, "base": "X", "x": 0, "y": 0}
             ],
-            "basePairs": []
+            "base_pairs": []
         }
         report = validate_structure(data, sample_gene)
-        
+
         assert report.valid is False
         assert any("Invalid base" in e.message for e in report.errors)
 
@@ -180,12 +178,12 @@ class TestStructureValidation:
             "nucleotides": [
                 {"id": 1, "base": "A", "x": 0, "y": 0}
             ],
-            "basePairs": [
-                {"from": 1, "to": 99}  # 99 doesn't exist
+            "base_pairs": [
+                {"from_pos": 1, "to_pos": 99}  # 99 doesn't exist
             ]
         }
         report = validate_structure(data, sample_gene)
-        
+
         assert report.valid is False
         assert any("does not match any nucleotide" in e.message for e in report.errors)
 
@@ -198,10 +196,10 @@ class TestStructureValidation:
                 {"id": 1, "base": "A", "x": 0, "y": 0},
                 {"id": 2, "base": "U", "x": 0, "y": 0},
             ],
-            "basePairs": []
+            "base_pairs": []
         }
         report = validate_structure(data, sample_gene)
-        
+
         assert report.valid is True
         assert len(report.warnings) == 1
         assert "does not match gene sequence length" in report.warnings[0].message
@@ -214,10 +212,10 @@ class TestStructureValidation:
             "nucleotides": [
                 {"id": 1, "base": "A"}  # Missing x, y
             ],
-            "basePairs": []
+            "base_pairs": []
         }
         report = validate_structure(data, sample_gene)
-        
+
         assert report.valid is False
         assert any("x" in e.field for e in report.errors)
 
@@ -228,7 +226,7 @@ class TestBEDValidation:
     def test_valid_intervals_pass(self, sample_gene, valid_bed_intervals):
         """All valid intervals should pass."""
         report = validate_bed_intervals(valid_bed_intervals, sample_gene)
-        
+
         assert report.valid is True
         assert len(report.errors) == 0
         assert len(report.valid_rows) == 3
@@ -237,7 +235,7 @@ class TestBEDValidation:
         """Start >= end should fail."""
         intervals = [{"chrom": "12", "chromStart": 120291770, "chromEnd": 120291760}]
         report = validate_bed_intervals(intervals, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 1
         assert "must be less than end" in report.errors[0].message
@@ -246,7 +244,7 @@ class TestBEDValidation:
         """Chromosome mismatch should fail."""
         intervals = [{"chrom": "11", "chromStart": 120291760, "chromEnd": 120291770}]
         report = validate_bed_intervals(intervals, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 1
         assert "does not match gene chromosome" in report.errors[0].message
@@ -255,7 +253,7 @@ class TestBEDValidation:
         """Intervals outside gene bounds should fail."""
         intervals = [{"chrom": "12", "chromStart": 120291000, "chromEnd": 120291010}]
         report = validate_bed_intervals(intervals, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 1
         assert "outside gene bounds" in report.errors[0].message
@@ -264,7 +262,7 @@ class TestBEDValidation:
         """Score > 1000 should now pass validation - no score cap."""
         intervals = [{"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "score": 1500}]
         report = validate_bed_intervals(intervals, sample_gene)
-        
+
         assert report.valid is True
         assert len(report.errors) == 0
 
@@ -272,7 +270,7 @@ class TestBEDValidation:
         """Negative score should fail validation."""
         intervals = [{"chrom": "12", "chromStart": 120291760, "chromEnd": 120291770, "score": -5}]
         report = validate_bed_intervals(intervals, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) >= 1
 
@@ -280,7 +278,7 @@ class TestBEDValidation:
         """Negative start coordinate should fail."""
         intervals = [{"chrom": "12", "chromStart": -10, "chromEnd": 120291770}]
         report = validate_bed_intervals(intervals, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) >= 1
         assert any("must be >= 0" in e.message for e in report.errors)
@@ -289,7 +287,7 @@ class TestBEDValidation:
         """Missing required fields should fail."""
         intervals = [{"chromStart": 120291760}]  # Missing chrom and chromEnd
         report = validate_bed_intervals(intervals, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 2
         error_fields = {e.field for e in report.errors}
@@ -300,7 +298,7 @@ class TestBEDValidation:
         """Non-numeric coordinates should fail."""
         intervals = [{"chrom": "12", "chromStart": "abc", "chromEnd": "def"}]
         report = validate_bed_intervals(intervals, sample_gene)
-        
+
         assert report.valid is False
         assert len(report.errors) == 2
         assert report.errors[0].field == "chromStart"

@@ -1,7 +1,5 @@
 """Tests for import API endpoints."""
 
-import pytest
-from fastapi.testclient import TestClient
 
 
 class TestVariantImportAPI:
@@ -13,7 +11,7 @@ class TestVariantImportAPI:
             "geneId": "RNU4-2",
             "variants": valid_variant_rows
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is True
@@ -26,7 +24,7 @@ class TestVariantImportAPI:
             "geneId": "RNU4-2",
             "variants": invalid_variant_rows
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is False
@@ -38,7 +36,7 @@ class TestVariantImportAPI:
             "geneId": "UNKNOWN",
             "variants": [{"position": 100, "ref": "A", "alt": "G"}]
         })
-        
+
         assert response.status_code == 404
 
     def test_import_valid_variants(self, test_client, valid_variant_rows):
@@ -48,7 +46,7 @@ class TestVariantImportAPI:
             "variants": valid_variant_rows,
             "skip_invalid": True
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -66,7 +64,7 @@ class TestVariantImportAPI:
             "variants": rows,
             "skip_invalid": True
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -83,7 +81,7 @@ class TestVariantImportAPI:
             "variants": rows,
             "skip_invalid": False
         })
-        
+
         assert response.status_code == 400
 
 
@@ -96,7 +94,7 @@ class TestStructureImportAPI:
             "geneId": "RNU4-2",
             "structure": valid_structure_data
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is True
@@ -108,7 +106,7 @@ class TestStructureImportAPI:
             "geneId": "RNU4-2",
             "structure": invalid_structure_data
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is False
@@ -120,7 +118,7 @@ class TestStructureImportAPI:
             "geneId": "RNU4-2",
             "structure": valid_structure_data
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -137,7 +135,7 @@ class TestBEDTrackImportAPI:
             "track_name": "test_track",
             "intervals": valid_bed_intervals
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is True
@@ -150,7 +148,7 @@ class TestBEDTrackImportAPI:
             "track_name": "bad_track",
             "intervals": invalid_bed_intervals
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is False
@@ -164,7 +162,7 @@ class TestBEDTrackImportAPI:
             "intervals": valid_bed_intervals,
             "color": "#FF6B6B"
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -178,10 +176,10 @@ class TestBEDTrackImportAPI:
             "track_name": "test_track",
             "intervals": valid_bed_intervals
         })
-        
+
         # Then get
         response = test_client.get("/api/genes/RNU4-2/bed-tracks")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert len(data) > 0
@@ -194,7 +192,7 @@ class TestBEDTrackAPI:
     def test_get_all_bed_tracks_empty(self, test_client):
         """GET all bed tracks when empty should return empty list."""
         response = test_client.get("/api/bed-tracks")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
