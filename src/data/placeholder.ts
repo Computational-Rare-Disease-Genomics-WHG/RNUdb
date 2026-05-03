@@ -17,7 +17,7 @@ export const placeholderGene: SnRNAGene = {
 
 // Simple placeholder variants for development
 export const placeholderVariants: Variant[] = [
-{
+  {
     id: "test_variant_1",
     geneId: "RNU4-2",
     position: 120291859, // nucleotidePosition 45 on reverse strand: 120291903 - 45 + 1

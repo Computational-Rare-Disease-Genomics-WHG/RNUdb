@@ -17,7 +17,7 @@ import {
   ChevronRight,
   Pencil,
 } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "@/components/GenomeBrowser/GenomeBrowser.css";
 
@@ -103,18 +103,21 @@ const Curate: React.FC = () => {
   const [editingVariant, setEditingVariant] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const regionViewerRef = useRef<HTMLDivElement>(null);
-  const [regionViewerWidth, setRegionViewerWidth] = useState(800);
+  const [regionViewerWidth, setRegionViewerWidth] = useState<number | null>(null);
   const { submitChange } = useApprovals();
 
-  useEffect(() => {
-    const updateWidth = () => {
-      if (regionViewerRef.current) {
-        setRegionViewerWidth(regionViewerRef.current.offsetWidth);
+  useLayoutEffect(() => {
+    if (!regionViewerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = Math.floor(entry.contentRect.width);
+        if (width > 0) setRegionViewerWidth(width);
       }
-    };
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
+    });
+    
+    observer.observe(regionViewerRef.current);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -164,7 +167,7 @@ const Curate: React.FC = () => {
       const [variantsRes, litRes, structRes, bedRes] = await Promise.all([
         fetch(`/api/genes/${geneId}/variants`, { credentials: "include" }),
         fetch(`/api/genes/${geneId}/literature`, { credentials: "include" }),
-        fetch(`/api/genes/${geneId}/structure`, {
+        fetch(`/api/genes/${geneId}/structures`, {
           credentials: "include",
         }).catch(() => null),
         fetch(`/api/genes/${geneId}/bed-tracks`, {
@@ -754,6 +757,7 @@ const Curate: React.FC = () => {
                       <div
                         ref={regionViewerRef}
                         className="genome-browser-viewer w-full"
+                        style={{ width: "100%", minWidth: "100%" }}
                       >
                         <RegionViewer
                           regions={[
@@ -762,7 +766,7 @@ const Curate: React.FC = () => {
                               stop: selectedGene.end,
                             },
                           ]}
-                          width={regionViewerWidth}
+                          width={regionViewerWidth || 1000}
                           leftPanelWidth={80}
                           rightPanelWidth={0}
                         >
