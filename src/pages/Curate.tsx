@@ -759,7 +759,7 @@ const Curate: React.FC = () => {
                       </div>
                       <div
                         ref={regionViewerRef}
-                        className="genome-browser-viewer"
+                        className="genome-browser-viewer w-full"
                       >
                         <RegionViewer
                           regions={[
