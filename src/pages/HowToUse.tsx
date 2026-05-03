@@ -61,15 +61,15 @@ const HowToUse: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-10 w-full flex-1">
-        <div className="flex items-center gap-1 p-1.5 bg-slate-200 rounded-xl w-fit mb-10">
+        <div className="flex items-center gap-1 p-1.5 bg-slate-100 rounded-lg w-fit mb-8">
           {tabs.map((tab) => (
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
-              className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 activeTab === tab.value
-                  ? "bg-white text-teal-600 shadow-md"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  ? "bg-white text-teal-600 shadow-sm"
+                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
               }`}
             >
               {tab.icon}
@@ -136,7 +136,7 @@ const HowToUse: React.FC = () => {
               </Card>
             </div>
 
-            <Card className="bg-white border-l-4 border-l-teal-500 shadow-sm">
+            <Card className="bg-white border-l-4 border-l-teal-500 shadow-sm rounded-lg">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <AlertTriangle className="h-6 w-6 text-teal-500 shrink-0 mt-0.5" />
@@ -436,13 +436,13 @@ const HowToUse: React.FC = () => {
 
         {activeTab === "faq" && (
           <div className="grid lg:grid-cols-2 gap-6">
-            <Card className="bg-white border border-slate-200 shadow-sm">
-              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-semibold text-slate-800">
+            <Card className="bg-white border border-slate-200 shadow-sm rounded-lg">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-semibold text-slate-800">
                   General Questions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-5 space-y-4">
+              <CardContent className="pt-4 space-y-3">
                 {[
                   {
                     q: "What are snRNAs?",
@@ -459,24 +459,24 @@ const HowToUse: React.FC = () => {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-4 border border-slate-100 rounded-xl bg-slate-50"
+                    className="p-3 border border-slate-100 rounded-lg bg-slate-50"
                   >
-                    <h4 className="font-semibold text-slate-800 text-base mb-2">
+                    <h4 className="font-semibold text-slate-800 text-sm mb-1">
                       {item.q}
                     </h4>
-                    <p className="text-slate-500 text-base">{item.a}</p>
+                    <p className="text-slate-500 text-sm">{item.a}</p>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
-            <Card className="bg-white border border-slate-200 shadow-sm">
-              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-semibold text-slate-800">
+            <Card className="bg-white border border-slate-200 shadow-sm rounded-lg">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-semibold text-slate-800">
                   Curator Questions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-5 space-y-4">
+              <CardContent className="pt-4 space-y-3">
                 {[
                   {
                     q: "How do I get curator access?",
@@ -490,61 +490,21 @@ const HowToUse: React.FC = () => {
                     q: "Can I edit existing variants?",
                     a: "Yes, click on a variant in the Curate dashboard to view and edit its details.",
                   },
-                ].map((item, idx) => (
+].map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-4 border border-slate-100 rounded-xl bg-slate-50"
+                    className="p-3 border border-slate-100 rounded-lg bg-slate-50"
                   >
-                    <h4 className="font-semibold text-slate-800 text-base mb-2">
+                    <h4 className="font-semibold text-slate-800 text-sm mb-1">
                       {item.q}
                     </h4>
-                    <p className="text-slate-500 text-base">{item.a}</p>
+                    <p className="text-slate-500 text-sm">{item.a}</p>
                   </div>
                 ))}
               </CardContent>
             </Card>
-
-            <Card className="bg-white border border-slate-200 shadow-sm lg:col-span-2">
-              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-lg font-semibold text-slate-800">
-                  Technical Questions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-5">
-                <div className="grid md:grid-cols-2 gap-4">
-                  {[
-                    {
-                      q: "How do I use the API?",
-                      a: "See /api-docs for endpoints and example code.",
-                    },
-                    {
-                      q: "Why don't some variants show up?",
-                      a: "Variants may not be indexed if not yet imported.",
-                    },
-                    {
-                      q: "How often is data updated?",
-                      a: "Data from gnomAD and ClinVar is refreshed periodically.",
-                    },
-                    {
-                      q: "Can I download the database?",
-                      a: "Use the public API or contact an admin for dataset exports.",
-                    },
-                  ].map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 border border-slate-100 rounded-xl bg-slate-50"
-                    >
-                      <h4 className="font-semibold text-slate-800 text-base mb-2">
-                        {item.q}
-                      </h4>
-                      <p className="text-slate-500 text-base">{item.a}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
-        )}
+)}
       </div>
 
       <Footer />
