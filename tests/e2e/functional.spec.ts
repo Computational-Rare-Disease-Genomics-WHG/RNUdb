@@ -4,7 +4,7 @@ import { mockGuestAuth } from './utils/mock-auth';
 test.describe('Search Functionality', () => {
   test('should display search results after typing', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = page.locator('input[type="text"], input[placeholder*="Search"]').first();
     await searchInput.fill('RNU4');
@@ -17,7 +17,7 @@ test.describe('Search Functionality', () => {
 
   test('should clear search results when clearing input', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = page.locator('input[type="text"], input[placeholder*="Search"]').first();
     await searchInput.fill('RNU4');
@@ -32,7 +32,7 @@ test.describe('Search Functionality', () => {
 
   test('should navigate to gene when selecting from search', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = page.locator('input[type="text"], input[placeholder*="Search"]').first();
     await searchInput.fill('RNU4-2');
@@ -49,7 +49,7 @@ test.describe('Search Functionality', () => {
 test.describe('Navigation', () => {
   test('should navigate to home from any page', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const homeLink = page.locator('a[href="/"], a:has-text("Home")').first();
     if (await homeLink.isVisible({ timeout: 3000 })) {
@@ -60,7 +60,7 @@ test.describe('Navigation', () => {
 
   test('should navigate to login page', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const loginLink = page.locator('a[href*="/login"]').first();
     if (await loginLink.isVisible({ timeout: 3000 })) {
@@ -72,7 +72,7 @@ test.describe('Navigation', () => {
   test('should show login link for guests', async ({ page }) => {
     mockGuestAuth(page);
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Login link should be visible for unauthenticated users
     const loginLink = page.locator('a:has-text("Login"), a:has-text("Sign in")').first();
@@ -83,7 +83,7 @@ test.describe('Navigation', () => {
 test.describe('Footer Links', () => {
   test('should have working links in footer', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const footer = page.locator('footer').first();
     await expect(footer).toBeVisible({ timeout: 5000 });
@@ -96,7 +96,7 @@ test.describe('Footer Links', () => {
 
   test('should display copyright or branding', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const footer = page.locator('footer').first();
     await expect(footer).toBeVisible({ timeout: 5000 });
@@ -106,7 +106,7 @@ test.describe('Footer Links', () => {
 test.describe('Loading States', () => {
   test('should handle loading gracefully', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Page should be stable after load
     const content = page.locator('body');
@@ -120,7 +120,7 @@ test.describe('Loading States', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
     // Filter out expected errors (like network errors for non-existent resources)
@@ -133,7 +133,7 @@ test.describe('Responsive Behavior', () => {
   test('should display content on mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const content = page.locator('body');
     await expect(content).toBeVisible();
@@ -142,7 +142,7 @@ test.describe('Responsive Behavior', () => {
   test('should display content on tablet viewport', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const content = page.locator('body');
     await expect(content).toBeVisible();
@@ -151,7 +151,7 @@ test.describe('Responsive Behavior', () => {
   test('should display content on desktop viewport', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const content = page.locator('body');
     await expect(content).toBeVisible();
@@ -161,7 +161,7 @@ test.describe('Responsive Behavior', () => {
 test.describe('Accessibility', () => {
   test('should have proper heading structure', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const h1 = page.locator('h1');
     expect(await h1.count()).toBeGreaterThanOrEqual(0);
@@ -169,7 +169,7 @@ test.describe('Accessibility', () => {
 
   test('should have alt text on images', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const images = page.locator('img');
     const count = await images.count();
@@ -184,7 +184,7 @@ test.describe('Accessibility', () => {
 
   test('should have accessible buttons', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const buttons = page.locator('button, a[role="button"]');
     expect(await buttons.count()).toBeGreaterThanOrEqual(0);

@@ -5,7 +5,7 @@ test.describe('Editor Page', () => {
   test('should redirect unauthenticated users away from editor', async ({ page }) => {
     mockGuestAuth(page);
     await page.goto('/editor');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
     expect(page.url()).not.toContain('/editor');
   });
@@ -13,14 +13,14 @@ test.describe('Editor Page', () => {
   test('should load editor page for curator', async ({ page }) => {
     mockCuratorAuth(page);
     await page.goto('/editor');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/\/editor/);
   });
 
   test('should display editor header', async ({ page }) => {
     mockCuratorAuth(page);
     await page.goto('/editor');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const header = page.locator('header');
     await expect(header.first()).toBeVisible({ timeout: 5000 });
@@ -29,7 +29,7 @@ test.describe('Editor Page', () => {
   test('should display canvas element', async ({ page }) => {
     mockCuratorAuth(page);
     await page.goto('/editor');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const canvas = page.locator('canvas');
     await expect(canvas.first()).toBeVisible({ timeout: 10000 });
@@ -38,7 +38,7 @@ test.describe('Editor Page', () => {
   test('should display toolbar with mode buttons', async ({ page }) => {
     mockCuratorAuth(page);
     await page.goto('/editor');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     const selectButton = page.locator('button:has-text("Select")');
@@ -55,7 +55,7 @@ test.describe('Editor Page', () => {
   test('should have zoom controls', async ({ page }) => {
     mockCuratorAuth(page);
     await page.goto('/editor');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     const zoomIn = page.locator('button:has-text("Zoom In")');

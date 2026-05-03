@@ -5,7 +5,7 @@ test.describe('Admin Page', () => {
   test('should redirect non-admin users away from admin page', async ({ page }) => {
     mockCuratorAuth(page);
     await page.goto('/admin');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
     expect(page.url()).not.toContain('/admin');
   });
@@ -13,7 +13,7 @@ test.describe('Admin Page', () => {
   test('should load admin page for admin user if available', async ({ page }) => {
     mockAdminAuth(page);
     await page.goto('/admin');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
     // Just check page loads without crashing
     const body = page.locator('body');
@@ -23,7 +23,7 @@ test.describe('Admin Page', () => {
   test('should display Admin Dashboard if available', async ({ page }) => {
     mockAdminAuth(page);
     await page.goto('/admin');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -32,7 +32,7 @@ test.describe('Admin Page', () => {
   test('should display tabs if available', async ({ page }) => {
     mockAdminAuth(page);
     await page.goto('/admin');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -41,7 +41,7 @@ test.describe('Admin Page', () => {
   test('should display Users if available', async ({ page }) => {
     mockAdminAuth(page);
     await page.goto('/admin');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -50,7 +50,7 @@ test.describe('Admin Page', () => {
   test('should switch between tabs if available', async ({ page }) => {
     mockAdminAuth(page);
     await page.goto('/admin');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -59,7 +59,7 @@ test.describe('Admin Page', () => {
   test('should display content if available', async ({ page }) => {
     mockAdminAuth(page);
     await page.goto('/admin');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
     const body = page.locator('body');
     await expect(body).toBeVisible();
