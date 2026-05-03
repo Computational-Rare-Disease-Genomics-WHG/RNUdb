@@ -413,7 +413,9 @@ const Editor: React.FC = () => {
           nucleotides={rnaData.nucleotides}
           initialFeature={
             editingFeature
-              ? rnaData.structural_features?.find((f) => f.id === editingFeature)
+              ? rnaData.structural_features?.find(
+                  (f) => f.id === editingFeature,
+                )
               : undefined
           }
           onSubmit={handleFeatureSubmit}

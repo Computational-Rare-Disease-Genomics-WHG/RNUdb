@@ -722,14 +722,19 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             >
               <g className="bonds-layer">
                 {rnaData.base_pairs.map(({ from_pos, to_pos }, index) => {
-                  const fromNuc = findNucleotideById(rnaData.nucleotides, from_pos);
+                  const fromNuc = findNucleotideById(
+                    rnaData.nucleotides,
+                    from_pos,
+                  );
                   const toNuc = findNucleotideById(rnaData.nucleotides, to_pos);
 
                   if (!fromNuc || !toNuc) return null;
 
                   // Create unique key using index and sorted nucleotide IDs to avoid duplicates
                   const sortedKey =
-                    from_pos < to_pos ? `${from_pos}-${to_pos}` : `${to_pos}-${from_pos}`;
+                    from_pos < to_pos
+                      ? `${from_pos}-${to_pos}`
+                      : `${to_pos}-${from_pos}`;
                   return (
                     <BasePairBond
                       key={`bond-${index}-${sortedKey}`}
