@@ -1,12 +1,11 @@
-from fastapi import APIRouter, HTTPException, Request
-from typing import List
+from fastapi import APIRouter, Request
+
+from api.routers.auth import require_admin
 from rnudb_utils.database import (
-    list_pending_users,
     list_all_users,
+    list_pending_users,
     update_user_role,
 )
-from api.models import UserResponse
-from api.routers.auth import require_admin
 
 router = APIRouter()
 

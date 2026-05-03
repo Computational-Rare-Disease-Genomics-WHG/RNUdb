@@ -1,96 +1,54 @@
-from fastapi import APIRouter, HTTPException, Request
-from typing import List
+"""BED track API endpoints."""
 
-from api.models import BEDTrack
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from api.models import BedTrack, BedTrackPublic
 from api.routers.auth import require_admin
-from rnudb_utils.database import get_db_connection, audit_log
+from rnudb_utils.database import audit_log, get_db
 
 router = APIRouter(tags=["bed-tracks"])
 
 
-@router.get("/genes/{gene_id}/bed-tracks", response_model=List[BEDTrack])
-async def get_gene_bed_tracks(gene_id: str):
+@router.get("/genes/{gene_id}/bed-tracks", response_model=list[BedTrackPublic])
+async def get_gene_bed_tracks(gene_id: str, db: Session = Depends(get_db)):
     """Get all BED tracks for a specific gene."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        """
-        SELECT * FROM bed_tracks
-        WHERE geneId = ?
-        ORDER BY interval_start
-        """,
-        (gene_id,)
-    )
-    rows = cursor.fetchall()
-    conn.close()
-    
-    return [
-        BEDTrack(
-            id=row["id"],
-            geneId=row["geneId"],
-            track_name=row["track_name"],
-            chrom=row["chrom"],
-            interval_start=row["interval_start"],
-            interval_end=row["interval_end"],
-            label=row["label"],
-            score=row["score"],
-            color=row["color"],
-            created_at=row["created_at"],
-            created_by=row["created_by"]
-        )
-        for row in rows
-    ]
+    rows = db.execute(
+        select(BedTrack)
+        .where(BedTrack.geneId == gene_id)
+        .order_by(BedTrack.interval_start)
+    ).fetchall()
+
+    return [BedTrackPublic.model_validate(dict(row._mapping)) for row in rows]
 
 
-@router.get("/bed-tracks", response_model=List[BEDTrack])
-async def get_all_bed_tracks():
+@router.get("/bed-tracks", response_model=list[BedTrackPublic])
+async def get_all_bed_tracks(db: Session = Depends(get_db)):
     """Get all BED tracks across all genes."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM bed_tracks ORDER BY geneId, interval_start")
-    rows = cursor.fetchall()
-    conn.close()
-    
-    return [
-        BEDTrack(
-            id=row["id"],
-            geneId=row["geneId"],
-            track_name=row["track_name"],
-            chrom=row["chrom"],
-            interval_start=row["interval_start"],
-            interval_end=row["interval_end"],
-            label=row["label"],
-            score=row["score"],
-            color=row["color"],
-            created_at=row["created_at"],
-            created_by=row["created_by"]
-        )
-        for row in rows
-    ]
+    rows = db.execute(
+        select(BedTrack).order_by(BedTrack.geneId, BedTrack.interval_start)
+    ).fetchall()
+
+    return [BedTrackPublic.model_validate(dict(row._mapping)) for row in rows]
 
 
 @router.delete("/bed-tracks/{track_id}")
-async def delete_bed_track(track_id: int, request: Request):
+async def delete_bed_track(
+    track_id: int, request: Request, db: Session = Depends(get_db)
+):
     """Delete a BED track by ID (admin only)."""
     user = require_admin(request)
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM bed_tracks WHERE id = ?", (track_id,))
-    row = cursor.fetchone()
-    
-    if not row:
-        conn.close()
+
+    existing = db.get(BedTrack, track_id)
+    if not existing:
         raise HTTPException(status_code=404, detail=f"BED track {track_id} not found")
-    
-    old_values = dict(row)
-    cursor.execute("DELETE FROM bed_tracks WHERE id = ?", (track_id,))
-    conn.commit()
-    
+
+    old_values = existing.model_dump()
+
+    db.delete(existing)
+    db.commit()
+
     audit_log("bed_tracks", track_id, "DELETE", old_values, None, user["github_login"])
-    
-    conn.close()
-    
+
     return {"success": True, "message": f"BED track {track_id} deleted"}

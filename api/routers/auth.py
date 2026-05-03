@@ -1,15 +1,14 @@
 import os
 import secrets
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, HTTPException, Response, Request
-from fastapi.responses import RedirectResponse
 import httpx
 import jwt
+from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
 
-from rnudb_utils.database import get_user, create_user, update_user_role, list_all_users
 from api.models import UserResponse
+from rnudb_utils.database import create_user, get_user, list_all_users
 
 router = APIRouter()
 
@@ -75,9 +74,14 @@ def _github_user_emails(token: str) -> list:
 
 def create_jwt_cookie(response: Response, github_login: str) -> None:
     """Set the session JWT cookie."""
-    expire = datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRE_DAYS)
+    expire = datetime.now(UTC) + timedelta(days=JWT_EXPIRE_DAYS)
     token = jwt.encode(
-        {"sub": github_login, "exp": expire, "iat": datetime.now(timezone.utc), "jti": secrets.token_hex(16)},
+        {
+            "sub": github_login,
+            "exp": expire,
+            "iat": datetime.now(UTC),
+            "jti": secrets.token_hex(16),
+        },
         JWT_SECRET_KEY,
         algorithm=JWT_ALGORITHM,
     )
@@ -102,10 +106,12 @@ def clear_jwt_cookie(response: Response) -> None:
     is_secure = FRONTEND_URL.startswith("https://")
     is_localhost = "localhost" in FRONTEND_URL
     cookie_domain = "localhost" if is_localhost else None
-    response.delete_cookie(key=JWT_COOKIE_NAME, httponly=True, secure=is_secure, domain=cookie_domain)
+    response.delete_cookie(
+        key=JWT_COOKIE_NAME, httponly=True, secure=is_secure, domain=cookie_domain
+    )
 
 
-def get_current_user_from_cookie(request: Request) -> Optional[dict]:
+def get_current_user_from_cookie(request: Request) -> dict | None:
     """Decode JWT cookie and return user dict, or None if invalid."""
     token = request.cookies.get(JWT_COOKIE_NAME)
     if not token:
@@ -150,16 +156,17 @@ def require_admin(request: Request) -> dict:
 # In-memory state storage (use Redis in production)
 _state_storage: dict = {}
 
+
 @router.get("/github")
 async def auth_github():
     """Redirect to GitHub OAuth authorize URL."""
     if not GITHUB_CLIENT_ID:
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured")
-    
+
     # Generate CSRF state token
     state = secrets.token_urlsafe(32)
-    _state_storage[state] = datetime.now(timezone.utc)
-    
+    _state_storage[state] = datetime.now(UTC)
+
     redirect_uri = f"{FRONTEND_URL}/api/auth/callback"
     url = (
         "https://github.com/login/oauth/authorize"
@@ -176,19 +183,21 @@ async def auth_callback(response: Response, code: str, state: str = ""):
     """Handle GitHub OAuth callback, issue JWT cookie."""
     if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured")
-    
+
     # Validate CSRF state token
     if not state or state not in _state_storage:
-        raise HTTPException(status_code=400, detail="Invalid or missing state parameter")
-    
+        raise HTTPException(
+            status_code=400, detail="Invalid or missing state parameter"
+        )
+
     # Clean up used state
     del _state_storage[state]
     # Remove expired states (> 10 minutes)
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
+    cutoff = datetime.now(UTC) - timedelta(minutes=10)
     expired = [k for k, v in _state_storage.items() if v < cutoff]
     for k in expired:
         del _state_storage[k]
-    
+
     # Exchange code for token
     token_data = _github_access_token(code)
     access_token = token_data.get("access_token")
@@ -214,7 +223,6 @@ async def auth_callback(response: Response, code: str, state: str = ""):
     # Look up user in DB
     user = get_user(login)
     if user is None:
-        # Determine initial role: if no users exist and login is in ADMIN_GITHUB_LOGINS, make admin
         all_users = list_all_users(limit=1)
         if not all_users and login in ADMIN_GITHUB_LOGINS:
             role = "admin"

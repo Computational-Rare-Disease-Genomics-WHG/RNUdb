@@ -2,139 +2,161 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master, feat/curator-portal ]
+    branches: [ main, feat/* ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
 
 jobs:
-  backend-tests:
-    name: Backend Tests
+  pre-commit:
+    name: Pre-commit Hooks
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11']
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-    - name: Install dependencies
-      run: |
-        uv pip install --system -e ".[dev]"
-        uv pip install --system pytest pytest-asyncio httpx
+      - name: Install pre-commit
+        run: uv tool install pre-commit
 
-    - name: Create test database
-      run: |
-        mkdir -p data
-        python -c "from rnudb_utils.database import create_database; create_database()"
+      - name: Run pre-commit
+        run: pre-commit run --all-files
 
-    - name: Run backend tests
-      run: |
-        python -m pytest tests/ -v --tb=short --color=yes
-      env:
-        JWT_SECRET_KEY: test-secret-key-for-ci-only
-        GITHUB_CLIENT_ID: test-client-id
-        GITHUB_CLIENT_SECRET: test-client-secret
-        FRONTEND_URL: http://localhost:5173
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results-${{ matrix.python-version }}
-        path: |
-          .pytest_cache/
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript type checking
+        run: npx tsc --noEmit
+
+  python-lint:
+    name: Python Lint (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install ruff
+        run: uv pip install ruff
+
+      - name: Run ruff
+        run: ruff check api/
+
+  backend-tests:
+    name: Backend Tests (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run Python tests
+        run: uv run pytest -v
 
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build frontend
-      run: npm run build
+      - name: Build frontend
+        run: npm run build
 
-    - name: Check for build errors
-      run: |
-        if [ $? -ne 0 ]; then
-          echo "Frontend build failed!"
-          exit 1
-        fi
-
-  code-quality:
-    name: Code Quality Checks
+  e2e-tests:
+    name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Run ESLint
-      run: npx eslint src/ --ext .ts,.tsx --max-warnings 50 || true
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
 
-  integration-tests:
-    name: Integration Tests
+      - name: Run Playwright tests
+        run: npx playwright test --reporter=list
+
+      - name: Upload Playwright test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload Playwright test traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
+
+  ci-success:
+    name: CI Success
     runs-on: ubuntu-latest
-    needs: [backend-tests]
-
+    needs: [pre-commit, lint-and-typecheck, python-lint, backend-tests, frontend-build, e2e-tests]
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-    - name: Install dependencies
-      run: |
-        uv pip install --system -e ".[dev]"
-
-    - name: Create test database with sample data
-      run: |
-        mkdir -p data
-        python -c "from rnudb_utils.database import create_database; create_database()"
-
-    - name: Run integration tests
-      run: |
-        python -m pytest tests/ -v -k "integration or end_to_end" --tb=short || true
-      env:
-        JWT_SECRET_KEY: test-secret-key-for-ci-only
-        GITHUB_CLIENT_ID: test-client-id
-        GITHUB_CLIENT_SECRET: test-client-secret
-        FRONTEND_URL: http://localhost:5173
+      - name: CI Complete
+        run: echo "All CI checks passed!"

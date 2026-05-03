@@ -32,7 +32,7 @@ def query_gnomad_variants(
           alt
           rsids
           consequence
-          
+
           # Get genome data (prioritize over exome)
           genome {{
             ac
@@ -40,7 +40,7 @@ def query_gnomad_variants(
             an
             af
           }}
-          
+
           # Fallback to exome if genome not available
           exome {{
             ac
@@ -48,7 +48,7 @@ def query_gnomad_variants(
             an
             af
           }}
-          
+
           # Joint data for latest datasets
           joint {{
             ac
@@ -130,9 +130,9 @@ def query_all_of_us_variants(
     """
     Query All of Us API for variants in a genomic region
 
-    NOTE: The All of Us public API now requires a valid Origin header and 
+    NOTE: The All of Us public API now requires a valid Origin header and
     authentication. Direct API access may return 403 Forbidden.
-    
+
     For programmatic access, consider:
     1. Using the All of Us Researcher Workbench
     2. Exporting data from the workbench and importing locally
@@ -182,7 +182,7 @@ def query_all_of_us_variants(
             }
 
             response = requests.post(url, json=payload, headers=headers, timeout=30)
-            
+
             if response.status_code == 403:
                 print("ERROR: All of Us API returned 403 Forbidden.")
                 print("The public API endpoint requires authentication.")
@@ -191,7 +191,7 @@ def query_all_of_us_variants(
                 print("  2. Export data to a local file and import to RNUdb")
                 print("  3. Use a registered application with proper credentials")
                 return []
-            
+
             response.raise_for_status()
 
             data = response.json()

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Dna, Mail, Github, Globe } from 'lucide-react';
+import { Dna, Mail, Github, Globe } from "lucide-react";
+import React from "react";
 
 const Footer: React.FC = () => {
   return (
@@ -12,23 +12,33 @@ const Footer: React.FC = () => {
             </div>
             <span className="text-base font-bold text-teal-600">RNUdb</span>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <a href="mailto:contact@rarediseasegenomics.org" className="text-muted-foreground hover:text-teal-600 transition-colors">
+            <a
+              href="mailto:contact@rarediseasegenomics.org"
+              className="text-muted-foreground hover:text-teal-600 transition-colors"
+            >
               <Mail className="h-3.5 w-3.5" />
             </a>
-            <a href="https://github.com/rarediseasegenomics" className="text-muted-foreground hover:text-teal-600 transition-colors">
+            <a
+              href="https://github.com/rarediseasegenomics"
+              className="text-muted-foreground hover:text-teal-600 transition-colors"
+            >
               <Github className="h-3.5 w-3.5" />
             </a>
-            <a href="https://rarediseasegenomics.org" className="text-muted-foreground hover:text-teal-600 transition-colors">
+            <a
+              href="https://rarediseasegenomics.org"
+              className="text-muted-foreground hover:text-teal-600 transition-colors"
+            >
               <Globe className="h-3.5 w-3.5" />
             </a>
           </div>
         </div>
-        
+
         <div className="border-t border-slate-200 mt-3 pt-3 text-center">
-<p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Computational Rare Disease Genomics. All rights reserved.
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Computational Rare Disease Genomics.
+            All rights reserved.
           </p>
         </div>
       </div>

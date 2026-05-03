@@ -1,4 +1,10 @@
-import type { RNAStructure, SnRNAGene, Variant, Literature, SGEDataset } from './rna';
+import type {
+  RNAStructure,
+  SnRNAGene,
+  Variant,
+  Literature,
+  SGEDataset,
+} from "./rna";
 
 export interface SnRNADataset {
   id: string;

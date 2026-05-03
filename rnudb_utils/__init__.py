@@ -1,9 +1,9 @@
 """RNUdb utilities package"""
 
 from .database import (
-    get_database_path,
-    get_db_connection,
-    create_database,
+    SessionLocal,
+    get_db,
+    get_db_session,
     insert_genes,
     insert_variants,
     insert_literature,
@@ -11,6 +11,12 @@ from .database import (
     insert_structures,
     insert_variant_links,
     get_linked_variants,
+    get_user,
+    create_user,
+    update_user_role,
+    list_pending_users,
+    list_all_users,
+    audit_log,
 )
 
 # Optional imports - only available if requests is installed
@@ -23,9 +29,8 @@ except ImportError:
 __version__ = "1.0.0"
 
 __all__ = [
-    "get_database_path",
-    "get_db_connection",
-    "create_database",
+    "get_db",
+    "get_db_session",
     "insert_genes",
     "insert_variants",
     "insert_literature",

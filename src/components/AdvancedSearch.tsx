@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, X, ChevronRight, Dna } from 'lucide-react';
-import { searchService, type SearchResult } from '../services/search';
-import type { SnRNAGene, Variant } from '../types';
+import { Search, X, ChevronRight, Dna } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { searchService, type SearchResult } from "../services/search";
+import type { SnRNAGene, Variant } from "../types";
 
 interface AdvancedSearchProps {
   className?: string;
@@ -11,11 +11,11 @@ interface AdvancedSearchProps {
 }
 
 const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
-  className = '',
-  placeholder = 'Search genes, variants, HGVS notation...',
-  onResultSelect
+  className = "",
+  placeholder = "Search genes, variants, HGVS notation...",
+  onResultSelect,
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -28,14 +28,17 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setShowResults(false);
         setSelectedIndex(-1);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -57,11 +60,15 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     setIsLoading(true);
 
     try {
-      const searchResults = await searchService.search(query, { includeGenes: true, includeVariants: true, maxResults: 6 });
+      const searchResults = await searchService.search(query, {
+        includeGenes: true,
+        includeVariants: true,
+        maxResults: 6,
+      });
       setResults(searchResults);
       setShowResults(true);
     } catch (err) {
-      console.error('Search error:', err);
+      console.error("Search error:", err);
       setResults([]);
     } finally {
       setIsLoading(false);
@@ -69,20 +76,22 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % Math.max(results.length, 1));
-    } else if (e.key === 'ArrowUp') {
+      setSelectedIndex((prev) => (prev + 1) % Math.max(results.length, 1));
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex(prev => prev <= 0 ? Math.max(results.length - 1, 0) : prev - 1);
-    } else if (e.key === 'Enter') {
+      setSelectedIndex((prev) =>
+        prev <= 0 ? Math.max(results.length - 1, 0) : prev - 1,
+      );
+    } else if (e.key === "Enter") {
       e.preventDefault();
       if (selectedIndex >= 0 && selectedIndex < results.length) {
         handleResultSelect(results[selectedIndex]);
       } else if (query.trim() && results.length > 0) {
         handleResultSelect(results[0]);
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setShowResults(false);
       setSelectedIndex(-1);
     }
@@ -91,15 +100,15 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   const handleResultSelect = (result: SearchResult) => {
     setShowResults(false);
     setSelectedIndex(-1);
-    setQuery('');
+    setQuery("");
 
     if (onResultSelect) {
       onResultSelect(result);
     } else {
-      if (result.type === 'gene') {
+      if (result.type === "gene") {
         const gene = result.item as SnRNAGene;
         navigate(`/gene/${gene.id}`);
-      } else if (result.type === 'variant') {
+      } else if (result.type === "variant") {
         const variant = result.item as Variant;
         navigate(`/gene/${variant.geneId}?variant=${variant.id}`);
       }
@@ -107,7 +116,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   };
 
   const clearSearch = () => {
-    setQuery('');
+    setQuery("");
     setResults([]);
     setShowResults(false);
     setSelectedIndex(-1);
@@ -116,15 +125,17 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
 
   return (
     <div ref={searchRef} className={`relative ${className}`}>
-      <div className={`
+      <div
+        className={`
         relative flex items-center bg-white rounded-2xl
         border border-slate-200 transition-all duration-200
-        ${isFocused ? 'border-teal-400 ring-2 ring-teal-500/10 shadow-lg shadow-teal-500/5' : 'hover:border-slate-300'}
-      `}>
+        ${isFocused ? "border-teal-400 ring-2 ring-teal-500/10 shadow-lg shadow-teal-500/5" : "hover:border-slate-300"}
+      `}
+      >
         <div className="absolute left-4 text-slate-400">
           <Search className="h-5 w-5" />
         </div>
-        
+
         <input
           ref={inputRef}
           type="text"
@@ -144,7 +155,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             focus:outline-none text-base
           "
         />
-        
+
         {query && !isLoading && (
           <button
             onClick={clearSearch}
@@ -153,7 +164,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             <X className="h-4 w-4 text-slate-400" />
           </button>
         )}
-        
+
         {isLoading && (
           <div className="absolute right-4">
             <div className="animate-spin h-5 w-5 border-2 border-teal-600 border-t-transparent rounded-full" />
@@ -173,31 +184,34 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
                   className={`
                     w-full text-left px-4 py-3.5 flex items-center gap-3
                     transition-colors duration-100
-                    ${selectedIndex === index ? 'bg-teal-50' : 'hover:bg-slate-50'}
-                    ${index !== 0 ? 'border-t border-slate-100' : ''}
+                    ${selectedIndex === index ? "bg-teal-50" : "hover:bg-slate-50"}
+                    ${index !== 0 ? "border-t border-slate-100" : ""}
                   `}
                 >
-                  <div className={`
+                  <div
+                    className={`
                     p-2 rounded-lg shrink-0
-                    ${result.type === 'gene' ? 'bg-teal-50' : 'bg-amber-50'}
-                  `}>
-                    {result.type === 'gene' ? (
+                    ${result.type === "gene" ? "bg-teal-50" : "bg-amber-50"}
+                  `}
+                  >
+                    {result.type === "gene" ? (
                       <Dna className="h-4 w-4 text-teal-600" />
                     ) : (
                       <Search className="h-4 w-4 text-amber-600" />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-slate-900 truncate">
-                      {result.type === 'gene'
+                      {result.type === "gene"
                         ? (result.item as SnRNAGene).name
-                        : (result.item as Variant).id
-                      }
+                        : (result.item as Variant).id}
                     </div>
                   </div>
-                  
-                  <ChevronRight className={`h-4 w-4 shrink-0 transition-colors ${selectedIndex === index ? 'text-teal-500' : 'text-slate-300'}`} />
+
+                  <ChevronRight
+                    className={`h-4 w-4 shrink-0 transition-colors ${selectedIndex === index ? "text-teal-500" : "text-slate-300"}`}
+                  />
                 </button>
               ))}
             </div>

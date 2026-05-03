@@ -1,16 +1,16 @@
 // Literature data utilities
-import { getAllLiterature, getGeneLiterature } from '../services/api';
-import type { Literature } from '../types';
+import { getAllLiterature, getGeneLiterature } from "../services/api";
+import type { Literature } from "../types";
 
 export const getLiterature = async (geneId?: string): Promise<Literature[]> => {
   try {
     if (!geneId) {
       return await getAllLiterature();
     }
-    
+
     return await getGeneLiterature(geneId);
   } catch (error) {
-    console.error(`Error fetching literature for ${geneId || 'all'}:`, error);
+    console.error(`Error fetching literature for ${geneId || "all"}:`, error);
     return [];
   }
 };

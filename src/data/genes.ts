@@ -1,18 +1,20 @@
 // Gene data utilities
-import { getGene, getAllGenes } from '../services/api';
-import type { SnRNAGene } from '../types';
+import { getGene, getAllGenes } from "../services/api";
+import type { SnRNAGene } from "../types";
 
 export const getAllSnRNAIds = async (): Promise<string[]> => {
   try {
     const genes: SnRNAGene[] = await getAllGenes();
     return genes.map((gene: SnRNAGene) => gene.id);
   } catch (error) {
-    console.error('Error fetching gene IDs:', error);
-    return ['RNU4-2']; // Fallback
+    console.error("Error fetching gene IDs:", error);
+    return ["RNU4-2"]; // Fallback
   }
 };
 
-export const getGeneData = async (geneId: string): Promise<SnRNAGene | null> => {
+export const getGeneData = async (
+  geneId: string,
+): Promise<SnRNAGene | null> => {
   try {
     return await getGene(geneId);
   } catch (error) {
