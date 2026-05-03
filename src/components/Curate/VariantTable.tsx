@@ -23,7 +23,6 @@ import {
   Pencil,
 } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -88,26 +87,18 @@ export function VariantTable({
       ),
       enableSorting: false,
       enableHiding: false,
+      size: 40,
     },
     {
-      accessorKey: "id",
-      header: "Variant ID",
-      cell: ({ row }) => (
-        <span className="font-mono text-sm text-slate-700">
-          {row.getValue("id")}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "position",
+      accessorKey: "hgvs",
       header: ({ column }) => (
         <Button
           variant="ghost"
           size="sm"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 -ml-3 font-bold text-slate-600"
+          className="h-8 font-bold text-slate-600"
         >
-          Position
+          HGVS
           {column.getIsSorted() === "asc" ? (
             <ArrowUp className="ml-1 h-3 w-3" />
           ) : column.getIsSorted() === "desc" ? (
@@ -118,63 +109,84 @@ export function VariantTable({
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="text-sm text-slate-600 font-medium">
-          {(row.getValue("position") as number).toLocaleString()}
+        <span className="font-mono text-sm text-slate-700">
+          {row.getValue("hgvs") || row.original.id}
         </span>
       ),
-    },
-    {
-      accessorKey: "change",
-      header: "Change",
-      cell: ({ row }) => (
-        <span className="text-sm">
-          <span className="font-mono text-slate-700">{row.original.ref}</span>
-          <span className="text-slate-400 mx-1">→</span>
-          <span className="font-mono text-slate-700">{row.original.alt}</span>
-        </span>
-      ),
+      size: 180,
     },
     {
       accessorKey: "clinical_significance",
-      header: "Clinical Significance",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 font-bold text-slate-600"
+        >
+          Classification
+          {column.getIsSorted() === "asc" ? (
+            <ArrowUp className="ml-1 h-3 w-3" />
+          ) : column.getIsSorted() === "desc" ? (
+            <ArrowDown className="ml-1 h-3 w-3" />
+          ) : (
+            <ArrowUpDown className="ml-1 h-3 w-3" />
+          )}
+        </Button>
+      ),
       cell: ({ row }) => {
         const sig = row.getValue("clinical_significance") as string;
-        if (!sig) return null;
+        if (!sig) return <span className="text-slate-400">—</span>;
         return (
-          <Badge
-            variant="outline"
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${getClinicalSigColor(sig)}`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-60"></span>
+          <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getClinicalSigColor(sig)}`}>
             {sig}
-          </Badge>
+          </span>
         );
       },
-      filterFn: (row, id, value) => {
-        return value === "all" || row.getValue(id) === value;
+      size: 140,
+    },
+    {
+      accessorKey: "disease_type",
+      header: "Disease",
+      cell: ({ row }) => (
+        <span className="text-sm text-teal-700 truncate">
+          {row.getValue("disease_type") || "—"}
+        </span>
+      ),
+      size: 140,
+    },
+    {
+      accessorKey: "zygosity",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 font-bold text-slate-600"
+        >
+          Zygosity
+          {column.getIsSorted() === "asc" ? (
+            <ArrowUp className="ml-1 h-3 w-3" />
+          ) : column.getIsSorted() === "desc" ? (
+            <ArrowDown className="ml-1 h-3 w-3" />
+          ) : (
+            <ArrowUpDown className="ml-1 h-3 w-3" />
+          )}
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const zyg = row.getValue("zygosity") as string;
+        return (
+          <span className={zyg === "hom" ? "text-purple-600 font-medium" : zyg === "het" ? "text-blue-600 font-medium" : "text-slate-400"}>
+            {zyg === "hom" ? "Hom" : zyg === "het" ? "Het" : "—"}
+          </span>
+        );
       },
-    },
-    {
-      accessorKey: "hgvs",
-      header: "HGVS",
-      cell: ({ row }) => (
-        <span className="text-sm text-slate-500 font-mono">
-          {row.getValue("hgvs") || "-"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "consequence",
-      header: "Consequence",
-      cell: ({ row }) => (
-        <span className="text-sm text-slate-600">
-          {row.getValue("consequence") || "-"}
-        </span>
-      ),
+      size: 80,
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "",
       cell: ({ row }) => (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
@@ -189,6 +201,7 @@ export function VariantTable({
       ),
       enableSorting: false,
       enableHiding: false,
+      size: 50,
     },
   ];
 
