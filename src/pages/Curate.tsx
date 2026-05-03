@@ -17,7 +17,7 @@ import {
   ChevronRight,
   Pencil,
 } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "@/components/GenomeBrowser/GenomeBrowser.css";
 
@@ -106,22 +106,21 @@ const Curate: React.FC = () => {
   const [regionViewerWidth, setRegionViewerWidth] = useState(1100);
   const { submitChange } = useApprovals();
 
-  useEffect(() => {
-    const updateWidth = () => {
-      if (regionViewerRef.current) {
-        const width = regionViewerRef.current.offsetWidth;
-        if (width > 0) setRegionViewerWidth(width);
+  useLayoutEffect(() => {
+    if (!regionViewerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = Math.floor(entry.contentRect.width);
+        if (width > 0 && width !== regionViewerWidth) {
+          setRegionViewerWidth(width);
+        }
       }
-    };
-
-    // Delay measurement to ensure ref is attached
-    const timeoutId = setTimeout(updateWidth, 0);
-    window.addEventListener("resize", updateWidth);
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener("resize", updateWidth);
-    };
-  }, [selectedGene]);
+    });
+    
+    observer.observe(regionViewerRef.current);
+    return () => observer.disconnect();
+  });
 
   useEffect(() => {
     if (isLoading) return;
