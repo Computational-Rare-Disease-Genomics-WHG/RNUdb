@@ -13,9 +13,6 @@ from api.models import (
     AnnotationModel,
     BasePair,
     BasePairModel,
-    BEDTrack,
-    BedTrack,
-    BedTrackPublic,
     Gene,
     GeneCreate,
     GenePublic,
@@ -28,7 +25,6 @@ from api.models import (
     RNAStructureCreate,
     StructuralFeature,
     StructuralFeatureModel,
-    Variant,
     VariantPublic,
 )
 from api.routers.auth import require_admin

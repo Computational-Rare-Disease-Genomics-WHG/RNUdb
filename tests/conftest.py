@@ -14,8 +14,8 @@ from sqlmodel import SQLModel
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-from api.main import app
 import api.models  # noqa: F401 - registers SQLModel table models
+from api.main import app
 from rnudb_utils.database import get_db
 
 # Test database setup
@@ -170,6 +170,7 @@ def valid_structure_data():
     """Return valid RNA structure data."""
     return {
         "id": "rnu4-2-test",
+        "name": "Test Structure",
         "geneId": "RNU4-2",
         "nucleotides": [
             {"id": 1, "base": "A", "x": 100.0, "y": 100.0},
@@ -190,6 +191,7 @@ def invalid_structure_data():
     """Return invalid RNA structure data."""
     return {
         "id": "invalid",
+        "name": "Invalid",
         "geneId": "RNU4-2",
         "nucleotides": [
             {"id": 1, "x": 100.0, "y": 100.0},  # Missing base

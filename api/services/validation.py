@@ -365,8 +365,8 @@ def validate_structure(data: dict[str, Any], gene: dict[str, Any]) -> Validation
             )
             continue
 
-        from_pos = bp.get("from")
-        to_pos = bp.get("to")
+        from_pos = bp.get("from_pos", bp.get("from"))
+        to_pos = bp.get("to_pos", bp.get("to"))
 
         if not isinstance(from_pos, int):
             errors.append(

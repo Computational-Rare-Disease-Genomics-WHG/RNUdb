@@ -7,7 +7,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
-from sqlmodel import Field, SQLModel
+from sqlmodel import SQLModel
 
 from api.models import PendingChange, PendingChangeOut
 from api.routers.auth import require_admin, require_curator
