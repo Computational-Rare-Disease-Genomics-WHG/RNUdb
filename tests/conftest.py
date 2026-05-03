@@ -8,8 +8,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Session as SQLModelSession
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -32,12 +31,12 @@ def test_engine():
 
 
 @pytest.fixture
-def test_db(test_engine) -> Generator[Session, None, None]:
+def test_db(test_engine) -> Generator[SQLModelSession, None, None]:
     """Provide a test database session."""
     connection = test_engine.connect()
     transaction = connection.begin()
 
-    session = Session(bind=connection)
+    session = SQLModelSession(bind=connection)
     yield session
 
     session.close()
@@ -51,7 +50,7 @@ def mock_auth():
     """Override authentication dependencies for testing."""
     from api.routers.auth import require_admin, require_curator
 
-    test_user = {
+    curator_user = {
         "github_login": "test_curator",
         "name": "Test Curator",
         "email": "test@example.com",
@@ -59,15 +58,61 @@ def mock_auth():
         "role": "curator",
     }
 
-    # Override with mock
-    app.dependency_overrides[require_curator] = lambda: test_user
-    app.dependency_overrides[require_admin] = lambda: test_user
+    admin_user = {
+        "github_login": "test_admin",
+        "name": "Test Admin",
+        "email": "admin@example.com",
+        "avatar_url": None,
+        "role": "admin",
+    }
+
+    # Override with mock - curator endpoints get curator, admin endpoints get admin
+    app.dependency_overrides[require_curator] = lambda: curator_user
+    app.dependency_overrides[require_admin] = lambda: admin_user
 
     yield
 
     # Restore original dependencies
     app.dependency_overrides.pop(require_curator, None)
     app.dependency_overrides.pop(require_admin, None)
+
+
+@pytest.fixture
+def seed_test_data(test_db):
+    """Seed test data for approval and other tests."""
+    from api.models import Gene, Variant
+
+    gene = Gene(
+        id="RNU4-2",
+        name="RNU4-2",
+        fullName="U4 spliceosomal RNA",
+        chromosome="chr12",
+        start=120291759,
+        end=120291903,
+        strand="+",
+        sequence="ACGU",
+        description="Test gene",
+    )
+    v_del = Variant(
+        id="V-DEL-001",
+        geneId="RNU4-2",
+        position=120291764,
+        ref="C",
+        alt="T",
+        clinical_significance="Pathogenic",
+    )
+    v_upd = Variant(
+        id="V-UPD-001",
+        geneId="RNU4-2",
+        position=120291782,
+        ref="A",
+        alt="C",
+        clinical_significance="VUS",
+    )
+    test_db.add_all([gene, v_del, v_upd])
+    test_db.commit()
+    yield
+    # Tables cleared by rollback in test_db fixture
 
 
 @pytest.fixture

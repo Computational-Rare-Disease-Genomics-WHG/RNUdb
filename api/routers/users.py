@@ -10,7 +10,7 @@ from rnudb_utils.database import (
 router = APIRouter()
 
 
-@router.get("/users", response_model=list)
+@router.get("", response_model=list)
 async def get_all_users(request: Request):
     """List all users (admin only)."""
     require_admin(request)
@@ -29,7 +29,7 @@ async def get_all_users(request: Request):
     ]
 
 
-@router.get("/users/pending", response_model=list)
+@router.get("/pending", response_model=list)
 async def get_pending_users(request: Request):
     """List pending users (admin only)."""
     require_admin(request)

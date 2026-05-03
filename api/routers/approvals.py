@@ -121,6 +121,7 @@ async def create_pending_change(
     )
     db.add(new_change)
     db.commit()
+    db.refresh(new_change)
 
     return _row_to_dict(new_change)
 
@@ -162,18 +163,20 @@ async def review_change(
     user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    """Admin approves or rejects a pending change."""
+    """Admin approves/rejects pending change."""
     change = db.get(PendingChange, change_id)
     if not change:
         raise HTTPException(status_code=404, detail="Change request not found")
     if change.status != "pending":
-        raise HTTPException(status_code=400, detail="Change already reviewed")
+        # Idempotent: return current state without error
+        return _row_to_dict(change)
 
     change.status = body.status
     change.reviewed_by = user["github_login"]
     change.reviewed_at = datetime.now(UTC)
     change.review_notes = body.notes
     db.commit()
+    db.refresh(change)
 
     return _row_to_dict(change)
 
@@ -202,15 +205,19 @@ async def apply_approved_change(
     user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    """Apply an approved change to the database."""
+    """Apply an approved change."""
     change = db.get(PendingChange, change_id)
     if not change:
         raise HTTPException(status_code=404, detail="Change request not found")
 
-    if change.status != "approved":
+    if change.status not in ("approved", "applied"):
         raise HTTPException(
             status_code=400, detail="Only approved changes can be applied"
         )
+
+    # Idempotent: if already applied, return current state
+    if change.applied_at is not None:
+        return _row_to_dict(change)
 
     entity_type = change.entity_type
     action = change.action
@@ -224,23 +231,13 @@ async def apply_approved_change(
     try:
         if entity_type == "variant":
             if action == "create":
+                # Build dynamic INSERT based on payload fields
+                cols = list(payload.keys())
+                placeholders = [f":{c}" for c in cols]
                 db.execute(
-                    text("""
-                        INSERT INTO variants
-                            (id, geneId, position, nucleotidePosition, ref, alt,
-                             hgvs, consequence, clinical_significance,
-                             pmid, function_score, pvalues, qvalues,
-                             depletion_group, gnomad_ac, gnomad_hom,
-                             aou_ac, aou_hom, ukbb_ac, ukbb_hom,
-                             cadd_score, zygosity, cohort)
-                        VALUES
-                            (:id, :geneId, :position, :nucleotidePosition,
-                             :ref, :alt, :hgvs, :consequence,
-                             :clinical_significance, :pmid, :function_score,
-                             :pvalues, :qvalues, :depletion_group,
-                             :gnomad_ac, :gnomad_hom, :aou_ac, :aou_hom,
-                             :ukbb_ac, :ukbb_hom, :cadd_score,
-                             :zygosity, :cohort)
+                    text(f"""
+                        INSERT INTO variants ({", ".join(cols)})
+                        VALUES ({", ".join(placeholders)})
                     """),
                     payload,
                 )
@@ -356,8 +353,12 @@ async def apply_approved_change(
 
         db.commit()
 
-        updated = db.get(PendingChange, change_id)
-        return _row_to_dict(updated)
+        # Mark as applied to prevent double-apply
+        change.applied_at = datetime.now(UTC)
+        change.status = "applied"
+        db.commit()
+        db.refresh(change)
+        return _row_to_dict(change)
 
     except Exception as e:
         db.rollback()

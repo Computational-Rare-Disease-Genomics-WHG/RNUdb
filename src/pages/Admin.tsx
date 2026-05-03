@@ -6,7 +6,6 @@ import {
   Clock,
   FileText,
   Database,
-  PlayCircle,
 } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -52,6 +51,7 @@ const Admin: React.FC = () => {
     reviewChange,
     applyChange,
     loading: approvalLoading,
+    error: approvalError,
   } = useApprovals();
 
   const loadData = useCallback(async () => {
@@ -67,7 +67,6 @@ const Admin: React.FC = () => {
       const changes = await listChanges({ status: "pending" });
       setPendingApprovals(changes);
 
-      // Load change log (all statuses)
       const allChanges = await listChanges({});
       setChangeLog(allChanges);
     } catch (error) {
@@ -85,6 +84,10 @@ const Admin: React.FC = () => {
     loadData();
   }, [isAdmin, navigate, loadData]);
 
+  useEffect(() => {
+    if (approvalError) console.error("Approval error:", approvalError);
+  }, [approvalError]);
+
   const handleApproveUser = async (github_login: string) => {
     try {
       const res = await fetch(`/api/users/${github_login}/approve`, {
@@ -99,17 +102,25 @@ const Admin: React.FC = () => {
   };
 
   const handleApproveChange = async (id: number) => {
-    await reviewChange(id, "approved");
-    await loadData();
-  };
-
-  const handleApplyChange = async (id: number) => {
-    await applyChange(id);
+    const result = await reviewChange(id, "approved");
+    if (!result) {
+      alert("Failed to approve change");
+      return;
+    }
+    const applied = await applyChange(id);
+    if (!applied) {
+      alert("Failed to apply change");
+      return;
+    }
     await loadData();
   };
 
   const handleRejectChange = async (id: number) => {
-    await reviewChange(id, "rejected");
+    const result = await reviewChange(id, "rejected");
+    if (!result) {
+      alert("Failed to reject change");
+      return;
+    }
     await loadData();
   };
 
@@ -247,24 +258,20 @@ const Admin: React.FC = () => {
                           <div className="flex gap-2 ml-4">
                             <Button
                               size="sm"
-                              onClick={() => handleApproveChange(change.id)}
+                              onClick={() => {
+                                console.log(
+                                  "Approve button clicked for id:",
+                                  change.id,
+                                );
+                                handleApproveChange(change.id);
+                              }}
                               disabled={approvalLoading}
                               className="bg-emerald-600 hover:bg-emerald-700 text-white"
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Approve
                             </Button>
-                            {change.status === "approved" && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleApplyChange(change.id)}
-                                disabled={approvalLoading}
-                                className="bg-teal-600 hover:bg-teal-700 text-white"
-                              >
-                                <PlayCircle className="h-4 w-4 mr-1" />
-                                Apply
-                              </Button>
-                            )}
+
                             <Button
                               size="sm"
                               variant="outline"
@@ -452,32 +459,32 @@ const Admin: React.FC = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge
-                              variant={
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${
                                 change.action === "create"
-                                  ? "default"
+                                  ? "bg-emerald-100 text-emerald-700"
                                   : change.action === "update"
-                                    ? "secondary"
-                                    : "destructive"
-                              }
-                              className="capitalize"
+                                    ? "bg-amber-100 text-amber-700"
+                                    : "bg-red-100 text-red-700"
+                              }`}
                             >
                               {change.action}
-                            </Badge>
+                            </span>
                           </TableCell>
                           <TableCell>
-                            <Badge
-                              variant={
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${
                                 change.status === "approved"
-                                  ? "default"
+                                  ? "bg-teal-100 text-teal-700"
                                   : change.status === "rejected"
-                                    ? "destructive"
-                                    : "secondary"
-                              }
-                              className="capitalize"
+                                    ? "bg-red-100 text-red-700"
+                                    : change.status === "applied"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-slate-100 text-slate-700"
+                              }`}
                             >
                               {change.status}
-                            </Badge>
+                            </span>
                           </TableCell>
                           <TableCell className="text-slate-600">
                             {change.requested_by}

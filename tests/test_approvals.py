@@ -76,7 +76,7 @@ class TestApprovalsAPI:
         assert review_res.status_code == 200
         reviewed = review_res.json()
         assert reviewed["status"] == "approved"
-        assert reviewed["reviewed_by"] == "test_curator"  # same user due to mock
+        assert reviewed["reviewed_by"] == "test_admin"  # admin user due to mock
         assert reviewed["review_notes"] == "Looks good"
 
     def test_review_reject(self, test_client):
@@ -119,12 +119,12 @@ class TestApprovalsAPI:
             f"/api/approvals/{change_id}/review", json={"status": "approved"}
         )
 
-        # Second review should 400
+        # Second review is idempotent - returns 200 with current state
         second = test_client.post(
             f"/api/approvals/{change_id}/review", json={"status": "rejected"}
         )
-        assert second.status_code == 400
-        assert "already reviewed" in second.json()["detail"].lower()
+        assert second.status_code == 200
+        assert second.json()["status"] == "approved"  # remains as first review
 
     def test_get_single_change(self, test_client):
         """Can fetch a change by ID."""
@@ -234,7 +234,7 @@ class TestApprovalsAPI:
         data = res.json()
         assert all(item["gene_id"] == "RNU4-2" for item in data)
 
-    def test_apply_variant_delete(self, test_client, test_db):
+    def test_apply_variant_delete(self, test_client, test_db, seed_test_data):
         """Admin can apply an approved variant delete."""
         # Create pending delete
         create_res = self._create_pending(
@@ -259,19 +259,13 @@ class TestApprovalsAPI:
         apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
         assert apply_res.status_code == 200
         applied = apply_res.json()
-        assert applied["status"] == "approved"
+        assert applied["status"] == "applied"
+        assert applied["applied_at"] is not None
 
-    def test_apply_variant_update(self, test_client, test_db):
+    def test_apply_variant_update(self, test_client, test_db, seed_test_data):
         """Admin can apply an approved variant update."""
-        # First create a variant to update
-        test_db.execute(
-            text(
-                "INSERT INTO variants "
-                "(id, geneId, position, ref, alt, clinical_significance) "
-                "VALUES ('V-UPD-001', 'RNU4-2', 100, 'A', 'G', 'VUS')"
-            )
-        )
-        test_db.commit()
+        # Variant V-UPD-001 already exists from seed_test_data
+        # Just update it via approval
 
         # Create pending update
         create_res = self._create_pending(
@@ -298,6 +292,9 @@ class TestApprovalsAPI:
         # Apply
         apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
         assert apply_res.status_code == 200
+        applied = apply_res.json()
+        assert applied["status"] == "applied"
+        assert applied["applied_at"] is not None
 
     def test_apply_rejected_change_fails(self, test_client):
         """Cannot apply a rejected change."""

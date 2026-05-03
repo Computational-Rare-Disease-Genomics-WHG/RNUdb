@@ -9,10 +9,11 @@ export interface PendingChange {
   payload: any;
   requested_by: string;
   requested_at: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "applied";
   reviewed_by: string | null;
   reviewed_at: string | null;
   review_notes: string | null;
+  applied_at: string | null;
 }
 
 export function useApprovals() {

@@ -452,6 +452,7 @@ class PendingChangeBase(SQLModel):
     reviewed_by: str | None = None
     reviewed_at: datetime | None = None
     review_notes: str | None = None
+    applied_at: datetime | None = None
 
 
 class PendingChange(PendingChangeBase, table=True):
@@ -469,7 +470,7 @@ class PendingChange(PendingChangeBase, table=True):
             name="check_action",
         ),
         CheckConstraint(
-            "status IN ('pending', 'approved', 'rejected')",
+            "status IN ('pending', 'approved', 'rejected', 'applied')",
             name="check_status",
         ),
     )
