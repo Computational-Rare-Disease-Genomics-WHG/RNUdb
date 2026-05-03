@@ -763,7 +763,7 @@ const Curate: React.FC = () => {
                               stop: selectedGene.end,
                             },
                           ]}
-                          width={regionViewerWidth || 1300}
+                          width={regionViewerWidth || 1100}
                           leftPanelWidth={80}
                           rightPanelWidth={0}
                         >
