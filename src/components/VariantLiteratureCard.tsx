@@ -296,6 +296,17 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
             <span>·</span>
             <span>{paperData.length} papers</span>
           </div>
+
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase border-b border-slate-200 pb-2">
+            <span className="w-32">HGVS</span>
+            <span className="w-20">Position</span>
+            <span className="w-16">Change</span>
+            <span className="w-24">Classification</span>
+            <span className="w-24">Disease</span>
+            <span className="w-12">Zygosity</span>
+            <span className="w-16">Biallelic</span>
+            <span className="w-12">Papers</span>
+          </div>
         </div>
       </CardHeader>
 
@@ -331,51 +342,34 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                       </button>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <Badge variant="outline" className="font-mono text-xs bg-white border-slate-300 text-slate-700">
-                            {variant.id}
-                          </Badge>
-                          <span className="text-xs text-slate-500 font-mono">{variant.position?.toLocaleString()}</span>
-                          <Badge className="font-mono text-xs bg-slate-100 text-slate-800 border-slate-300">
-                            {variant.ref}→{variant.alt}
-                          </Badge>
-                          <Badge className={`text-xs ${getClinicalBadge(variant.clinical_significance || '')}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-32 text-xs font-mono text-slate-600 truncate" title={variant.hgvs || variant.id}>{variant.hgvs || variant.id}</span>
+                          <span className="w-20 text-xs text-slate-500 font-mono">{variant.position?.toLocaleString()}</span>
+                          <span className="w-16 text-xs font-mono text-slate-700">{variant.ref}→{variant.alt}</span>
+                          <span className={`w-24 text-xs ${getClinicalBadge(variant.clinical_significance || '').replace('text-white', 'text-').replace('bg-slate-200', 'bg-slate-100 text-slate-700')}`}>
                             {variant.clinical_significance || 'Unknown'}
-                          </Badge>
-                          {variant.disease_type && (
-                            <Badge variant="outline" className="text-xs bg-teal-50 text-teal-700 border-teal-200">
-                              {variant.disease_type}
-                            </Badge>
-                          )}
-                          {variant.zygosity && (
-                            <Badge variant="outline" className={`text-xs ${
-                              variant.zygosity === 'hom' 
-                                ? 'bg-purple-50 text-purple-700 border-purple-200' 
-                                : 'bg-blue-50 text-blue-700 border-blue-200'
-                            }`}>
-                              {variant.zygosity === 'hom' ? 'Hom' : 'Het'}
-                            </Badge>
-                          )}
-                          {isBiallelic && (
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs cursor-pointer transition-colors ${
-                                selectedBiallelicLink === variant.id 
-                                  ? 'bg-indigo-100 text-indigo-700 border-indigo-300' 
-                                  : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
-                              }`}
-                              onClick={(e) => { e.stopPropagation(); handleBiallelicLinkClick(variant.id); }}
-                            >
-                              <LinkIcon className="h-3 w-3 mr-1" />
-                              Biallelic{linkedVariants.length > 0 ? ` (${linkedVariants.length + 1})` : ''}
-                            </Badge>
-                          )}
-                          {variantLit.length > 0 && (
-                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                              <BookOpen className="h-3 w-3 mr-1" />
-                              {variantLit.length} paper{variantLit.length > 1 ? 's' : ''}
-                            </Badge>
-                          )}
+                          </span>
+                          <span className="w-24 text-xs text-teal-700 truncate">{variant.disease_type || ''}</span>
+                          <span className={`w-12 text-xs ${variant.zygosity === 'hom' ? 'text-purple-600 font-medium' : variant.zygosity === 'het' ? 'text-blue-600 font-medium' : 'text-slate-400'}`}>
+                            {variant.zygosity === 'hom' ? 'Hom' : variant.zygosity === 'het' ? 'Het' : ''}
+                          </span>
+                          <span className="w-16">
+                            {isBiallelic ? (
+                              linkedVariants.length > 0 ? (
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleBiallelicLinkClick(variant.id); }}
+                                  className={`text-xs font-medium hover:underline ${selectedBiallelicLink === variant.id ? 'text-indigo-700' : 'text-indigo-600'}`}
+                                >
+                                  {variant.zygosity === 'hom' ? 'Hom' : `${linkedVariants.length + 1} linked`}
+                                </button>
+                              ) : (
+                                <span className="text-xs text-slate-500">Hom</span>
+                              )
+                            ) : <span className="text-xs text-slate-400">—</span>}
+                          </span>
+                          <span className={`w-12 text-xs ${variantLit.length > 0 ? 'text-blue-600 font-medium' : 'text-slate-400'}`}>
+                            {variantLit.length}
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-4 text-xs text-slate-500">
