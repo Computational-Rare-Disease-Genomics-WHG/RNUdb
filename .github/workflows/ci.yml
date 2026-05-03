@@ -146,6 +146,30 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Initialize database
+        run: uv run alembic upgrade head
+
+      - name: Start backend server
+        run: uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 &
+        shell: bash
+
+      - name: Wait for server
+        run: sleep 10
+
       - name: Run Playwright tests
         run: npx playwright test --reporter=list
 

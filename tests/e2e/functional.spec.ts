@@ -74,9 +74,9 @@ test.describe('Navigation', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // Login link should be visible for unauthenticated users
-    const loginLink = page.locator('a:has-text("Login"), a:has-text("Sign in")').first();
-    expect(await loginLink.count()).toBeGreaterThan(0);
+    // Login button should be visible for unauthenticated users
+    const loginButton = page.locator('button:has-text("Sign In"), button:has-text("Login")').first();
+    await expect(loginButton).toBeVisible({ timeout: 5000 });
   });
 });
 

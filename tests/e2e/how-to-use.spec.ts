@@ -15,13 +15,12 @@ test.describe('How To Use Page', () => {
     await expect(header).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display all four tabs', async ({ page }) => {
+  test('should display all three tabs', async ({ page }) => {
     await page.goto('/how-to-use');
     await page.waitForLoadState('domcontentloaded');
 
     await expect(page.locator('button:has-text("Getting Started")')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('button:has-text("Guides")')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('button:has-text("Navigation")')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('button:has-text("FAQ")')).toBeVisible({ timeout: 5000 });
   });
 
@@ -51,17 +50,6 @@ test.describe('How To Use Page', () => {
 
     const curatorGuide = page.locator('text=Curator Guide');
     await expect(curatorGuide.first()).toBeVisible({ timeout: 5000 });
-  });
-
-  test('should switch to Navigation tab', async ({ page }) => {
-    await page.goto('/how-to-use');
-    await page.waitForLoadState('domcontentloaded');
-
-    await page.locator('button:has-text("Navigation")').click();
-    await page.waitForTimeout(500);
-
-    const pageRoutes = page.locator('text=Page Routes');
-    await expect(pageRoutes.first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should switch to FAQ tab', async ({ page }) => {

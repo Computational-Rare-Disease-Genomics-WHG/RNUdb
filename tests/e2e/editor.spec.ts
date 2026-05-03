@@ -26,13 +26,13 @@ test.describe('Editor Page', () => {
     await expect(header.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('should display canvas element', async ({ page }) => {
+  test('should display SVG element', async ({ page }) => {
     mockCuratorAuth(page);
     await page.goto('/editor');
     await page.waitForLoadState('domcontentloaded');
 
-    const canvas = page.locator('canvas');
-    await expect(canvas.first()).toBeVisible({ timeout: 10000 });
+    const svg = page.locator('svg');
+    await expect(svg.first()).toBeVisible({ timeout: 10000 });
   });
 
   test('should display toolbar with mode buttons', async ({ page }) => {
