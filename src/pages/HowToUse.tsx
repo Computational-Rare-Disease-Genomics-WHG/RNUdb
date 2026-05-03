@@ -12,7 +12,6 @@ import {
   ChevronRight,
   FileText,
   HelpCircle,
-  ExternalLink,
   Key,
 } from "lucide-react";
 import React, { useState } from "react";
@@ -36,11 +35,7 @@ const HowToUse: React.FC = () => {
       label: "Guides",
       icon: <FileText className="h-4 w-4 inline mr-2" />,
     },
-    {
-      value: "navigation",
-      label: "Navigation",
-      icon: <Search className="h-4 w-4 inline mr-2" />,
-    },
+    
     {
       value: "faq",
       label: "FAQ",
@@ -437,111 +432,7 @@ const HowToUse: React.FC = () => {
           </div>
         )}
 
-        {activeTab === "navigation" && (
-          <div className="space-y-6">
-            <Card className="bg-white border border-slate-200 shadow-sm">
-              <CardHeader className="pb-5 border-b border-slate-100">
-                <CardTitle className="text-xl font-semibold text-slate-800">
-                  Page Routes
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-5">
-                <div className="space-y-4">
-                  {[
-                    {
-                      route: "/",
-                      title: "Home Page",
-                      desc: "Entry point with search functionality and gene overview",
-                    },
-                    {
-                      route: "/gene/:geneId",
-                      title: "Gene Page",
-                      desc: "Interactive RNA structure visualization with variant overlay",
-                    },
-                    {
-                      route: "/curate",
-                      title: "Curate Dashboard",
-                      desc: "Manage variants, structures, literature, and BED tracks",
-                    },
-                    {
-                      route: "/api-docs",
-                      title: "API Documentation",
-                      desc: "Developer documentation for programmatic access",
-                    },
-                    {
-                      route: "/clinical-interpretation",
-                      title: "Clinical Interpretation",
-                      desc: "Guidelines for variant classification in snRNA genes",
-                    },
-                  ].map((page) => (
-                    <div
-                      key={page.route}
-                      className="flex items-center gap-5 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
-                    >
-                      <code className="text-sm bg-teal-50 px-3 py-2 rounded-lg text-teal-700 font-mono shrink-0">
-                        {page.route}
-                      </code>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-slate-800 text-lg">
-                          {page.title}
-                        </h4>
-                        <p className="text-slate-500 text-base">{page.desc}</p>
-                      </div>
-                      <ExternalLink className="h-5 w-5 text-slate-400" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card className="bg-white border border-slate-200 shadow-sm">
-              <CardHeader className="pb-5 border-b border-slate-100">
-                <CardTitle className="text-xl font-semibold text-slate-800">
-                  Curate Dashboard Features
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-5">
-                <div className="grid md:grid-cols-4 gap-4">
-                  {[
-                    {
-                      title: "Variants",
-                      desc: "Import, edit, and manage variant data",
-                      icon: Dna,
-                    },
-                    {
-                      title: "Structures",
-                      desc: "Manage RNA secondary structure annotations",
-                      icon: Layers,
-                    },
-                    {
-                      title: "Literature",
-                      desc: "Link papers to variants and genes",
-                      icon: BookOpen,
-                    },
-                    {
-                      title: "BED Tracks",
-                      desc: "Create custom genomic annotations",
-                      icon: FileText,
-                    },
-                  ].map((feature) => (
-                    <div
-                      key={feature.title}
-                      className="p-5 border border-slate-200 rounded-xl bg-slate-50 hover:border-teal-200 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center mb-3">
-                        <feature.icon className="h-5 w-5 text-teal-600" />
-                      </div>
-                      <h4 className="font-semibold text-slate-800 text-base mb-1">
-                        {feature.title}
-                      </h4>
-                      <p className="text-sm text-slate-500">{feature.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {activeTab === "faq" && (
           <div className="grid lg:grid-cols-2 gap-6">

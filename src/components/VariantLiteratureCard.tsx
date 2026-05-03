@@ -389,7 +389,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                     const isBiallelic = variant.zygosity === 'hom' || linkedVariants.length > 0;
 
                     return (
-                      <>
+                      <React.Fragment key={variant.id}>
                         <tr
                           key={variant.id}
                           className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
@@ -436,21 +436,88 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                           <tr>
                             <td colSpan={7} className="bg-slate-50 p-4">
                               <div className="space-y-4">
-                                <div className="flex items-center gap-4 text-xs text-slate-500">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-xs">
+                                  <div>
+                                    <span className="font-medium text-slate-600">Variant ID: </span>
+                                    <span className="text-slate-700 font-mono">{variant.id}</span>
+                                  </div>
                                   {variant.gnomad_ac !== undefined && variant.gnomad_ac > 0 && (
-                                    <span><span className="font-medium text-slate-600">gnomAD AC:</span> {variant.gnomad_ac.toLocaleString()}</span>
+                                    <div>
+                                      <span className="font-medium text-slate-600">gnomAD AC: </span>
+                                      <span className="text-slate-700">{variant.gnomad_ac.toLocaleString()}</span>
+                                    </div>
+                                  )}
+                                  {variant.gnomad_hom !== undefined && variant.gnomad_hom > 0 && (
+                                    <div>
+                                      <span className="font-medium text-slate-600">gnomAD Hom: </span>
+                                      <span className="text-slate-700">{variant.gnomad_hom.toLocaleString()}</span>
+                                    </div>
                                   )}
                                   {variant.aou_ac !== undefined && variant.aou_ac > 0 && (
-                                    <span><span className="font-medium text-slate-600">AoU AC:</span> {variant.aou_ac.toLocaleString()}</span>
+                                    <div>
+                                      <span className="font-medium text-slate-600">All of Us AC: </span>
+                                      <span className="text-slate-700">{variant.aou_ac.toLocaleString()}</span>
+                                    </div>
+                                  )}
+                                  {variant.aou_hom !== undefined && variant.aou_hom > 0 && (
+                                    <div>
+                                      <span className="font-medium text-slate-600">All of Us Hom: </span>
+                                      <span className="text-slate-700">{variant.aou_hom.toLocaleString()}</span>
+                                    </div>
                                   )}
                                   {variant.ukbb_ac !== undefined && variant.ukbb_ac > 0 && (
-                                    <span><span className="font-medium text-slate-600">UKBB AC:</span> {variant.ukbb_ac.toLocaleString()}</span>
+                                    <div>
+                                      <span className="font-medium text-slate-600">UKBB AC: </span>
+                                      <span className="text-slate-700">{variant.ukbb_ac.toLocaleString()}</span>
+                                    </div>
+                                  )}
+                                  {variant.ukbb_hom !== undefined && variant.ukbb_hom > 0 && (
+                                    <div>
+                                      <span className="font-medium text-slate-600">UKBB Hom: </span>
+                                      <span className="text-slate-700">{variant.ukbb_hom.toLocaleString()}</span>
+                                    </div>
+                                  )}
+                                  {variant.cadd_score !== undefined && variant.cadd_score !== null && (
+                                    <div>
+                                      <span className="font-medium text-slate-600">CADD: </span>
+                                      <span className="text-slate-700">{variant.cadd_score.toFixed(1)}</span>
+                                    </div>
                                   )}
                                   {variant.function_score !== undefined && variant.function_score !== null && (
-                                    <span><span className="font-medium text-slate-600">Score:</span> {variant.function_score.toFixed(3)}</span>
+                                    <div>
+                                      <span className="font-medium text-slate-600">Function Score: </span>
+                                      <span className="text-slate-700">{variant.function_score.toFixed(3)}</span>
+                                    </div>
+                                  )}
+                                  {variant.pvalues !== undefined && variant.pvalues !== null && (
+                                    <div>
+                                      <span className="font-medium text-slate-600">P-value: </span>
+                                      <span className="text-slate-700">{variant.pvalues.toExponential(2)}</span>
+                                    </div>
+                                  )}
+                                  {variant.qvalues !== undefined && variant.qvalues !== null && (
+                                    <div>
+                                      <span className="font-medium text-slate-600">Q-value: </span>
+                                      <span className="text-slate-700">{variant.qvalues.toExponential(2)}</span>
+                                    </div>
+                                  )}
+                                  {variant.depletion_group && (
+                                    <div>
+                                      <span className="font-medium text-slate-600">Depletion: </span>
+                                      <span className="text-slate-700">{variant.depletion_group}</span>
+                                    </div>
                                   )}
                                   {variant.consequence && (
-                                    <span className="text-slate-600">{variant.consequence}</span>
+                                    <div>
+                                      <span className="font-medium text-slate-600">Consequence: </span>
+                                      <span className="text-slate-700">{variant.consequence}</span>
+                                    </div>
+                                  )}
+                                  {variant.cohort && (
+                                    <div>
+                                      <span className="font-medium text-slate-600">Cohort: </span>
+                                      <span className="text-slate-700">{variant.cohort}</span>
+                                    </div>
                                   )}
                                 </div>
 
@@ -551,7 +618,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </tbody>

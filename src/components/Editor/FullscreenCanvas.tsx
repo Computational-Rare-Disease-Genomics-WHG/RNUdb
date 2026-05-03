@@ -375,7 +375,9 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
 
     const renderBasePairs = () => {
       return rnaData.base_pairs.map((bp, index) => {
-        const nucleotide1 = rnaData.nucleotides.find((n) => n.id === bp.from_pos);
+        const nucleotide1 = rnaData.nucleotides.find(
+          (n) => n.id === bp.from_pos,
+        );
         const nucleotide2 = rnaData.nucleotides.find((n) => n.id === bp.to_pos);
 
         if (!nucleotide1 || !nucleotide2) return null;
@@ -908,6 +910,8 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
             {/* Structural Features Layer */}
             {mode !== "add" &&
               rnaData.structural_features?.map((feature) => {
+                if (!feature.nucleotide_ids || feature.nucleotide_ids.length === 0) return null;
+                
                 const nucleotides = feature.nucleotide_ids
                   .map((id) => rnaData.nucleotides.find((n) => n.id === id))
                   .filter(Boolean) as typeof rnaData.nucleotides;
@@ -944,12 +948,14 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                       <rect
                         x={
                           feature.label_x -
-                          (feature.label_text.length * feature.label_font_size) /
+                          (feature.label_text.length *
+                            feature.label_font_size) /
                             3
                         }
                         y={feature.label_y - feature.label_font_size / 1.5}
                         width={
-                          (feature.label_text.length * feature.label_font_size) /
+                          (feature.label_text.length *
+                            feature.label_font_size) /
                           1.5
                         }
                         height={feature.label_font_size + 8}
@@ -1028,7 +1034,9 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                       (annotation.text.length * annotation.font_size) / 3
                     }
                     y={annotation.y - annotation.font_size / 1.5}
-                    width={(annotation.text.length * annotation.font_size) / 1.5}
+                    width={
+                      (annotation.text.length * annotation.font_size) / 1.5
+                    }
                     height={annotation.font_size + 8}
                     fill={
                       currentLabel === annotation.id

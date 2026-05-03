@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 const Gene: React.FC = () => {
   const { geneId } = useParams<{ geneId: string }>();
   const navigate = useNavigate();
-  const { isCurator } = useAuth();
+  useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSnRNA, setSelectedSnRNA] = useState(geneId || "RNU4-2");
   const [searchResults, setSearchResults] = useState<null | SnRNAGene[]>(null);
@@ -439,33 +439,6 @@ const Gene: React.FC = () => {
 
       <div className="flex-1">
         <div className="flex-1">
-          {isCurator && currentData && (
-            <div className="max-w-7xl mx-auto px-4 py-4">
-              <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 flex items-center justify-between">
-                <div className="text-sm font-medium text-teal-800">
-                  Curator Mode
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => navigate("/curate")}
-                    className="text-sm bg-teal-600 hover:bg-teal-700 text-white"
-                  >
-                    Edit Gene
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      navigate(`/editor?geneId=${currentData.name}`)
-                    }
-                    className="text-sm border-teal-300 text-teal-700 hover:bg-teal-50"
-                  >
-                    Edit Structure
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <MainContent
             currentData={currentData}
             rnaStructureData={rnaStructureData}
