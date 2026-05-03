@@ -32,6 +32,7 @@ class ReviewRequest(SQLModel):
     status: Literal["approved", "rejected"]
     notes: str | None = None
 
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -87,8 +88,11 @@ _ENTITY_TABLE_MAP = {
 def _row_to_dict(row) -> dict:
     import json
 
-    d = dict(row._mapping)
-    if d.get("payload"):
+    if hasattr(row, "__table__"):
+        d = {key: getattr(row, key) for key in row.__table__.columns.keys()}
+    else:
+        d = dict(row._mapping)
+    if d.get("payload") and isinstance(d["payload"], str):
         d["payload"] = json.loads(d["payload"])
     return d
 
@@ -147,8 +151,8 @@ async def list_pending_changes(
 
     query = query.order_by(PendingChange.requested_at.desc()).limit(200)
 
-    rows = db.execute(query).fetchall()
-    return [_row_to_dict(row) for row in rows]
+    rows = db.execute(query).scalars().all()
+    return [row.model_dump(mode="json") for row in rows]
 
 
 @router.post("/{change_id}/review", response_model=PendingChangeOut)
@@ -209,7 +213,7 @@ async def apply_approved_change(
         )
 
     entity_type = change.entity_type
-    action = change.payload.get("action") if isinstance(change.payload, dict) else None
+    action = change.action
     payload = (
         change.payload
         if isinstance(change.payload, dict)
@@ -256,7 +260,7 @@ async def apply_approved_change(
                             UPDATE variants
                             SET {", ".join(set_clauses)}
                             WHERE id = :entity_id
-                        """),
+                        """),  # noqa: S608
                         params,
                     )
             elif action == "delete":
@@ -293,7 +297,7 @@ async def apply_approved_change(
                             UPDATE genes
                             SET {", ".join(set_clauses)}
                             WHERE id = :entity_id
-                        """),
+                        """),  # noqa: S608
                         params,
                     )
             elif action == "delete":
@@ -327,7 +331,7 @@ async def apply_approved_change(
                             UPDATE literature
                             SET {", ".join(set_clauses)}
                             WHERE id = :entity_id
-                        """),
+                        """),  # noqa: S608
                         params,
                     )
             elif action == "delete":
