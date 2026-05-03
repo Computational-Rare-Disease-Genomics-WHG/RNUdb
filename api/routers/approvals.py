@@ -234,11 +234,29 @@ async def apply_approved_change(
                 # Build dynamic INSERT based on payload fields
                 # Validate column names against whitelist to prevent SQL injection
                 allowed_cols = {
-                    "id", "geneId", "position", "nucleotidePosition", "ref", "alt",
-                    "hgvs", "consequence", "clinical_significance", "pmid",
-                    "function_score", "pvalues", "qvalues", "depletion_group",
-                    "gnomad_ac", "gnomad_hom", "aou_ac", "aou_hom",
-                    "ukbb_ac", "ukbb_hom", "cadd_score", "zygosity", "cohort",
+                    "id",
+                    "geneId",
+                    "position",
+                    "nucleotidePosition",
+                    "ref",
+                    "alt",
+                    "hgvs",
+                    "consequence",
+                    "clinical_significance",
+                    "pmid",
+                    "function_score",
+                    "pvalues",
+                    "qvalues",
+                    "depletion_group",
+                    "gnomad_ac",
+                    "gnomad_hom",
+                    "aou_ac",
+                    "aou_hom",
+                    "ukbb_ac",
+                    "ukbb_hom",
+                    "cadd_score",
+                    "zygosity",
+                    "cohort",
                 }
                 cols = [c for c in payload.keys() if c in allowed_cols]
                 placeholders = [f":{c}" for c in cols]
