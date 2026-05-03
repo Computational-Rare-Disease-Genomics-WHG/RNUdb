@@ -168,6 +168,7 @@ async def import_variant_batch(
         None,
         {"count": len(variants_data), "geneId": request.geneId},
         "system",
+        db,
     )
 
     return ImportResult(
@@ -238,6 +239,7 @@ async def import_structure(
             "nucleotides": len(request.structure.get("nucleotides", [])),
         },
         "system",
+        db,
     )
 
     return ImportResult(
@@ -321,6 +323,7 @@ async def import_bed_track(
         None,
         {"geneId": request.geneId, "intervals": inserted},
         "system",
+        db,
     )
 
     return ImportResult(

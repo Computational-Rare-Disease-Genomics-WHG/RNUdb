@@ -330,8 +330,22 @@ def audit_log(
     old_values: Any,
     new_values: Any,
     user_login: str,
+    session: Session | None = None,
 ) -> None:
-    """Log an audit entry."""
+    """Log an audit entry. Optionally accepts a session for testing."""
+    if session is not None:
+        entry = AuditLog(
+            table_name=table_name,
+            record_id=record_id,
+            action=action,
+            old_values=old_values,
+            new_values=new_values,
+            user_login=user_login,
+        )
+        session.merge(entry)
+        session.commit()
+        return
+
     with SessionLocal() as session:
         entry = AuditLog(
             table_name=table_name,
