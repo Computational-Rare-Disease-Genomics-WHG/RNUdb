@@ -102,7 +102,7 @@ export const StructuralFeatureModal: React.FC<StructuralFeatureModalProps> = ({
     }
 
     const feature: Omit<StructuralFeature, "id"> = {
-      feature_type: featureType as StructuralFeature['feature_type'],
+      feature_type: featureType as StructuralFeature["feature_type"],
       nucleotide_ids: selectedNucleotides,
       label_text: labelText.trim(),
       label_x: labelX,

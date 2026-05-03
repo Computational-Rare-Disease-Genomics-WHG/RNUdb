@@ -39,7 +39,9 @@ const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(
   ) => {
     const renderBasePairs = useCallback(() => {
       return rnaData.base_pairs.map((bp, index) => {
-        const nucleotide1 = rnaData.nucleotides.find((n) => n.id === bp.from_pos);
+        const nucleotide1 = rnaData.nucleotides.find(
+          (n) => n.id === bp.from_pos,
+        );
         const nucleotide2 = rnaData.nucleotides.find((n) => n.id === bp.to_pos);
 
         if (!nucleotide1 || !nucleotide2) return null;
