@@ -6,6 +6,9 @@ import {
   Clock,
   FileText,
   Database,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -38,6 +41,8 @@ interface UserRecord {
   updated_at: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const Admin: React.FC = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
@@ -46,6 +51,10 @@ const Admin: React.FC = () => {
   const [pendingApprovals, setPendingApprovals] = useState<PendingChange[]>([]);
   const [changeLog, setChangeLog] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
+  const [changeLogPage, setChangeLogPage] = useState(1);
+  const [expandedPayloads, setExpandedPayloads] = useState<Set<number>>(
+    new Set(),
+  );
   const {
     listChanges,
     reviewChange,
@@ -147,6 +156,24 @@ const Admin: React.FC = () => {
         return "";
     }
   };
+
+  const togglePayload = (id: number) => {
+    setExpandedPayloads((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const paginatedChangeLog = changeLog.slice(
+    (changeLogPage - 1) * ITEMS_PER_PAGE,
+    changeLogPage * ITEMS_PER_PAGE,
+  );
+  const totalPages = Math.ceil(changeLog.length / ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -445,7 +472,7 @@ const Admin: React.FC = () => {
                       <div className="col-span-2">Date / Notes</div>
                     </div>
 
-                    {changeLog.map((change) => (
+                    {paginatedChangeLog.map((change) => (
                       <div
                         key={change.id}
                         className="block md:grid md:grid-cols-12 gap-4 p-4 bg-slate-50/50 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors"
@@ -496,17 +523,30 @@ const Admin: React.FC = () => {
                           </p>
                         </div>
 
-                        {/* Payload Preview */}
+                        {/* Payload - Clickable */}
                         <div className="col-span-3 mb-2 md:mb-0">
-                          <pre className="text-xs bg-white p-2 rounded border border-slate-200 overflow-x-auto max-h-20 text-slate-600">
-                            {JSON.stringify(change.payload, null, 2).slice(
-                              0,
-                              200,
-                            )}
-                            {JSON.stringify(change.payload).length > 200
-                              ? "..."
-                              : ""}
-                          </pre>
+                          <button
+                            onClick={() => togglePayload(change.id)}
+                            className="flex items-center gap-2 text-xs text-slate-600 hover:text-teal-600 transition-colors"
+                          >
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform ${
+                                expandedPayloads.has(change.id)
+                                  ? "rotate-0"
+                                  : "-rotate-90"
+                              }`}
+                            />
+                            <span className="font-medium">
+                              {expandedPayloads.has(change.id)
+                                ? "Hide payload"
+                                : "View payload"}
+                            </span>
+                          </button>
+                          {expandedPayloads.has(change.id) && (
+                            <pre className="mt-2 text-xs bg-white p-3 rounded border border-slate-200 overflow-x-auto max-h-60 text-slate-600">
+                              {JSON.stringify(change.payload, null, 2)}
+                            </pre>
+                          )}
                         </div>
 
                         {/* Users */}
@@ -562,6 +602,42 @@ const Admin: React.FC = () => {
                         </div>
                       </div>
                     ))}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                        <p className="text-sm text-slate-500">
+                          Page {changeLogPage} of {totalPages} (
+                          {changeLog.length} total)
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setChangeLogPage((p) => Math.max(1, p - 1))
+                            }
+                            disabled={changeLogPage === 1}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            Previous
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setChangeLogPage((p) =>
+                                Math.min(totalPages, p + 1),
+                              )
+                            }
+                            disabled={changeLogPage === totalPages}
+                          >
+                            Next
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
