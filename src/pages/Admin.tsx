@@ -8,7 +8,7 @@ import {
   Database,
   PlayCircle,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -54,15 +54,7 @@ const Admin: React.FC = () => {
     loading: approvalLoading,
   } = useApprovals();
 
-  useEffect(() => {
-    if (!isAdmin) {
-      navigate("/");
-      return;
-    }
-    loadData();
-  }, [isAdmin, navigate]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [pendingRes, allRes] = await Promise.all([
@@ -83,7 +75,15 @@ const Admin: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [listChanges]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate("/");
+      return;
+    }
+    loadData();
+  }, [isAdmin, navigate, loadData]);
 
   const handleApproveUser = async (github_login: string) => {
     try {

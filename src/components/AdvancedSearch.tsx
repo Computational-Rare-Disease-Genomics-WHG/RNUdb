@@ -1,5 +1,5 @@
 import { Search, X, ChevronRight, Dna } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchService, type SearchResult } from "../services/search";
 import type { SnRNAGene, Variant } from "../types";
@@ -41,20 +41,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const searchTimeout = setTimeout(() => {
-      if (query.trim().length >= 2) {
-        performSearch();
-      } else {
-        setResults([]);
-        setShowResults(false);
-      }
-    }, 200);
-
-    return () => clearTimeout(searchTimeout);
-  }, [query]);
-
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
     if (!query.trim()) return;
 
     setIsLoading(true);
@@ -73,7 +60,20 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [query]);
+
+  useEffect(() => {
+    const searchTimeout = setTimeout(() => {
+      if (query.trim().length >= 2) {
+        performSearch();
+      } else {
+        setResults([]);
+        setShowResults(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(searchTimeout);
+  }, [query, performSearch]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {

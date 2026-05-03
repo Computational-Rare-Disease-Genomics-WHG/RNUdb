@@ -13,7 +13,7 @@ import {
   MousePointer2,
   Shapes,
 } from "lucide-react";
-import React, { forwardRef, useState } from "react";
+import React, { forwardRef, useState, useCallback } from "react";
 import type { RNAData } from "../../types/rna";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -118,11 +118,11 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
       y: number;
     } | null>(null);
 
-    const handleLabelModalClose = () => {
+    const handleLabelModalClose = useCallback(() => {
       setShowLabelModal(false);
       setPendingLabelPosition(null);
       onSetLabelModalOpen(false);
-    };
+    }, [onSetLabelModalOpen]);
 
     // Handle ESC key to close label modal
     React.useEffect(() => {
@@ -136,7 +136,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
         document.addEventListener("keydown", handleKeyDown);
         return () => document.removeEventListener("keydown", handleKeyDown);
       }
-    }, [showLabelModal, isLabelModalOpen]);
+    }, [showLabelModal, isLabelModalOpen, handleLabelModalClose]);
 
     const LabelForm = ({
       initialText,

@@ -135,6 +135,7 @@ export const useDragAndZoom = ({
 
       return null;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       isPanning,
       draggedNucleotide,

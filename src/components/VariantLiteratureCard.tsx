@@ -150,7 +150,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
       }
       return 0;
     });
-  }, [clinicalVariants, variantData, searchQuery, sigFilter, diseaseFilter, zygosityFilter, selectedBiallelicLink, sortField, sortDirection]);
+  }, [clinicalVariants, variantData, searchQuery, sigFilter, diseaseFilter, zygosityFilter, selectedBiallelicLink, sortField, sortDirection, getVariantLiterature]);
 
   const filteredLiterature = useMemo(() => {
     const literatureWithCounts = paperData.map(paper => {

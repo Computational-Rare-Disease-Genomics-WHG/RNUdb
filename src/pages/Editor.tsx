@@ -71,7 +71,7 @@ const Editor: React.FC = () => {
     if (autosaved) {
       updateRnaData(autosaved);
     }
-  }, []); // Only run once on mount
+  }, []);
 
   // Autosave functionality
   useEffect(() => {
@@ -91,6 +91,7 @@ const Editor: React.FC = () => {
     }, 3000); // Autosave every 3 seconds
 
     return () => clearInterval(autoSaveInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rnaData]);
 
   const dragAndZoom = useDragAndZoom({
