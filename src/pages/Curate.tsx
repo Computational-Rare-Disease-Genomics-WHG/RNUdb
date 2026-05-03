@@ -103,20 +103,25 @@ const Curate: React.FC = () => {
   const [editingVariant, setEditingVariant] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const regionViewerRef = useRef<HTMLDivElement>(null);
-  const [regionViewerWidth, setRegionViewerWidth] = useState<number | null>(null);
+  const [regionViewerWidth, setRegionViewerWidth] = useState(1100);
   const { submitChange } = useApprovals();
 
   useEffect(() => {
     const updateWidth = () => {
       if (regionViewerRef.current) {
-        setRegionViewerWidth(regionViewerRef.current.offsetWidth);
+        const width = regionViewerRef.current.offsetWidth;
+        if (width > 0) setRegionViewerWidth(width);
       }
     };
 
-    updateWidth();
+    // Delay measurement to ensure ref is attached
+    const timeoutId = setTimeout(updateWidth, 0);
     window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, []);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", updateWidth);
+    };
+  }, [selectedGene]);
 
   useEffect(() => {
     if (isLoading) return;
