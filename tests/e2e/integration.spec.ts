@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockCuratorAuth, mockAdminAuth } from './utils/mock-auth';
+import { mockAdminAuth } from './utils/mock-auth';
 
 test.describe('Gene Page Interactions', () => {
   test('should display gene information', async ({ page }) => {
