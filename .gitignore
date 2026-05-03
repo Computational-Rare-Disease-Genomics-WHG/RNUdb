@@ -211,6 +211,9 @@ logs
 node_modules
 bower_components
 
+# Playwright test results
+test-results/
+
 *.sublime*
 
 psd
