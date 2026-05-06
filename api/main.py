@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from .routers import genes, literature, variants
 from .routers.approvals import router as approvals_router
@@ -21,6 +22,10 @@ app = FastAPI(
     description="API for RNUdb - RNA variant database and curation platform",
     default_response_class=ORJSONResponse,
 )
+
+# Session middleware for OAuth state (using JWT_SECRET_KEY as secret)
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-secret-key")
+app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET_KEY, max_age=86400 * 7)
 
 # CORS: locked origin with credentials for cookie-based auth
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://rnudb.rarediseasegenomics.org")

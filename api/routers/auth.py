@@ -1,9 +1,12 @@
+"""Authentication using Authlib with GitHub OAuth."""
+
 import os
 import secrets
 from datetime import UTC, datetime, timedelta
 
 import httpx
 import jwt
+from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 
@@ -25,23 +28,23 @@ ADMIN_GITHUB_LOGINS = [
 
 JWT_ALGORITHM = "HS256"
 JWT_COOKIE_NAME = "session"
-JWT_EXPIRE_DAYS = 7
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
+# Initialize Authlib OAuth client
+oauth = OAuth()
 
-def _github_access_token(code: str) -> dict:
-    """Exchange OAuth code for access token with GitHub."""
-    resp = httpx.post(
-        "https://github.com/login/oauth/access_token",
-        data={
-            "client_id": GITHUB_CLIENT_ID,
-            "client_secret": GITHUB_CLIENT_SECRET,
-            "code": code,
-        },
-        headers={"Accept": "application/json"},
-        timeout=30.0,
-    )
-    resp.raise_for_status()
-    return resp.json()
+# Register GitHub OAuth client with PKCE
+oauth.register(
+    name="github",
+    client_id=GITHUB_CLIENT_ID,
+    client_secret=GITHUB_CLIENT_SECRET,
+    access_token_url="https://github.com/login/oauth/access_token",  # noqa: S106
+    authorize_url="https://github.com/login/oauth/authorize",  # noqa: S106
+    api_base_url="https://api.github.com/",  # noqa: S106
+    client_kwargs={
+        "scope": "user:email",
+    },
+)
 
 
 def _github_user_info(token: str) -> dict:
@@ -72,55 +75,72 @@ def _github_user_emails(token: str) -> list:
     return resp.json()
 
 
-def create_jwt_cookie(response: Response, github_login: str) -> None:
-    """Set the session JWT cookie."""
-    expire = datetime.now(UTC) + timedelta(days=JWT_EXPIRE_DAYS)
-    token = jwt.encode(
+def create_session_token(response: Response, login: str, access_token: str) -> None:
+    """Create JWT access token in cookie."""
+    now = datetime.now(UTC)
+    expire = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    jti = secrets.token_hex(16)
+
+    jwt_token = jwt.encode(
         {
-            "sub": github_login,
+            "sub": login,
+            "type": "access",
             "exp": expire,
-            "iat": datetime.now(UTC),
-            "jti": secrets.token_hex(16),
+            "iat": now,
+            "jti": jti,
         },
         JWT_SECRET_KEY,
         algorithm=JWT_ALGORITHM,
     )
-    # Use secure=False for local HTTP dev, True for HTTPS production
+
     is_secure = FRONTEND_URL.startswith("https://")
-    # For localhost dev, set domain to "localhost" so cookie works across ports
     is_localhost = "localhost" in FRONTEND_URL
     cookie_domain = "localhost" if is_localhost else None
+
+    # Store access token in HTTP-only cookie
     response.set_cookie(
         key=JWT_COOKIE_NAME,
-        value=token,
+        value=jwt_token,
         httponly=True,
         secure=is_secure,
         samesite="lax",
         domain=cookie_domain,
-        max_age=int(timedelta(days=JWT_EXPIRE_DAYS).total_seconds()),
+        max_age=int(timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES).total_seconds()),
     )
 
 
-def clear_jwt_cookie(response: Response) -> None:
-    """Clear the session JWT cookie."""
+def clear_session_token(response: Response) -> None:
+    """Clear session token cookie."""
     is_secure = FRONTEND_URL.startswith("https://")
     is_localhost = "localhost" in FRONTEND_URL
     cookie_domain = "localhost" if is_localhost else None
+
     response.delete_cookie(
-        key=JWT_COOKIE_NAME, httponly=True, secure=is_secure, domain=cookie_domain
+        key=JWT_COOKIE_NAME,
+        httponly=True,
+        secure=is_secure,
+        samesite="lax",
+        domain=cookie_domain,
     )
 
 
-def get_current_user_from_cookie(request: Request) -> dict | None:
-    """Decode JWT cookie and return user dict, or None if invalid."""
+def get_user_from_request(request: Request) -> dict | None:
+    """Decode JWT from cookie and return user, or None if invalid/expired."""
     token = request.cookies.get(JWT_COOKIE_NAME)
     if not token:
         return None
+
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+
+        # Verify token type
+        if payload.get("type") != "access":
+            return None
+
         login = payload.get("sub")
         if not login:
             return None
+
         user = get_user(login)
         return user
     except jwt.ExpiredSignatureError:
@@ -131,7 +151,7 @@ def get_current_user_from_cookie(request: Request) -> dict | None:
 
 def require_auth(request: Request) -> dict:
     """FastAPI dependency: user must be authenticated (any role)."""
-    user = get_current_user_from_cookie(request)
+    user = get_user_from_request(request)
     if user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return user
@@ -153,56 +173,35 @@ def require_admin(request: Request) -> dict:
     return user
 
 
-# In-memory state storage (use Redis in production)
-_state_storage: dict = {}
-
-
 @router.get("/github")
-async def auth_github():
-    """Redirect to GitHub OAuth authorize URL."""
+async def auth_github(request: Request):
+    """Redirect to GitHub OAuth authorize URL with PKCE."""
     if not GITHUB_CLIENT_ID:
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured")
 
-    # Generate CSRF state token
-    state = secrets.token_urlsafe(32)
-    _state_storage[state] = datetime.now(UTC)
-
+    # Use Authlib's authorize_redirect which handles PKCE automatically
     redirect_uri = f"{FRONTEND_URL}/api/auth/callback"
-    url = (
-        "https://github.com/login/oauth/authorize"
-        f"?client_id={GITHUB_CLIENT_ID}"
-        f"&redirect_uri={redirect_uri}"
-        f"&scope=user:email"
-        f"&state={state}"
-    )
-    return RedirectResponse(url=url)
+    return await oauth.github.authorize_redirect(request, redirect_uri)
 
 
 @router.get("/callback")
-async def auth_callback(response: Response, code: str, state: str = ""):
-    """Handle GitHub OAuth callback, issue JWT cookie."""
+async def auth_callback(request: Request, response: Response):
+    """Handle GitHub OAuth callback, issue session token."""
     if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured")
 
-    # Validate CSRF state token
-    if not state or state not in _state_storage:
+    try:
+        # Exchange code for token using Authlib
+        token = await oauth.github.authorize_access_token(request)
+    except Exception as e:
         raise HTTPException(
-            status_code=400, detail="Invalid or missing state parameter"
-        )
+            status_code=400, detail=f"Authorization failed: {str(e)}"
+        ) from e
 
-    # Clean up used state
-    del _state_storage[state]
-    # Remove expired states (> 10 minutes)
-    cutoff = datetime.now(UTC) - timedelta(minutes=10)
-    expired = [k for k, v in _state_storage.items() if v < cutoff]
-    for k in expired:
-        del _state_storage[k]
+    access_token = token.get("access_token")
 
-    # Exchange code for token
-    token_data = _github_access_token(code)
-    access_token = token_data.get("access_token")
     if not access_token:
-        raise HTTPException(status_code=400, detail="GitHub access_token missing")
+        raise HTTPException(status_code=400, detail="Access token missing")
 
     # Fetch user profile
     profile = _github_user_info(access_token)
@@ -237,25 +236,23 @@ async def auth_callback(response: Response, code: str, state: str = ""):
         )
         user = get_user(login)
 
-    # Issue JWT cookie on the redirect response
+    # Issue session token
     redirect_response = RedirectResponse(url=f"{FRONTEND_URL}/")
-    create_jwt_cookie(redirect_response, login)
+    create_session_token(redirect_response, login, access_token)
     return redirect_response
 
 
 @router.post("/logout")
 async def auth_logout(response: Response):
-    """Clear the session cookie."""
-    clear_jwt_cookie(response)
+    """Clear session token."""
+    clear_session_token(response)
     return {"message": "Logged out"}
 
 
 @router.get("/me", response_model=UserResponse)
 async def auth_me(request: Request):
     """Return current authenticated user info."""
-    user = get_current_user_from_cookie(request)
-    if user is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+    user = require_auth(request)
     return UserResponse(
         github_login=user["github_login"],
         name=user["name"],
@@ -263,3 +260,9 @@ async def auth_me(request: Request):
         avatar_url=user.get("avatar_url"),
         role=user["role"],
     )
+
+
+# Also export for use in other routers
+def get_current_user(request: Request) -> dict | None:
+    """Get current user from request."""
+    return get_user_from_request(request)
