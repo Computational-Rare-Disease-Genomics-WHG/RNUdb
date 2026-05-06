@@ -1,0 +1,19 @@
+{
+  "id": "example-with-pairs",
+  "name": "Structure with Base Pairs",
+  "nucleotides": [
+    { "id": 1, "base": "G", "x": 100, "y": 50 },
+    { "id": 2, "base": "U", "x": 110, "y": 60 },
+    { "id": 3, "base": "C", "x": 120, "y": 70 },
+    { "id": 4, "base": "G", "x": 130, "y": 80 },
+    { "id": 5, "base": "A", "x": 140, "y": 90 },
+    { "id": 6, "base": "U", "x": 150, "y": 100 },
+    { "id": 7, "base": "C", "x": 160, "y": 110 },
+    { "id": 8, "base": "G", "x": 170, "y": 120 }
+  ],
+  "base_pairs": [
+    { "from_pos": 1, "to_pos": 8 },
+    { "from_pos": 2, "to_pos": 7 },
+    { "from_pos": 3, "to_pos": 6 }
+  ]
+}
