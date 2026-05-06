@@ -8,7 +8,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      day: "first"
+      day: "monday"
     open-pull-requests-limit: 10
     auto-merge-method: "squash"
     auto-assign: true
@@ -24,7 +24,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      day: "first"
+      day: "monday"
     open-pull-requests-limit: 10
     auto-merge-method: "squash"
     auto-assign: true
