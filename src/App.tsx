@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/AuthContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import APIDocs from "./pages/APIDocs";
 import Admin from "./pages/Admin";
 import ClinicalInterpretation from "./pages/ClinicalInterpretation";
@@ -30,22 +31,24 @@ function ProtectedEditor() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/gene/:geneId" element={<Gene />} />
-          <Route path="/editor" element={<ProtectedEditor />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/curate" element={<Curate />} />
-          <Route path="/api-docs" element={<APIDocs />} />
-          <Route
-            path="/clinical-interpretation"
-            element={<ClinicalInterpretation />}
-          />
-          <Route path="/how-to-use" element={<HowToUse />} />
-        </Routes>
-      </Router>
+      <TooltipProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/gene/:geneId" element={<Gene />} />
+            <Route path="/editor" element={<ProtectedEditor />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/curate" element={<Curate />} />
+            <Route path="/api-docs" element={<APIDocs />} />
+            <Route
+              path="/clinical-interpretation"
+              element={<ClinicalInterpretation />}
+            />
+            <Route path="/how-to-use" element={<HowToUse />} />
+          </Routes>
+        </Router>
+      </TooltipProvider>
     </AuthProvider>
   );
 }
