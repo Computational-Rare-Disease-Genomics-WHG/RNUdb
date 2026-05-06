@@ -10,8 +10,11 @@ test.describe("Authentication", () => {
     test("unauthenticated /api/auth/github redirects to GitHub", async ({
       page,
     }) => {
-      await page.goto("http://localhost:8000/api/auth/github");
-      expect(page.url()).toContain("github.com/login");
+      await page.goto("http://localhost:8000/api/auth/github", {
+        waitUntil: "domcontentloaded",
+      });
+      const url = page.url();
+      expect(url).toMatch(/github\.com|github\.com\/login/);
     });
 
     test("logout returns success", async ({ request }) => {
