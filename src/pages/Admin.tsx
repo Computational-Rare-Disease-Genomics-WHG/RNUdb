@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Bell,
 } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -55,6 +56,9 @@ const Admin: React.FC = () => {
   const [expandedPayloads, setExpandedPayloads] = useState<Set<number>>(
     new Set(),
   );
+  const [slackEnabled, setSlackEnabled] = useState(false);
+  const [testSlackLoading, setTestSlackLoading] = useState(false);
+  const [testSlackResult, setTestSlackResult] = useState<string | null>(null);
   const {
     listChanges,
     reviewChange,
@@ -133,6 +137,32 @@ const Admin: React.FC = () => {
     await loadData();
   };
 
+  const handleTestSlack = async () => {
+    setTestSlackLoading(true);
+    setTestSlackResult(null);
+    try {
+      const res = await fetch("/api/admin/slack/test", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      setTestSlackResult(
+        data.success ? "Test notification sent!" : "Slack not configured",
+      );
+    } catch {
+      setTestSlackResult("Failed to send test");
+    } finally {
+      setTestSlackLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/admin/slack/status", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setSlackEnabled(data.enabled))
+      .catch(() => {});
+  }, []);
+
   const getEntityIcon = (type: string) => {
     switch (type) {
       case "variant":
@@ -191,6 +221,28 @@ const Admin: React.FC = () => {
             <p className="text-slate-500">
               Manage users, approvals, and system settings
             </p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestSlack}
+              disabled={testSlackLoading}
+            >
+              <Bell className="h-4 w-4 mr-1" />
+              {testSlackLoading ? "Sending..." : "Test Slack"}
+            </Button>
+            {testSlackResult && (
+              <span className="text-xs text-slate-600">{testSlackResult}</span>
+            )}
+            {slackEnabled && (
+              <Badge
+                variant="secondary"
+                className="bg-emerald-100 text-emerald-700"
+              >
+                Slack Enabled
+              </Badge>
+            )}
           </div>
         </div>
 
