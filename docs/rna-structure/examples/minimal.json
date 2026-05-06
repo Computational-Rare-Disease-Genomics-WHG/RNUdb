@@ -1,0 +1,12 @@
+{
+  "id": "example-minimal",
+  "name": "Minimal Structure",
+  "nucleotides": [
+    { "id": 1, "base": "G", "x": 100, "y": 50 },
+    { "id": 2, "base": "U", "x": 110, "y": 60 },
+    { "id": 3, "base": "C", "x": 120, "y": 70 }
+  ],
+  "base_pairs": [],
+  "annotations": [],
+  "structural_features": []
+}

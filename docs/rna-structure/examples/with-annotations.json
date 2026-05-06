@@ -1,0 +1,36 @@
+{
+  "id": "example-annotated",
+  "name": "Structure with Annotations",
+  "nucleotides": [
+    { "id": 1, "base": "G", "x": 100, "y": 50 },
+    { "id": 2, "base": "U", "x": 110, "y": 60 },
+    { "id": 3, "base": "C", "x": 120, "y": 70 },
+    { "id": 4, "base": "G", "x": 130, "y": 80 }
+  ],
+  "annotations": [
+    {
+      "id": "ann-1",
+      "text": "5' End",
+      "x": 95,
+      "y": 45,
+      "font_size": 12,
+      "color": "#000000"
+    },
+    {
+      "id": "ann-2",
+      "text": "3' End",
+      "x": 135,
+      "y": 85,
+      "font_size": 12,
+      "color": "#000000"
+    },
+    {
+      "id": "ann-3",
+      "text": "Conserved region",
+      "x": 115,
+      "y": 40,
+      "font_size": 10,
+      "color": "#666666"
+    }
+  ]
+}

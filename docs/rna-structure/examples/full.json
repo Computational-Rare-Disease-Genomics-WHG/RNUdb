@@ -1,0 +1,78 @@
+{
+  "id": "example-full",
+  "name": "Complete Structure Example",
+  "nucleotides": [
+    { "id": 1, "base": "G", "x": 100, "y": 50 },
+    { "id": 2, "base": "U", "x": 110, "y": 60 },
+    { "id": 3, "base": "C", "x": 120, "y": 70 },
+    { "id": 4, "base": "G", "x": 130, "y": 80 },
+    { "id": 5, "base": "A", "x": 140, "y": 90 },
+    { "id": 6, "base": "U", "x": 150, "y": 100 },
+    { "id": 7, "base": "C", "x": 160, "y": 110 },
+    { "id": 8, "base": "G", "x": 170, "y": 120 },
+    { "id": 9, "base": "A", "x": 180, "y": 130 },
+    { "id": 10, "base": "U", "x": 190, "y": 140 }
+  ],
+  "base_pairs": [
+    { "from_pos": 1, "to_pos": 10 },
+    { "from_pos": 2, "to_pos": 9 },
+    { "from_pos": 3, "to_pos": 8 },
+    { "from_pos": 4, "to_pos": 7 }
+  ],
+  "annotations": [
+    {
+      "id": "ann-1",
+      "text": "5' End",
+      "x": 95,
+      "y": 45,
+      "font_size": 12,
+      "color": "#000000"
+    },
+    {
+      "id": "ann-2",
+      "text": "3' End",
+      "x": 195,
+      "y": 145,
+      "font_size": 12,
+      "color": "#000000"
+    }
+  ],
+  "structural_features": [
+    {
+      "id": "feat-1",
+      "feature_type": "stem",
+      "nucleotide_ids": [1, 2, 3, 4],
+      "label_text": "Stem 1",
+      "label_x": 115,
+      "label_y": 55,
+      "label_font_size": 11,
+      "label_color": "#008000",
+      "description": "Primary stem region",
+      "color": "#00FF00"
+    },
+    {
+      "id": "feat-2",
+      "feature_type": "loop",
+      "nucleotide_ids": [5, 6],
+      "label_text": "Loop",
+      "label_x": 145,
+      "label_y": 95,
+      "label_font_size": 10,
+      "label_color": "#FF6600",
+      "description": "Terminal loop",
+      "color": "#FF9900"
+    },
+    {
+      "id": "feat-3",
+      "feature_type": "stem",
+      "nucleotide_ids": [7, 8, 9, 10],
+      "label_text": "Stem 2",
+      "label_x": 165,
+      "label_y": 125,
+      "label_font_size": 11,
+      "label_color": "#008000",
+      "description": "Secondary stem region",
+      "color": "#00FF00"
+    }
+  ]
+}
