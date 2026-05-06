@@ -31,15 +31,10 @@ interface MainContentProps {
   variantData: Variant[];
   gnomadVariants: Variant[];
   aouVariants: Variant[];
-  overlayMode:
-    | "none"
-    | "clinvar"
-    | "gnomad"
-    | "function_score"
-    | "depletion_group";
+  overlayMode: "none" | "clinvar" | "gnomad" | "depletion_group";
   getCurrentOverlayData: () => OverlayData;
   cycleOverlayMode: () => void;
-  functionScoreTrackData: OverlayData;
+  functionScoreTrackData?: OverlayData;
   depletionGroupTrackData: OverlayData;
   caddScoreTrackData: OverlayData;
 }
