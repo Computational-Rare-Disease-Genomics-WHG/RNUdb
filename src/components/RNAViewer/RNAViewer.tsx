@@ -13,6 +13,11 @@ import {
 } from "lucide-react";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   COLORBLIND_FRIENDLY_PALETTE,
   generateGnomadColorWithAlpha,
 } from "../../lib/colors";
@@ -487,7 +492,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         {!show3D && (
           <>
             <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-md border border-slate-200">
-              <span className="text-sm text-slate-700 font-medium">
+              <span className="text-sm font-medium text-slate-500">
                 Structural Features
               </span>
               <Switch
@@ -515,96 +520,127 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
               {/* Mode toggle buttons - fixed width container */}
               <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => {
-                    if (overlayMode !== "none") {
-                      const cycles =
-                        [
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        if (overlayMode !== "none") {
+                          const cycles =
+                            [
+                              "none",
+                              "clinvar",
+                              "gnomad",
+                              "depletion_group",
+                            ].indexOf("none") - cyclesFromMode(overlayMode);
+                          for (let i = 0; i < Math.abs(cycles || 1); i++)
+                            onCycleOverlay();
+                        }
+                      }}
+                      className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "none" ? "bg-slate-200 text-slate-800" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
+                    >
+                      <Ban className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">None</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Disable data overlay</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        const targetIndex = [
                           "none",
                           "clinvar",
                           "gnomad",
                           "depletion_group",
-                        ].indexOf("none") - cyclesFromMode(overlayMode);
-                      for (let i = 0; i < Math.abs(cycles || 1); i++)
-                        onCycleOverlay();
-                    }
-                  }}
-                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    overlayMode === "none"
-                      ? "bg-slate-200 text-slate-800"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                  }`}
-                  title="Disable data overlay"
-                >
-                  <Ban className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">None</span>
-                </button>
-                <button
-                  onClick={() => {
-                    const targetIndex = [
-                      "none",
-                      "clinvar",
-                      "gnomad",
-                      "depletion_group",
-                    ].indexOf("clinvar");
-                    const current = cyclesFromMode(overlayMode);
-                    for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
-                      onCycleOverlay();
-                  }}
-                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    overlayMode === "clinvar"
-                      ? "bg-red-100 text-red-700"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                  }`}
-                  title="Show ClinVar clinical variants with pathogenicity classifications"
-                >
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Clinical Variants</span>
-                </button>
-                <button
-                  onClick={() => {
-                    const targetIndex = [
-                      "none",
-                      "clinvar",
-                      "gnomad",
-                      "depletion_group",
-                    ].indexOf("gnomad");
-                    const current = cyclesFromMode(overlayMode);
-                    for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
-                      onCycleOverlay();
-                  }}
-                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    overlayMode === "gnomad"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                  }`}
-                  title="Show population frequency data from gnomAD and All of Us"
-                >
-                  <Users className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Population Variants</span>
-                </button>
-                <button
-                  onClick={() => {
-                    const targetIndex = [
-                      "none",
-                      "clinvar",
-                      "gnomad",
-                      "depletion_group",
-                    ].indexOf("depletion_group");
-                    const current = cyclesFromMode(overlayMode);
-                    for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
-                      onCycleOverlay();
-                  }}
-                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    overlayMode === "depletion_group"
-                      ? "bg-orange-100 text-orange-700"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                  }`}
-                  title="Show depletion group categories: Strong, Moderate, Normal"
-                >
-                  <Activity className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Depletion</span>
-                </button>
+                        ].indexOf("clinvar");
+                        const current = cyclesFromMode(overlayMode);
+                        for (
+                          let i = 0;
+                          i < (targetIndex - current + 4) % 4;
+                          i++
+                        )
+                          onCycleOverlay();
+                      }}
+                      className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "clinvar" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">
+                        Clinical Variants
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Show ClinVar clinical variants with pathogenicity
+                      classifications
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        const targetIndex = [
+                          "none",
+                          "clinvar",
+                          "gnomad",
+                          "depletion_group",
+                        ].indexOf("gnomad");
+                        const current = cyclesFromMode(overlayMode);
+                        for (
+                          let i = 0;
+                          i < (targetIndex - current + 4) % 4;
+                          i++
+                        )
+                          onCycleOverlay();
+                      }}
+                      className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "gnomad" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
+                    >
+                      <Users className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">
+                        Population Variants
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Show population frequency data from gnomAD and All of Us
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        const targetIndex = [
+                          "none",
+                          "clinvar",
+                          "gnomad",
+                          "depletion_group",
+                        ].indexOf("depletion_group");
+                        const current = cyclesFromMode(overlayMode);
+                        for (
+                          let i = 0;
+                          i < (targetIndex - current + 4) % 4;
+                          i++
+                        )
+                          onCycleOverlay();
+                      }}
+                      className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "depletion_group" ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
+                    >
+                      <Activity className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Depletion</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Show depletion group categories: Strong, Moderate, Normal
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
 
@@ -617,7 +653,9 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                 <div className="flex items-center gap-2 flex-wrap">
                   {overlayMode === "clinvar" && (
                     <>
-                      <span className="text-xs text-slate-400">Group by</span>
+                      <span className="text-xs font-medium text-slate-500">
+                        Group by
+                      </span>
                       <Select
                         value={clinvarGroupBy}
                         onValueChange={setClinvarGroupBy}
@@ -637,7 +675,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         <>
                           {clinvarGroupBy === "significance" && (
                             <>
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs font-medium text-slate-500">
                                 Significance
                               </span>
                               <Select
@@ -660,7 +698,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                           )}
                           {clinvarGroupBy === "disease" && (
                             <>
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs font-medium text-slate-500">
                                 Disease
                               </span>
                               <Select
@@ -683,7 +721,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                               </Select>
                             </>
                           )}
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs font-medium text-slate-500">
                             Zygosity
                           </span>
                           <Select
@@ -712,7 +750,9 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   )}
                   {overlayMode === "gnomad" && (
                     <>
-                      <span className="text-xs text-slate-400">Source</span>
+                      <span className="text-xs font-medium text-slate-500">
+                        Source
+                      </span>
                       <Select
                         value={selectedPopulationSource}
                         onValueChange={setSelectedPopulationSource}
