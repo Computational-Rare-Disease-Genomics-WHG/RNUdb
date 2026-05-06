@@ -10,8 +10,6 @@ updates:
       interval: "monthly"
       day: "monday"
     open-pull-requests-limit: 10
-    auto-merge-method: "squash"
-    auto-assign: true
     commit-message:
       prefix: "npm"
     labels:
@@ -26,8 +24,6 @@ updates:
       interval: "monthly"
       day: "monday"
     open-pull-requests-limit: 10
-    auto-merge-method: "squash"
-    auto-assign: true
     commit-message:
       prefix: "pip"
     labels:
