@@ -18,4 +18,5 @@ async def get_slack_status(user: dict = Depends(require_admin)) -> dict:
 async def test_slack_notification(user: dict = Depends(require_admin)) -> dict:
     """Send a test Slack notification."""
     success = notify_test()
-    return {"success": success, "message": "Test notification sent" if success else "Slack not configured"}
+    msg = "Test notification sent" if success else "Slack not configured"
+    return {"success": success, "message": msg}

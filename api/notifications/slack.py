@@ -1,7 +1,7 @@
 """Slack webhook notifications for approvals."""
 
-import os
 import logging
+import os
 from datetime import datetime
 
 import httpx
@@ -34,7 +34,10 @@ def _send_webhook(message: str) -> bool:
 
 def notify_user_approved(github_login: str, approved_by: str) -> bool:
     """Notify when a user is approved."""
-    message = f"🔔 User Approved\n• @{github_login} promoted to curator\n• By: @{approved_by}"
+    message = (
+        f"🔔 User Approved\n• @{github_login} promoted to curator\n"
+        f"• By: @{approved_by}"
+    )
     return _send_webhook(message)
 
 
@@ -58,13 +61,20 @@ def notify_change_rejected(
 ) -> bool:
     """Notify when a data change is rejected."""
     reason_text = f"\n• Reason: {reason}" if reason else ""
-    message = f"📝 Change Rejected\n• {entity_type} - {action}\n• By: @{rejected_by}{reason_text}"
-    return _send_webhook(message)
+    msg = (
+        f"📝 Change Rejected\n• {entity_type} - {action}\n"
+        f"• By: @{rejected_by}{reason_text}"
+    )
+    return _send_webhook(msg)
 
 
 def notify_test() -> bool:
     """Send a test notification."""
-    message = f"🧪 Test Notification\n• RNUdb Slack integration is working!\n• Time: {datetime.now().isoformat()}"
+    message = (
+        f"🧪 Test Notification\n"
+        f"• RNUdb Slack integration is working!\n"
+        f"• Time: {datetime.now().isoformat()}"
+    )
     return _send_webhook(message)
 
 

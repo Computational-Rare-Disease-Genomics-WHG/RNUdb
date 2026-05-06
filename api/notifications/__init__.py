@@ -1,4 +1,5 @@
 """Notifications module."""
+
 from api.notifications.slack import (
     is_enabled,
     notify_change_approved,
