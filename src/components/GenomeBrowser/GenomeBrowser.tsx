@@ -1,13 +1,13 @@
 // GenomeBrowser.tsx
-import React, { useState, useRef } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage } from 'lucide-react';
-import domtoimage from 'dom-to-image-more';
-import { RegionViewer, PositionAxisTrack, Cursor } from '@gnomad/region-viewer';
-import { Button } from '@/components/ui/button';
-import SequenceTrack from './SequenceTrack';
-import SnRNAVariantTrack from './SnRNAVariantTrack';
-import GenericTrack from './GenericTrack';
-import './GenomeBrowser.css';
+import { RegionViewer, PositionAxisTrack, Cursor } from "@gnomad/region-viewer";
+import domtoimage from "dom-to-image-more";
+import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import GenericTrack from "./GenericTrack";
+import SequenceTrack from "./SequenceTrack";
+import SnRNAVariantTrack from "./SnRNAVariantTrack";
+import { Button } from "@/components/ui/button";
+import "./GenomeBrowser.css";
 
 interface GenomeBrowserProps {
   selectedGene: string;
@@ -28,12 +28,34 @@ interface GenomeBrowserProps {
   };
 }
 
-const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, gnomadVariants, aouVariants, functionScoreTrackData, depletionGroupTrackData, caddScoreTrackData, geneData }) => {
+const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
+  selectedGene,
+  variants,
+  gnomadVariants,
+  aouVariants,
+  functionScoreTrackData,
+  depletionGroupTrackData,
+  caddScoreTrackData,
+  geneData,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
   const [, setIsZoomed] = useState(false);
-  // Default region based on gene coordinates - wider view
-  const defaultRegion = { start: geneData.start, stop: geneData.end  };
+  const [viewerWidth, setViewerWidth] = useState(800);
+  const defaultRegion = { start: geneData.start, stop: geneData.end };
   const [regions, setRegions] = useState([defaultRegion]);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (viewerRef.current) {
+        setViewerWidth(viewerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
 
   const renderCustomCursor = (x: number) => {
     return (
@@ -73,7 +95,9 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
     if (newRange >= defaultRange) {
       setRegions([defaultRegion]);
     } else {
-      setRegions([{ start: center - newRange / 2, stop: center + newRange / 2 }]);
+      setRegions([
+        { start: center - newRange / 2, stop: center + newRange / 2 },
+      ]);
     }
   };
 
@@ -83,29 +107,38 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
   };
 
   const handleExportSVG = () => {
-    if (containerRef.current) {
-      domtoimage.toSvg(containerRef.current)
-        .then((dataUrl: string) => {
-          const link = document.createElement('a');
-          link.download = `${selectedGene}_genome_browser.svg`;
-          link.href = dataUrl;
-          link.click();
-        })
-        .catch((error: Error) => console.error('Error capturing SVG:', error));
-    }
+    if (!containerRef.current) return;
+
+    domtoimage
+      .toSvg(containerRef.current, {
+        bgcolor: "#ffffff",
+        style: {
+          fontFamily: "Barlow, system-ui, sans-serif",
+        },
+      })
+      .then((dataUrl: string) => {
+        const link = document.createElement("a");
+        link.download = `${selectedGene}_genome_browser.svg`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((error: Error) => console.error("Error capturing SVG:", error));
   };
 
   const handleExportPNG = () => {
-    if (containerRef.current) {
-      domtoimage.toPng(containerRef.current as HTMLElement)
-        .then((dataUrl: string) => {
-          const link: HTMLAnchorElement = document.createElement('a');
-          link.download = `${selectedGene}_genome_browser.png`;
-          link.href = dataUrl;
-          link.click();
-        })
-        .catch((error: Error) => console.error('Error capturing PNG:', error));
-    }
+    if (!containerRef.current) return;
+
+    domtoimage
+      .toPng(containerRef.current, {
+        bgcolor: "#ffffff",
+      })
+      .then((dataUrl: string) => {
+        const link: HTMLAnchorElement = document.createElement("a");
+        link.download = `${selectedGene}_genome_browser.png`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((error: Error) => console.error("Error capturing PNG:", error));
   };
 
   return (
@@ -165,15 +198,26 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
           </Button>
         </div>
       </div>
-      
-      <div ref={containerRef} className="genome-browser-viewer">
-        <RegionViewer regions={regions} width={1080} leftPanelWidth={140} rightPanelWidth={0}>
+
+      <div ref={viewerRef} className="genome-browser-viewer">
+        <RegionViewer
+          regions={regions}
+          width={viewerWidth}
+          leftPanelWidth={140}
+          rightPanelWidth={0}
+        >
           <PositionAxisTrack />
-            <SequenceTrack regions={regions} geneSequence={geneData.sequence} geneStart={geneData.start} />
+          <SequenceTrack
+            regions={regions}
+            geneSequence={geneData.sequence}
+            geneStart={geneData.start}
+          />
           <Cursor
             onClick={(cursorPosition) => {
               if (cursorPosition !== null) {
-                setRegions([{ start: cursorPosition - 75, stop: cursorPosition + 75 }]);
+                setRegions([
+                  { start: cursorPosition - 75, stop: cursorPosition + 75 },
+                ]);
                 setIsZoomed(true);
               }
             }}
@@ -197,8 +241,8 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
                 </g>
               )}
               renderGene={(gene) => {
-                const color = gene.gene_type === 'snRNA' ? COLORBLIND_FRIENDLY_PALETTE.GENES.SNRNA : 
-                             gene.gene_type === 'protein_coding' ? COLORBLIND_FRIENDLY_PALETTE.GENES.PROTEIN_CODING : 
+                const color = gene.gene_type === 'snRNA' ? COLORBLIND_FRIENDLY_PALETTE.GENES.SNRNA :
+                             gene.gene_type === 'protein_coding' ? COLORBLIND_FRIENDLY_PALETTE.GENES.PROTEIN_CODING :
                              COLORBLIND_FRIENDLY_PALETTE.GENES.OTHER;
                 return (
                   <rect
@@ -209,10 +253,35 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({ selectedGene, variants, g
                 );
               }}
             /> */}
-            <GenericTrack title="Function Score" height={80} data={functionScoreTrackData} regions={regions} displayType="bars" geneStart={geneData.start} />
-            <GenericTrack title="CADD Score" height={80} data={caddScoreTrackData} regions={regions} displayType="bars" geneStart={geneData.start} />
-            <GenericTrack title="Depletion Group" height={30} data={depletionGroupTrackData} regions={regions} displayType="bars" geneStart={geneData.start} />
-            <SnRNAVariantTrack variants={variants} gnomadVariants={gnomadVariants} aouVariants={aouVariants} />
+            <GenericTrack
+              title="Function Score"
+              height={80}
+              data={functionScoreTrackData}
+              regions={regions}
+              displayType="bars"
+              geneStart={geneData.start}
+            />
+            <GenericTrack
+              title="CADD Score"
+              height={80}
+              data={caddScoreTrackData}
+              regions={regions}
+              displayType="bars"
+              geneStart={geneData.start}
+            />
+            <GenericTrack
+              title="Depletion Group"
+              height={30}
+              data={depletionGroupTrackData}
+              regions={regions}
+              displayType="bars"
+              geneStart={geneData.start}
+            />
+            <SnRNAVariantTrack
+              variants={variants}
+              gnomadVariants={gnomadVariants}
+              aouVariants={aouVariants}
+            />
           </Cursor>
         </RegionViewer>
       </div>

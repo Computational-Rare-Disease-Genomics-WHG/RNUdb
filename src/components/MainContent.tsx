@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
-import { Dna } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import InfoPanel from './InfoPanel';
-import RNAViewer from './RNAViewer';
-import GenomeBrowser from './GenomeBrowser';
-import VariantsSection from './VariantsSection';
-import LiteratureSection from './LiteratureSection';
-import type { OverlayData, Literature, Variant, SnRNAGene, RNAStructure, Nucleotide, PDBStructure, LiteratureCounts } from '../types';
+import { Dna } from "lucide-react";
+import React, { useState } from "react";
+import type {
+  OverlayData,
+  Literature,
+  Variant,
+  SnRNAGene,
+  RNAStructure,
+  Nucleotide,
+  PDBStructure,
+  LiteratureCounts,
+} from "../types";
+import GenomeBrowser from "./GenomeBrowser";
+import InfoPanel from "./InfoPanel";
+import RNAViewer from "./RNAViewer";
+import VariantLiteratureCard from "./VariantLiteratureCard";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface MainContentProps {
   currentData: SnRNAGene;
@@ -17,7 +31,12 @@ interface MainContentProps {
   variantData: Variant[];
   gnomadVariants: Variant[];
   aouVariants: Variant[];
-  overlayMode: 'none' | 'clinvar' | 'gnomad' | 'function_score' | 'depletion_group';
+  overlayMode:
+    | "none"
+    | "clinvar"
+    | "gnomad"
+    | "function_score"
+    | "depletion_group";
   getCurrentOverlayData: () => OverlayData;
   cycleOverlayMode: () => void;
   functionScoreTrackData: OverlayData;
@@ -39,15 +58,15 @@ const MainContent: React.FC<MainContentProps> = ({
   cycleOverlayMode,
   functionScoreTrackData,
   depletionGroupTrackData,
-  caddScoreTrackData
+  caddScoreTrackData,
 }) => {
-  // State to manage hovered and selected nucleotide
-  const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
-  const [selectedNucleotide, setSelectedNucleotide] = useState<Nucleotide | null>(null);
+  const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(
+    null,
+  );
+  const [selectedNucleotide, setSelectedNucleotide] =
+    useState<Nucleotide | null>(null);
 
-  // Handler for nucleotide selection (single select)
   const handleNucleotideClick = (nucleotide: Nucleotide) => {
-    // Toggle selection: if clicking the same nucleotide, deselect it
     if (selectedNucleotide?.id === nucleotide.id) {
       setSelectedNucleotide(null);
     } else {
@@ -55,42 +74,37 @@ const MainContent: React.FC<MainContentProps> = ({
     }
   };
 
-  // Get the nucleotide to display in InfoPanel (prioritize hovered, then selected)
   const getDisplayNucleotide = (): Nucleotide | null => {
     return hoveredNucleotide || selectedNucleotide;
   };
 
-  // Convert RNAStructure to RNAData format for RNAViewer
   const getRNAData = () => {
     if (rnaStructureData) {
       return {
         id: rnaStructureData.id,
-        geneId: rnaStructureData.geneId,
+        geneId: rnaStructureData.gene_id,
         name: currentData.name,
         nucleotides: rnaStructureData.nucleotides,
-        basePairs: rnaStructureData.basePairs,
+        base_pairs: rnaStructureData.base_pairs,
         annotations: rnaStructureData.annotations,
-        structuralFeatures: rnaStructureData.structuralFeatures
+        structural_features: rnaStructureData.structural_features,
       };
     }
-    // Return minimal structure if no data available
     return {
       id: "default",
       geneId: currentData.id,
       name: currentData.name,
       nucleotides: [],
-      basePairs: [],
+      base_pairs: [],
       annotations: [],
-      structuralFeatures: []
+      structural_features: [],
     };
   };
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="space-y-8">
-        {/* Top Row: InfoPanel and RNA Structure */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
-          {/* Left Column: InfoPanel */}
           <div className="lg:col-span-1 space-y-8 w-full">
             <InfoPanel
               currentData={currentData}
@@ -103,9 +117,7 @@ const MainContent: React.FC<MainContentProps> = ({
             />
           </div>
 
-          {/* Right Column: RNA Structure */}
           <div className="lg:col-span-2 space-y-8 w-full">
-            {/* RNA Secondary Structure */}
             <Card className="bg-white/95 backdrop-blur-sm border border-slate-200 shadow-xl shadow-slate-200/30 rounded-2xl w-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -113,7 +125,8 @@ const MainContent: React.FC<MainContentProps> = ({
                   RNA Secondary Structure
                 </CardTitle>
                 <CardDescription>
-                  Interactive visualization of {currentData.name} structure with overlay data
+                  Interactive visualization of {currentData.name} structure with
+                  overlay data
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -135,7 +148,7 @@ const MainContent: React.FC<MainContentProps> = ({
                     start: currentData.start,
                     end: currentData.end,
                     strand: currentData.strand,
-                    sequence: currentData.sequence
+                    sequence: currentData.sequence,
                   }}
                 />
               </CardContent>
@@ -143,7 +156,6 @@ const MainContent: React.FC<MainContentProps> = ({
           </div>
         </div>
 
-        {/* Second Row: Genome Browser Full Width */}
         <div className="w-full">
           <Card className="bg-white/95 backdrop-blur-sm border border-slate-200 shadow-xl shadow-slate-200/30 rounded-2xl w-full">
             <CardHeader>
@@ -156,7 +168,7 @@ const MainContent: React.FC<MainContentProps> = ({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <GenomeBrowser 
+              <GenomeBrowser
                 selectedGene={currentData.name}
                 variants={variantData}
                 gnomadVariants={gnomadVariants}
@@ -171,27 +183,20 @@ const MainContent: React.FC<MainContentProps> = ({
                   start: currentData.start,
                   end: currentData.end,
                   strand: currentData.strand,
-                  sequence: currentData.sequence
+                  sequence: currentData.sequence,
                 }}
               />
             </CardContent>
           </Card>
         </div>
 
-        {/* Third Row: Literature and Variants */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-          <div>
-            <LiteratureSection 
-              paperData={paperData}
-              currentGene={currentData.name}
-            />
-          </div>
-          <div>
-            <VariantsSection 
-              variantData={variantData}
-              currentGene={currentData.name}
-            />
-          </div>
+        <div className="w-full">
+          <VariantLiteratureCard
+            variantData={variantData}
+            paperData={paperData}
+            literatureCounts={literatureCounts}
+            currentGene={currentData.name}
+          />
         </div>
       </div>
     </main>

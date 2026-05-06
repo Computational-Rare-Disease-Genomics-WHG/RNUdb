@@ -1,27 +1,30 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { 
-  Move, 
-  Plus, 
-  Link, 
-  Trash2, 
-  Edit3, 
-  Keyboard, 
+import {
+  Move,
+  Plus,
+  Link,
+  Trash2,
+  Edit3,
+  Keyboard,
   Target,
-  BarChart3
-} from 'lucide-react';
-import type { RNAData } from '../../types/rna';
+  BarChart3,
+} from "lucide-react";
+import React from "react";
+import type { RNAData } from "../../types/rna";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Input } from "../ui/input";
 
 interface EditorSidebarProps {
   rnaData: RNAData;
-  mode: 'select' | 'add' | 'pair' | 'delete';
+  mode: "select" | "add" | "pair" | "delete";
   currentNucleotide: number | null;
   editingId: number | null;
-  onModeChange: (mode: 'select' | 'add' | 'pair' | 'delete') => void;
-  onUpdateNucleotideBase: (nucleotideId: number, newBase: 'A' | 'C' | 'G' | 'U') => void;
+  onModeChange: (mode: "select" | "add" | "pair" | "delete") => void;
+  onUpdateNucleotideBase: (
+    nucleotideId: number,
+    newBase: "A" | "C" | "G" | "U",
+  ) => void;
   onUpdateNucleotideId: (oldId: number, newId: number) => boolean;
   onSetEditingId: (id: number | null) => void;
 }
@@ -34,26 +37,34 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
   onModeChange,
   onUpdateNucleotideBase,
   onUpdateNucleotideId,
-  onSetEditingId
+  onSetEditingId,
 }) => {
   const handleIdUpdate = (newId: number) => {
     if (currentNucleotide) {
       const success = onUpdateNucleotideId(currentNucleotide, newId);
       if (!success) {
-        alert('ID already exists!');
+        alert("ID already exists!");
       }
     }
   };
 
   const getBaseStats = () => {
-    const bases = rnaData.nucleotides.reduce((acc, nuc) => {
-      if (nuc.base) {
-        acc[nuc.base] = (acc[nuc.base] || 0) + 1;
-      }
-      return acc;
-    }, {} as Record<string, number>);
-    
-    return { A: bases.A || 0, U: bases.U || 0, G: bases.G || 0, C: bases.C || 0 };
+    const bases = rnaData.nucleotides.reduce(
+      (acc, nuc) => {
+        if (nuc.base) {
+          acc[nuc.base] = (acc[nuc.base] || 0) + 1;
+        }
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return {
+      A: bases.A || 0,
+      U: bases.U || 0,
+      G: bases.G || 0,
+      C: bases.C || 0,
+    };
   };
 
   const baseStats = getBaseStats();
@@ -80,48 +91,53 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <Button
-              variant={mode === 'select' ? 'default' : 'outline'}
+              variant={mode === "select" ? "default" : "outline"}
               size="sm"
-              onClick={() => onModeChange('select')}
-              className={mode === 'select' ? 'bg-teal-600 hover:bg-teal-700' : ''}
+              onClick={() => onModeChange("select")}
+              className={
+                mode === "select" ? "bg-teal-600 hover:bg-teal-700" : ""
+              }
             >
               <Move className="h-4 w-4 mr-2" />
               Select
             </Button>
             <Button
-              variant={mode === 'add' ? 'default' : 'outline'}
+              variant={mode === "add" ? "default" : "outline"}
               size="sm"
-              onClick={() => onModeChange('add')}
-              className={mode === 'add' ? 'bg-teal-600 hover:bg-teal-700' : ''}
+              onClick={() => onModeChange("add")}
+              className={mode === "add" ? "bg-teal-600 hover:bg-teal-700" : ""}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add
             </Button>
             <Button
-              variant={mode === 'pair' ? 'default' : 'outline'}
+              variant={mode === "pair" ? "default" : "outline"}
               size="sm"
-              onClick={() => onModeChange('pair')}
-              className={mode === 'pair' ? 'bg-teal-600 hover:bg-teal-700' : ''}
+              onClick={() => onModeChange("pair")}
+              className={mode === "pair" ? "bg-teal-600 hover:bg-teal-700" : ""}
             >
               <Link className="h-4 w-4 mr-2" />
               Pair
             </Button>
             <Button
-              variant={mode === 'delete' ? 'destructive' : 'outline'}
+              variant={mode === "delete" ? "destructive" : "outline"}
               size="sm"
-              onClick={() => onModeChange('delete')}
+              onClick={() => onModeChange("delete")}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
           </div>
-          
+
           <div className="pt-3 border-t border-gray-100">
             <p className="text-xs text-gray-600 leading-relaxed">
-              {mode === 'select' && "Click and drag nucleotides to move them around"}
-              {mode === 'add' && "Click anywhere on the canvas to add a nucleotide"}
-              {mode === 'pair' && "Click two nucleotides to create or remove a base pair"}
-              {mode === 'delete' && "Click on nucleotides to delete them"}
+              {mode === "select" &&
+                "Click and drag nucleotides to move them around"}
+              {mode === "add" &&
+                "Click anywhere on the canvas to add a nucleotide"}
+              {mode === "pair" &&
+                "Click two nucleotides to create or remove a base pair"}
+              {mode === "delete" && "Click on nucleotides to delete them"}
             </p>
           </div>
         </CardContent>
@@ -156,7 +172,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                     }}
                     onBlur={() => onSetEditingId(null)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         onSetEditingId(null);
                       }
                     }}
@@ -164,8 +180,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                     autoFocus
                   />
                 ) : (
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className="cursor-pointer hover:bg-gray-200"
                     onClick={() => onSetEditingId(currentNucleotide)}
                   >
@@ -173,20 +189,28 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   </Badge>
                 )}
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Base:</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Base:
+                </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {(['A', 'U', 'G', 'C'] as const).map(base => {
-                    const nucleotide = rnaData.nucleotides.find(n => n.id === currentNucleotide);
+                  {(["A", "U", "G", "C"] as const).map((base) => {
+                    const nucleotide = rnaData.nucleotides.find(
+                      (n) => n.id === currentNucleotide,
+                    );
                     const isSelected = nucleotide?.base === base;
                     return (
                       <Button
                         key={base}
-                        variant={isSelected ? 'default' : 'outline'}
+                        variant={isSelected ? "default" : "outline"}
                         size="sm"
-                        onClick={() => onUpdateNucleotideBase(currentNucleotide, base)}
-                        className={isSelected ? 'bg-teal-600 hover:bg-teal-700' : ''}
+                        onClick={() =>
+                          onUpdateNucleotideBase(currentNucleotide, base)
+                        }
+                        className={
+                          isSelected ? "bg-teal-600 hover:bg-teal-700" : ""
+                        }
                       >
                         {base}
                       </Button>
@@ -198,9 +222,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
           ) : (
             <div className="text-center py-4">
               <Target className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">
-                No nucleotide selected
-              </p>
+              <p className="text-sm text-gray-500">No nucleotide selected</p>
               <p className="text-xs text-gray-400 mt-1">
                 Click on a nucleotide to edit it
               </p>
@@ -225,24 +247,32 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{rnaData.nucleotides.length}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {rnaData.nucleotides.length}
+                </div>
                 <div className="text-sm text-gray-500">Nucleotides</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{rnaData.basePairs.length}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {rnaData.base_pairs.length}
+                </div>
                 <div className="text-sm text-gray-500">Base Pairs</div>
               </div>
             </div>
-            
+
             <div className="pt-4 border-t border-gray-100">
-              <div className="text-sm font-medium text-gray-700 mb-2">Base Composition:</div>
+              <div className="text-sm font-medium text-gray-700 mb-2">
+                Base Composition:
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(baseStats).map(([base, count]) => (
                   <div key={base} className="flex items-center justify-between">
                     <Badge variant="outline" className="text-xs">
                       {base}
                     </Badge>
-                    <span className="text-sm font-mono text-gray-600">{count}</span>
+                    <span className="text-sm font-mono text-gray-600">
+                      {count}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -267,23 +297,33 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between">
               <span>Add nucleotide</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">N</kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                N
+              </kbd>
             </div>
             <div className="flex items-center justify-between">
               <span>Set base</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">A/C/G/U</kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                A/C/G/U
+              </kbd>
             </div>
             <div className="flex items-center justify-between">
               <span>Navigate</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">↑↓←→</kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                ↑↓←→
+              </kbd>
             </div>
             <div className="flex items-center justify-between">
               <span>Delete</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Del</kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                Del
+              </kbd>
             </div>
             <div className="flex items-center justify-between">
               <span>Clear selection</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Esc</kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                Esc
+              </kbd>
             </div>
           </div>
         </CardContent>

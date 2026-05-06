@@ -1,8 +1,10 @@
 // Structure data utilities
-import type { RNAStructure } from '../types';
-import { getGeneStructure, getGenePDB } from '../services/api';
+import { getGeneStructure, getGenePDB } from "../services/api";
+import type { RNAStructure } from "../types";
 
-export const getRNAStructure = async (geneId: string): Promise<RNAStructure | null> => {
+export const getRNAStructure = async (
+  geneId: string,
+): Promise<RNAStructure | null> => {
   try {
     return await getGeneStructure(geneId);
   } catch (error) {
@@ -11,7 +13,9 @@ export const getRNAStructure = async (geneId: string): Promise<RNAStructure | nu
   }
 };
 
-export const getPDBStructure = async (geneId: string): Promise<{ geneId: string; pdbData: string } | null> => {
+export const getPDBStructure = async (
+  geneId: string,
+): Promise<{ geneId: string; pdbData: string } | null> => {
   try {
     const result = await getGenePDB(geneId);
     return result;
@@ -21,9 +25,11 @@ export const getPDBStructure = async (geneId: string): Promise<{ geneId: string;
   }
 };
 
-export const getRNAStructureById = async (structureId: string): Promise<RNAStructure | null> => {
+export const getRNAStructureById = async (
+  structureId: string,
+): Promise<RNAStructure | null> => {
   try {
-    // Since we don't have a direct endpoint for structure by ID, 
+    // Since we don't have a direct endpoint for structure by ID,
     // we'd need to implement this differently or add it to the API
     // For now, just return null as this function might not be used
     return null;

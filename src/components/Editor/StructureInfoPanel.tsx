@@ -1,6 +1,6 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import type { RNAData } from '../../types/rna';
+import React from "react";
+import type { RNAData } from "../../types/rna";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 interface StructureInfoPanelProps {
   rnaData: RNAData;
@@ -9,7 +9,7 @@ interface StructureInfoPanelProps {
 
 const StructureInfoPanel: React.FC<StructureInfoPanelProps> = ({
   rnaData,
-  currentNucleotide
+  currentNucleotide,
 }) => {
   return (
     <Card>
@@ -19,8 +19,10 @@ const StructureInfoPanel: React.FC<StructureInfoPanelProps> = ({
       <CardContent>
         <div className="space-y-2 text-sm">
           <div>Nucleotides: {rnaData.nucleotides.length}</div>
-          <div>Base Pairs: {rnaData.basePairs.length}</div>
-          <div>Current: {currentNucleotide ? `#${currentNucleotide}` : 'None'}</div>
+          <div>Base Pairs: {rnaData.base_pairs.length}</div>
+          <div>
+            Current: {currentNucleotide ? `#${currentNucleotide}` : "None"}
+          </div>
         </div>
       </CardContent>
     </Card>

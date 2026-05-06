@@ -32,7 +32,7 @@ def query_gnomad_variants(
           alt
           rsids
           consequence
-          
+
           # Get genome data (prioritize over exome)
           genome {{
             ac
@@ -40,7 +40,7 @@ def query_gnomad_variants(
             an
             af
           }}
-          
+
           # Fallback to exome if genome not available
           exome {{
             ac
@@ -48,7 +48,7 @@ def query_gnomad_variants(
             an
             af
           }}
-          
+
           # Joint data for latest datasets
           joint {{
             ac
@@ -130,6 +130,14 @@ def query_all_of_us_variants(
     """
     Query All of Us API for variants in a genomic region
 
+    NOTE: The All of Us public API now requires a valid Origin header and
+    authentication. Direct API access may return 403 Forbidden.
+
+    For programmatic access, consider:
+    1. Using the All of Us Researcher Workbench
+    2. Exporting data from the workbench and importing locally
+    3. Using a registered application with proper credentials
+
     Args:
         chromosome: Chromosome (e.g., "1", "2", "X")
         start: Start position (1-based)
@@ -140,7 +148,6 @@ def query_all_of_us_variants(
         List of variants with allele counts and homozygote counts
     """
 
-    # Format genomic region query (All of Us expects chr prefix)
     if not chromosome.startswith("chr"):
         region_query = f"chr{chromosome}:{start}-{end}"
     else:
@@ -150,7 +157,9 @@ def query_all_of_us_variants(
     headers = {
         "Content-Type": "application/json",
         "Accept": "*/*",
-        "User-Agent": "curl/8.0.0",
+        "Origin": "https://databrowser.researchallofus.org",
+        "Referer": "https://databrowser.researchallofus.org/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.2 Safari/605.1.15",
     }
 
     all_variants = []
@@ -173,23 +182,31 @@ def query_all_of_us_variants(
             }
 
             response = requests.post(url, json=payload, headers=headers, timeout=30)
+
+            if response.status_code == 403:
+                print("ERROR: All of Us API returned 403 Forbidden.")
+                print("The public API endpoint requires authentication.")
+                print("To access All of Us data programmatically:")
+                print("  1. Use the All of Us Researcher Workbench")
+                print("  2. Export data to a local file and import to RNUdb")
+                print("  3. Use a registered application with proper credentials")
+                return []
+
             response.raise_for_status()
 
             data = response.json()
 
-            # Extract variants from response
             variants = data.get("items", [])
             if not variants:
                 break
 
-            # Process variants
             for variant in variants:
                 processed_variant = {
                     "variant_id": variant.get("variantId"),
-                    "genes": variant.get("genes"),  # Note: plural "genes" not "gene"
-                    "position": None,  # Extract from variantId if needed
-                    "ref": None,  # Extract from variantId if needed
-                    "alt": None,  # Extract from variantId if needed
+                    "genes": variant.get("genes"),
+                    "position": None,
+                    "ref": None,
+                    "alt": None,
                     "consequence": variant.get("consequence"),
                     "variant_type": variant.get("variantType"),
                     "clinical_significance": variant.get("clinicalSignificance"),
@@ -199,10 +216,8 @@ def query_all_of_us_variants(
                     "aou_af": variant.get("alleleFrequency"),
                 }
 
-                # Parse variant ID to extract position and alleles if in standard format
                 variant_id = variant.get("variantId", "")
                 if variant_id:
-                    # Try to parse format like "1-123456-A-T"
                     parts = variant_id.split("-")
                     if len(parts) >= 4:
                         processed_variant["position"] = (
@@ -213,14 +228,10 @@ def query_all_of_us_variants(
 
                 all_variants.append(processed_variant)
 
-            # Check if we have more pages
-            # If we got fewer results than requested, we're at the end
             if len(variants) < page_size:
                 break
 
             page_number += 1
-
-            # Add small delay to be respectful to API
             time.sleep(0.1)
 
         return all_variants

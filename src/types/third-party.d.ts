@@ -1,4 +1,4 @@
-declare module 'dom-to-image-more' {
+declare module "dom-to-image-more" {
   interface Options {
     filter?: (node: Node) => boolean;
     bgcolor?: string;
@@ -13,11 +13,14 @@ declare module 'dom-to-image-more' {
   export function toPng(node: Node, options?: Options): Promise<string>;
   export function toJpeg(node: Node, options?: Options): Promise<string>;
   export function toSvg(node: Node, options?: Options): Promise<string>;
-  export function toPixelData(node: Node, options?: Options): Promise<Uint8ClampedArray>;
+  export function toPixelData(
+    node: Node,
+    options?: Options,
+  ): Promise<Uint8ClampedArray>;
   export function toBlob(node: Node, options?: Options): Promise<Blob>;
 }
 
-declare module '@gnomad/track-genes' {
+declare module "@gnomad/track-genes" {
   interface Gene {
     gene_id: string;
     symbol: string;
@@ -42,7 +45,7 @@ declare module '@gnomad/track-genes' {
   export const GenesTrack: React.ComponentType<GenesTrackProps>;
 }
 
-declare module '@gnomad/track-variants' {
+declare module "@gnomad/track-variants" {
   interface Variant {
     variant_id: string;
     pos: number;
@@ -64,8 +67,8 @@ declare module '@gnomad/track-variants' {
   export default VariantTrack;
 }
 
-declare module '@gnomad/region-viewer' {
-  import React from 'react';
+declare module "@gnomad/region-viewer" {
+  import React from "react";
   interface Region {
     start: number;
     stop: number;
@@ -90,7 +93,10 @@ declare module '@gnomad/region-viewer' {
   }
 
   interface TrackProps {
-    children: (props: { scalePosition: (pos: number) => number; width: number }) => React.ReactNode;
+    children: (props: {
+      scalePosition: (pos: number) => number;
+      width: number;
+    }) => React.ReactNode;
     height?: number;
     leftPanelWidth?: number;
     rightPanelWidth?: number;
@@ -98,7 +104,7 @@ declare module '@gnomad/region-viewer' {
   }
 
   export const Cursor: React.ComponentType<CursorProps>;
-  export const PositionAxisTrack: React.ComponentType<{}>;
+  export const PositionAxisTrack: React.ComponentType<Record<string, never>>;
   export const RegionViewer: React.ComponentType<RegionViewerProps>;
   export const Track: React.ComponentType<TrackProps>;
 }

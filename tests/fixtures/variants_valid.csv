@@ -1,0 +1,6 @@
+position,ref,alt,hgvs,clinical_significance,zygosity,function_score,cadd_score
+120291764,C,T,n.140G>A,VUS,hom,,
+120291785,T,C,n.119A>G,Pathogenic,het,hom,,
+120291782,A,C,n.122T>G,Likely Pathogenic,het,-1.234,15.6
+120291777,G,A,n.127C>T,VUS,het,hom,,
+120291769,T,C,n.135A>G,VUS,het,,

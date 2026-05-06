@@ -1,0 +1,10 @@
+{
+  "id": "invalid",
+  "name": "Invalid Structure",
+  "nucleotides": [
+    {"id": 1, "x": 100.0, "y": 100.0}
+  ],
+  "basePairs": [
+    {"from": 1, "to": 99}
+  ]
+}

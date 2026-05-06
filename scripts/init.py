@@ -1,31 +1,37 @@
 #!/usr/bin/env python3
-"""Initialize RNUdb database with schema and optional sample data"""
+"""Initialize RNUdb database with Alembic migrations."""
 
 import sys
 from pathlib import Path
 
-# Add parent directory to path to import rnudb_utils
+# Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from rnudb_utils import create_database, get_database_path
-from insert_sample_data import main as insert_sample_data_main
+from alembic.config import Config
+
+from alembic import command
 
 
 def main():
-    """Initialize the database and optionally insert sample data"""
+    """Initialize the database using Alembic migrations."""
+    # Get Alembic config
+    alembic_ini = Path(__file__).parent.parent / "alembic.ini"
+    cfg = Config(str(alembic_ini))
+    cfg.set_main_option("sqlalchemy.url", "sqlite:///data/database.db")
+
     print("Creating database schema...")
-    conn = create_database()
-    conn.close()
-    print(f"Database created successfully at {get_database_path()}")
-    
+    command.upgrade(cfg, "head")
+    print(f"Database created successfully at {Path('data/database.db')}")
+
     # Ask user if they want to insert sample data
     while True:
         choice = input("Do you want to insert sample data? (y/n): ").lower().strip()
-        if choice in ['y', 'yes']:
+        if choice in ["y", "yes"]:
             print("\nInserting sample data...")
+            from insert_sample_data import main as insert_sample_data_main
             insert_sample_data_main()
             break
-        elif choice in ['n', 'no']:
+        elif choice in ["n", "no"]:
             print("Database initialized without sample data.")
             break
         else:

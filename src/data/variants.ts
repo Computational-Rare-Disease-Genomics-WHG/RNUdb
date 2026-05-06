@@ -1,6 +1,6 @@
 // Variant data utilities
-import { getGeneVariants, getVariant } from '../services/api';
-import type { Variant } from '../types';
+import { getGeneVariants, getVariant } from "../services/api";
+import type { Variant } from "../types";
 
 // Fallback clinical variants data (matches database structure)
 const fallbackClinicalVariants: Variant[] = [
@@ -16,7 +16,7 @@ const fallbackClinicalVariants: Variant[] = [
     zygosity: "hom",
     gnomad_ac: 5,
     aou_ac: 37,
-    cohort: "clinical"
+    cohort: "clinical",
   },
   {
     id: "chr12-120291769-T-C",
@@ -30,7 +30,7 @@ const fallbackClinicalVariants: Variant[] = [
     zygosity: "het",
     gnomad_ac: 8,
     aou_ac: 13,
-    cohort: "clinical"
+    cohort: "clinical",
   },
   {
     id: "chr12-120291775-C-T",
@@ -44,7 +44,7 @@ const fallbackClinicalVariants: Variant[] = [
     zygosity: "het",
     gnomad_ac: 3,
     aou_ac: 8,
-    cohort: "clinical"
+    cohort: "clinical",
   },
   {
     id: "chr12-120291777-G-A",
@@ -58,7 +58,7 @@ const fallbackClinicalVariants: Variant[] = [
     zygosity: "hom",
     gnomad_ac: 170,
     aou_ac: 935,
-    cohort: "clinical"
+    cohort: "clinical",
   },
   {
     id: "chr12-120291782-A-C",
@@ -72,7 +72,7 @@ const fallbackClinicalVariants: Variant[] = [
     zygosity: "het",
     gnomad_ac: 1,
     aou_ac: 6,
-    cohort: "clinical"
+    cohort: "clinical",
   },
   {
     id: "chr12-120291785-T-C",
@@ -86,8 +86,8 @@ const fallbackClinicalVariants: Variant[] = [
     zygosity: "hom",
     gnomad_ac: 37,
     aou_ac: 219,
-    cohort: "clinical"
-  }
+    cohort: "clinical",
+  },
 ];
 
 export const getVariants = async (geneId: string): Promise<Variant[]> => {
@@ -98,16 +98,18 @@ export const getVariants = async (geneId: string): Promise<Variant[]> => {
       return apiVariants;
     }
     // Otherwise fall back to clinical variants for demo
-    console.log('API not available, using fallback clinical variants data');
+    console.log("API not available, using fallback clinical variants data");
     return fallbackClinicalVariants;
   } catch (error) {
     console.error(`Error fetching variants for ${geneId}:`, error);
-    console.log('Using fallback clinical variants data');
+    console.log("Using fallback clinical variants data");
     return fallbackClinicalVariants;
   }
 };
 
-export const getVariantById = async (variantId: string): Promise<Variant | null> => {
+export const getVariantById = async (
+  variantId: string,
+): Promise<Variant | null> => {
   try {
     return await getVariant(variantId);
   } catch (error) {

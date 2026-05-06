@@ -1,16 +1,43 @@
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Database, Dna, Globe, Search, AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react';
-import type { SnRNAGene, Literature, Variant, Nucleotide, LiteratureCounts } from '@/types';
+import {
+  Database,
+  Dna,
+  Globe,
+  Search,
+  AlertTriangle,
+  CheckCircle,
+  HelpCircle,
+  ExternalLink,
+} from "lucide-react";
+import React from "react";
+import { useNavigate } from "react-router";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type {
+  SnRNAGene,
+  Literature,
+  Variant,
+  Nucleotide,
+  LiteratureCounts,
+} from "@/types";
 
 interface InfoPanelProps {
   currentData: SnRNAGene;
   paperData: Literature[];
   literatureCounts: LiteratureCounts[];
   variantData: Variant[];
-  overlayMode: 'none' | 'clinvar' | 'gnomad' | 'function_score' | 'depletion_group';
+  overlayMode:
+    | "none"
+    | "clinvar"
+    | "gnomad"
+    | "function_score"
+    | "depletion_group";
   onCycleOverlay: () => void;
   hoveredNucleotide: Nucleotide | null;
 }
@@ -20,25 +47,23 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   paperData,
   literatureCounts,
   hoveredNucleotide,
-  variantData
+  variantData,
 }) => {
+  const navigate = useNavigate();
   const geneLength = currentData.end - currentData.start + 1;
 
   const getVariantInfoForNucleotide = (nucleotideId: number) => {
-    // Find variants that affect this nucleotide position
-    const relevantVariants = variantData.filter(variant => {
-      // Handle both clinical variants (with position) and SGE variants (with nucleotidePosition)
-      if (variant.nucleotidePosition !== undefined && variant.nucleotidePosition !== null) {
-        // SGE variant - direct nucleotide mapping
+    const relevantVariants = variantData.filter((variant) => {
+      if (
+        variant.nucleotidePosition !== undefined &&
+        variant.nucleotidePosition !== null
+      ) {
         return variant.nucleotidePosition === nucleotideId;
       } else if (variant.position) {
-        // Clinical variant - convert genomic position to nucleotide (strand-aware)
         let nucleotidePos: number;
-        if (currentData.strand === '-') {
-          // Reverse strand: nucleotide_pos = gene_end - genomic_pos + 1
+        if (currentData.strand === "-") {
           nucleotidePos = currentData.end - variant.position + 1;
         } else {
-          // Forward strand: nucleotide_pos = genomic_pos - gene_start + 1
           nucleotidePos = variant.position - currentData.start + 1;
         }
         return nucleotidePos === nucleotideId;
@@ -46,331 +71,433 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       return false;
     });
 
-    // Filter to only show variants with clinical significance OR population frequency data
-    const filteredVariants = relevantVariants.filter(variant => 
-      variant.clinical_significance || variant.gnomad_ac || variant.aou_ac || variant.ukbb_ac
+    const filteredVariants = relevantVariants.filter(
+      (variant) =>
+        variant.clinical_significance ||
+        variant.gnomad_ac ||
+        variant.aou_ac ||
+        variant.ukbb_ac,
     );
 
-    // Separate by clinical vs population data
-    const clinicalVariants = filteredVariants.filter(v => v.clinical_significance);
-    const populationVariants = filteredVariants.filter(v =>
-      !v.clinical_significance && (v.gnomad_ac || v.aou_ac || v.ukbb_ac)
+    const clinicalVariants = filteredVariants.filter(
+      (v) => v.clinical_significance,
+    );
+    const populationVariants = filteredVariants.filter(
+      (v) => !v.clinical_significance && (v.gnomad_ac || v.aou_ac || v.ukbb_ac),
     );
 
     return {
       clinicalVariants,
       populationVariants,
-      allVariants: filteredVariants
+      allVariants: filteredVariants,
     };
   };
 
-  const normalizeVariantId = (id: string) => {
-    // Remove 'chr' prefix for consistency
-    return id.replace(/^chr/, '');
-  };
+  const normalizeVariantId = (id: string) => id.replace(/^chr/, "");
 
   const getSignificanceIcon = (significance?: string) => {
     if (!significance) return <HelpCircle className="h-3 w-3" />;
     const lower = significance.toLowerCase();
-    if (lower === 'path' || (lower.includes('pathogenic') && !lower.includes('likely'))) {
+    if (
+      lower === "path" ||
+      (lower.includes("pathogenic") && !lower.includes("likely"))
+    ) {
       return <AlertTriangle className="h-3 w-3" />;
-    } else if (lower === 'lp' || lower.includes('likely pathogenic')) {
+    } else if (lower === "lp" || lower.includes("likely pathogenic")) {
       return <AlertTriangle className="h-3 w-3" />;
-    } else if (lower.includes('benign')) {
+    } else if (lower.includes("benign")) {
       return <CheckCircle className="h-3 w-3" />;
     }
     return <HelpCircle className="h-3 w-3" />;
   };
 
   const getSignificanceColor = (significance?: string) => {
-    if (!significance) return 'bg-gray-100 text-gray-700 border-gray-200';
+    if (!significance) return "bg-gray-100 text-gray-700 border-gray-200";
     const lower = significance.toLowerCase();
-    if (lower === 'path' || (lower.includes('pathogenic') && !lower.includes('likely'))) {
-      return 'bg-red-50 text-red-700 border-red-200';
-    } else if (lower === 'lp' || lower.includes('likely pathogenic')) {
-      return 'bg-orange-50 text-orange-700 border-orange-200';
-    } else if (lower.includes('benign')) {
-      return 'bg-green-50 text-green-700 border-green-200';
-    } else if (lower === 'vus' || lower.includes('uncertain')) {
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (
+      lower === "path" ||
+      (lower.includes("pathogenic") && !lower.includes("likely"))
+    ) {
+      return "bg-red-50 text-red-700 border-red-200";
+    } else if (lower === "lp" || lower.includes("likely pathogenic")) {
+      return "bg-orange-50 text-orange-700 border-orange-200";
+    } else if (lower.includes("benign")) {
+      return "bg-green-50 text-green-700 border-green-200";
+    } else if (lower === "vus" || lower.includes("uncertain")) {
+      return "bg-amber-50 text-amber-700 border-amber-200";
     }
-    return 'bg-gray-50 text-gray-700 border-gray-200';
+    return "bg-gray-50 text-gray-700 border-gray-200";
+  };
+
+  const handleVariantClick = (variant: Variant) => {
+    if (variant.position) {
+      navigate(`/curate?gene=${currentData.name}&variant=${variant.id}`);
+    }
   };
 
   const getLiteratureForVariant = (variantId: string) => {
-    // Find literature counts for this variant
-    const counts = literatureCounts.filter(lc => lc.variant_id === variantId);
-    if (counts.length === 0) return [];
-
-    // Get the literature entries for these counts
-    return counts.map(count => {
-      const literature = paperData.find(p => p.id === count.literature_id);
-      return literature ? { ...literature, count: count.counts } : null;
-    }).filter((lit): lit is Literature & { count: number } => lit !== null);
+    const counts = literatureCounts.filter((lc) => lc.variant_id === variantId);
+    return counts
+      .map((count) => {
+        const literature = paperData.find((p) => p.id === count.literature_id);
+        return literature ? { ...literature, count: count.counts } : null;
+      })
+      .filter((lit): lit is Literature & { count: number } => lit !== null);
   };
 
   return (
     <div className="space-y-4">
-      {/* Gene Information Card */}
-      <Card className="bg-linear-to-br from-teal-50 to-cyan-50 border-teal-200 shadow-sm">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-teal-600 rounded-lg shadow-sm">
-                <Dna className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-bold text-gray-900">
-                  {currentData.name}
-                </CardTitle>
-                <CardDescription className="text-sm text-teal-700">
-                  {currentData.fullName}
-                </CardDescription>
-              </div>
+      <Card className="bg-gradient-to-br from-teal-800 via-teal-700 to-teal-600 border-teal-900 shadow-md">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-white/20 rounded-lg shadow-md backdrop-blur-sm">
+              <Dna className="h-5 w-5 text-white" />
             </div>
-            <Badge className="bg-teal-100 text-teal-800 border-teal-300 px-3 py-1 text-sm font-medium">
-              snRNA Gene
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-xl font-bold text-white">
+                {currentData.name}
+              </CardTitle>
+              <CardDescription className="text-sm text-teal-200 font-medium">
+                {currentData.fullName}
+              </CardDescription>
+            </div>
+            <Badge className="bg-white/20 text-white border-white/30 px-2.5 py-1 text-xs font-semibold backdrop-blur-sm">
+              snRNA
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-gray-700 leading-relaxed">{currentData.description}</p>
+          <p className="text-sm text-teal-100 leading-relaxed line-clamp-3">
+            {currentData.description}
+          </p>
 
-          <div className="grid grid-cols-3 gap-3 pt-3 border-t border-teal-100">
-            <div className="text-center p-2 bg-white rounded-lg border border-teal-100">
-              <div className="text-xs text-teal-600 font-medium">Chromosome</div>
-              <div className="text-lg font-bold text-gray-900">{currentData.chromosome}</div>
-            </div>
-            <div className="text-center p-2 bg-white rounded-lg border border-teal-100">
-              <div className="text-xs text-teal-600 font-medium">Position</div>
-              <div className="text-xs font-mono text-gray-900">
-                {currentData.start.toLocaleString()}–{currentData.end.toLocaleString()}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-2 text-center p-2 bg-white/10 rounded-lg border border-white/20 shadow-sm backdrop-blur-sm">
+              <div className="text-[10px] text-teal-300 font-medium mb-1">
+                Coordinate
+              </div>
+              <div className="text-xs font-mono text-white leading-tight">
+                chr{currentData.chromosome}:{currentData.start}-
+                {currentData.end}
               </div>
             </div>
-            <div className="text-center p-2 bg-white rounded-lg border border-teal-100">
-              <div className="text-xs text-teal-600 font-medium">Length</div>
-              <div className="text-lg font-bold text-gray-900">{geneLength} bp</div>
+            <div className="text-center p-2 bg-white/10 rounded-lg border border-white/20 shadow-sm backdrop-blur-sm">
+              <div className="text-[10px] text-teal-300 font-medium mb-1">
+                Length
+              </div>
+              <div className="text-xs font-bold text-white">
+                {geneLength} bp
+              </div>
             </div>
           </div>
 
-          <div className="pt-3 border-t border-teal-100">
-            <div className="text-sm font-medium text-gray-700 mb-2">External Resources:</div>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-teal-200 hover:bg-teal-50">
-                <Globe className="h-3 w-3 mr-1" />
+          <div className="flex gap-2 pt-2">
+            <a
+              href={`https://gnomad.broadinstitute.org/variant/${currentData.chromosome}-${currentData.start}-${currentData.end}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1"
+            >
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full h-8 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+              >
+                <Globe className="h-3.5 w-3.5 mr-1.5" />
                 gnomAD
               </Button>
-              <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-teal-200 hover:bg-teal-50">
-                <Search className="h-3 w-3 mr-1" />
+            </a>
+            <a
+              href={`https://genome.ucsc.edu/cgi-bin/dgDashRef?db=hg38&position=${currentData.chromosome}:${currentData.start}-${currentData.end}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1"
+            >
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full h-8 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+              >
+                <Search className="h-3.5 w-3.5 mr-1.5" />
                 UCSC
               </Button>
-              <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-teal-200 hover:bg-teal-50">
-                <Database className="h-3 w-3 mr-1" />
+            </a>
+            <a
+              href={`https://www.omim.org/search?search=${currentData.name}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1"
+            >
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full h-8 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+              >
+                <Database className="h-3.5 w-3.5 mr-1.5" />
                 OMIM
               </Button>
-            </div>
+            </a>
           </div>
         </CardContent>
       </Card>
 
-      {/* Nucleotide Information Card */}
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-white border-slate-200 shadow-md overflow-hidden">
         {hoveredNucleotide ? (
           <>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-linear-to-br from-blue-100 to-indigo-100 rounded-lg border border-blue-200">
-                  <span className="text-xl font-bold text-blue-900">{hoveredNucleotide.base}</span>
+                <div className="p-2.5 bg-slate-100 rounded-lg">
+                  <span className="text-lg font-bold text-slate-700">
+                    {hoveredNucleotide.base}
+                  </span>
                 </div>
-                <div className="flex-1">
-                  <CardTitle className="text-lg font-bold text-gray-900">
-                    Position {hoveredNucleotide.id}
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-base font-bold text-slate-900">
+                    Nucleotide {hoveredNucleotide.id}
                   </CardTitle>
-                  <CardDescription className="text-sm text-gray-600">
-                    RNA nucleotide {hoveredNucleotide.id} • Genomic position {currentData.strand === '-' ?
-                      (currentData.end - hoveredNucleotide.id + 1).toLocaleString() :
-                      (currentData.start + hoveredNucleotide.id - 1).toLocaleString()}
+                  <CardDescription className="text-xs text-slate-500">
+                    Genomic:{" "}
+                    {(currentData.strand === "-"
+                      ? currentData.end - hoveredNucleotide.id + 1
+                      : currentData.start + hoveredNucleotide.id - 1
+                    ).toLocaleString()}
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-4">
               {(() => {
-                const variantInfo = getVariantInfoForNucleotide(hoveredNucleotide.id);
+                const variantInfo = getVariantInfoForNucleotide(
+                  hoveredNucleotide.id,
+                );
                 const totalVariants = variantInfo.allVariants.length;
 
                 if (totalVariants === 0) {
                   return (
-                    <div className="text-center py-6 text-gray-500">
-                      <div className="text-3xl mb-2">✨</div>
-                      <div className="text-sm font-medium">No known variants</div>
-                      <div className="text-xs text-gray-400">This position appears conserved</div>
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <svg
+                        className="w-12 h-12 mb-3 text-slate-300"
+                        viewBox="0 0 56 56"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <circle
+                          cx="28"
+                          cy="28"
+                          r="24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                        <path
+                          d="M20 28l4 4 12-12"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <div className="text-sm font-medium text-slate-600">
+                        No known variants
+                      </div>
                     </div>
                   );
                 }
 
                 return (
                   <div className="space-y-4">
-                    {/* Clinical Variants */}
                     {variantInfo.clinicalVariants.length > 0 && (
-                      <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="text-sm font-medium text-green-900">
-                            Clinical Variants ({variantInfo.clinicalVariants.length})
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {variantInfo.clinicalVariants.slice(0, 3).map((variant: Variant, index: number) => {
-                            const variantLiterature = getLiteratureForVariant(variant.id);
-                            const linkedVariants = variant.linkedVariantIds ? 
-                              variantData.filter(v => variant.linkedVariantIds!.includes(v.id)) : [];
-                            
+                      <div className="space-y-3">
+                        {variantInfo.clinicalVariants
+                          .slice(0, 3)
+                          .map((variant: Variant, index: number) => {
+                            const variantLiterature = getLiteratureForVariant(
+                              variant.id,
+                            );
+                            const linkedVariants = variant.linkedVariantIds
+                              ? variantData.filter((v) =>
+                                  variant.linkedVariantIds!.includes(v.id),
+                                )
+                              : [];
+
                             return (
-                              <div key={index} className="p-3 bg-white rounded border border-green-100">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    {getSignificanceIcon(variant.clinical_significance)}
-                                    <div className="flex flex-col">
-                                      <span className="font-mono text-xs text-gray-500">{normalizeVariantId(variant.id)}</span>
-                                      <span className="font-mono text-sm font-medium">
-                                        {variant.ref}→{variant.alt}
+                              <div
+                                key={index}
+                                className="p-3 bg-slate-50 rounded-lg border border-slate-200"
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      {getSignificanceIcon(
+                                        variant.clinical_significance,
+                                      )}
+                                      <span
+                                        className={`text-xs font-medium ${getSignificanceColor(
+                                          variant.clinical_significance,
+                                        )}`}
+                                      >
+                                        {variant.clinical_significance}
                                       </span>
+                                      {variant.zygosity && (
+                                        <span
+                                          className={`text-xs font-medium ${
+                                            variant.zygosity === "hom"
+                                              ? "text-purple-600"
+                                              : "text-blue-600"
+                                          }`}
+                                        >
+                                          {variant.zygosity === "hom"
+                                            ? "Hom"
+                                            : "Het"}
+                                        </span>
+                                      )}
                                     </div>
-                                    {variant.zygosity && (
-                                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
-                                        {variant.zygosity}
-                                      </Badge>
-                                    )}
+                                    <div className="text-sm font-semibold text-slate-900 mb-0.5">
+                                      {variant.hgvs ||
+                                        `${variant.ref}>${variant.alt}`}
+                                    </div>
+                                    <button
+                                      onClick={() =>
+                                        handleVariantClick(variant)
+                                      }
+                                      className="text-xs text-slate-400 hover:text-slate-600 hover:underline"
+                                    >
+                                      {normalizeVariantId(variant.id)}
+                                    </button>
                                   </div>
-                                  <Badge className={`text-xs ${getSignificanceColor(variant.clinical_significance)}`}>
-                                    {variant.clinical_significance}
-                                  </Badge>
                                 </div>
-                                
-                                {/* Linked variants for compound heterozygous */}
+
                                 {linkedVariants.length > 0 && (
-                                  <div className="mb-2 p-2 bg-green-25 rounded border border-green-200">
-                                    <div className="text-xs text-green-700 font-medium mb-1">Compound Heterozygous with:</div>
-                                    {linkedVariants.map((linked, linkedIndex) => (
-                                      <div key={linkedIndex} className="text-xs text-gray-600">
-                                        <span className="font-mono">{normalizeVariantId(linked.id)}</span> ({linked.ref}→{linked.alt})
-                                        {linked.clinical_significance && (
-                                          <Badge className={`text-xs ml-1 ${getSignificanceColor(linked.clinical_significance)}`}>
-                                            {linked.clinical_significance}
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                                
-                                {/* Population frequencies for this variant */}
-                                {(variant.gnomad_ac || variant.aou_ac || variant.ukbb_ac) && (
-                                  <div className="flex gap-4 mt-2 pt-2 border-t border-green-50">
-                                    {variant.gnomad_ac && (
-                                      <div className="text-xs text-gray-600">
-                                        <span className="font-medium">gnomAD AC:</span> {variant.gnomad_ac.toLocaleString()}
-                                      </div>
-                                    )}
-                                    {variant.aou_ac && (
-                                      <div className="text-xs text-gray-600">
-                                        <span className="font-medium">All of Us AC:</span> {variant.aou_ac.toLocaleString()}
-                                      </div>
-                                    )}
-                                    {variant.ukbb_ac && (
-                                      <div className="text-xs text-gray-600">
-                                        <span className="font-medium">UK Biobank AC:</span> {variant.ukbb_ac.toLocaleString()}
-                                      </div>
+                                  <div className="mb-2 p-2 bg-slate-100 rounded text-xs">
+                                    <span className="text-slate-500 font-medium">
+                                      Compound Het:{" "}
+                                    </span>
+                                    {linkedVariants.map(
+                                      (linked, linkedIndex) => (
+                                        <span
+                                          key={linkedIndex}
+                                          className="text-slate-700"
+                                        >
+                                          {linked.hgvs ||
+                                            `${linked.ref}>${linked.alt}`}
+                                          {linkedIndex <
+                                            linkedVariants.length - 1 && ", "}
+                                        </span>
+                                      ),
                                     )}
                                   </div>
                                 )}
-                                
-                                {/* Literature citations for this variant */}
+
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600 pt-2 border-t border-slate-200">
+                                  {variant.gnomad_ac !== undefined &&
+                                    variant.gnomad_ac > 0 && (
+                                      <span>
+                                        <span className="font-medium">
+                                          gnomAD AC:
+                                        </span>{" "}
+                                        {variant.gnomad_ac.toLocaleString()}
+                                      </span>
+                                    )}
+                                  {variant.aou_ac !== undefined &&
+                                    variant.aou_ac > 0 && (
+                                      <span>
+                                        <span className="font-medium">
+                                          AoU AC:
+                                        </span>{" "}
+                                        {variant.aou_ac.toLocaleString()}
+                                      </span>
+                                    )}
+                                  {variant.ukbb_ac !== undefined &&
+                                    variant.ukbb_ac > 0 && (
+                                      <span>
+                                        <span className="font-medium">
+                                          UKBB AC:
+                                        </span>{" "}
+                                        {variant.ukbb_ac.toLocaleString()}
+                                      </span>
+                                    )}
+                                </div>
+
                                 {variantLiterature.length > 0 && (
-                                  <div className="mt-2 pt-2 border-t border-green-50">
-                                    <div className="text-xs text-green-700 font-medium mb-1">Citations:</div>
+                                  <div className="mt-2 pt-2 border-t border-slate-200">
+                                    <div className="text-xs text-slate-500 font-medium mb-1">
+                                      Literature ({variantLiterature.length})
+                                    </div>
                                     <div className="space-y-1">
-                                      {variantLiterature.map((lit, litIndex) => (
-                                        <div key={litIndex} className="text-xs text-gray-600 bg-green-25 p-1 rounded">
-                                          {lit.authors} ({lit.year}) - {lit.count} reference{lit.count !== 1 ? 's' : ''}
-                                        </div>
-                                      ))}
+                                      {variantLiterature.map(
+                                        (lit, litIndex) => (
+                                          <div
+                                            key={litIndex}
+                                            className="flex items-center justify-between gap-2 text-xs"
+                                          >
+                                            <span className="text-slate-600 truncate">
+                                              {lit.authors} ({lit.year})
+                                            </span>
+                                            <a
+                                              href={`https://doi.org/${lit.doi}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-slate-400 hover:text-slate-600 shrink-0"
+                                            >
+                                              <ExternalLink className="h-3 w-3" />
+                                            </a>
+                                          </div>
+                                        ),
+                                      )}
                                     </div>
                                   </div>
                                 )}
                               </div>
                             );
                           })}
-                        </div>
                       </div>
                     )}
 
-                    {/* Population-only Variants */}
                     {variantInfo.populationVariants.length > 0 && (
-                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-4 h-3 bg-blue-500 rounded-sm"></div>
-                          <span className="text-sm font-medium text-blue-900">
-                            Population Variants ({variantInfo.populationVariants.length})
-                          </span>
+                      <div className="space-y-2">
+                        <div className="text-xs font-medium text-slate-500">
+                          Population ({variantInfo.populationVariants.length})
                         </div>
-                        <div className="space-y-2">
-                          {variantInfo.populationVariants.slice(0, 3).map((variant: Variant, index: number) => {
-                            const variantLiterature = getLiteratureForVariant(variant.id);
-                            
+                        {variantInfo.populationVariants
+                          .slice(0, 3)
+                          .map((variant: Variant, index: number) => {
                             return (
-                              <div key={index} className="p-3 bg-white rounded border border-blue-100">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex flex-col">
-                                      <span className="font-mono text-xs text-gray-500">{normalizeVariantId(variant.id)}</span>
-                                      <span className="font-mono text-sm font-medium">
-                                        {variant.ref}→{variant.alt}
-                                      </span>
+                              <div
+                                key={index}
+                                className="p-2.5 bg-slate-50 rounded-lg border border-slate-100"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="text-sm text-slate-700">
+                                      {variant.hgvs ||
+                                        `${variant.ref}>${variant.alt}`}
                                     </div>
+                                    <button
+                                      onClick={() =>
+                                        handleVariantClick(variant)
+                                      }
+                                      className="text-xs text-slate-400 hover:text-slate-600"
+                                    >
+                                      {normalizeVariantId(variant.id)}
+                                    </button>
                                   </div>
-                                  <Badge className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                    Population
-                                  </Badge>
-                                </div>
-                                
-                                {/* Population frequencies for this variant */}
-                                <div className="flex gap-4 mt-2 pt-2 border-t border-blue-50">
-                                  {variant.gnomad_ac && (
-                                    <div className="text-xs text-gray-600">
-                                      <span className="font-medium">gnomAD AC:</span> {variant.gnomad_ac.toLocaleString()}
-                                    </div>
-                                  )}
-                                  {variant.aou_ac && (
-                                    <div className="text-xs text-gray-600">
-                                      <span className="font-medium">All of Us AC:</span> {variant.aou_ac.toLocaleString()}
-                                    </div>
-                                  )}
-                                  {variant.ukbb_ac && (
-                                    <div className="text-xs text-gray-600">
-                                      <span className="font-medium">UK Biobank AC:</span> {variant.ukbb_ac.toLocaleString()}
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Literature citations for this variant */}
-                                {variantLiterature.length > 0 && (
-                                  <div className="mt-2 pt-2 border-t border-blue-50">
-                                    <div className="text-xs text-blue-700 font-medium mb-1">Citations:</div>
-                                    <div className="space-y-1">
-                                      {variantLiterature.map((lit, litIndex) => (
-                                        <div key={litIndex} className="text-xs text-gray-600 bg-blue-25 p-1 rounded">
-                                          {lit.authors} ({lit.year}) - {lit.count} reference{lit.count !== 1 ? 's' : ''}
-                                        </div>
-                                      ))}
-                                    </div>
+                                  <div className="flex flex-wrap gap-x-2 text-xs text-slate-500">
+                                    {variant.gnomad_ac !== undefined &&
+                                      variant.gnomad_ac > 0 && (
+                                        <span>gnomAD: {variant.gnomad_ac}</span>
+                                      )}
+                                    {variant.aou_ac !== undefined &&
+                                      variant.aou_ac > 0 && (
+                                        <span>AoU: {variant.aou_ac}</span>
+                                      )}
+                                    {variant.ukbb_ac !== undefined &&
+                                      variant.ukbb_ac > 0 && (
+                                        <span>UKBB: {variant.ukbb_ac}</span>
+                                      )}
                                   </div>
-                                )}
+                                </div>
                               </div>
                             );
                           })}
-                        </div>
                       </div>
                     )}
                   </div>
@@ -380,18 +507,54 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
           </>
         ) : (
           <>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-gray-900">
-                Nucleotide Information
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-bold text-slate-900">
+                Nucleotide Details
               </CardTitle>
-              <CardDescription className="text-sm text-gray-600">
-                Hover over a nucleotide in the RNA structure to view details
+              <CardDescription className="text-sm text-slate-500">
+                Hover over a nucleotide to view variant information
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center text-gray-500 py-8">
-                <div className="text-4xl mb-2">🧬</div>
-                <div className="text-sm">Select a nucleotide to explore variant data and functional annotations</div>
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <svg
+                  className="w-12 h-12 mb-3 text-slate-300"
+                  viewBox="0 0 64 64"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeDasharray="4 2"
+                  />
+                  <path
+                    d="M32 12v8M32 44v8M12 32h8M44 32h8"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="8"
+                    fill="currentColor"
+                    opacity="0.3"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="4"
+                    fill="currentColor"
+                    opacity="0.5"
+                  />
+                </svg>
+                <div className="text-sm font-medium text-slate-600">
+                  Hover over a nucleotide
+                </div>
               </div>
             </CardContent>
           </>

@@ -5,17 +5,16 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from pprint import pprint
 
 # Add parent directory to path to import rnudb_utils
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from rnudb_utils import (
     insert_genes,
-    insert_variants,
     insert_structures,
-    query_gnomad_variants,
+    insert_variants,
     query_all_of_us_variants,
+    query_gnomad_variants,
 )
 
 
@@ -48,6 +47,12 @@ def insert_sample_variants():
 
     print("Querying All of Us variants...")
     aou_variants = query_all_of_us_variants("12", 120291759, 120291903)
+
+    if len(aou_variants) == 0:
+        print("Note: No All of Us variants retrieved (API may require authentication).")
+        print("To get All of Us data:")
+        print("  1. Use the All of Us Researcher Workbench")
+        print("  2. Export data and import locally via CSV")
 
     # Load SGE data
     print("Loading SGE data...")
@@ -241,7 +246,7 @@ def insert_sample_structures():
         Path(__file__).parent.parent / "data" / "rnu4-2" / "structure.json"
     )
 
-    with open(structure_file_path, "r") as f:
+    with open(structure_file_path) as f:
         structure_data = json.load(f)
 
     # Prepare structure for insertion
@@ -250,14 +255,14 @@ def insert_sample_structures():
             "id": "rnu4-2_structure",
             "geneId": "RNU4-2",
             "nucleotides": structure_data.get("nucleotides", []),
-            "basePairs": structure_data.get("basePairs", []),
+            "base_pairs": structure_data.get("base_pairs", []),
             "annotations": structure_data.get("annotations", []),
-            "structuralFeatures": structure_data.get("structuralFeatures", []),
+            "structural_features": structure_data.get("structural_features", []),
         }
     ]
 
     print(
-        f"Loading structure with {len(structure_data.get('nucleotides', []))} nucleotides, {len(structure_data.get('basePairs', []))} base pairs, {len(structure_data.get('annotations', []))} annotations, and {len(structure_data.get('structuralFeatures', []))} structural features..."
+        f"Loading structure with {len(structure_data.get('nucleotides', []))} nucleotides, {len(structure_data.get('base_pairs', []))} base pairs, {len(structure_data.get('annotations', []))} annotations, and {len(structure_data.get('structural_features', []))} structural features..."
     )
     insert_structures(structures_data)
     print("RNA structure inserted successfully!")

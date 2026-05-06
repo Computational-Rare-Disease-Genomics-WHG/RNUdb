@@ -1,155 +1,342 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Dna, Menu, X, Database } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getAllSnRNAIds, getGeneData } from '../data/genes';
-import type { SnRNAGene } from '@/types';
+import {
+  Dna,
+  Menu,
+  X,
+  Database,
+  LogIn,
+  LogOut,
+  Shield,
+  User,
+  FileCode,
+  Edit3,
+  Stethoscope,
+  BookOpen,
+  Search,
+} from "lucide-react";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { getAllSnRNAIds, getGeneData } from "../data/genes";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { SnRNAGene } from "@/types";
 
 interface HeaderProps {
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  searchResults: SnRNAGene[] | null;
-  setSearchResults: (results: SnRNAGene[] | null) => void;
-  setSelectedSnRNA: (snRNA: string) => void;
-  isMobileMenuOpen: boolean;
-  setIsMobileMenuOpen: (open: boolean) => void;
+  searchTerm?: string;
+  setSearchTerm?: (term: string) => void;
+  searchResults?: SnRNAGene[] | null;
+  setSearchResults?: (results: SnRNAGene[] | null) => void;
+  setSelectedSnRNA?: (snRNA: string) => void;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
+  showSearch?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
-  searchTerm,
-  setSearchTerm,
-  searchResults,
-  setSearchResults,
-  isMobileMenuOpen,
-  setIsMobileMenuOpen
+  searchTerm = "",
+  setSearchTerm = () => {},
+  searchResults: _searchResults = null,
+  setSearchResults = () => {},
+  isMobileMenuOpen = false,
+  setIsMobileMenuOpen = () => {},
+  showSearch = true,
 }) => {
   const navigate = useNavigate();
+  const {
+    user,
+    isLoading: authLoading,
+    isLoggedIn,
+    isAdmin,
+    login,
+    logout,
+  } = useAuth();
 
   const handleSearch = async () => {
     if (searchTerm.trim()) {
       try {
         const geneIds = await getAllSnRNAIds();
         const results: SnRNAGene[] = [];
-        
+
         for (const geneId of geneIds) {
           const geneData = await getGeneData(geneId);
           if (geneData) {
-            if (geneData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                geneData.fullName.toLowerCase().includes(searchTerm.toLowerCase())) {
+            if (
+              geneData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              geneData.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+            ) {
               results.push(geneData);
             }
           }
         }
-        
+
         setSearchResults(results);
         if (results.length > 0) {
           navigate(`/gene/${results[0].name}`);
         }
       } catch (error) {
-        console.error('Error during search:', error);
+        console.error("Error during search:", error);
         setSearchResults([]);
       }
     }
   };
 
   return (
-    <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50 shadow-lg shadow-slate-200/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          <div className="flex items-center space-x-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="p-3 bg-teal-600 rounded-xl shadow-lg">
-                <Dna className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-teal-600 tracking-tight">
-                  RNU<span className="text-teal-600">db</span>
-                </h1>
-              </div>
-            </Link>
-          </div>
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <Input
-                  placeholder="Search snRNA (e.g., RNU4-2, RNU1-1, RNU2-1)"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-4 h-12 border-slate-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 rounded-xl bg-white shadow-sm transition-all duration-200"
-                />
-              </div>
-              <Button 
-                onClick={handleSearch} 
-                className="h-12 px-8 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
-              >
-                Search
-              </Button>
+    <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center h-16 gap-6">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div className="p-2 bg-teal-600 rounded-lg">
+              <Dna className="h-5 w-5 text-white" />
             </div>
-            
-            {searchResults && (
-              <div className="mt-4">
-                {searchResults.length > 0 ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-600">Found {searchResults.length} result(s):</p>
-                    {searchResults.map((result) => (
-                      <Alert key={result.name} className="border-teal-200 bg-teal-50/80 rounded-xl shadow-sm">
-                        <Database className="h-4 w-4 text-teal-600" />
-                        <AlertDescription>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <strong className="text-teal-800">{result.name}</strong> - {result.fullName}
-                              <br />
-                              <span className="text-sm text-gray-600">
-                                Chr {result.chromosome}:{result.start.toLocaleString()}-{result.end.toLocaleString()} | {(result.end - result.start + 1)} bp
-                              </span>
-                            </div>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => navigate(`/gene/${result.name}`)}
-                              className="ml-4"
-                            >
-                              Select
-                            </Button>
-                          </div>
-                        </AlertDescription>
-                      </Alert>
-                    ))}
-                  </div>
-                ) : (
-                  <Alert className="border-yellow-200 bg-yellow-50">
-                    <AlertDescription>No results found for "{searchTerm}"</AlertDescription>
-                  </Alert>
-                )}
-              </div>
-            )}
-          </nav>
+            <span className="text-xl font-bold text-teal-600 tracking-tight hidden sm:block">
+              RNUdb
+            </span>
+          </Link>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+          <nav className="hidden lg:flex items-center gap-1">
+            {isLoggedIn &&
+              user &&
+              (user.role === "curator" || user.role === "admin") && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/curate")}
+                    className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+                  >
+                    <Database className="h-4 w-4 mr-1.5" />
+                    Curate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/editor")}
+                    className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+                  >
+                    <Edit3 className="h-4 w-4 mr-1.5" />
+                    Editor
+                  </Button>
+                </>
+              )}
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/admin")}
+                className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+              >
+                <Shield className="h-4 w-4 mr-1.5" />
+                Admin
+              </Button>
+            )}
+            <div className="w-px h-5 bg-slate-200 mx-1" />
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => navigate("/clinical-interpretation")}
+              className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+            >
+              <Stethoscope className="h-4 w-4 mr-1.5" />
+              Clinical
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/api-docs")}
+              className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+            >
+              <FileCode className="h-4 w-4 mr-1.5" />
+              API
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/how-to-use")}
+              className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+            >
+              <BookOpen className="h-4 w-4 mr-1.5" />
+              Guide
+            </Button>
+          </nav>
+
+          {showSearch && (
+            <div className="hidden md:flex flex-1 max-w-md mx-auto">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search genes, variants..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  className="pl-9 h-10 border-slate-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg bg-slate-50"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 ml-auto">
+            {showSearch && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden text-slate-600"
+                onClick={() => {}}
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+            )}
+
+            {authLoading ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600" />
+            ) : isLoggedIn && user ? (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2">
+                  <Avatar size="sm">
+                    {user.avatar_url && (
+                      <AvatarImage src={user.avatar_url} alt={user.name} />
+                    )}
+                    <AvatarFallback>
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-slate-700">
+                    {user.name}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-slate-500 hover:text-slate-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={login}
+                className="border-teal-600 text-teal-600 hover:bg-teal-50"
+              >
+                <LogIn className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Sign In</span>
+              </Button>
+            )}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden text-slate-600"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <nav className="flex flex-col space-y-2">
-            </nav>
+        {showSearch && (
+          <div className="md:hidden pb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search genes, variants..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="pl-9 h-10 border-slate-200 focus:border-teal-500 rounded-lg bg-slate-50"
+              />
+            </div>
           </div>
         )}
       </div>
+
+      {isMobileMenuOpen && (
+        <div className="lg:hidden border-t border-slate-200 bg-white">
+          <div className="px-4 py-4 space-y-2">
+            {isLoggedIn &&
+              user &&
+              (user.role === "curator" || user.role === "admin") && (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/curate");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-slate-700"
+                  >
+                    <Database className="h-4 w-4 mr-2" />
+                    Curate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/editor");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-slate-700"
+                  >
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Editor
+                  </Button>
+                </>
+              )}
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  navigate("/admin");
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full justify-start text-slate-700"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Admin
+              </Button>
+            )}
+            <div className="border-t border-slate-100 my-2" />
+            <Button
+              variant="ghost"
+              onClick={() => {
+                navigate("/clinical-interpretation");
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full justify-start text-slate-700"
+            >
+              <Stethoscope className="h-4 w-4 mr-2" />
+              Clinical Interpretation
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                navigate("/api-docs");
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full justify-start text-slate-700"
+            >
+              <FileCode className="h-4 w-4 mr-2" />
+              API Docs
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                navigate("/how-to-use");
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full justify-start text-slate-700"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              How to Use
+            </Button>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

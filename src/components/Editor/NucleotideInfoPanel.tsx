@@ -1,14 +1,17 @@
-import React from 'react';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
-import type { RNAData } from '../../types/rna';
+import React from "react";
+import type { RNAData } from "../../types/rna";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Input } from "../ui/input";
 
 interface NucleotideInfoPanelProps {
   rnaData: RNAData;
   currentNucleotide: number | null;
   editingId: number | null;
-  onUpdateNucleotideBase: (nucleotideId: number, newBase: 'A' | 'C' | 'G' | 'U') => void;
+  onUpdateNucleotideBase: (
+    nucleotideId: number,
+    newBase: "A" | "C" | "G" | "U",
+  ) => void;
   onUpdateNucleotideId: (oldId: number, newId: number) => boolean;
   onSetEditingId: (id: number | null) => void;
 }
@@ -19,13 +22,13 @@ const NucleotideInfoPanel: React.FC<NucleotideInfoPanelProps> = ({
   editingId,
   onUpdateNucleotideBase,
   onUpdateNucleotideId,
-  onSetEditingId
+  onSetEditingId,
 }) => {
   const handleIdUpdate = (newId: number) => {
     if (currentNucleotide) {
       const success = onUpdateNucleotideId(currentNucleotide, newId);
       if (!success) {
-        alert('ID already exists!');
+        alert("ID already exists!");
       }
     }
   };
@@ -52,7 +55,7 @@ const NucleotideInfoPanel: React.FC<NucleotideInfoPanelProps> = ({
                   }}
                   onBlur={() => onSetEditingId(null)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       onSetEditingId(null);
                     }
                   }}
@@ -60,7 +63,7 @@ const NucleotideInfoPanel: React.FC<NucleotideInfoPanelProps> = ({
                   autoFocus
                 />
               ) : (
-                <span 
+                <span
                   className="cursor-pointer underline"
                   onClick={() => onSetEditingId(currentNucleotide)}
                 >
@@ -68,18 +71,24 @@ const NucleotideInfoPanel: React.FC<NucleotideInfoPanelProps> = ({
                 </span>
               )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">Base:</label>
               <div className="flex gap-2">
-                {(['A', 'U', 'G', 'C'] as const).map(base => {
-                  const nucleotide = rnaData.nucleotides.find(n => n.id === currentNucleotide);
+                {(["A", "U", "G", "C"] as const).map((base) => {
+                  const nucleotide = rnaData.nucleotides.find(
+                    (n) => n.id === currentNucleotide,
+                  );
                   return (
                     <Button
                       key={base}
-                      variant={nucleotide?.base === base ? 'default' : 'outline'}
+                      variant={
+                        nucleotide?.base === base ? "default" : "outline"
+                      }
                       size="sm"
-                      onClick={() => onUpdateNucleotideBase(currentNucleotide, base)}
+                      onClick={() =>
+                        onUpdateNucleotideBase(currentNucleotide, base)
+                      }
                       className="flex-1"
                     >
                       {base}
@@ -90,7 +99,7 @@ const NucleotideInfoPanel: React.FC<NucleotideInfoPanelProps> = ({
             </div>
           </div>
         )}
-        
+
         {!currentNucleotide && (
           <p className="text-sm text-gray-500">
             Click on a nucleotide to edit it

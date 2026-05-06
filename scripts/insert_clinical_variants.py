@@ -1,24 +1,18 @@
 """Insert curated clinical variants from VCF file into RNUdb database"""
 
 import sys
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Import directly from database module file to avoid __init__.py dependencies
-import importlib.util
-
-spec = importlib.util.spec_from_file_location(
-    "database", Path(__file__).parent.parent / "rnudb_utils" / "database.py"
+from rnudb_utils import (
+    insert_literature,
+    insert_literature_counts,
+    insert_variant_links,
+    insert_variants,
 )
-db = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(db)
-insert_variants = db.insert_variants
-insert_variant_links = db.insert_variant_links
-insert_literature = db.insert_literature
-insert_literature_counts = db.insert_literature_counts
 
 
 def parse_variant_string(variant_str: str) -> dict:
@@ -90,7 +84,7 @@ def load_clinical_variants():
     all_variants = {}  # variant_id -> variant_dict
     literature_counts_data = []  # Will collect literature counts
 
-    with open(vcf_path, "r") as f:
+    with open(vcf_path) as f:
         for line in f:
             line = line.strip()
             if line.startswith("#"):
@@ -109,7 +103,7 @@ def load_clinical_variants():
             position = int(pos)
             hgvs = info.get("HGVS", "")
             clinvar_sig = info.get("CLINVAR_SIG", "")
-            
+
             # Map abbreviated clinical significance to full terms expected by frontend
             clinvar_sig_mapped = {
                 "PATH": "Pathogenic",
@@ -118,7 +112,7 @@ def load_clinical_variants():
                 "LB": "Likely Benign",
                 "B": "Benign"
             }.get(clinvar_sig, clinvar_sig)  # Default to original if not found
-            
+
             zygosity_str = info.get("ZYGOSITY", "")
             literature_counts_str = info.get("INFO_LITERATURE_COUNTS", "")
             linked_variants_str = info.get("LINKED_VARIANT", "")
@@ -206,7 +200,7 @@ def load_clinical_variants():
         vcf_path_again = (
             Path(__file__).parent.parent / "data" / "rnu4-2" / "variants.vcf"
         )
-        with open(vcf_path_again, "r") as f:
+        with open(vcf_path_again) as f:
             for line in f:
                 line = line.strip()
                 if line.startswith("#"):
@@ -275,7 +269,7 @@ def insert_clinical_literature():
         Path(__file__).parent.parent / "data" / "rnu4-2" / "literature.json"
     )
 
-    with open(literature_file_path, "r") as f:
+    with open(literature_file_path) as f:
         literature_data = json.load(f)
 
     print(f"Inserting {len(literature_data)} literature entries...")

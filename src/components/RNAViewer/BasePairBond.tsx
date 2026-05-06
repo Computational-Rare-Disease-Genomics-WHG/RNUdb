@@ -1,7 +1,7 @@
 // src/components/RNAViewer/BasePairBond.tsx
-import React from 'react';
-import type { Nucleotide } from '../../types';
-import { isWatsonCrickPair } from '../../lib/rnaUtils';
+import React from "react";
+import { isWatsonCrickPair } from "../../lib/rnaUtils";
+import type { Nucleotide } from "../../types";
 
 interface BasePairBondProps {
   from: Nucleotide;
