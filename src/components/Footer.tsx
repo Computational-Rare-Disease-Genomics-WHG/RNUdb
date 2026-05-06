@@ -15,6 +15,12 @@ const Footer: React.FC = () => {
 
           <div className="flex items-center gap-4">
             <a
+              href="https://github.com/Computational-Rare-Disease-Genomics-WHG/RNUdb/issues"
+              className="text-xs text-muted-foreground hover:text-teal-600 transition-colors"
+            >
+              Found an issue?
+            </a>
+            <a
               href="mailto:contact@rarediseasegenomics.org"
               className="text-muted-foreground hover:text-teal-600 transition-colors"
             >
