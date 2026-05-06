@@ -10,7 +10,7 @@ test.describe("Authentication", () => {
     test("unauthenticated /api/auth/github redirects to GitHub", async ({
       page,
     }) => {
-      await page.goto("/api/auth/github");
+      await page.goto("http://localhost:8000/api/auth/github");
       expect(page.url()).toContain("github.com/login");
     });
 
