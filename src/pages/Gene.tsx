@@ -31,14 +31,14 @@ const Gene: React.FC = () => {
   const [searchResults, setSearchResults] = useState<null | SnRNAGene[]>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [overlayMode, setOverlayMode] = useState<
-    "none" | "clinvar" | "gnomad" | "function_score" | "depletion_group"
-  >("none");
+    "none" | "clinvar" | "gnomad" | "depletion_group"
+  >("clinvar");
   const [functionScoreTrackData, setFunctionScoreTrackData] = useState({});
   const [depletionGroupTrackData, setDepletionGroupTrackData] = useState({});
   const [caddScoreTrackData, setCaddScoreTrackData] = useState({});
   const [clinvarOverlayData, setClinvarOverlayData] = useState({});
   const [gnomadOverlayData, setGnomadOverlayData] = useState({});
-  const [functionScoreOverlayData, setFunctionScoreOverlayData] = useState({});
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,31 +109,6 @@ const Gene: React.FC = () => {
   }, [geneId, selectedSnRNA]);
 
   useEffect(() => {
-    const createFunctionScoreTrackData = (variants: Variant[]) => {
-      return Object.fromEntries(
-        variants
-          .filter(
-            (v) =>
-              v.function_score !== undefined &&
-              v.function_score !== null &&
-              v.nucleotidePosition !== undefined,
-          )
-          .map((v) => [
-            v.nucleotidePosition!,
-            {
-              value: v.function_score!, // Use actual raw values for line chart
-              label: `Function Score: ${v.function_score!.toFixed(3)}`,
-              color:
-                v.function_score! > 0
-                  ? COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL // Green for beneficial (positive)
-                  : v.function_score! < -1
-                    ? COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG // Red for highly deleterious (< -1)
-                    : COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE, // Orange for moderately deleterious (-1 to 0)
-            },
-          ]),
-      );
-    };
-
     const createDepletionGroupTrackData = (variants: Variant[]) => {
       return Object.fromEntries(
         variants
@@ -205,37 +180,28 @@ const Gene: React.FC = () => {
       );
     };
 
-    const createFunctionScoreOverlayData = (
-      variants: Variant[],
-      geneData: SnRNAGene,
-    ) => {
+    const createFunctionScoreTrackData = (variants: Variant[]) => {
       return Object.fromEntries(
         variants
           .filter(
             (v) =>
               v.function_score !== undefined &&
               v.function_score !== null &&
-              (v.nucleotidePosition !== undefined || v.position !== undefined),
+              v.nucleotidePosition !== undefined,
           )
-          .map((v) => {
-            // Get nucleotide position - either directly or convert from genomic position
-            let nucleotidePos = v.nucleotidePosition;
-            if (nucleotidePos === undefined && v.position !== undefined) {
-              if (geneData.strand === "-") {
-                nucleotidePos = geneData.end - v.position + 1;
-              } else {
-                nucleotidePos = v.position - geneData.start + 1;
-              }
-            }
-            return [
-              nucleotidePos!,
-              {
-                value: v.function_score!, // Use actual continuous values for overlay
-                label: `Function Score: ${v.function_score!.toFixed(3)}`,
-                variantId: v.id,
-              },
-            ];
-          }),
+          .map((v) => [
+            v.nucleotidePosition!,
+            {
+              value: v.function_score!,
+              label: `Function Score: ${v.function_score!.toFixed(3)}`,
+              color:
+                v.function_score! > 0
+                  ? COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL
+                  : v.function_score! < -1
+                    ? COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG
+                    : COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE,
+            },
+          ]),
       );
     };
 
@@ -323,15 +289,11 @@ const Gene: React.FC = () => {
     const gnomadData = currentData
       ? createGnomadOverlayData(variantData, currentData)
       : {};
-    const functionScoreOverlayData = currentData
-      ? createFunctionScoreOverlayData(variantData, currentData)
-      : {};
     setFunctionScoreTrackData(funcScoreData);
     setDepletionGroupTrackData(depletionData);
     setCaddScoreTrackData(caddData);
     setClinvarOverlayData(clinvarData);
     setGnomadOverlayData(gnomadData);
-    setFunctionScoreOverlayData(functionScoreOverlayData);
   }, [variantData, currentData]);
 
   const cycleOverlayMode = () => {
@@ -342,13 +304,11 @@ const Gene: React.FC = () => {
         case "clinvar":
           return "gnomad";
         case "gnomad":
-          return "function_score";
-        case "function_score":
           return "depletion_group";
         case "depletion_group":
           return "none";
         default:
-          return "none";
+          return "clinvar";
       }
     });
   };
@@ -359,8 +319,6 @@ const Gene: React.FC = () => {
         return clinvarOverlayData;
       case "gnomad":
         return gnomadOverlayData;
-      case "function_score":
-        return functionScoreOverlayData; // Use continuous overlay data
       case "depletion_group":
         return depletionGroupTrackData;
       default:

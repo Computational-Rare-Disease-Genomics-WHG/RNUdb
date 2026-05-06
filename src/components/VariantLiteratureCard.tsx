@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { COLORBLIND_FRIENDLY_PALETTE } from "@/lib/colors";
 import type { Variant, Literature, LiteratureCounts } from "@/types";
 
 interface VariantLiteratureCardProps {
@@ -275,17 +276,49 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
 
   const getClinicalBadge = (clinical: string) => {
     const lower = clinical?.toLowerCase() || "";
-    if (lower.includes("pathogenic") && !lower.includes("likely"))
-      return "bg-red-100 text-red-800 border-red-200";
-    if (lower.includes("likely pathogenic") || lower === "lp")
-      return "bg-orange-100 text-orange-800 border-orange-200";
-    if (lower.includes("benign") && !lower.includes("likely"))
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
-    if (lower.includes("likely benign") || lower === "lb")
-      return "bg-green-100 text-green-800 border-green-200";
-    if (lower.includes("vus") || lower.includes("uncertain"))
-      return "bg-amber-100 text-amber-800 border-amber-200";
-    return "bg-slate-100 text-slate-800 border-slate-200";
+    if (lower.includes("pathogenic") && !lower.includes("likely")) {
+      return {
+        backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC + "20",
+        color: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC,
+        borderColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC + "40",
+      };
+    }
+    if (lower.includes("likely pathogenic") || lower === "lp") {
+      return {
+        backgroundColor:
+          COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC + "20",
+        color: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC,
+        borderColor:
+          COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC + "40",
+      };
+    }
+    if (lower.includes("benign") && !lower.includes("likely")) {
+      return {
+        backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN + "20",
+        color: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN,
+        borderColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN + "40",
+      };
+    }
+    if (lower.includes("likely benign") || lower === "lb") {
+      return {
+        backgroundColor:
+          COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN + "20",
+        color: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN,
+        borderColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN + "40",
+      };
+    }
+    if (lower.includes("vus") || lower.includes("uncertain")) {
+      return {
+        backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS + "20",
+        color: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS,
+        borderColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS + "40",
+      };
+    }
+    return {
+      backgroundColor: "#f1f5f9",
+      color: "#475569",
+      borderColor: "#e2e8f0",
+    };
   };
 
   const clearFilters = () => {
@@ -587,18 +620,19 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                             {variant.hgvs || variant.id}
                           </td>
                           <td className="py-3 px-2">
-                            <span
-                              className={`text-xs px-1.5 py-0.5 rounded-full text-center font-medium ${getClinicalBadge(
+                            {(() => {
+                              const style = getClinicalBadge(
                                 variant.clinical_significance || "",
-                              )
-                                .replace("text-white", "text-")
-                                .replace(
-                                  "bg-slate-200",
-                                  "bg-slate-100 text-slate-700",
-                                )}`}
-                            >
-                              {variant.clinical_significance || "Unknown"}
-                            </span>
+                              );
+                              return (
+                                <span
+                                  className="text-xs px-1.5 py-0.5 rounded-full text-center font-medium"
+                                  style={style}
+                                >
+                                  {variant.clinical_significance || "Unknown"}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="py-3 px-2 text-slate-600 truncate">
                             {variant.disease_type || "—"}
@@ -1064,13 +1098,17 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                     {variant.ref}→{variant.alt}
                                   </span>
                                 )}
-                                {variant?.clinical_significance && (
-                                  <Badge
-                                    className={`text-xs ${getClinicalBadge(variant.clinical_significance)}`}
-                                  >
-                                    {variant.clinical_significance}
-                                  </Badge>
-                                )}
+                                {variant?.clinical_significance &&
+                                  (() => {
+                                    const style = getClinicalBadge(
+                                      variant.clinical_significance,
+                                    );
+                                    return (
+                                      <Badge className="text-xs" style={style}>
+                                        {variant.clinical_significance}
+                                      </Badge>
+                                    );
+                                  })()}
                               </div>
                             );
                           },
