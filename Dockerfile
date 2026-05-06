@@ -32,8 +32,6 @@ WORKDIR /app
 # Install Python 3.11 and essentials
 RUN apt-get update && apt-get install -y \
     python3.11 \
-    python3.11-venv \
-    python3-pip \
     curl \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -46,11 +44,9 @@ COPY pyproject.toml uv.lock* ./
 COPY api ./api
 COPY rnudb_utils ./rnudb_utils
 
-# Create venv using Python 3.11
-RUN python3.11 -m venv /app/.venv && \
-    /app/.venv/bin/pip install --upgrade pip && \
-    uv export --no-hashes > requirements.txt && \
-    uv pip install --python=/app/.venv/bin/python -r requirements.txt
+# Create venv and install dependencies using uv
+RUN uv venv --python 3.11 .venv && \
+    uv sync --python .venv/bin/python
 
 # --------------------------------------------------
 # Stage 3: Final runtime (distroless, non-root)
