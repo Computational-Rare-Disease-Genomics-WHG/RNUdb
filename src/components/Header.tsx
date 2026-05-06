@@ -13,11 +13,12 @@ import {
   BookOpen,
   Search,
 } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getAllSnRNAIds, getGeneData } from "../data/genes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SnRNAGene } from "@/types";
@@ -51,6 +52,25 @@ const Header: React.FC<HeaderProps> = ({
     login,
     logout,
   } = useAuth();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (isAdmin) {
+      Promise.all([
+        fetch("/api/users/pending", { credentials: "include" }).then((r) =>
+          r.json(),
+        ),
+        fetch("/api/approvals?status=pending", { credentials: "include" }).then(
+          (r) => r.json(),
+        ),
+      ])
+        .then(([users, changes]) => {
+          const count = (users?.length || 0) + (changes?.length || 0);
+          setPendingCount(count);
+        })
+        .catch(() => {});
+    }
+  }, [isAdmin]);
 
   const handleSearch = async () => {
     if (searchTerm.trim()) {
@@ -124,10 +144,18 @@ const Header: React.FC<HeaderProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/admin")}
-                className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+                className="text-slate-600 hover:text-teal-600 hover:bg-teal-50 relative"
               >
                 <Shield className="h-4 w-4 mr-1.5" />
                 Admin
+                {pendingCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]"
+                  >
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </Badge>
+                )}
               </Button>
             )}
             <div className="w-px h-5 bg-slate-200 mx-1" />
@@ -294,10 +322,18 @@ const Header: React.FC<HeaderProps> = ({
                   navigate("/admin");
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full justify-start text-slate-700"
+                className="w-full justify-start text-slate-700 relative"
               >
                 <Shield className="h-4 w-4 mr-2" />
                 Admin
+                {pendingCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="ml-auto h-5 w-5 p-0 flex items-center justify-center text-[10px]"
+                  >
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </Badge>
+                )}
               </Button>
             )}
             <div className="border-t border-slate-100 my-2" />

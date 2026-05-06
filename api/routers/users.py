@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
+from api.notifications import notify_user_approved
 from api.routers.auth import require_admin
 from rnudb_utils.database import (
     list_all_users,
@@ -49,10 +50,13 @@ async def get_pending_users(request: Request):
 
 
 @router.post("/users/{github_login}/approve")
-async def approve_user(github_login: str, request: Request):
+async def approve_user(
+    github_login: str,
+    user: dict = Depends(require_admin),
+):
     """Approve a pending user as curator (admin only)."""
-    require_admin(request)
     update_user_role(github_login, "curator")
+    notify_user_approved(github_login, user.get("github_login", "admin"))
     return {"message": f"User {github_login} approved as curator"}
 
 

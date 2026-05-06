@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from sqlmodel import SQLModel
 
 from api.models import PendingChange, PendingChangeOut
+from api.notifications import notify_change_approved, notify_change_rejected
 from api.routers.auth import require_admin, require_curator
 from rnudb_utils.database import get_db
 
@@ -177,6 +178,23 @@ async def review_change(
     change.review_notes = body.notes
     db.commit()
     db.refresh(change)
+
+    # Send Slack notification (fail silently)
+    if body.status == "approved":
+        notify_change_approved(
+            change.entity_type,
+            change.action,
+            change.requested_by,
+            user["github_login"],
+        )
+    elif body.status == "rejected":
+        notify_change_rejected(
+            change.entity_type,
+            change.action,
+            change.requested_by,
+            user["github_login"],
+            body.notes,
+        )
 
     return _row_to_dict(change)
 

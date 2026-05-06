@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from .routers import genes, literature, variants
+from .routers.admin import router as admin_router
 from .routers.approvals import router as approvals_router
 from .routers.auth import router as auth_router
 from .routers.bed_tracks import router as bed_tracks_router
@@ -46,6 +47,7 @@ app.include_router(users_router, prefix="/api/users")
 app.include_router(imports_router, prefix="/api")
 app.include_router(bed_tracks_router, prefix="/api")
 app.include_router(approvals_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")
 
 # Serve frontend static files
 dist_path = Path(__file__).resolve().parent.parent / "dist"

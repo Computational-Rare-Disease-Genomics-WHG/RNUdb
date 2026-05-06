@@ -53,13 +53,16 @@ The Docker image mounts `/app/data` for persistent storage:
 
 ### Environment Variables
 
-| Variable               | Required | Description                            |
-| ---------------------- | -------- | -------------------------------------- |
-| `GITHUB_CLIENT_ID`     | Yes      | GitHub OAuth App client ID             |
-| `GITHUB_CLIENT_SECRET` | Yes      | GitHub OAuth App client secret         |
-| `JWT_SECRET_KEY`       | Yes      | Secret for JWT signing (min 32 chars)  |
-| `ADMIN_GITHUB_LOGINS`  | Yes      | Comma-separated admin GitHub usernames |
-| `FRONTEND_URL`         | Yes      | Production URL for OAuth callbacks     |
+| Variable                | Required | Description                                         |
+| ----------------------- | -------- | --------------------------------------------------- |
+| `GITHUB_CLIENT_ID`      | Yes      | GitHub OAuth App client ID                          |
+| `GITHUB_CLIENT_SECRET`  | Yes      | GitHub OAuth App client secret                      |
+| `JWT_SECRET_KEY`        | Yes      | Secret for JWT signing (min 32 chars)               |
+| `ADMIN_GITHUB_LOGINS`   | Yes      | Comma-separated admin GitHub usernames              |
+| `FRONTEND_URL`          | Yes      | Production URL for OAuth callbacks                  |
+| `SLACK_ENABLED`         | No       | Enable Slack notifications (true/false)             |
+| `SLACK_WEBHOOK_URL`     | No       | Slack webhook URL for notifications                 |
+| `SLACK_DEFAULT_CHANNEL` | No       | Slack channel for notifications (default: #general) |
 
 ---
 
