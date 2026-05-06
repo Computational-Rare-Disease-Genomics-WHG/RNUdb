@@ -13,11 +13,6 @@ import {
 } from "lucide-react";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   COLORBLIND_FRIENDLY_PALETTE,
   generateGnomadColorWithAlpha,
 } from "../../lib/colors";
@@ -35,6 +30,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import "./RNAViewer.css";
 import {
   getDistinctDiseaseTypes,

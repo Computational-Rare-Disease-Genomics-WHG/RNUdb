@@ -6,7 +6,6 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/AuthContext";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import APIDocs from "./pages/APIDocs";
 import Admin from "./pages/Admin";
 import ClinicalInterpretation from "./pages/ClinicalInterpretation";
@@ -16,6 +15,7 @@ import Gene from "./pages/Gene";
 import Home from "./pages/Home";
 import HowToUse from "./pages/HowToUse";
 import Login from "./pages/Login";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function ProtectedEditor() {
   const { isCurator, isLoading } = useAuth();
