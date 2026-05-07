@@ -198,7 +198,7 @@ async def get_variant_classifications_for_variant(
 
 @router.get("/literature-counts", response_model=list[VariantClassificationPublic])
 async def get_literature_counts(db: Session = Depends(get_db)):
-    """Get all variant classifications (legacy endpoint, use /variant-classifications)"""
+    """Get all variant classifications (legacy, use /variant-classifications)"""
     classifications = db.execute(select(VariantClassification)).scalars().all()
     return [VariantClassificationPublic.model_validate(c) for c in classifications]
 
@@ -249,7 +249,10 @@ async def create_variant_classification(
     if existing:
         raise HTTPException(
             status_code=409,
-            detail=f"Variant classification for {classification.variant_id} and {classification.literature_id} already exists",
+            detail=(
+                f"Variant classification for {classification.variant_id} "
+                f"and {classification.literature_id} already exists"
+            ),
         )
 
     new_classification = VariantClassification.model_validate(classification)
@@ -384,7 +387,7 @@ async def bulk_import_variant_classifications(
     db: Session = Depends(get_db),
 ):
     """Bulk import variant classifications (curator only)"""
-    user = require_curator(request)
+    require_curator(request)
     body = await request.json()
 
     if isinstance(body, list):
@@ -407,7 +410,10 @@ async def bulk_import_variant_classifications(
                     {
                         "row": idx + 1,
                         "field": "variant_id",
-                        "message": f"Variant {classification_data.get('variant_id')} does not exist",
+                        "message": (
+                            f"Variant {classification_data.get('variant_id')} "
+                            "does not exist"
+                        ),
                     }
                 )
                 skipped_count += 1
@@ -419,7 +425,10 @@ async def bulk_import_variant_classifications(
                     {
                         "row": idx + 1,
                         "field": "literature_id",
-                        "message": f"Literature {classification_data.get('literature_id')} does not exist",
+                        "message": (
+                            f"Literature {classification_data.get('literature_id')} "
+                            "does not exist"
+                        ),
                     }
                 )
                 skipped_count += 1

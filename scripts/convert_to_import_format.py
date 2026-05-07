@@ -76,11 +76,11 @@ def main():
     sge_data = load_sge_data()
     variants = load_variants()
     variant_ids_in_clinical = {v["id"] for v in variants}
-    
+
     print(f"Loaded: {len(sge_data)} SGE records, {len(variants)} clinical variants")
-    
+
     print("\n=== Creating clinical_variants.vcf (minimal - HGVS only) ===")
-    
+
     # Minimal VCF - only position/ref/alt and HGVS (clinical variants only)
     vcf_lines = [
         '##fileformat=VCFv4.2',
@@ -90,27 +90,27 @@ def main():
         '##INFO=<ID=HGVS,Number=1,Type=String,Description="HGVS nomenclature for the variant">',
         '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO',
     ]
-    
+
     for v in variants:
         info_parts = []
         if v["info"].get("HGVS"):
             info_parts.append(f"HGVS={v['info']['HGVS']}")
-        
+
         info_str = ";".join(info_parts) if info_parts else "."
-        
+
         vcf_lines.append(
             f"{v['chrom']}\t{v['pos']}\t{v['id']}\t{v['ref']}\t{v['alt']}\t.\tPASS\t{info_str}"
         )
-    
+
     vcf_output = DATA_DIR / "clinical_variants.vcf"
     with open(vcf_output, "w") as f:
         f.write("\n".join(vcf_lines))
-    
+
     print(f"Written: {vcf_output}")
     print(f"Clinical variants: {len(vcf_lines) - 6}")
-    
+
     print("\n=== Creating sge_variants.vcf (ALL SGE variants in gene region) ===")
-    
+
     # SGE VCF - ALL variants with SGE data (not just clinical ones)
     sge_vcf_lines = [
         '##fileformat=VCFv4.2',
@@ -126,7 +126,7 @@ def main():
         '##INFO=<ID=CADD_SCORE,Number=1,Type=Float,Description="CADD pathogenicity score">',
         '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO',
     ]
-    
+
     # Process ALL SGE data records - not just those in clinical VCF
     for sge_id, sge in sge_data.items():
         # Parse variant ID to get chrom, pos, ref, alt
@@ -137,7 +137,7 @@ def main():
             pos = int(parts[1])
             ref = parts[2]
             alt = parts[3] if len(parts) > 3 else ""
-            
+
             # Skip variants with empty alt (deletions can't be represented in standard VCF)
             if not alt:
                 continue
@@ -146,7 +146,7 @@ def main():
                 continue
         except:
             continue
-        
+
         # Get HGVS from SGE data directly (or from clinical VCF if not in txt)
         hgvs = sge.get("hgvs") or ""
         if not hgvs:
@@ -154,14 +154,14 @@ def main():
                 if v["id"] == sge_id:
                     hgvs = v["info"].get("HGVS", "")
                     break
-        
+
         info_parts = []
         if hgvs and hgvs != "NA":
             info_parts.append(f"HGVS={hgvs}")
-        
+
         if sge.get("nucleotide") and sge["nucleotide"] != "NA":
             info_parts.append(f"NUCLEOTIDE_POSITION={sge['nucleotide']}")
-        
+
         if sge.get("function_score") and sge["function_score"] != "NA":
             info_parts.append(f"FUNCTION_SCORE={sge['function_score']}")
         if sge.get("pvalues") and sge["pvalues"] != "NA":
@@ -172,51 +172,51 @@ def main():
             info_parts.append(f"DEPLETION_GROUP={sge['depletion_group']}")
         if sge.get("cadd_score") and sge["cadd_score"] != "NA":
             info_parts.append(f"CADD_SCORE={sge['cadd_score']}")
-        
+
         info_str = ";".join(info_parts) if info_parts else "."
-        
+
         sge_vcf_lines.append(
             f"chr{chrom}\t{pos}\t{sge_id}\t{ref}\t{alt}\t.\tPASS\t{info_str}"
         )
-    
+
     sge_vcf_output = DATA_DIR / "sge_variants.vcf"
     with open(sge_vcf_output, "w") as f:
         f.write("\n".join(sge_vcf_lines))
-    
+
     print(f"Written: {sge_vcf_output}")
     print(f"SGE variants: {len(sge_vcf_lines) - 12}")
-    
+
     print("\n=== Creating variant_classifications.csv (clinical from papers) ===")
-    
+
     # Load literature for DOI mapping
     with open(DATA_DIR / "literature.json") as f:
         literature = json.load(f)
-    
+
     paper_id_to_doi = {lit["id"]: lit.get("doi", "") for lit in literature}
-    
+
     classifications = []
-    
+
     for v in variants:
         variant_id = v["id"]
-        
+
         # Parse INFO_LITERATURE_COUNTS: "chen_et_al_2024:5,nava_et_al_2025:1"
         lit_counts_str = v["info"].get("INFO_LITERATURE_COUNTS", "")
         if not lit_counts_str:
             continue
-            
+
         for pair in lit_counts_str.split(","):
             if ":" not in pair:
                 continue
             old_paper_id, count = pair.split(":", 1)
             count = int(count.strip())
-            
+
             doi = paper_id_to_doi.get(old_paper_id.strip(), "")
             if not doi:
                 continue
-            
+
             # Get zygosity from VCF
             zygosity = v["info"].get("ZYGOSITY", "")
-            
+
             # Get clinical significance
             clin_sig = v["info"].get("CLINVAR_SIG", "")
             clin_sig_map = {
@@ -227,10 +227,10 @@ def main():
                 "B": "Benign",
             }
             clinical_significance = clin_sig_map.get(clin_sig, clin_sig)
-            
+
             # Get linked variants
             linked = v["info"].get("LINKED_VARIANT", "")
-            
+
             classifications.append({
                 "variant_id": variant_id,
                 "paper_id": doi,
@@ -240,18 +240,18 @@ def main():
                 "counts": count,
                 "linked_variant_ids": linked,
             })
-    
+
     classifications_output = DATA_DIR / "variant_classifications.csv"
     fieldnames = ["variant_id", "paper_id", "clinical_significance", "zygosity", "disease", "counts", "linked_variant_ids"]
-    
+
     with open(classifications_output, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(classifications)
-    
+
     print(f"Written: {classifications_output}")
     print(f"Classifications: {len(classifications)}")
-    
+
     print("\n=== Summary ===")
     print(f"clinical_variants.vcf: {len(vcf_lines) - 6} variants")
     print(f"sge_variants.vcf: {len(sge_vcf_lines) - 12} variants")

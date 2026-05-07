@@ -82,7 +82,6 @@ async def create_gene(
 
     if fetch_population_data:
         from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
-        from rnudb_utils.database import SessionLocal
 
         chrom = (
             gene.chromosome
@@ -90,8 +89,15 @@ async def create_gene(
             else gene.chromosome[3:]
         )
 
-        gnomad_variants = query_gnomad_variants(chrom, gene.start, gene.end) if query_gnomad_variants else []
-        aou_variants = query_all_of_us_variants(chrom, gene.start, gene.end) if query_all_of_us_variants else []
+        start, end = gene.start, gene.end
+        gnomad_variants = (
+            query_gnomad_variants(chrom, start, end) if query_gnomad_variants else []
+        )
+        aou_variants = (
+            query_all_of_us_variants(chrom, start, end)
+            if query_all_of_us_variants
+            else []
+        )
 
         gnomad_count = len(gnomad_variants)
         aou_count = len(aou_variants)
@@ -99,17 +105,19 @@ async def create_gene(
         variants_to_insert = []
 
         for v in gnomad_variants:
-            variants_to_insert.append({
-                "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
-                "geneId": gene.id,
-                "position": v["position"],
-                "ref": v["ref"],
-                "alt": v["alt"],
-                "gnomad_ac": v.get("gnomad_ac"),
-                "gnomad_hom": v.get("gnomad_hom"),
-                "aou_ac": None,
-                "aou_hom": None,
-            })
+            variants_to_insert.append(
+                {
+                    "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
+                    "geneId": gene.id,
+                    "position": v["position"],
+                    "ref": v["ref"],
+                    "alt": v["alt"],
+                    "gnomad_ac": v.get("gnomad_ac"),
+                    "gnomad_hom": v.get("gnomad_hom"),
+                    "aou_ac": None,
+                    "aou_hom": None,
+                }
+            )
 
         for v in aou_variants:
             vid = f"chr{chrom}-{v['position']}-{v.get('ref', '')}-{v.get('alt', '')}"
@@ -118,30 +126,36 @@ async def create_gene(
                 existing["aou_ac"] = v.get("aou_ac")
                 existing["aou_hom"] = v.get("aou_hom")
             else:
-                variants_to_insert.append({
-                    "id": vid,
-                    "geneId": gene.id,
-                    "position": v["position"],
-                    "ref": v.get("ref", ""),
-                    "alt": v.get("alt", ""),
-                    "gnomad_ac": None,
-                    "gnomad_hom": None,
-                    "aou_ac": v.get("aou_ac"),
-                    "aou_hom": v.get("aou_hom"),
-                })
+                variants_to_insert.append(
+                    {
+                        "id": vid,
+                        "geneId": gene.id,
+                        "position": v["position"],
+                        "ref": v.get("ref", ""),
+                        "alt": v.get("alt", ""),
+                        "gnomad_ac": None,
+                        "gnomad_hom": None,
+                        "aou_ac": v.get("aou_ac"),
+                        "aou_hom": v.get("aou_hom"),
+                    }
+                )
 
         for v in variants_to_insert:
             db.execute(
                 text("""
-                    INSERT INTO variants (id, geneId, position, ref, alt, gnomad_ac, gnomad_hom, aou_ac, aou_hom)
-                    VALUES (:id, :geneId, :position, :ref, :alt, :gnomad_ac, :gnomad_hom, :aou_ac, :aou_hom)
+                    INSERT INTO variants
+                    (id, geneId, position, ref, alt, gnomad_ac,
+                     gnomad_hom, aou_ac, aou_hom)
+                    VALUES
+                    (:id, :geneId, :position, :ref, :alt, :gnomad_ac,
+                     :gnomad_hom, :aou_ac, :aou_hom)
                     ON CONFLICT(id) DO UPDATE SET
                         gnomad_ac = EXCLUDED.gnomad_ac,
                         gnomad_hom = EXCLUDED.gnomad_hom,
                         aou_ac = EXCLUDED.aou_ac,
                         aou_hom = EXCLUDED.aou_hom
                 """),
-                v
+                v,
             )
 
         db.commit()
@@ -211,8 +225,16 @@ async def refresh_gene_variants(
 
     from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
 
-    gnomad_variants = query_gnomad_variants(chrom, gene.start, gene.end) if query_gnomad_variants else []
-    aou_variants = query_all_of_us_variants(chrom, gene.start, gene.end) if query_all_of_us_variants else []
+    gnomad_variants = (
+        query_gnomad_variants(chrom, gene.start, gene.end)
+        if query_gnomad_variants
+        else []
+    )
+    aou_variants = (
+        query_all_of_us_variants(chrom, gene.start, gene.end)
+        if query_all_of_us_variants
+        else []
+    )
 
     gnomad_count = len(gnomad_variants)
     aou_count = len(aou_variants)
@@ -220,17 +242,19 @@ async def refresh_gene_variants(
     variants_to_insert = []
 
     for v in gnomad_variants:
-        variants_to_insert.append({
-            "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
-            "geneId": gene.id,
-            "position": v["position"],
-            "ref": v["ref"],
-            "alt": v["alt"],
-            "gnomad_ac": v.get("gnomad_ac"),
-            "gnomad_hom": v.get("gnomad_hom"),
-            "aou_ac": None,
-            "aou_hom": None,
-        })
+        variants_to_insert.append(
+            {
+                "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
+                "geneId": gene.id,
+                "position": v["position"],
+                "ref": v["ref"],
+                "alt": v["alt"],
+                "gnomad_ac": v.get("gnomad_ac"),
+                "gnomad_hom": v.get("gnomad_hom"),
+                "aou_ac": None,
+                "aou_hom": None,
+            }
+        )
 
     for v in aou_variants:
         vid = f"chr{chrom}-{v['position']}-{v.get('ref', '')}-{v.get('alt', '')}"
@@ -239,30 +263,35 @@ async def refresh_gene_variants(
             existing["aou_ac"] = v.get("aou_ac")
             existing["aou_hom"] = v.get("aou_hom")
         else:
-            variants_to_insert.append({
-                "id": vid,
-                "geneId": gene.id,
-                "position": v["position"],
-                "ref": v.get("ref", ""),
-                "alt": v.get("alt", ""),
-                "gnomad_ac": None,
-                "gnomad_hom": None,
-                "aou_ac": v.get("aou_ac"),
-                "aou_hom": v.get("aou_hom"),
-            })
+            variants_to_insert.append(
+                {
+                    "id": vid,
+                    "geneId": gene.id,
+                    "position": v["position"],
+                    "ref": v.get("ref", ""),
+                    "alt": v.get("alt", ""),
+                    "gnomad_ac": None,
+                    "gnomad_hom": None,
+                    "aou_ac": v.get("aou_ac"),
+                    "aou_hom": v.get("aou_hom"),
+                }
+            )
 
     for v in variants_to_insert:
         db.execute(
             text("""
-                INSERT INTO variants (id, geneId, position, ref, alt, gnomad_ac, gnomad_hom, aou_ac, aou_hom)
-                VALUES (:id, :geneId, :position, :ref, :alt, :gnomad_ac, :gnomad_hom, :aou_ac, :aou_hom)
+                INSERT INTO variants
+                (id, geneId, position, ref, alt, gnomad_ac, gnomad_hom, aou_ac, aou_hom)
+                VALUES
+                (:id, :geneId, :position, :ref, :alt, :gnomad_ac, :gnomad_hom,
+                 :aou_ac, :aou_hom)
                 ON CONFLICT(id) DO UPDATE SET
                     gnomad_ac = EXCLUDED.gnomad_ac,
                     gnomad_hom = EXCLUDED.gnomad_hom,
                     aou_ac = EXCLUDED.aou_ac,
                     aou_hom = EXCLUDED.aou_hom
             """),
-            v
+            v,
         )
 
     db.commit()
@@ -337,7 +366,11 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
             classifications_by_variant[vid] = []
         classifications_by_variant[vid].append(row_dict)
 
-    hgvs_by_variant = {row._mapping["id"]: row._mapping["hgvs"] for row in rows if row._mapping.get("hgvs")}
+    hgvs_by_variant = {
+        row._mapping["id"]: row._mapping["hgvs"]
+        for row in rows
+        if row._mapping.get("hgvs")
+    }
 
     variants = []
     for row in rows:
@@ -361,9 +394,16 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
                 "clinical_significance"
             )
             row_dict["disease_type"] = primary_class.get("disease")
-            row_dict["zygosity"] = primary_class.get("zygosity")
+            raw_zyg = primary_class.get("zygosity")
+            row_dict["zygosity"] = (
+                "hom"
+                if raw_zyg == "Homozygous"
+                else "het"
+                if raw_zyg == "Heterozygous"
+                else None
+            )
             row_dict["clinvar_significance"] = primary_class.get("clinvar_significance")
-            
+
             linked_ids = primary_class.get("linked_variant_ids")
             if linked_ids:
                 linked_id_list = [v.strip() for v in linked_ids.split(",") if v.strip()]

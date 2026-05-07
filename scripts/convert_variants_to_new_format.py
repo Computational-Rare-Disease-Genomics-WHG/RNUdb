@@ -34,12 +34,12 @@ def convert_clinical_variants():
     if not VARIANTS_VCF.exists():
         print(f"Error: {VARIANTS_VCF} not found")
         sys.exit(1)
-    
+
     lines = VARIANTS_VCF.read_text().strip().split("\n")
-    
+
     vcf_lines = []
     csv_rows = []
-    
+
     CLINVAR_MAP = {
         "PATH": "Pathogenic",
         "LP": "Likely Pathogenic",
@@ -47,25 +47,25 @@ def convert_clinical_variants():
         "LB": "Likely Benign",
         "B": "Benign",
     }
-    
+
     for line in lines:
         if line.startswith("##"):
             if "source" in line.lower():
                 line = line.replace("ReNU_Syndrome_Variants_Database", "RNUdb_Clinical")
             vcf_lines.append(line)
             continue
-            
+
         if line.startswith("#CHROM"):
             vcf_lines.append(line)
             continue
-            
+
         if not line.strip():
             continue
-            
+
         parts = line.split("\t")
         if len(parts) < 8:
             continue
-            
+
         chrom = parts[0]
         pos = parts[1]
         variant_id = parts[2]
@@ -74,26 +74,26 @@ def convert_clinical_variants():
         qual = parts[5]
         filter_field = parts[6]
         info = parts[7]
-        
+
         info_dict = parse_info_field(info)
-        
+
         hgvs = info_dict.get("HGVS", "")
         clinvar_sig = info_dict.get("CLINVAR_SIG", "")
         zygosity = info_dict.get("ZYGOSITY", "")
         literature_counts = info_dict.get("INFO_LITERATURE_COUNTS", "")
         linked_variants = info_dict.get("LINKED_VARIANT", "")
-        
+
         clinical_sig = CLINVAR_MAP.get(clinvar_sig, clinvar_sig)
-        
+
         new_info_parts = []
         if hgvs:
             new_info_parts.append(f"HGVS={hgvs}")
-        
+
         new_info = ";".join(new_info_parts) if new_info_parts else "."
-        
+
         new_line = f"{chrom}\t{pos}\t{variant_id}\t{ref}\t{alt}\t{qual}\t{filter_field}\t{new_info}"
         vcf_lines.append(new_line)
-        
+
         if literature_counts:
             for lc in literature_counts.split(";"):
                 if ":" in lc:
@@ -119,13 +119,13 @@ def convert_clinical_variants():
                 "linked_variant_ids": linked_variants.replace(",", ";") if linked_variants else "",
                 "clinvar_significance": clinvar_sig,
             })
-    
+
     OUTPUT_VCF.write_text("\n".join(vcf_lines))
     print(f"Created {OUTPUT_VCF}")
-    
+
     variant_count = sum(1 for line in vcf_lines if not line.startswith("#"))
     print(f"Converted {variant_count} variants to VCF")
-    
+
     with open(OUTPUT_CSV, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=[
             "variant_id", "paper_id", "clinical_significance", "zygosity",
@@ -134,7 +134,7 @@ def convert_clinical_variants():
         writer.writeheader()
         for row in csv_rows:
             writer.writerow(row)
-    
+
     print(f"Created {OUTPUT_CSV}")
     print(f"Wrote {len(csv_rows)} classification rows")
 

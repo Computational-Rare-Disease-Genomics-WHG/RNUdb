@@ -200,8 +200,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             >
               <Button
                 size="sm"
-                variant="outline"
-                className="w-full h-8 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                className="w-full h-8 border border-white/30 bg-transparent text-white hover:bg-white/20 backdrop-blur-sm"
               >
                 <Globe className="h-3.5 w-3.5 mr-1.5" />
                 gnomAD
@@ -215,8 +214,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             >
               <Button
                 size="sm"
-                variant="outline"
-                className="w-full h-8 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                className="w-full h-8 border border-white/30 bg-transparent text-white hover:bg-white/20 backdrop-blur-sm"
               >
                 <Search className="h-3.5 w-3.5 mr-1.5" />
                 UCSC
@@ -230,8 +228,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             >
               <Button
                 size="sm"
-                variant="outline"
-                className="w-full h-8 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                className="w-full h-8 border border-white/30 bg-transparent text-white hover:bg-white/20 backdrop-blur-sm"
               >
                 <Database className="h-3.5 w-3.5 mr-1.5" />
                 OMIM

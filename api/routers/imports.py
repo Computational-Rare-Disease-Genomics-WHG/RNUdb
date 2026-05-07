@@ -477,7 +477,7 @@ async def import_variants_vcf(
             ],
         )
 
-    existing = _get_existing_variant_keys(geneId, db)
+    _get_existing_variant_keys(geneId, db)
     imported_count = 0
     skipped_count = 0
     id_pattern = regex_lib.compile(r"^chr\d+-\d+-[ATCGatcg]+-[ATCGatcg]+$")
@@ -496,18 +496,24 @@ async def import_variants_vcf(
         db.execute(
             text("""
                 INSERT INTO variants
-                (id, geneId, position, ref, alt, nucleotidePosition, hgvs, function_score, pvalues, qvalues,
-                 depletion_group, gnomad_ac, gnomad_hom, aou_ac, aou_hom, cadd_score)
+                (id, geneId, position, ref, alt, nucleotidePosition, hgvs,
+                 function_score, pvalues, qvalues, depletion_group,
+                 gnomad_ac, gnomad_hom, aou_ac, aou_hom, cadd_score)
                 VALUES
-                (:id, :geneId, :position, :ref, :alt, :nucleotidePosition, :hgvs, :function_score, :pvalues, :qvalues,
-                 :depletion_group, :gnomad_ac, :gnomad_hom, :aou_ac, :aou_hom, :cadd_score)
+                (:id, :geneId, :position, :ref, :alt, :nucleotidePosition,
+                 :hgvs, :function_score, :pvalues, :qvalues, :depletion_group,
+                 :gnomad_ac, :gnomad_hom, :aou_ac, :aou_hom, :cadd_score)
                 ON CONFLICT(id) DO UPDATE SET
                     hgvs = EXCLUDED.hgvs,
                     nucleotidePosition = EXCLUDED.nucleotidePosition,
-                    function_score = COALESCE(EXCLUDED.function_score, variants.function_score),
+                    function_score = COALESCE(
+                        EXCLUDED.function_score, variants.function_score
+                    ),
                     pvalues = COALESCE(EXCLUDED.pvalues, variants.pvalues),
                     qvalues = COALESCE(EXCLUDED.qvalues, variants.qvalues),
-                    depletion_group = COALESCE(EXCLUDED.depletion_group, variants.depletion_group),
+                    depletion_group = COALESCE(
+                        EXCLUDED.depletion_group, variants.depletion_group
+                    ),
                     gnomad_ac = COALESCE(EXCLUDED.gnomad_ac, variants.gnomad_ac),
                     gnomad_hom = COALESCE(EXCLUDED.gnomad_hom, variants.gnomad_hom),
                     aou_ac = COALESCE(EXCLUDED.aou_ac, variants.aou_ac),
@@ -566,7 +572,7 @@ async def import_variant_classifications(
     results: list[PubMedLookupResult] = []
     dois_to_lookup: dict[str, ClassificationCSVRow] = {}
 
-    for idx, row in enumerate(request.classifications):
+    for _idx, row in enumerate(request.classifications):
         variant = db.get(Variant, row.variant_id)
         if not variant:
             results.append(
@@ -603,7 +609,7 @@ async def import_variant_classifications(
 
     db.commit()
 
-    for doi, classification_row in dois_to_lookup.items():
+    for doi, _classification_row in dois_to_lookup.items():
         lookup_result = _fetch_pubmed_metadata(doi)
 
         if lookup_result.success:

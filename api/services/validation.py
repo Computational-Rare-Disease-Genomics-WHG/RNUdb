@@ -162,7 +162,11 @@ def validate_variant_batch(
                     ValidationError(
                         i,
                         "id",
-                        f"Invalid variant ID '{variant_id}'. Must match format chrCHR-POS-REF-ALT (e.g., chr12-120291764-C-T)",
+                        (
+                            f"Invalid variant ID '{variant_id}'. "
+                            "Must match format chrCHR-POS-REF-ALT "
+                            "(e.g., chr12-120291764-C-T)"
+                        ),
                         variant_id,
                     )
                 )
