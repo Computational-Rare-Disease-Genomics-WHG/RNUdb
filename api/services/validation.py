@@ -153,6 +153,20 @@ def validate_variant_batch(
                 )
             )
 
+        # Validate variant ID format (chrCHR-POS-REF-ALT)
+        variant_id = row.get("id")
+        if variant_id:
+            id_pattern = re.compile(r"^chr\d+-\d+-[ATCGatcg]+-[ATCGatcg]+$")
+            if not id_pattern.match(variant_id):
+                row_errors.append(
+                    ValidationError(
+                        i,
+                        "id",
+                        f"Invalid variant ID '{variant_id}'. Must match format chrCHR-POS-REF-ALT (e.g., chr12-120291764-C-T)",
+                        variant_id,
+                    )
+                )
+
         # Validate clinical significance
         clinical_sig = row.get("clinical_significance")
         if clinical_sig and clinical_sig not in VALID_CLINICAL_SIG:

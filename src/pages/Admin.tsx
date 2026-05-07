@@ -304,11 +304,11 @@ const Admin: React.FC = () => {
                     {pendingApprovals.map((change) => (
                       <div
                         key={change.id}
-                        className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors shadow-sm"
+                        className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors shadow-sm overflow-hidden"
                       >
                         <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
                               {getEntityIcon(change.entity_type)}
                               <span className="font-semibold capitalize">
                                 {change.entity_type}
@@ -330,7 +330,7 @@ const Admin: React.FC = () => {
                                 change.requested_at,
                               ).toLocaleDateString()}
                             </p>
-                            <pre className="text-xs bg-slate-50 p-2 rounded mt-2 overflow-x-auto">
+                            <pre className="text-xs bg-slate-50 p-2 rounded mt-2 overflow-x-auto max-h-60 break-all">
                               {JSON.stringify(change.payload, null, 2)}
                             </pre>
                           </div>
@@ -611,7 +611,7 @@ const Admin: React.FC = () => {
                             </span>
                           </button>
                           {expandedPayloads.has(change.id) && (
-                            <pre className="mt-2 text-xs bg-white p-3 rounded border border-slate-200 overflow-x-auto max-h-60 text-slate-600">
+                            <pre className="mt-2 text-xs bg-white p-3 rounded border border-slate-200 overflow-x-auto max-h-60 text-slate-600 break-all">
                               {JSON.stringify(change.payload, null, 2)}
                             </pre>
                           )}

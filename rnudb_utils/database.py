@@ -14,12 +14,12 @@ from api.models import (
     BasePair,
     Gene,
     Literature,
-    LiteratureCount,
     Nucleotide,
     RNAStructure,
     StructuralFeature,
     User,
     Variant,
+    VariantClassification,
     VariantLink,
 )
 
@@ -202,12 +202,17 @@ def insert_literature_counts(counts_data: list[dict]) -> None:
     """Insert literature counts into the database (upsert with merge)."""
     with SessionLocal() as session:
         for c in counts_data:
-            count = LiteratureCount(
+            classification = VariantClassification(
                 variant_id=c["variant_id"],
                 literature_id=c["literature_id"],
-                counts=c["counts"],
+                counts=c.get("counts"),
+                clinical_significance=c.get("clinical_significance"),
+                zygosity=c.get("zygosity"),
+                disease=c.get("disease"),
+                linked_variant_ids=c.get("linked_variant_ids"),
+                clinvar_significance=c.get("clinvar_significance"),
             )
-            session.merge(count)
+            session.merge(classification)
         session.commit()
 
 
