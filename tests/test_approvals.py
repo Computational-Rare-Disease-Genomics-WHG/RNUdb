@@ -233,17 +233,23 @@ class TestApprovalsAPI:
         data = res.json()
         assert all(item["gene_id"] == "RNU4-2" for item in data)
 
-    def test_apply_variant_delete(self, test_client, test_db, seed_test_data):
-        """Admin can apply an approved variant delete."""
-        # Create pending delete
+    def test_apply_variant_update(self, test_client, test_db, seed_test_data):
+        """Admin can apply an approved variant update."""
+        # Variant V-UPD-001 already exists from seed_test_data
+        # Just update it via approval
+
+        # Create pending update
         create_res = self._create_pending(
             test_client,
             {
                 "entity_type": "variant",
-                "entity_id": "V-DEL-001",
+                "entity_id": "V-UPD-001",
                 "gene_id": "RNU4-2",
-                "action": "delete",
-                "payload": {"id": "V-DEL-001"},
+                "action": "update",
+                "payload": {
+                    "id": "V-UPD-001",
+                    "function_score": 0.5,
+                },
             },
         )
         change_id = create_res.json()["id"]
@@ -261,23 +267,17 @@ class TestApprovalsAPI:
         assert applied["status"] == "applied"
         assert applied["applied_at"] is not None
 
-    def test_apply_variant_update(self, test_client, test_db, seed_test_data):
-        """Admin can apply an approved variant update."""
-        # Variant V-UPD-001 already exists from seed_test_data
-        # Just update it via approval
-
-        # Create pending update
+    def test_apply_variant_delete(self, test_client, test_db, seed_test_data):
+        """Admin can apply an approved variant delete."""
+        # Create pending delete
         create_res = self._create_pending(
             test_client,
             {
                 "entity_type": "variant",
-                "entity_id": "V-UPD-001",
+                "entity_id": "V-DEL-001",
                 "gene_id": "RNU4-2",
-                "action": "update",
-                "payload": {
-                    "id": "V-UPD-001",
-                    "clinical_significance": "Pathogenic",
-                },
+                "action": "delete",
+                "payload": {"id": "V-DEL-001"},
             },
         )
         change_id = create_res.json()["id"]

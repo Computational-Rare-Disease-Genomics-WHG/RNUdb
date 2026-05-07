@@ -100,7 +100,6 @@ def seed_test_data(test_db):
         position=120291764,
         ref="C",
         alt="T",
-        clinical_significance="Pathogenic",
     )
     v_upd = Variant(
         id="V-UPD-001",
@@ -108,7 +107,6 @@ def seed_test_data(test_db):
         position=120291782,
         ref="A",
         alt="C",
-        clinical_significance="VUS",
     )
     test_db.add_all([gene, v_del, v_upd])
     test_db.commit()
@@ -156,7 +154,7 @@ def sample_gene():
         "id": "RNU4-2",
         "name": "RNU4-2",
         "fullName": "RNA, U4 small nuclear 2",
-        "chromosome": "12",
+        "chromosome": "chr12",
         "start": 120291759,
         "end": 120291903,
         "strand": "-",
@@ -174,24 +172,18 @@ def valid_variant_rows():
             "ref": "C",
             "alt": "T",
             "hgvs": "n.140G>T",
-            "clinical_significance": "VUS",
-            "zygosity": "hom",
         },
         {
             "position": 120291785,
             "ref": "T",
             "alt": "C",
             "hgvs": "n.119A>G",
-            "clinical_significance": "Pathogenic",
-            "zygosity": "het",
         },
         {
             "position": 120291782,
             "ref": "A",
             "alt": "C",
             "hgvs": "n.122T>G",
-            "clinical_significance": "Likely Pathogenic",
-            "zygosity": "het",
             "function_score": -1.234,
             "cadd_score": 15.6,
         },
@@ -206,19 +198,11 @@ def invalid_variant_rows():
             "position": 120291000,  # Out of bounds
             "ref": "C",
             "alt": "T",
-            "clinical_significance": "VUS",
         },
         {
             "position": 120291785,
             "ref": "X",  # Invalid nucleotide
             "alt": "T",
-            "clinical_significance": "Pathogenic",
-        },
-        {
-            "position": 120291790,
-            "ref": "G",
-            "alt": "A",
-            "clinical_significance": "Unknown",  # Invalid classification
         },
     ]
 
