@@ -25,8 +25,12 @@ import BEDTrackImportWizard from "../components/Curate/BEDTrackImportWizard";
 import { BEDTrackViewer } from "../components/Curate/BEDTrackViewer";
 import CuratorVariantTrack from "../components/Curate/CuratorVariantTrack";
 import GeneForm from "../components/Curate/GeneForm";
+
 import LiteratureForm from "../components/Curate/LiteratureForm";
+import LiteratureImportWizard from "../components/Curate/LiteratureImportWizard";
 import StructureImportWizard from "../components/Curate/StructureImportWizard";
+import VariantAssociationForm from "../components/Curate/VariantAssociationForm";
+import VariantAssociationImportWizard from "../components/Curate/VariantAssociationImportWizard";
 import VariantForm from "../components/Curate/VariantForm";
 import VariantImportWizard from "../components/Curate/VariantImportWizard";
 import { VariantTable } from "../components/Curate/VariantTable";
@@ -62,6 +66,7 @@ const Curate: React.FC = () => {
   const [literature, setLiterature] = useState<any[]>([]);
   const [structures, setStructures] = useState<any[]>([]);
   const [bedTracks, setBedTracks] = useState<any[]>([]);
+  const [variantAssociations, setVariantAssociations] = useState<any[]>([]);
 
   // Transform flat BED API rows into nested tracks for BEDTrackViewer
   const nestedBedTracks = React.useMemo(() => {
@@ -96,11 +101,20 @@ const Curate: React.FC = () => {
   const [showVariantImport, setShowVariantImport] = useState(false);
   const [showStructureImport, setShowStructureImport] = useState(false);
   const [showBEDImport, setShowBEDImport] = useState(false);
-  const [showLiteratureForm, setShowLiteratureForm] = useState(false);
+
   const [showGeneForm, setShowGeneForm] = useState(false);
   const [showVariantForm, setShowVariantForm] = useState(false);
+  const [showLiteratureForm, setShowLiteratureForm] = useState(false);
+  const [showLiteratureImport, setShowLiteratureImport] = useState(false);
+  const [showVariantAssociationForm, setShowVariantAssociationForm] =
+    useState(false);
+  const [showVariantAssociationImport, setShowVariantAssociationImport] =
+    useState(false);
   const [editingGene, setEditingGene] = useState<any>(null);
   const [editingVariant, setEditingVariant] = useState<any>(null);
+  const [editingLiterature, setEditingLiterature] = useState<any>(null);
+  const [editingVariantAssociation, setEditingVariantAssociation] =
+    useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const regionViewerRef = useRef<HTMLDivElement>(null);
   const [regionViewerWidth, setRegionViewerWidth] = useState(1100);
@@ -166,16 +180,21 @@ const Curate: React.FC = () => {
   const loadGeneData = async (geneId: string) => {
     setLoading(true);
     try {
-      const [variantsRes, litRes, structRes, bedRes] = await Promise.all([
-        fetch(`/api/genes/${geneId}/variants`, { credentials: "include" }),
-        fetch(`/api/genes/${geneId}/literature`, { credentials: "include" }),
-        fetch(`/api/genes/${geneId}/structures`, {
-          credentials: "include",
-        }).catch(() => null),
-        fetch(`/api/genes/${geneId}/bed-tracks`, {
-          credentials: "include",
-        }).catch(() => null),
-      ]);
+      const [variantsRes, litRes, structRes, bedRes, vaRes] = await Promise.all(
+        [
+          fetch(`/api/genes/${geneId}/variants`, { credentials: "include" }),
+          fetch(`/api/genes/${geneId}/literature`, { credentials: "include" }),
+          fetch(`/api/genes/${geneId}/structures`, {
+            credentials: "include",
+          }).catch(() => null),
+          fetch(`/api/genes/${geneId}/bed-tracks`, {
+            credentials: "include",
+          }).catch(() => null),
+          fetch(`/api/genes/${geneId}/variant-classifications`, {
+            credentials: "include",
+          }).catch(() => null),
+        ],
+      );
       if (variantsRes.ok) setVariants(await variantsRes.json());
       if (litRes.ok) setLiterature(await litRes.json());
       if (structRes?.ok) {
@@ -186,6 +205,8 @@ const Curate: React.FC = () => {
       }
       if (bedRes?.ok) setBedTracks(await bedRes.json());
       else setBedTracks([]);
+      if (vaRes?.ok) setVariantAssociations(await vaRes.json());
+      else setVariantAssociations([]);
     } catch {
       console.error("Error loading gene data");
     } finally {
@@ -229,41 +250,6 @@ const Curate: React.FC = () => {
     }
     setSelectedVariants(new Set());
     alert("Delete request submitted for approval");
-  };
-
-  const handleCreateLiterature = async (data: any) => {
-    try {
-      await submitChange("literature", selectedGene?.id || "", "create", data);
-      setShowLiteratureForm(false);
-      alert("Literature submission submitted for approval");
-    } catch {
-      alert("Network error");
-    }
-  };
-
-  const [editingLiterature, setEditingLiterature] = useState<any>(null);
-
-  const handleEditLiterature = (paper: any) => {
-    setEditingLiterature(paper);
-    setShowLiteratureForm(true);
-  };
-
-  const handleUpdateLiterature = async (data: any) => {
-    if (!editingLiterature) return;
-    try {
-      await submitChange(
-        "literature",
-        selectedGene?.id || "",
-        "update",
-        data,
-        editingLiterature.id,
-      );
-      setShowLiteratureForm(false);
-      setEditingLiterature(null);
-      alert("Literature update submitted for approval");
-    } catch {
-      alert("Network error");
-    }
   };
 
   const handleDeleteStructure = async (structureId: string) => {
@@ -371,6 +357,56 @@ const Curate: React.FC = () => {
     }
   };
 
+  const handleDeleteGene = async (geneId: string) => {
+    if (
+      !confirm(
+        `Delete gene ${geneId}? This will also delete all variants, structures, and literature associated with this gene. This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/genes/${geneId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail?.message || "Failed to delete gene");
+      }
+      setShowGeneForm(false);
+      setEditingGene(null);
+      await loadGenes();
+      alert(`Gene ${geneId} deleted successfully`);
+    } catch (err: any) {
+      alert(err.message || "Network error");
+    }
+  };
+
+  const handleRefreshVariants = async (geneId: string) => {
+    if (
+      !confirm(
+        `Refresh population data (gnomAD and All of Us) for ${geneId}? This will update variant counts from external APIs.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/genes/${geneId}/refresh-variants`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail?.message || "Failed to refresh variants");
+      }
+      await loadGenes();
+      alert(`Variants refreshed successfully for ${geneId}`);
+    } catch (err: any) {
+      alert(err.message || "Network error");
+    }
+  };
+
   const handleEditVariant = (variant: any) => {
     setEditingVariant(variant);
     setShowVariantForm(true);
@@ -407,6 +443,63 @@ const Curate: React.FC = () => {
         setShowVariantForm(false);
         setEditingVariant(null);
         alert("Variant update submitted for approval");
+      }
+    } catch {
+      alert("Network error");
+    }
+  };
+
+  const handleCreateLiterature = async (data: any) => {
+    try {
+      const res = await fetch("/api/literature", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        setShowLiteratureForm(false);
+        setEditingLiterature(null);
+        const litRes = await fetch(
+          `/api/genes/${selectedGene?.id}/literature`,
+          {
+            credentials: "include",
+          },
+        );
+        if (litRes.ok) setLiterature(await litRes.json());
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to create literature");
+      }
+    } catch {
+      alert("Network error");
+    }
+  };
+
+  const handleUpdateLiterature = async (data: any) => {
+    try {
+      const res = await fetch(
+        `/api/literature?literature_id=${encodeURIComponent(editingLiterature.id)}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+      if (res.ok) {
+        setShowLiteratureForm(false);
+        setEditingLiterature(null);
+        const litRes = await fetch(
+          `/api/genes/${selectedGene?.id}/literature`,
+          {
+            credentials: "include",
+          },
+        );
+        if (litRes.ok) setLiterature(await litRes.json());
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to update literature");
       }
     } catch {
       alert("Network error");
@@ -697,6 +790,19 @@ const Curate: React.FC = () => {
                     {bedTracks.length}
                   </Badge>
                 </TabsTrigger>
+                <TabsTrigger
+                  value="variant_associations"
+                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
+                >
+                  <Layers className="h-4 w-4 mr-2" />
+                  Variant Associations
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 bg-slate-100 text-slate-600"
+                  >
+                    {variantAssociations.length}
+                  </Badge>
+                </TabsTrigger>
               </TabsList>
 
               {/* Variants Tab */}
@@ -925,14 +1031,27 @@ const Curate: React.FC = () => {
                           {literature.length} paper(s) linked
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => setShowLiteratureForm(true)}
-                        className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Literature
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingLiterature(null);
+                            setShowLiteratureForm(true);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowLiteratureImport(true)}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import CSV
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <CardContent className="p-6">
@@ -954,13 +1073,6 @@ const Curate: React.FC = () => {
                           Add research papers and publications related to this
                           gene.
                         </p>
-                        <Button
-                          onClick={() => setShowLiteratureForm(true)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Literature
-                        </Button>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -996,13 +1108,57 @@ const Curate: React.FC = () => {
                                   </a>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleEditLiterature(paper)}
-                                className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 shrink-0"
-                                title="Edit literature"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </button>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                                  onClick={() => {
+                                    setEditingLiterature(paper);
+                                    setShowLiteratureForm(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-400 hover:text-red-600"
+                                  onClick={async () => {
+                                    if (
+                                      confirm(
+                                        `Delete literature "${paper.title}"?`,
+                                      )
+                                    ) {
+                                      try {
+                                        const res = await fetch(
+                                          `/api/literature?literature_id=${encodeURIComponent(paper.id)}`,
+                                          {
+                                            method: "DELETE",
+                                            credentials: "include",
+                                          },
+                                        );
+                                        if (res.ok) {
+                                          setLiterature(
+                                            literature.filter(
+                                              (l: any) => l.id !== paper.id,
+                                            ),
+                                          );
+                                        } else {
+                                          const err = await res.text();
+                                          alert(
+                                            `Failed to delete: ${res.status} ${err}`,
+                                          );
+                                        }
+                                      } catch {
+                                        alert("Failed to delete");
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -1069,6 +1225,165 @@ const Curate: React.FC = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Variant Associations Tab */}
+              <TabsContent value="variant_associations" className="mt-0">
+                <Card className="bg-white border border-slate-200 shadow-sm">
+                  <div className="p-6 border-b border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          Variant Associations
+                        </h3>
+                        <p className="text-sm text-slate-500 mt-0.5">
+                          {variantAssociations.length} classification(s) linked
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingVariantAssociation(null);
+                            setShowVariantAssociationForm(true);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowVariantAssociationImport(true)}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import CSV
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <CardContent className="p-6">
+                    {loading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-20 w-full" />
+                        ))}
+                      </div>
+                    ) : variantAssociations.length === 0 ? (
+                      <div className="text-center py-16">
+                        <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
+                          <Layers className="h-8 w-8 text-slate-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                          No variant associations yet
+                        </h3>
+                        <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                          Link variants to literature with clinical significance
+                          classifications.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {variantAssociations.map((va: any) => (
+                          <div
+                            key={`${va.variant_id}-${va.literature_id}`}
+                            className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-sm transition-all group relative"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="font-semibold text-slate-900">
+                                    {va.variant_id}
+                                  </span>
+                                  <span className="text-slate-400">→</span>
+                                  <span className="text-slate-600">
+                                    {va.literature_id}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getClinicalSigColor(va.clinical_significance)}`}
+                                  >
+                                    {va.clinical_significance}
+                                  </span>
+                                </div>
+                                {va.disease && (
+                                  <p className="text-sm text-slate-500">
+                                    Disease: {va.disease}
+                                  </p>
+                                )}
+                                {va.zygosity && (
+                                  <p className="text-sm text-slate-500">
+                                    Zygosity: {va.zygosity}
+                                  </p>
+                                )}
+                                {va.inheritance && (
+                                  <p className="text-sm text-slate-500">
+                                    Inheritance: {va.inheritance}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                                  onClick={() => {
+                                    setEditingVariantAssociation(va);
+                                    setShowVariantAssociationForm(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-400 hover:text-red-600"
+                                  onClick={async () => {
+                                    if (
+                                      confirm(
+                                        `Delete this variant association?`,
+                                      )
+                                    ) {
+                                      try {
+                                        const res = await fetch(
+                                          `/api/variant-classifications?variant_id=${encodeURIComponent(va.variant_id)}&literature_id=${encodeURIComponent(va.literature_id)}`,
+                                          {
+                                            method: "DELETE",
+                                            credentials: "include",
+                                          },
+                                        );
+                                        if (res.ok) {
+                                          setVariantAssociations(
+                                            variantAssociations.filter(
+                                              (a: any) =>
+                                                a.variant_id !==
+                                                  va.variant_id ||
+                                                a.literature_id !==
+                                                  va.literature_id,
+                                            ),
+                                          );
+                                        } else {
+                                          const err = await res.text();
+                                          alert(
+                                            `Failed to delete: ${res.status} ${err}`,
+                                          );
+                                        }
+                                      } catch {
+                                        alert("Failed to delete");
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
           </>
         )}
@@ -1095,33 +1410,21 @@ const Curate: React.FC = () => {
             onClose={() => setShowBEDImport(false)}
             onSuccess={() => loadGeneData(selectedGene.id)}
           />
+          <VariantAssociationImportWizard
+            open={showVariantAssociationImport}
+            onClose={() => setShowVariantAssociationImport(false)}
+            onSuccess={async () => {
+              const vaRes = await fetch(
+                `/api/genes/${selectedGene?.id}/variant-classifications`,
+                {
+                  credentials: "include",
+                },
+              );
+              if (vaRes.ok) setVariantAssociations(await vaRes.json());
+            }}
+          />
         </>
       )}
-
-      {/* Literature Add/Edit Modal */}
-      <Dialog open={showLiteratureForm} onOpenChange={setShowLiteratureForm}>
-        <DialogContent className="sm:max-w-[600px]">
-          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 rounded-t-xl">
-            <DialogTitle className="text-xl font-bold text-white">
-              {editingLiterature ? "Edit Literature" : "Add Literature"}
-            </DialogTitle>
-          </div>
-          <div className="px-8 pb-8 pt-4">
-            <LiteratureForm
-              initialData={editingLiterature}
-              onSubmit={
-                editingLiterature
-                  ? handleUpdateLiterature
-                  : handleCreateLiterature
-              }
-              onCancel={() => {
-                setShowLiteratureForm(false);
-                setEditingLiterature(null);
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Gene Create/Edit Modal */}
       <Dialog open={showGeneForm} onOpenChange={setShowGeneForm}>
@@ -1139,6 +1442,14 @@ const Curate: React.FC = () => {
                 setShowGeneForm(false);
                 setEditingGene(null);
               }}
+              onDelete={
+                editingGene ? () => handleDeleteGene(editingGene.id) : undefined
+              }
+              onRefreshVariants={
+                editingGene
+                  ? () => handleRefreshVariants(editingGene.id)
+                  : undefined
+              }
             />
           </div>
         </DialogContent>
@@ -1162,6 +1473,101 @@ const Curate: React.FC = () => {
               onCancel={() => {
                 setShowVariantForm(false);
                 setEditingVariant(null);
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Literature Create Modal */}
+      <Dialog open={showLiteratureForm} onOpenChange={setShowLiteratureForm}>
+        <DialogContent className="sm:max-w-[650px]">
+          <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-8 py-6 rounded-t-xl">
+            <DialogTitle className="text-xl font-bold text-white">
+              {editingLiterature ? "Edit Literature" : "Add Literature"}
+            </DialogTitle>
+          </div>
+          <div className="px-8 pb-8 pt-4">
+            <LiteratureForm
+              initialData={editingLiterature}
+              onSubmit={
+                editingLiterature
+                  ? handleUpdateLiterature
+                  : handleCreateLiterature
+              }
+              onCancel={() => {
+                setShowLiteratureForm(false);
+                setEditingLiterature(null);
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Literature Import Wizard */}
+      <LiteratureImportWizard
+        open={showLiteratureImport}
+        onClose={() => setShowLiteratureImport(false)}
+        onSuccess={async () => {
+          const litRes = await fetch(
+            `/api/genes/${selectedGene?.id}/literature`,
+            {
+              credentials: "include",
+            },
+          );
+          if (litRes.ok) setLiterature(await litRes.json());
+        }}
+      />
+
+      {/* Variant Association Create/Edit Modal */}
+      <Dialog
+        open={showVariantAssociationForm}
+        onOpenChange={setShowVariantAssociationForm}
+      >
+        <DialogContent className="sm:max-w-[650px]">
+          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-8 py-6 rounded-t-xl">
+            <DialogTitle className="text-xl font-bold text-white">
+              {editingVariantAssociation
+                ? "Edit Variant Association"
+                : "Add Variant Association"}
+            </DialogTitle>
+          </div>
+          <div className="px-8 pb-8 pt-4">
+            <VariantAssociationForm
+              initialData={editingVariantAssociation}
+              variants={variants}
+              literature={literature}
+              onSubmit={async (data) => {
+                try {
+                  const method = editingVariantAssociation ? "PUT" : "POST";
+                  const url = editingVariantAssociation
+                    ? `/api/variant-classifications?variant_id=${encodeURIComponent(editingVariantAssociation.variant_id)}&literature_id=${encodeURIComponent(editingVariantAssociation.literature_id)}`
+                    : "/api/variant-classifications";
+                  const res = await fetch(url, {
+                    method,
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                  });
+                  if (res.ok) {
+                    setShowVariantAssociationForm(false);
+                    setEditingVariantAssociation(null);
+                    const vaRes = await fetch(
+                      `/api/genes/${selectedGene?.id}/variant-classifications`,
+                      { credentials: "include" },
+                    );
+                    if (vaRes.ok) setVariantAssociations(await vaRes.json());
+                  } else {
+                    const err = await res.json();
+                    alert(err.detail || "Failed to save variant association");
+                  }
+                } catch {
+                  alert("Network error");
+                }
+              }}
+              onCancel={() => {
+                setShowVariantAssociationForm(false);
+                setEditingVariantAssociation(null);
               }}
             />
           </div>
