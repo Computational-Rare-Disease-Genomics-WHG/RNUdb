@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+import pydantic
 from sqlmodel import (
     JSON,
     CheckConstraint,
@@ -33,6 +34,55 @@ class GeneBase(SQLModel):
     strand: str
     sequence: str
     description: str
+
+    @pydantic.field_validator("chromosome")
+    @classmethod
+    def validate_chromosome(cls, v: str) -> str:
+        valid_chromosomes = [f"chr{i}" for i in range(1, 23)] + [
+            "chrX",
+            "chrY",
+            "chrMT",
+        ]
+        v_lower = v.lower()
+        if v_lower not in valid_chromosomes:
+            raise ValueError(
+                f"Invalid chromosome '{v}'. Must be chr1-chr22, chrX, chrY, or chrMT"
+            )
+        return v
+
+    @pydantic.field_validator("start", "end")
+    @classmethod
+    def validate_coordinates(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError(f"Coordinates must be positive, got {v}")
+        return v
+
+    @pydantic.model_validator(mode="after")
+    def validate_start_end(self) -> GeneBase:
+        if self.start >= self.end:
+            raise ValueError(f"Start ({self.start}) must be less than End ({self.end})")
+        return self
+
+    @pydantic.field_validator("sequence")
+    @classmethod
+    def validate_sequence(cls, v: str) -> str:
+        valid_bases = set("ATCGUatcgu")
+        if not v:
+            raise ValueError("Sequence cannot be empty")
+        invalid = set(v.upper()) - valid_bases
+        if invalid:
+            raise ValueError(
+                f"Invalid nucleotides in sequence: {', '.join(invalid)}. "
+                f"Valid bases: A, T, C, G, U"
+            )
+        return v.upper()
+
+    @pydantic.field_validator("strand")
+    @classmethod
+    def validate_strand(cls, v: str) -> str:
+        if v not in ("+", "-"):
+            raise ValueError(f"Invalid strand '{v}'. Must be '+' or '-'")
+        return v
 
 
 class Gene(GeneBase, table=True):
@@ -78,10 +128,6 @@ class VariantBase(SQLModel):
     alt: str
     hgvs: str | None = None
     consequence: str | None = None
-    clinvar_significance: str | None = None
-    clinical_significance: str | None = None
-    disease_type: str | None = None
-    pmid: str | None = None
     function_score: float | None = None
     pvalues: float | None = None
     qvalues: float | None = None
@@ -90,11 +136,7 @@ class VariantBase(SQLModel):
     gnomad_hom: int | None = None
     aou_ac: int | None = None
     aou_hom: int | None = None
-    ukbb_ac: int | None = None
-    ukbb_hom: int | None = None
     cadd_score: float | None = None
-    zygosity: str | None = None
-    cohort: str | None = None
 
 
 class Variant(VariantBase, table=True):
@@ -116,10 +158,6 @@ class VariantUpdate(SQLModel):
     alt: str | None = None
     hgvs: str | None = None
     consequence: str | None = None
-    clinvar_significance: str | None = None
-    clinical_significance: str | None = None
-    disease_type: str | None = None
-    pmid: str | None = None
     function_score: float | None = None
     pvalues: float | None = None
     qvalues: float | None = None
@@ -128,17 +166,20 @@ class VariantUpdate(SQLModel):
     gnomad_hom: int | None = None
     aou_ac: int | None = None
     aou_hom: int | None = None
-    ukbb_ac: int | None = None
-    ukbb_hom: int | None = None
     cadd_score: float | None = None
-    zygosity: str | None = None
-    cohort: str | None = None
 
 
 class VariantPublic(VariantBase):
     """Variant public output."""
 
     linkedVariantIds: list[str] | None = None
+    # Fields from variant_classifications for API compatibility
+    clinical_significance: str | None = None
+    disease_type: str | None = None
+    zygosity: str | None = None
+    pmid: str | None = None
+    clinvar_significance: str | None = None
+    cohort: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +196,8 @@ class LiteratureBase(SQLModel):
     journal: str
     year: str
     doi: str
+    pmid: str | None = None
+    url: str | None = None
 
 
 class Literature(LiteratureBase, table=True):
@@ -175,6 +218,9 @@ class LiteratureUpdate(SQLModel):
     journal: str | None = None
     year: str | None = None
     doi: str | None = None
+    pmid: str | None = None
+    url: str | None = None
+    disease: str | None = None
 
 
 class LiteraturePublic(LiteratureBase):
@@ -182,19 +228,45 @@ class LiteraturePublic(LiteratureBase):
 
 
 # ---------------------------------------------------------------------------
-# LiteratureCount model (table only, simple)
+# VariantClassification model (table only, replaces LiteratureCount)
 # ---------------------------------------------------------------------------
 
 
-class LiteratureCount(SQLModel, table=True):
-    """Variant-literature relationship table."""
+class VariantClassificationBase(SQLModel):
+    """Shared VariantClassification fields."""
 
-    __tablename__ = "literature_counts"
+    variant_id: str
+    literature_id: str
+    clinical_significance: str | None = None
+    zygosity: str | None = None
+    inheritance: str | None = None
+    disease: str | None = None
+    counts: int | None = None
+    linked_variant_ids: str | None = None
+
+
+class VariantClassification(VariantClassificationBase, table=True):
+    """Variant-classification relationship table."""
+
+    __tablename__ = "variant_classifications"
     __table_args__ = (PrimaryKeyConstraint("variant_id", "literature_id"),)
 
     variant_id: str = Field(primary_key=True)
     literature_id: str = Field(primary_key=True)
-    counts: int
+    clinical_significance: str | None = Field(default=None)
+    zygosity: str | None = Field(default=None)
+    inheritance: str | None = Field(default=None)
+    disease: str | None = Field(default=None)
+    counts: int | None = Field(default=None)
+    linked_variant_ids: str | None = Field(default=None)
+
+
+class VariantClassificationCreate(VariantClassificationBase):
+    """VariantClassification creation input."""
+
+
+class VariantClassificationPublic(VariantClassificationBase):
+    """VariantClassification public output."""
 
 
 # ---------------------------------------------------------------------------
@@ -642,8 +714,10 @@ __all__ = [
     "LiteratureCreate",
     "LiteratureUpdate",
     "LiteraturePublic",
-    # LiteratureCount
-    "LiteratureCount",
+    # VariantClassification (replaces LiteratureCount)
+    "VariantClassification",
+    "VariantClassificationCreate",
+    "VariantClassificationPublic",
     # RNAStructure models
     "RNAStructure",
     "Nucleotide",
