@@ -324,7 +324,7 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
 
     variant_classifications_sql = text("""
         SELECT variant_id, literature_id, clinical_significance, zygosity,
-               disease
+               disease, linked_variant_ids
         FROM variant_classifications
     """)
     classifications_rows = db.execute(variant_classifications_sql).fetchall()
@@ -336,6 +336,8 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
         if vid not in classifications_by_variant:
             classifications_by_variant[vid] = []
         classifications_by_variant[vid].append(row_dict)
+
+    hgvs_by_variant = {row["id"]: row["hgvs"] for row in rows if row.get("hgvs")}
 
     variants = []
     for row in rows:
@@ -361,6 +363,17 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
             row_dict["disease_type"] = primary_class.get("disease")
             row_dict["zygosity"] = primary_class.get("zygosity")
             row_dict["clinvar_significance"] = primary_class.get("clinvar_significance")
+            
+            linked_ids = primary_class.get("linked_variant_ids")
+            if linked_ids:
+                linked_id_list = [v.strip() for v in linked_ids.split(",") if v.strip()]
+                linked_hgvs = []
+                for lid in linked_id_list:
+                    hgvs = hgvs_by_variant.get(lid)
+                    if hgvs:
+                        linked_hgvs.append(hgvs)
+                if linked_hgvs:
+                    row_dict["linkedVariantIds"] = linked_hgvs
 
         variants.append(VariantPublic(**row_dict))
 
