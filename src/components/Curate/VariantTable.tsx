@@ -176,50 +176,7 @@ export function VariantTable({
           )}
         </Button>
       ),
-      cell: ({ row }) => {
-        const zyg = row.getValue("zygosity") as string;
-        const zygLabel =
-          zyg === "Homozygous"
-            ? "Hom"
-            : zyg === "Heterozygous"
-              ? "Het"
-              : zyg === "Compound Heterozygous"
-                ? "Comp Het"
-                : "—";
-        return (
-          <span
-            className={
-              zyg === "Homozygous"
-                ? "text-purple-600 font-medium"
-                : zyg === "Heterozygous" || zyg === "Compound Heterozygous"
-                  ? "text-blue-600 font-medium"
-                  : "text-slate-400"
-            }
-          >
-            {zygLabel}
-          </span>
-        );
-      },
       size: 80,
-    },
-    {
-      id: "linkedVariants",
-      header: "Linked",
-      cell: ({ row }) => {
-        const linked = row.getValue("linkedVariantIds") as string[] | undefined;
-        if (!linked || linked.length === 0)
-          return <span className="text-slate-400">—</span>;
-        return (
-          <div className="flex flex-col gap-0.5">
-            {linked.map((hgvs, i) => (
-              <span key={i} className="text-xs text-blue-600">
-                {hgvs}
-              </span>
-            ))}
-          </div>
-        );
-      },
-      size: 120,
     },
     {
       id: "actions",

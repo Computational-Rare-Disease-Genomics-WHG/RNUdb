@@ -324,7 +324,7 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
 
     variant_classifications_sql = text("""
         SELECT variant_id, literature_id, clinical_significance, zygosity,
-               disease, linked_variant_ids
+               disease, linked_variant_ids, inheritance
         FROM variant_classifications
     """)
     classifications_rows = db.execute(variant_classifications_sql).fetchall()
