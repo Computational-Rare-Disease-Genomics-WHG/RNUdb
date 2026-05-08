@@ -14,6 +14,12 @@
   <a href="https://github.com/Computational-Rare-Disease-Genomics-WHG/RNUdb/pkgs/container/rnudb">
     <img src="https://img.shields.io/docker/pulls/ghcr.io/computational-rare-disease-genomics-whg/rnudb.svg" alt="Docker Pulls">
   </a>
+  <a href="https://codecov.io/gh/Computational-Rare-Disease-Genomics-WHG/RNUdb">
+    <img src="https://codecov.io/gh/Computational-Rare-Disease-Genomics-WHG/RNUdb/branch/main/graph/badge.svg?flag=backend" alt="Backend Coverage">
+  </a>
+  <a href="https://codecov.io/gh/Computational-Rare-Disease-Genomics-WHG/RNUdb">
+    <img src="https://codecov.io/gh/Computational-Rare-Disease-Genomics-WHG/RNUdb/branch/main/graph/badge.svg?flag=frontend" alt="Frontend Coverage">
+  </a>
 </p>
 
 ---
