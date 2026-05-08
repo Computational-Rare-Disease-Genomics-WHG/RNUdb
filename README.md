@@ -61,7 +61,7 @@ A curated database for small nuclear RNA (snRNA) variants in rare disease genomi
 ### Prerequisites
 
 - Python 3.11
-- Node.js 20+
+- Node.js 20.19+ or 22.12+ (for Vite 8)
 - [uv](https://github.com/astral-sh/uv) (Python package manager)
 - Docker (for containerized deployment)
 

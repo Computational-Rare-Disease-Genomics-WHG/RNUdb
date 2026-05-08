@@ -5,7 +5,7 @@ This guide covers setting up a local development environment for RNUdb.
 ## Prerequisites
 
 - **Python 3.11** - Required for the backend
-- **Node.js 20+** - Required for the frontend
+- **Node.js 20.19+ or 22.12+** - Required for Vite 8 frontend
 - **uv** - Python package manager (install via `curl -LsSf https://astral.sh/uv/install.sh | sh` or `pip install uv`)
 - **Docker** - Optional, for containerized development
 
