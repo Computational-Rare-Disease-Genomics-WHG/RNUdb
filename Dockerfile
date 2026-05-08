@@ -33,6 +33,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     python3.11 \
     python3.11-dev \
+    libffi-dev \
+    libssl-dev \
     curl \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
