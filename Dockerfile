@@ -29,9 +29,10 @@ ARG BUILDPLATFORM
 
 WORKDIR /app
 
-# Install Python 3.11 and essentials
+# Install Python 3.11 and essentials (including compilation tools for native extensions)
 RUN apt-get update && apt-get install -y \
     python3.11 \
+    python3.11-dev \
     curl \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -47,8 +48,10 @@ COPY api ./api
 COPY rnudb_utils ./rnudb_utils
 
 # Create venv and install dependencies using uv
+# Force compilation from source for native extensions (pydantic-core, etc.)
+# to ensure compatibility across architectures
 RUN uv venv --python 3.11 .venv && \
-    uv sync --python .venv/bin/python
+    UV_NO_BINARY=:all: uv sync --python .venv/bin/python
 
 # --------------------------------------------------
 # Stage 3: Final runtime (distroless, non-root)
