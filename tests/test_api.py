@@ -36,12 +36,49 @@ class TestGenesAPI:
     def test_get_gene_structures(self, test_client, seed_gene):
         """GET /api/genes/{id}/structures returns structures for gene."""
         response = test_client.get("/api/genes/RNU4-2/structures")
-        assert response.status_code in (200, 404)
+        # Now returns 200 with [] when no structures exist
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
 
     def test_get_gene_pdb(self, test_client, seed_gene):
         """GET /api/genes/{id}/pdb returns PDB data for gene."""
         response = test_client.get("/api/genes/RNU4-2/pdb")
         assert response.status_code in (200, 404)
+
+
+class TestGeneStructuresAPI:
+    """Tests for gene structures API endpoints - regression tests for 404 issue."""
+
+    def test_get_gene_structures_empty_returns_200_with_empty_list(
+        self, test_client, seed_gene
+    ):
+        """GET /api/genes/{id}/structures returns 200 with [] when no structures exist.
+
+        This is a regression test for the issue where the endpoint was returning 404
+        when no structures existed for a gene, causing React error #130.
+        """
+        response = test_client.get("/api/genes/RNU4-2/structures")
+        assert response.status_code == 200, (
+            f"Expected 200 but got {response.status_code}. "
+            "Empty structures should return 200 with [], not 404."
+        )
+        data = response.json()
+        assert isinstance(data, list), "Response should be a list"
+        assert data == [], "Empty structures should return empty list"
+
+    def test_get_nonexistent_gene_structures_returns_empty_list(self, test_client):
+        """GET /api/genes/{id}/structures returns 200 with [] for nonexistent gene.
+
+        Unlike other endpoints, structures returns 200 with empty list for consistency
+        with frontend expectations (prevents React errors when no data exists).
+        """
+        response = test_client.get("/api/genes/NONEXISTENT-GENE/structures")
+        assert response.status_code == 200, (
+            f"Expected 200 for nonexistent gene but got {response.status_code}"
+        )
+        data = response.json()
+        assert isinstance(data, list)
+        assert data == [], "Nonexistent gene should return empty list, not 404"
 
 
 class TestVariantsAPI:

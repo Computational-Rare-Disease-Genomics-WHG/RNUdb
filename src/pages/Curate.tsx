@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 import "@/components/GenomeBrowser/GenomeBrowser.css";
 
 import BEDTrackImportWizard from "../components/Curate/BEDTrackImportWizard";
-import { BEDTrackViewer } from "../components/Curate/BEDTrackViewer";
+import BEDTrackViewer from "../components/Curate/BEDTrackViewer";
 import CuratorVariantTrack from "../components/Curate/CuratorVariantTrack";
 import GeneForm from "../components/Curate/GeneForm";
 
@@ -33,7 +33,7 @@ import VariantAssociationForm from "../components/Curate/VariantAssociationForm"
 import VariantAssociationImportWizard from "../components/Curate/VariantAssociationImportWizard";
 import VariantForm from "../components/Curate/VariantForm";
 import VariantImportWizard from "../components/Curate/VariantImportWizard";
-import { VariantTable } from "../components/Curate/VariantTable";
+import VariantTable from "../components/Curate/VariantTable";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { useAuth } from "../context/AuthContext";
