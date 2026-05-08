@@ -128,10 +128,10 @@ def get_user_from_request(request: Request) -> dict | None:
     """Get user from session (set by Authlib OAuth), or None if not authenticated."""
     # Use session from SessionMiddleware (request.session)
     session = getattr(request, "session", {})
-    
+
     # Check for user in session
     login = session.get("user")
-    
+
     # Fallback: also check JWT cookie for backwards compatibility
     if not login:
         token = request.cookies.get(JWT_COOKIE_NAME)
@@ -139,9 +139,11 @@ def get_user_from_request(request: Request) -> dict | None:
             try:
                 payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
                 login = payload.get("sub")
-            except Exception:
+            except jwt.ExpiredSignatureError:
                 pass
-    
+            except jwt.InvalidTokenError:
+                pass
+
     if not login:
         return None
 
@@ -239,7 +241,7 @@ async def auth_callback(request: Request, response: Response):
     # Store user in session (SessionMiddleware provides this)
     request.session["user"] = login
     request.session["access_token"] = access_token
-    
+
     # Issue session token (also set cookie for compatibility)
     redirect_response = RedirectResponse(url=f"{FRONTEND_URL}/")
     create_session_token(redirect_response, login, access_token)
