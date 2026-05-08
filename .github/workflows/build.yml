@@ -18,8 +18,10 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
+            tag_suffix: linux-amd64
             runner: ubuntu-latest
           - platform: linux/arm64
+            tag_suffix: linux-arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
 
@@ -63,7 +65,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ steps.meta.outputs.tags }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ replace(matrix.platform, '/', '-') }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag_suffix }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
