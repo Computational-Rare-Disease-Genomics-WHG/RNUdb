@@ -70,4 +70,4 @@ jobs:
 
       - name: Image digest
         if: github.event_name != 'pull_request'
-        run: echo "${{ matrix.platform }} digest: ${{ steps.build.outputs.digest }}"
+        run: echo "Build completed"
