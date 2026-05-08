@@ -56,13 +56,13 @@ interface VariantTableProps {
   getClinicalSigColor: (sig: string) => string;
 }
 
-export function VariantTable({
+const VariantTable = ({
   data,
   selectedVariants,
   onToggleVariant,
   onEdit,
   getClinicalSigColor,
-}: VariantTableProps) {
+}: VariantTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -439,4 +439,6 @@ export function VariantTable({
       </div>
     </div>
   );
-}
+};
+
+export default VariantTable;

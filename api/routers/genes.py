@@ -439,9 +439,6 @@ async def get_gene_structures(gene_id: str, db: Session = Depends(get_db)):
         .all()
     )
 
-    if not structures:
-        raise HTTPException(status_code=404, detail="Structure not found")
-
     result = []
     for structure in structures:
         # Query nucleotides

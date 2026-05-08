@@ -53,7 +53,7 @@ const TRACK_PALETTES = [
   { id: "cyan", name: "Cyan", color: "#06b6d4" },
 ];
 
-export const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
+const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
   tracks,
   geneStart,
   geneEnd,

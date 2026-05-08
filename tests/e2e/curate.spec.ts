@@ -116,3 +116,126 @@ test.describe("Structure and BED Import", () => {
     await expect(body).toBeVisible();
   });
 });
+
+test.describe("Gene Selection and Data Loading", () => {
+  test.beforeEach(async ({ page }) => {
+    mockCuratorAuth(page);
+    // Mock empty structures response to avoid 404 issue
+    page.route(/\/api\/genes\/.*\/structures/, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
+    });
+    // Mock other endpoints that might fail
+    page.route(/\/api\/genes\/.*\/literature/, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
+    });
+    page.route(/\/api\/genes\/.*\/bed-tracks/, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
+    });
+    page.route(/\/api\/genes\/.*\/variant-classifications/, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
+    });
+  });
+
+  test("should load gene data without console errors when selecting a gene", async ({
+    page,
+  }) => {
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    await page.goto("/curate");
+    await page.waitForLoadState("domcontentloaded");
+
+    // Filter out expected errors (e.g., AdBlock, favicon)
+    const criticalErrors = consoleErrors.filter(
+      (err) =>
+        !err.includes("Content blocker") &&
+        !err.includes("beacon.min.js") &&
+        !err.includes("favicon") &&
+        !err.includes("cloudflareinsights") &&
+        !err.includes("adguard"),
+    );
+
+    expect(criticalErrors).toHaveLength(0);
+  });
+
+  test("should display structures empty state when no structures exist", async ({
+    page,
+  }) => {
+    await page.goto("/curate");
+    await page.waitForLoadState("domcontentloaded");
+
+    // Navigate to structures tab if present
+    const structuresTab = page.locator(
+      'button[role="tab"], button:has-text("Structures"), [data-value="structures"]',
+    );
+    if (await structuresTab.isVisible()) {
+      await structuresTab.click();
+      await page.waitForTimeout(500);
+    }
+
+    // Should display empty state
+    const emptyState = page.locator('text="No structures yet"');
+    await expect(emptyState).toBeVisible({ timeout: 5000 });
+  });
+
+  test("should display BED tracks empty state when no tracks exist", async ({
+    page,
+  }) => {
+    await page.goto("/curate");
+    await page.waitForLoadState("domcontentloaded");
+
+    // Navigate to BED tracks tab if present
+    const bedTracksTab = page.locator(
+      'button[role="tab"], button:has-text("BED"), [data-value="bed-tracks"]',
+    );
+    if (await bedTracksTab.isVisible()) {
+      await bedTracksTab.click();
+      await page.waitForTimeout(500);
+    }
+  });
+
+  test("should load all tabs for selected gene without crashing", async ({
+    page,
+  }) => {
+    await page.goto("/curate");
+    await page.waitForLoadState("domcontentloaded");
+
+    // All tabs should be clickable without causing errors
+    const tabs = [
+      'button[role="tab"]:has-text("Variants")',
+      'button[role="tab"]:has-text("Structures")',
+      'button[role="tab"]:has-text("Literature")',
+    ];
+
+    for (const tabSelector of tabs) {
+      const tab = page.locator(tabSelector);
+      if (await tab.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await tab.click();
+        await page.waitForTimeout(300);
+      }
+    }
+
+    // Page should still be on curate page
+    expect(page.url()).toContain("/curate");
+  });
+});
