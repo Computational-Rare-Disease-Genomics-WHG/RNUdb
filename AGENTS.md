@@ -15,6 +15,14 @@ Repository-specific guidance for AI coding agents.
 
 ## Autonomy Boundaries
 
+### Safe to do without asking
+
+- Read files and inspect codebase
+- Run lint, tests, builds, pre-commit
+- Edit code directly related to the request
+- Generate new Alembic migration with `--autogenerate`
+- Update docs required by code change
+
 ### Ask before doing
 
 - Applying migrations to non-local DB
