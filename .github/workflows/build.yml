@@ -58,6 +58,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -106,8 +107,8 @@ jobs:
 
       - name: Create and push multi-arch manifest
         run: |
-          AMD64_DIGEST="${{ needs.build.outputs.amd64_digest }}"
-          ARM64_DIGEST="${{ needs.build.outputs.arm64_digest }}"
+          AMD64_DIGEST="${{ needs.build.outputs.linux/amd64_digest }}"
+          ARM64_DIGEST="${{ needs.build.outputs.linux/arm64_digest }}"
 
           # Extract SHA256 from digests
           AMD64_SHA=$(echo "$AMD64_DIGEST" | grep -oP 'sha256:[a-f0-9]+' | head -1)
