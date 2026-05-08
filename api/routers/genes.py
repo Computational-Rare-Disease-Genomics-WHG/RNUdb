@@ -407,13 +407,8 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
             linked_ids = primary_class.get("linked_variant_ids")
             if linked_ids:
                 linked_id_list = [v.strip() for v in linked_ids.split(",") if v.strip()]
-                linked_hgvs = []
-                for lid in linked_id_list:
-                    hgvs = hgvs_by_variant.get(lid)
-                    if hgvs:
-                        linked_hgvs.append(hgvs)
-                if linked_hgvs:
-                    row_dict["linkedVariantIds"] = linked_hgvs
+                if linked_id_list:
+                    row_dict["linkedVariantIds"] = linked_id_list
 
         variants.append(VariantPublic(**row_dict))
 
