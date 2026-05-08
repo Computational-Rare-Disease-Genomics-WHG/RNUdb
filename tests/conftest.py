@@ -294,3 +294,79 @@ def invalid_bed_intervals():
             "score": 1500,
         },  # Score > 1000
     ]
+
+
+# ---------------------------------------------------------------------------
+# Variant Classification fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def sample_literature():
+    """Return a sample literature record for testing."""
+    from api.models import Literature
+
+    return Literature(
+        id="10.1101/2025.08.13.25333306",
+        title="Test Paper on Retinitis Pigmentosa",
+        authors="Smith J, Doe A",
+        journal="bioRxiv",
+        year="2025",
+        doi="10.1101/2025.08.13.25333306",
+        pmid="12345678",
+    )
+
+
+@pytest.fixture
+def sample_variant_with_data(test_db, sample_gene):
+    """Return a variant with population data for testing."""
+    from api.models import Variant
+
+    variant = Variant(
+        id="chr12-120291764-C-T",
+        geneId="RNU4-2",
+        position=120291764,
+        ref="C",
+        alt="T",
+        gnomad_ac=5,
+        gnomad_hom=0,
+        aou_ac=37,
+        aou_hom=0,
+    )
+    test_db.add(variant)
+    test_db.commit()
+    return variant
+
+
+@pytest.fixture
+def sample_variant_classification(test_db, sample_variant_with_data, sample_literature):
+    """Return a sample variant classification for testing."""
+    from api.models import VariantClassification
+
+    test_db.add(sample_literature)
+    test_db.commit()
+
+    classification = VariantClassification(
+        variant_id="chr12-120291764-C-T",
+        literature_id="10.1101/2025.08.13.25333306",
+        clinical_significance="VUS",
+        zygosity="Heterozygous",
+        disease="Retinitis Pigmentosa",
+        counts=2,
+        linked_variant_ids=None,
+    )
+    test_db.add(classification)
+    test_db.commit()
+    return classification
+
+
+@pytest.fixture
+def sample_import_payload():
+    """Return sample import payload for testing."""
+    return {
+        "geneId": "RNU4-2",
+        "variants": [
+            {"position": 120291764, "ref": "C", "alt": "T", "hgvs": "n.140G>T"}
+        ],
+        "skip_invalid": True,
+    }
