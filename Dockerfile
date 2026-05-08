@@ -50,9 +50,8 @@ COPY api ./api
 COPY rnudb_utils ./rnudb_utils
 
 # Create venv and install dependencies using uv
-# Force compilation from source for native extensions to ensure cross-arch compatibility
 RUN uv venv --python 3.11 .venv && \
-    uv sync --python .venv/bin/python --no-binary
+    uv sync --python .venv/bin/python
 
 # --------------------------------------------------
 # Stage 3: Final runtime (distroless, non-root)
