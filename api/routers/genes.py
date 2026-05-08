@@ -366,12 +366,6 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
             classifications_by_variant[vid] = []
         classifications_by_variant[vid].append(row_dict)
 
-    hgvs_by_variant = {
-        row._mapping["id"]: row._mapping["hgvs"]
-        for row in rows
-        if row._mapping.get("hgvs")
-    }
-
     variants = []
     for row in rows:
         row_dict = dict(row._mapping)
