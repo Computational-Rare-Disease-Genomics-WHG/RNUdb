@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SnRNAGene, Variant } from "@/types";
 
 const mockGenes: SnRNAGene[] = [
   {
@@ -57,6 +56,7 @@ vi.mock("./api", () => ({
 
 import { getAllGenes, getGeneVariants } from "./api";
 import { searchService } from "./search";
+import type { SnRNAGene, Variant } from "@/types";
 
 describe("searchService", () => {
   beforeEach(() => {
