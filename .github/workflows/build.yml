@@ -63,7 +63,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ steps.meta.outputs.tags }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.platform }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ replace(matrix.platform, '/', '-') }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -109,13 +109,13 @@ jobs:
         run: |
           docker manifest create \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:linux/amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:linux/arm64
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:linux-arm64
 
           docker manifest create \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:linux/amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:linux/arm64
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:linux-arm64
 
           docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
