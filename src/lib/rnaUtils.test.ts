@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import type { Nucleotide } from "@/types";
 import { isWatsonCrickPair, findNucleotideById } from "./rnaUtils";
+import type { Nucleotide } from "@/types";
 
 describe("isWatsonCrickPair", () => {
   it("returns true for G-C pair", () => {

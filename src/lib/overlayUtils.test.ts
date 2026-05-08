@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import type { OverlayData } from "@/types";
 import {
   getOverlayValue,
   getOverlayVariantId,
   hasOverlayData,
   convertLegacyOverlay,
 } from "./overlayUtils";
+import type { OverlayData } from "@/types";
 
 describe("getOverlayValue", () => {
   it("returns 0 for undefined nucleotide", () => {
