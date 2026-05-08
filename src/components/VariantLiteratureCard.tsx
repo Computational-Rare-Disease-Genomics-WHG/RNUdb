@@ -653,7 +653,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                               >
                                 {variant.zygosity === "hom"
                                   ? "Hom"
-                                  : `Het n.${[variant.hgvs || variant.id, ...linkedVariants.map((v) => v.hgvs || v.id)].join(", ")}`}
+                                  : `Het ${[variant.hgvs || variant.id, ...linkedVariants.map((v) => v.hgvs || v.id)].join(", ")}`}
                               </button>
                             ) : (
                               <span className="text-slate-700 font-medium">

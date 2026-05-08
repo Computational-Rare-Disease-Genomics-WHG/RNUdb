@@ -60,12 +60,62 @@ const MainContent: React.FC<MainContentProps> = ({
   );
   const [selectedNucleotide, setSelectedNucleotide] =
     useState<Nucleotide | null>(null);
+  const [highlightedNucleotideIds, setHighlightedNucleotideIds] = useState<
+    number[]
+  >([]);
 
   const handleNucleotideClick = (nucleotide: Nucleotide) => {
     if (selectedNucleotide?.id === nucleotide.id) {
       setSelectedNucleotide(null);
+      setHighlightedNucleotideIds([]);
     } else {
       setSelectedNucleotide(nucleotide);
+      const variantsAtPosition = variantData.filter((variant) => {
+        if (
+          variant.nucleotidePosition !== undefined &&
+          variant.nucleotidePosition !== null
+        ) {
+          return variant.nucleotidePosition === nucleotide.id;
+        } else if (variant.position) {
+          let nucleotidePos: number;
+          if (currentData.strand === "-") {
+            nucleotidePos = currentData.end - variant.position + 1;
+          } else {
+            nucleotidePos = variant.position - currentData.start + 1;
+          }
+          return nucleotidePos === nucleotide.id;
+        }
+        return false;
+      });
+      const linkedIds: number[] = [];
+      for (const v of variantsAtPosition) {
+        if (v.linkedVariantIds && v.linkedVariantIds.length > 0) {
+          for (const linkedId of v.linkedVariantIds) {
+            const linkedVariant = variantData.find((x) => x.id === linkedId);
+            if (linkedVariant) {
+              let nucPos: number;
+              if (
+                linkedVariant.nucleotidePosition !== undefined &&
+                linkedVariant.nucleotidePosition !== null
+              ) {
+                nucPos = linkedVariant.nucleotidePosition;
+              } else if (linkedVariant.position) {
+                if (currentData.strand === "-") {
+                  nucPos = currentData.end - linkedVariant.position + 1;
+                } else {
+                  nucPos = linkedVariant.position - currentData.start + 1;
+                }
+              } else {
+                continue;
+              }
+              if (!linkedIds.includes(nucPos)) {
+                linkedIds.push(nucPos);
+              }
+            }
+          }
+        }
+      }
+      setHighlightedNucleotideIds(linkedIds);
     }
   };
 
@@ -136,6 +186,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   onNucleotideHover={setHoveredNucleotide}
                   onNucleotideClick={handleNucleotideClick}
                   selectedNucleotide={selectedNucleotide}
+                  highlightedNucleotideIds={highlightedNucleotideIds}
                   geneData={{
                     id: currentData.id,
                     name: currentData.name,

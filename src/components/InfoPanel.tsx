@@ -177,8 +177,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 Coordinate
               </div>
               <div className="text-xs font-mono text-white leading-tight">
-                chr{currentData.chromosome}:{currentData.start}-
-                {currentData.end}
+                {currentData.chromosome}:{currentData.start}-{currentData.end}
               </div>
             </div>
             <div className="text-center p-2 bg-white/10 rounded-lg border border-white/20 shadow-sm backdrop-blur-sm">
