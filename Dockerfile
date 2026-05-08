@@ -41,6 +41,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy Python project files
 COPY pyproject.toml uv.lock* ./
+COPY alembic.ini ./
+COPY alembic ./alembic
 COPY api ./api
 COPY rnudb_utils ./rnudb_utils
 
@@ -57,6 +59,10 @@ WORKDIR /app
 
 # Copy venv from backend-builder
 COPY --from=backend-builder --chown=nonroot:nonroot /app/.venv /app/.venv
+
+# Copy alembic config and migrations
+COPY --from=backend-builder --chown=nonroot:nonroot /app/alembic.ini /app/alembic.ini
+COPY --from=backend-builder --chown=nonroot:nonroot /app/alembic /app/alembic
 
 # Copy backend code
 COPY --from=backend-builder --chown=nonroot:nonroot /app/api /app/api
