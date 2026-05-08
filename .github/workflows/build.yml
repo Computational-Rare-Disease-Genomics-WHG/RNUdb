@@ -11,15 +11,7 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        platform: [linux/amd64, linux/arm64]
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-latest
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -56,12 +48,13 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
       - name: Image digest
         if: github.event_name != 'pull_request'
         run: echo ${{ steps.meta.outputs.digest }}
