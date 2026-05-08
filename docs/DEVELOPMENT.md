@@ -5,7 +5,7 @@ This guide covers setting up a local development environment for RNUdb.
 ## Prerequisites
 
 - **Python 3.11** - Required for the backend
-- **Node.js 20+** - Required for the frontend
+- **Node.js 20.19+ or 22.12+** - Required for Vite 8 frontend
 - **uv** - Python package manager (install via `curl -LsSf https://astral.sh/uv/install.sh | sh` or `pip install uv`)
 - **Docker** - Optional, for containerized development
 
@@ -38,7 +38,30 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env` with your settings (see [Environment Setup](../README.md#environment-setup) in README).
+Edit `.env` with your settings:
+
+```bash
+# GitHub OAuth - Create an OAuth App at https://github.com/settings/developers
+GITHUB_CLIENT_ID=your_github_oauth_app_client_id
+GITHUB_CLIENT_SECRET=your_github_oauth_app_client_secret
+
+# JWT Authentication - Generate a secure random key
+JWT_SECRET_KEY=your_random_secret_key_at_least_32_characters
+
+# Admin Users - Comma-separated GitHub usernames
+ADMIN_GITHUB_LOGINS=username1,username2
+
+# Frontend URL
+FRONTEND_URL=http://localhost:5173
+```
+
+### Setting up GitHub OAuth
+
+1. Go to GitHub Settings → Developer settings → OAuth Apps
+2. Create a new OAuth App:
+   - **Homepage URL**: `http://localhost:5173`
+   - **Authorization callback URL**: `http://localhost:5173/api/auth/callback`
+3. Copy the Client ID and Client Secret to your `.env` file
 
 ### 4. Setup Database
 

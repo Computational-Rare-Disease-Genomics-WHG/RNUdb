@@ -41,9 +41,10 @@ Navigate to `/curate` to access the curator dashboard.
 ### Dashboard Features
 
 - **Gene selector** - Select a gene to curate
-- **Data tabs** - Switch between Genes, Variants, Literature, Structures, and BED Tracks
+- **Data tabs** - Switch between Genes, Variants, Literature, Variant Associations, Structures, and BED Tracks
 - **Import wizards** - Batch import data for each entity type
 - **Pending changes** - View your pending submissions
+- **Refresh variants** - Update population frequency data for existing genes
 
 ---
 
@@ -61,8 +62,9 @@ Navigate to `/curate` to access the curator dashboard.
    - Strand
    - Sequence
    - Description
-4. Click "Save Changes"
-5. Your changes will appear as "pending" until an admin approves them
+4. Optional: Enable "Fetch population data" to automatically import gnomAD and All of Us frequency data
+5. Click "Save Changes"
+6. Your changes will appear as "pending" until an admin approves them
 
 ### Adding Variants
 
@@ -89,6 +91,20 @@ Navigate to `/curate` to access the curator dashboard.
    - DOI
 3. Link literature to variants using the variant literature counts
 
+### Variant Associations
+
+The Variant Association tab links variants to literature with clinical classifications:
+
+1. Go to the "Variant Association" tab
+2. Add or edit variant classifications:
+   - Clinical significance (ACMG guidelines)
+   - Zygosity (Homozygous, Heterozygous, Compound Heterozygous)
+   - Inheritance pattern (Autosomal Dominant, Recessive, etc.)
+   - Disease association
+   - Number of individuals diagnosed
+   - Linked variant IDs
+3. Use the Import Wizard for bulk import from CSV
+
 ### RNA Structures
 
 1. Go to the "Structures" tab
@@ -113,13 +129,15 @@ Navigate to `/curate` to access the curator dashboard.
 
 RNUdb provides batch import wizards for each data type:
 
-| Wizard                | Description              | File Format |
-| --------------------- | ------------------------ | ----------- |
-| **Gene Import**       | Add multiple genes       | CSV/JSON    |
-| **Variant Import**    | Batch add variants       | CSV/JSON    |
-| **Literature Import** | Add publications         | CSV/JSON    |
-| **Structure Import**  | Import RNA structures    | JSON        |
-| **BED Track Import**  | Import annotation tracks | BED/CSV     |
+| Wizard                         | Description                          | File Format |
+| ------------------------------ | ------------------------------------ | ----------- |
+| **Gene Import**                | Add multiple genes                   | CSV/JSON    |
+| **Variant Import**             | Batch add variants                   | CSV/JSON    |
+| **Variant Import (VCF)**       | Import variants from VCF files       | VCF         |
+| **Literature Import**          | Add publications                     | CSV/JSON    |
+| **Variant Association Import** | Bulk import clinical classifications | CSV         |
+| **Structure Import**           | Import RNA structures                | JSON        |
+| **BED Track Import**           | Import annotation tracks             | BED/CSV     |
 
 Access wizards from the curate dashboard tabs.
 

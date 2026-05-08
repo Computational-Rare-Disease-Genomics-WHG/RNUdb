@@ -77,19 +77,38 @@ Stores publication information.
 
 ---
 
-### 4. literature_counts
+### 4. variant_classifications
 
-Links variants to literature with citation counts.
+Links variants to literature with clinical classifications.
+
+| Column                | Type    | Constraints                                | Description                      |
+| --------------------- | ------- | ------------------------------------------ | -------------------------------- |
+| variant_id            | TEXT    | PRIMARY KEY (composite with literature_id) | Foreign key to variants.id       |
+| literature_id         | TEXT    | PRIMARY KEY (composite with variant_id)    | Foreign key to literature.id     |
+| clinical_significance | TEXT    | NULLABLE                                   | ACMG clinical significance       |
+| zygosity              | TEXT    | NULLABLE                                   | Zygosity type                    |
+| inheritance           | TEXT    | NULLABLE                                   | Inheritance pattern              |
+| disease               | TEXT    | NULLABLE                                   | Associated disease               |
+| counts                | INTEGER | NULLABLE                                   | Individuals diagnosed            |
+| linked_variant_ids    | TEXT    | NULLABLE                                   | JSON array of linked variant IDs |
+
+Constraint: `PrimaryKeyConstraint("variant_id", "literature_id")`
+
+---
+
+### 5. literature_counts
+
+Links variants to literature with diagnosed individuals counts.
 
 | Column        | Type    | Constraints | Description                  |
 | ------------- | ------- | ----------- | ---------------------------- |
 | variant_id    | TEXT    | PRIMARY KEY | Foreign key to variants.id   |
 | literature_id | TEXT    | PRIMARY KEY | Foreign key to literature.id |
-| counts        | INTEGER | NOT NULL    | Citation count               |
+| counts        | INTEGER | NOT NULL    | Individuals diagnosed        |
 
 ---
 
-### 5. rna_structures
+### 6. rna_structures
 
 Stores RNA secondary structure metadata.
 
@@ -100,7 +119,7 @@ Stores RNA secondary structure metadata.
 
 ---
 
-### 6. nucleotides
+### 7. nucleotides
 
 Stores nucleotide positions for RNA structures.
 
@@ -114,7 +133,7 @@ Stores nucleotide positions for RNA structures.
 
 ---
 
-### 7. base_pairs
+### 8. base_pairs
 
 Stores base pair information for RNA structures.
 
@@ -126,7 +145,7 @@ Stores base pair information for RNA structures.
 
 ---
 
-### 8. annotations
+### 9. annotations
 
 Stores text annotations on RNA structures.
 
@@ -142,7 +161,7 @@ Stores text annotations on RNA structures.
 
 ---
 
-### 9. structural_features
+### 10. structural_features
 
 Stores structural feature annotations.
 
@@ -162,7 +181,7 @@ Stores structural feature annotations.
 
 ---
 
-### 10. variant_links
+### 11. variant_links
 
 Stores biallelic variant relationships.
 
@@ -175,7 +194,7 @@ Constraint: `variant_id_1 < variant_id_2` (prevents duplicates)
 
 ---
 
-### 11. users
+### 12. users
 
 Stores user information and roles.
 
@@ -193,7 +212,7 @@ Stores user information and roles.
 
 ---
 
-### 12. audit_log
+### 13. audit_log
 
 Tracks all database changes for audit purposes.
 
@@ -309,14 +328,16 @@ For interactive API documentation, visit: `/api-docs` (when running locally) or 
 
 ### Authenticated Endpoints
 
-| Endpoint              | Methods   | Roles          | Description            |
-| --------------------- | --------- | -------------- | ---------------------- |
-| `/api/auth/me`        | GET       | All            | Get current user       |
-| `/api/curate`         | GET, POST | Curator, Admin | Curate data            |
-| `/api/approvals`      | GET       | Admin          | List pending approvals |
-| `/api/approvals/{id}` | POST      | Admin          | Approve/reject         |
-| `/api/users`          | GET, POST | Admin          | Manage users           |
-| `/api/import/*`       | POST      | Curator, Admin | Batch imports          |
+| Endpoint                              | Methods   | Roles          | Description                 |
+| ------------------------------------- | --------- | -------------- | --------------------------- |
+| `/api/auth/me`                        | GET       | All            | Get current user            |
+| `/api/curate`                         | GET, POST | Curator, Admin | Curate data                 |
+| `/api/approvals`                      | GET       | Admin          | List pending approvals      |
+| `/api/approvals/{id}`                 | POST      | Admin          | Approve/reject              |
+| `/api/users`                          | GET, POST | Admin          | Manage users                |
+| `/api/import/*`                       | POST      | Curator, Admin | Batch imports               |
+| `/api/variant-classifications/import` | POST      | Curator, Admin | Bulk import classifications |
+| `/api/genes/refresh-variants`         | POST      | Curator, Admin | Refresh population data     |
 
 ---
 
