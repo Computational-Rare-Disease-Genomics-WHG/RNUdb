@@ -18,7 +18,7 @@ router = APIRouter()
 # Config from environment
 GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
 GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
-JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "")
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-secret-key")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://rnudb.rarediseasegenomics.org")
 ADMIN_GITHUB_LOGINS = [
     u.strip().lower()

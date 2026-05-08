@@ -3,8 +3,13 @@ services:
     image: ghcr.io/computational-rare-disease-genomics-whg/rnudb:latest
     ports:
       - "8000:8000"
+    environment:
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ADMIN_GITHUB_LOGINS=${ADMIN_GITHUB_LOGINS}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - NODE_ENV=production
     volumes:
       - ./data:/app/data
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
