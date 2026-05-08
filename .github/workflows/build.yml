@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ github.event.repository.name }}
 
 jobs:
   build-amd64:
@@ -17,6 +17,8 @@ jobs:
       contents: read
       packages: write
     runs-on: ubuntu-latest
+    outputs:
+      amd64_digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - name: Checkout
@@ -60,16 +62,16 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Output digest
-        if: github.event_name != 'pull_request'
-        run: echo "amd64_digest=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+          provenance: false
+          sbom: false
 
   build-arm64:
     permissions:
       contents: read
       packages: write
     runs-on: ubuntu-24.04-arm
+    outputs:
+      arm64_digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - name: Checkout
@@ -110,10 +112,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Output digest
-        if: github.event_name != 'pull_request'
-        run: echo "arm64_digest=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+          provenance: false
+          sbom: false
 
   manifest:
     needs: [build-amd64, build-arm64]
@@ -152,21 +152,20 @@ jobs:
           AMD64_DIGEST="${{ needs.build-amd64.outputs.amd64_digest }}"
           ARM64_DIGEST="${{ needs.build-arm64.outputs.arm64_digest }}"
 
-          # Extract SHA256 from digests
           AMD64_SHA=$(echo "$AMD64_DIGEST" | grep -oP 'sha256:[a-f0-9]+' | head -1)
           ARM64_SHA=$(echo "$ARM64_DIGEST" | grep -oP 'sha256:[a-f0-9]+' | head -1)
+
+          REGISTRY=ghcr.io
+          IMAGE_NAME="${REGISTRY}/${GITHUB_REPOSITORY,,}"
 
           echo "Pulling amd64: $AMD64_SHA"
           echo "Pulling arm64: $ARM64_SHA"
 
-          # Pull both images
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$AMD64_SHA || echo "AMD64 pull failed"
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$ARM64_SHA || echo "ARM64 pull failed"
+          docker pull $IMAGE_NAME@$AMD64_SHA
+          docker pull $IMAGE_NAME@$ARM64_SHA
 
-          # Create manifest list for latest
-          docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$AMD64_SHA \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$ARM64_SHA || true
+          docker manifest create $IMAGE_NAME:latest \
+            $IMAGE_NAME@$AMD64_SHA \
+            $IMAGE_NAME@$ARM64_SHA
 
-          # Push manifest
-          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || echo "Manifest push completed"
+          docker manifest push $IMAGE_NAME:latest
