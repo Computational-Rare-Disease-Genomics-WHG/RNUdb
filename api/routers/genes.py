@@ -62,7 +62,10 @@ async def get_gene(gene_id: str, db: Session = Depends(get_db)):
 
 @router.post("/genes", response_model=GenePublic)
 async def create_gene(
-    gene: GeneCreate, request: Request, db: Session = Depends(get_db)
+    gene: GeneCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    fetch_population_data: bool = True,
 ):
     """Create a new gene (curator only)"""
     user = require_admin(request)
@@ -76,6 +79,96 @@ async def create_gene(
     db.refresh(new_gene)
 
     audit_log("genes", gene.id, "CREATE", None, gene.model_dump(), user["github_login"])
+
+    if fetch_population_data:
+        from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
+
+        chrom = (
+            gene.chromosome
+            if not gene.chromosome.startswith("chr")
+            else gene.chromosome[3:]
+        )
+
+        start, end = gene.start, gene.end
+        gnomad_variants = (
+            query_gnomad_variants(chrom, start, end) if query_gnomad_variants else []
+        )
+        aou_variants = (
+            query_all_of_us_variants(chrom, start, end)
+            if query_all_of_us_variants
+            else []
+        )
+
+        gnomad_count = len(gnomad_variants)
+        aou_count = len(aou_variants)
+
+        variants_to_insert = []
+
+        for v in gnomad_variants:
+            variants_to_insert.append(
+                {
+                    "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
+                    "geneId": gene.id,
+                    "position": v["position"],
+                    "ref": v["ref"],
+                    "alt": v["alt"],
+                    "gnomad_ac": v.get("gnomad_ac"),
+                    "gnomad_hom": v.get("gnomad_hom"),
+                    "aou_ac": None,
+                    "aou_hom": None,
+                }
+            )
+
+        for v in aou_variants:
+            vid = f"chr{chrom}-{v['position']}-{v.get('ref', '')}-{v.get('alt', '')}"
+            existing = next((x for x in variants_to_insert if x["id"] == vid), None)
+            if existing:
+                existing["aou_ac"] = v.get("aou_ac")
+                existing["aou_hom"] = v.get("aou_hom")
+            else:
+                variants_to_insert.append(
+                    {
+                        "id": vid,
+                        "geneId": gene.id,
+                        "position": v["position"],
+                        "ref": v.get("ref", ""),
+                        "alt": v.get("alt", ""),
+                        "gnomad_ac": None,
+                        "gnomad_hom": None,
+                        "aou_ac": v.get("aou_ac"),
+                        "aou_hom": v.get("aou_hom"),
+                    }
+                )
+
+        for v in variants_to_insert:
+            db.execute(
+                text("""
+                    INSERT INTO variants
+                    (id, geneId, position, ref, alt, gnomad_ac,
+                     gnomad_hom, aou_ac, aou_hom)
+                    VALUES
+                    (:id, :geneId, :position, :ref, :alt, :gnomad_ac,
+                     :gnomad_hom, :aou_ac, :aou_hom)
+                    ON CONFLICT(id) DO UPDATE SET
+                        gnomad_ac = EXCLUDED.gnomad_ac,
+                        gnomad_hom = EXCLUDED.gnomad_hom,
+                        aou_ac = EXCLUDED.aou_ac,
+                        aou_hom = EXCLUDED.aou_hom
+                """),
+                v,
+            )
+
+        db.commit()
+
+        audit_log(
+            "variants",
+            "population_import",
+            "CREATE",
+            None,
+            {"geneId": gene.id, "gnomad_count": gnomad_count, "aou_count": aou_count},
+            "system",
+            db,
+        )
 
     return GenePublic.model_validate(new_gene)
 
@@ -112,6 +205,110 @@ async def update_gene(
     return GenePublic.model_validate(updated)
 
 
+@router.post("/genes/{gene_id}/refresh-variants", response_model=GenePublic)
+async def refresh_gene_variants(
+    gene_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Refresh population data (gnomAD and All of Us) for a gene (curator only)"""
+    user = require_admin(request)
+
+    gene = db.get(Gene, gene_id)
+    if not gene:
+        raise HTTPException(status_code=404, detail="Gene not found")
+
+    chrom = gene.chromosome
+    if not chrom.startswith("chr"):
+        chrom = chrom[3:]
+    chrom = f"chr{chrom}"
+
+    from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
+
+    gnomad_variants = (
+        query_gnomad_variants(chrom, gene.start, gene.end)
+        if query_gnomad_variants
+        else []
+    )
+    aou_variants = (
+        query_all_of_us_variants(chrom, gene.start, gene.end)
+        if query_all_of_us_variants
+        else []
+    )
+
+    gnomad_count = len(gnomad_variants)
+    aou_count = len(aou_variants)
+
+    variants_to_insert = []
+
+    for v in gnomad_variants:
+        variants_to_insert.append(
+            {
+                "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
+                "geneId": gene.id,
+                "position": v["position"],
+                "ref": v["ref"],
+                "alt": v["alt"],
+                "gnomad_ac": v.get("gnomad_ac"),
+                "gnomad_hom": v.get("gnomad_hom"),
+                "aou_ac": None,
+                "aou_hom": None,
+            }
+        )
+
+    for v in aou_variants:
+        vid = f"chr{chrom}-{v['position']}-{v.get('ref', '')}-{v.get('alt', '')}"
+        existing = next((x for x in variants_to_insert if x["id"] == vid), None)
+        if existing:
+            existing["aou_ac"] = v.get("aou_ac")
+            existing["aou_hom"] = v.get("aou_hom")
+        else:
+            variants_to_insert.append(
+                {
+                    "id": vid,
+                    "geneId": gene.id,
+                    "position": v["position"],
+                    "ref": v.get("ref", ""),
+                    "alt": v.get("alt", ""),
+                    "gnomad_ac": None,
+                    "gnomad_hom": None,
+                    "aou_ac": v.get("aou_ac"),
+                    "aou_hom": v.get("aou_hom"),
+                }
+            )
+
+    for v in variants_to_insert:
+        db.execute(
+            text("""
+                INSERT INTO variants
+                (id, geneId, position, ref, alt, gnomad_ac, gnomad_hom, aou_ac, aou_hom)
+                VALUES
+                (:id, :geneId, :position, :ref, :alt, :gnomad_ac, :gnomad_hom,
+                 :aou_ac, :aou_hom)
+                ON CONFLICT(id) DO UPDATE SET
+                    gnomad_ac = EXCLUDED.gnomad_ac,
+                    gnomad_hom = EXCLUDED.gnomad_hom,
+                    aou_ac = EXCLUDED.aou_ac,
+                    aou_hom = EXCLUDED.aou_hom
+            """),
+            v,
+        )
+
+    db.commit()
+
+    audit_log(
+        "variants",
+        "population_refresh",
+        "UPDATE",
+        None,
+        {"geneId": gene.id, "gnomad_count": gnomad_count, "aou_count": aou_count},
+        user["github_login"],
+        db,
+    )
+
+    return GenePublic.model_validate(gene)
+
+
 @router.delete("/genes/{gene_id}")
 async def delete_gene(gene_id: str, request: Request, db: Session = Depends(get_db)):
     """Delete a gene and all associated data (curator only)"""
@@ -141,7 +338,6 @@ async def delete_gene(gene_id: str, request: Request, db: Session = Depends(get_
 @router.get("/genes/{gene_id}/variants", response_model=list[VariantPublic])
 async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
     """Get all variants for a specific gene"""
-    # Use raw SQL for the complex GROUP_CONCAT query
     sql = text("""
         SELECT v.*,
                GROUP_CONCAT(DISTINCT vl1.variant_id_2) as linked_ids_1,
@@ -155,6 +351,27 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
 
     rows = db.execute(sql, {"gene_id": gene_id}).fetchall()
 
+    variant_classifications_sql = text("""
+        SELECT variant_id, literature_id, clinical_significance, zygosity,
+               disease, linked_variant_ids, inheritance
+        FROM variant_classifications
+    """)
+    classifications_rows = db.execute(variant_classifications_sql).fetchall()
+
+    classifications_by_variant = {}
+    for row in classifications_rows:
+        row_dict = dict(row._mapping)
+        vid = row_dict["variant_id"]
+        if vid not in classifications_by_variant:
+            classifications_by_variant[vid] = []
+        classifications_by_variant[vid].append(row_dict)
+
+    hgvs_by_variant = {
+        row._mapping["id"]: row._mapping["hgvs"]
+        for row in rows
+        if row._mapping.get("hgvs")
+    }
+
     variants = []
     for row in rows:
         row_dict = dict(row._mapping)
@@ -167,6 +384,37 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
         row_dict.pop("linked_ids_2", None)
         if linked_ids:
             row_dict["linkedVariantIds"] = linked_ids
+
+        variant_id = row_dict["id"]
+        classifications = classifications_by_variant.get(variant_id, [])
+
+        if classifications:
+            primary_class = classifications[0]
+            row_dict["clinical_significance"] = primary_class.get(
+                "clinical_significance"
+            )
+            row_dict["disease_type"] = primary_class.get("disease")
+            raw_zyg = primary_class.get("zygosity")
+            row_dict["zygosity"] = (
+                "hom"
+                if raw_zyg == "Homozygous"
+                else "het"
+                if raw_zyg == "Heterozygous"
+                else None
+            )
+            row_dict["clinvar_significance"] = primary_class.get("clinvar_significance")
+
+            linked_ids = primary_class.get("linked_variant_ids")
+            if linked_ids:
+                linked_id_list = [v.strip() for v in linked_ids.split(",") if v.strip()]
+                linked_hgvs = []
+                for lid in linked_id_list:
+                    hgvs = hgvs_by_variant.get(lid)
+                    if hgvs:
+                        linked_hgvs.append(hgvs)
+                if linked_hgvs:
+                    row_dict["linkedVariantIds"] = linked_hgvs
+
         variants.append(VariantPublic(**row_dict))
 
     return variants

@@ -213,6 +213,7 @@ bower_components
 
 # Playwright test results
 test-results/
+playwright-report/
 
 *.sublime*
 

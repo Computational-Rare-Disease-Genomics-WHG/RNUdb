@@ -7,7 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
 } from "lucide-react";
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,11 +26,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface VariantImportWizardProps {
-  geneId: string;
+interface VariantAssociationImportWizardProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+}
+
+interface VariantAssociationRow {
+  variant_id: string;
+  literature_id: string;
+  clinical_significance?: string;
+  zygosity?: string;
+  inheritance?: string;
+  disease?: string;
+  counts?: number | null;
+  linked_variant_ids?: string;
 }
 
 interface ImportResult {
@@ -38,269 +48,339 @@ interface ImportResult {
   imported_count: number;
   skipped_count: number;
   errors: { row: number; field: string; message: string }[];
-  warnings: { row: number; message: string }[];
 }
 
 interface FieldMapping {
-  vcfField: string;
+  csvField: string;
   targetColumn: string;
-}
-
-interface ParsedVariant {
-  chrom: string;
-  pos: number;
-  ref: string;
-  alt: string;
-  [key: string]: string | number | null;
 }
 
 const STEPS = [
   { id: 1, label: "Upload" },
   { id: 2, label: "Map Fields" },
   { id: 3, label: "Preview" },
+  { id: 4, label: "Import" },
 ];
 
 const TARGET_COLUMNS = [
   {
-    value: "nucleotidePosition",
-    label: "Nucleotide Position",
-    description: "Position in RNA sequence",
-  },
-  { value: "hgvs", label: "HGVS", description: "HGVS nomenclature" },
-  {
-    value: "consequence",
-    label: "Consequence",
-    description: "Variant consequence type",
+    value: "variant_id",
+    label: "Variant ID",
+    description: "Variant ID (required)",
   },
   {
-    value: "function_score",
-    label: "Function Score",
-    description: "Functional impact score",
-  },
-  { value: "pvalues", label: "P-Value", description: "Statistical p-value" },
-  { value: "qvalues", label: "Q-Value", description: "Adjusted q-value" },
-  {
-    value: "depletion_group",
-    label: "Depletion Group",
-    description: "Depletion category",
+    value: "literature_id",
+    label: "Literature (DOI)",
+    description: "Literature DOI (required)",
   },
   {
-    value: "cadd_score",
-    label: "CADD Score",
-    description: "CADD pathogenicity score",
+    value: "clinical_significance",
+    label: "Clinical Significance",
+    description: "Pathogenic, VUS, etc.",
   },
   {
-    value: "gnomad_ac",
-    label: "gnomAD AC",
-    description: "gnomAD allele count",
+    value: "zygosity",
+    label: "Zygosity",
+    description: "Heterozygous, Homozygous, Compound Heterozygous",
   },
   {
-    value: "gnomad_hom",
-    label: "gnomAD Hom",
-    description: "gnomAD homozygous count",
+    value: "inheritance",
+    label: "Inheritance",
+    description: "Dominant or Biallelic",
   },
+  { value: "disease", label: "Disease", description: "Disease name" },
+  { value: "counts", label: "Counts", description: "Number value" },
   {
-    value: "aou_ac",
-    label: "All of Us AC",
-    description: "All of Us allele count",
-  },
-  {
-    value: "aou_hom",
-    label: "All of Us Hom",
-    description: "All of Us homozygous count",
+    value: "linked_variant_ids",
+    label: "Linked Variant IDs",
+    description: "Comma-separated IDs",
   },
 ];
 
 const COMMON_FIELD_PATTERNS: Record<string, string> = {
-  HGVS: "hgvs",
-  HGVS_NOMENCLATURE: "hgvs",
-  FUNCTION_SCORE: "function_score",
-  FUNCTIONSCORE: "function_score",
-  FUNC_SCORE: "function_score",
-  PVALUES: "pvalues",
-  P_VALUE: "pvalues",
-  PVALUE: "pvalues",
-  P_VAL: "pvalues",
-  QVALUES: "qvalues",
-  Q_VALUE: "qvalues",
-  QVALUE: "qvalues",
-  Q_VAL: "qvalues",
-  DEPLETION_GROUP: "depletion_group",
-  DEPLETION: "depletion_group",
-  DEPLETIONGROUP: "depletion_group",
-  CADD_SCORE: "cadd_score",
-  CADD: "cadd_score",
-  CADDSCORE: "cadd_score",
-  GNOMAD_AC: "gnomad_ac",
-  GNOMADAC: "gnomad_ac",
-  GnomAD_AC: "gnomad_ac",
-  GNOMAD_HOM: "gnomad_hom",
-  GNOMADHOM: "gnomad_hom",
-  GnomAD_HOM: "gnomad_hom",
-  AOU_AC: "aou_ac",
-  AOUAC: "aou_ac",
-  AoU_AC: "aou_ac",
-  AOU_HOM: "aou_hom",
-  AOUHOM: "aou_hom",
-  AoU_HOM: "aou_hom",
-  NUCLEOTIDE_POSITION: "nucleotidePosition",
-  NUCLEOTIDEPOSITION: "nucleotidePosition",
-  NUCLEOTIDE_POS: "nucleotidePosition",
-  POSITION_RNA: "nucleotidePosition",
-  CONSEQUENCE: "consequence",
-  CONSEQUENCES: "consequence",
-  VARIANT_TYPE: "consequence",
-  VAR_TYPE: "consequence",
+  VARIANT: "variant_id",
+  VARIANT_ID: "variant_id",
+  VARIANTID: "variant_id",
+  ID: "variant_id",
+  LITERATURE: "literature_id",
+  LITERATURE_ID: "literature_id",
+  DOI: "literature_id",
+  PAPER_ID: "literature_id",
+  PAPERID: "literature_id",
+  CLINICAL_SIGNIFICANCE: "clinical_significance",
+  CLINICAL: "clinical_significance",
+  SIGNIFICANCE: "clinical_significance",
+  CLASSIFICATION: "clinical_significance",
+  ZYGOSITY: "zygosity",
+  Zygosity: "zygosity",
+  INHERITANCE: "inheritance",
+  INHERIT: "inheritance",
+  DISEASE: "disease",
+  Disease: "disease",
+  COUNTS: "counts",
+  COUNT: "counts",
+  NUMBER: "counts",
+  LINKED_VARIANT_IDS: "linked_variant_ids",
+  LINKED_VARIANTS: "linked_variant_ids",
+  LINKED_IDS: "linked_variant_ids",
+  LINKED: "linked_variant_ids",
 };
 
-const VariantImportWizard = ({
-  geneId,
+const CLINICAL_SIG_OPTIONS = [
+  "Pathogenic",
+  "Likely Pathogenic",
+  "VUS",
+  "Likely Benign",
+  "Benign",
+];
+
+const INHERITANCE_OPTIONS = ["Dominant", "Biallelic"];
+
+const ZYGOSITY_OPTIONS = [
+  "Heterozygous",
+  "Homozygous",
+  "Compound Heterozygous",
+];
+
+const VariantAssociationImportWizard = ({
   open,
   onClose,
   onSuccess,
-}: VariantImportWizardProps) => {
+}: VariantAssociationImportWizardProps) => {
   const [step, setStep] = useState(1);
-  const [vcfFile, setVcfFile] = useState<File | null>(null);
-  const [vcfContent, setVcfContent] = useState<string>("");
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [rawHeaders, setRawHeaders] = useState<string[]>([]);
+  const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
+  const [parsedData, setParsedData] = useState<VariantAssociationRow[]>([]);
+  const [validationErrors, setValidationErrors] = useState<
+    { row: number; field: string; message: string }[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [detectedFields, setDetectedFields] = useState<string[]>([]);
-  const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
-  const [parsedVariants, setParsedVariants] = useState<ParsedVariant[]>([]);
 
-  const detectAndMapFields = useCallback((content: string) => {
-    const lines = content.split("\n");
+  const detectAndMapFields = useCallback((headers: string[]) => {
     const detected: string[] = [];
     const mappings: FieldMapping[] = [];
 
-    for (const line of lines) {
-      if (line.startsWith("##INFO")) {
-        const match = line.match(/ID=([^,]+)/);
-        if (match) {
-          const vcfField = match[1];
-          detected.push(vcfField);
+    headers.forEach((header) => {
+      const normalizedHeader = header.trim().toUpperCase();
+      const autoMapped = COMMON_FIELD_PATTERNS[normalizedHeader] || "";
+      detected.push(header.trim());
+      mappings.push({
+        csvField: header.trim(),
+        targetColumn: autoMapped,
+      });
+    });
 
-          const upperField = vcfField.toUpperCase();
-          const autoMapped = COMMON_FIELD_PATTERNS[upperField] || "";
-
-          mappings.push({
-            vcfField,
-            targetColumn: autoMapped,
-          });
-        }
-      }
-      if (line.startsWith("#CHROM")) break;
-    }
-
-    setDetectedFields(detected);
+    setRawHeaders(detected);
     setFieldMappings(mappings);
   }, []);
 
-  const parseVcfData = useCallback(
-    (content: string) => {
-      const lines = content.split("\n");
-      const variants: ParsedVariant[] = [];
+  const parseCSV = useCallback(
+    (content: string, mappings: FieldMapping[]): VariantAssociationRow[] => {
+      const lines = content.trim().split("\n");
+      if (lines.length < 2) return [];
 
-      for (const line of lines) {
-        if (line.startsWith("#") || !line.trim()) continue;
+      const parseCSVLine = (line: string): string[] => {
+        const result: string[] = [];
+        let current = "";
+        let inQuotes = false;
 
-        const parts = line.split("\t");
-        if (parts.length < 5) continue;
-
-        const variant: ParsedVariant = {
-          chrom: parts[0],
-          pos: parseInt(parts[1], 10),
-          ref: parts[3],
-          alt: parts[4],
-        };
-
-        if (parts.length >= 8 && parts[7]) {
-          const infoFields = parts[7].split(";");
-          for (const field of infoFields) {
-            const [key, value] = field.split("=");
-            if (key && value) {
-              const mappedField = fieldMappings.find(
-                (m) => m.vcfField.toUpperCase() === key.toUpperCase(),
-              );
-              const targetKey = mappedField?.targetColumn || key.toLowerCase();
-              variant[targetKey] = isNaN(Number(value)) ? value : Number(value);
-            }
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === "," && !inQuotes) {
+            result.push(current.trim());
+            current = "";
+          } else {
+            current += char;
           }
         }
+        result.push(current.trim());
+        return result;
+      };
 
-        variants.push(variant);
+      const rows: VariantAssociationRow[] = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const row: Record<string, string> = {};
+
+        mappings.forEach((mapping, idx) => {
+          const value = values[idx] || "";
+          row[mapping.targetColumn] = value.replace(/^"|"$/g, "");
+        });
+
+        if (row.variant_id && row.literature_id) {
+          rows.push({
+            variant_id: row.variant_id || "",
+            literature_id: row.literature_id || "",
+            clinical_significance: row.clinical_significance || undefined,
+            zygosity: row.zygosity || undefined,
+            inheritance: row.inheritance || undefined,
+            disease: row.disease || undefined,
+            counts: row.counts ? parseInt(row.counts, 10) : null,
+            linked_variant_ids: row.linked_variant_ids || undefined,
+          });
+        }
       }
 
-      setParsedVariants(variants);
+      return rows;
     },
-    [fieldMappings],
+    [],
   );
 
-  const handleVcfUpload = useCallback(
+  const validateData = useCallback((data: VariantAssociationRow[]) => {
+    const errors: { row: number; field: string; message: string }[] = [];
+
+    data.forEach((row, idx) => {
+      if (!row.variant_id || row.variant_id.trim() === "") {
+        errors.push({
+          row: idx + 2,
+          field: "variant_id",
+          message: "Variant ID is required",
+        });
+      }
+      if (!row.literature_id || row.literature_id.trim() === "") {
+        errors.push({
+          row: idx + 2,
+          field: "literature_id",
+          message: "Literature (DOI) is required",
+        });
+      }
+      if (
+        row.clinical_significance &&
+        !CLINICAL_SIG_OPTIONS.includes(row.clinical_significance)
+      ) {
+        errors.push({
+          row: idx + 2,
+          field: "clinical_significance",
+          message: `Must be one of: ${CLINICAL_SIG_OPTIONS.join(", ")}`,
+        });
+      }
+      if (row.counts !== undefined && row.counts !== null && row.counts < 0) {
+        errors.push({
+          row: idx + 2,
+          field: "counts",
+          message: "Counts must be greater than or equal to 0",
+        });
+      }
+      if (row.zygosity && !ZYGOSITY_OPTIONS.includes(row.zygosity)) {
+        errors.push({
+          row: idx + 2,
+          field: "zygosity",
+          message: `Must be one of: ${ZYGOSITY_OPTIONS.join(", ")}`,
+        });
+      }
+      if (row.inheritance && !INHERITANCE_OPTIONS.includes(row.inheritance)) {
+        errors.push({
+          row: idx + 2,
+          field: "inheritance",
+          message: `Must be one of: ${INHERITANCE_OPTIONS.join(", ")}`,
+        });
+      }
+    });
+
+    return errors;
+  }, []);
+
+  const handleFileUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const f = e.target.files?.[0];
       if (!f) return;
 
-      if (!f.name.toLowerCase().endsWith(".vcf")) {
-        setError("Please upload a VCF file");
+      if (!f.name.toLowerCase().endsWith(".csv")) {
+        setError("Please upload a CSV file");
         return;
       }
 
       const reader = new FileReader();
       reader.onload = (event) => {
         const text = event.target?.result as string;
-        setVcfContent(text);
-        detectAndMapFields(text);
+        const lines = text.trim().split("\n");
+
+        if (lines.length < 2) {
+          setError("CSV file is empty or has no data rows");
+          return;
+        }
+
+        const parseCSVLine = (line: string): string[] => {
+          const result: string[] = [];
+          let current = "";
+          let inQuotes = false;
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') inQuotes = !inQuotes;
+            else if (char === "," && !inQuotes) {
+              result.push(current.trim());
+              current = "";
+            } else current += char;
+          }
+          result.push(current.trim());
+          return result;
+        };
+
+        const headers = parseCSVLine(lines[0]);
+        detectAndMapFields(headers);
+        setCsvFile(f);
+        setStep(2);
+        setError("");
       };
       reader.readAsText(f);
-
-      setVcfFile(f);
-      setError("");
-      setStep(2);
     },
     [detectAndMapFields],
   );
 
-  const handleMappingChange = (vcfField: string, targetColumn: string) => {
+  const handleMappingChange = (csvField: string, targetColumn: string) => {
     setFieldMappings((prev) =>
-      prev.map((m) => (m.vcfField === vcfField ? { ...m, targetColumn } : m)),
+      prev.map((m) => (m.csvField === csvField ? { ...m, targetColumn } : m)),
     );
   };
 
+  const mappedColumns = fieldMappings
+    .filter((m) => m.targetColumn && m.targetColumn !== "skip")
+    .map((m) => m.targetColumn);
+
   const handleContinueToPreview = () => {
-    parseVcfData(vcfContent);
-    setStep(3);
+    if (!csvFile) return;
+
+    const fileReader = new FileReader();
+    fileReader.onload = (event) => {
+      const text = event.target?.result as string;
+      const data = parseCSV(text, fieldMappings);
+      setParsedData(data);
+
+      const errors = validateData(data);
+      setValidationErrors(errors);
+
+      setStep(3);
+    };
+    fileReader.readAsText(csvFile);
   };
 
   const handleImport = async () => {
-    if (!vcfFile) return;
+    if (parsedData.length === 0) return;
     setLoading(true);
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", vcfFile);
-
-      const filteredMappings = fieldMappings.filter(
-        (m) => m.targetColumn && m.targetColumn !== "skip",
-      );
-      const mappingJson = JSON.stringify(filteredMappings);
-      formData.append("field_mappings", mappingJson);
-
-      const res = await fetch(`/api/imports/variants/vcf?geneId=${geneId}`, {
+      const res = await fetch("/api/variant-classifications/bulk", {
         method: "POST",
         credentials: "include",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsedData),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.detail?.message || "VCF import failed");
+        throw new Error(data.detail || "Import failed");
       }
 
       const data = await res.json();
       setImportResult(data);
+      setStep(4);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Import failed";
       setError(message);
@@ -311,13 +391,13 @@ const VariantImportWizard = ({
 
   const reset = () => {
     setStep(1);
-    setVcfFile(null);
-    setVcfContent("");
+    setCsvFile(null);
+    setRawHeaders([]);
+    setFieldMappings([]);
+    setParsedData([]);
+    setValidationErrors([]);
     setError("");
     setImportResult(null);
-    setDetectedFields([]);
-    setFieldMappings([]);
-    setParsedVariants([]);
   };
 
   const handleClose = () => {
@@ -330,15 +410,6 @@ const VariantImportWizard = ({
     handleClose();
   };
 
-  const mappedColumns = useMemo(() => {
-    return fieldMappings
-      .filter(
-        (m) =>
-          m.targetColumn && m.targetColumn !== "" && m.targetColumn !== "skip",
-      )
-      .map((m) => m.targetColumn);
-  }, [fieldMappings]);
-
   const progress = ((step - 1) / (STEPS.length - 1)) * 100;
 
   return (
@@ -348,14 +419,14 @@ const VariantImportWizard = ({
           <DialogHeader className="p-0">
             <DialogTitle className="text-white text-xl font-bold flex items-center gap-2">
               <Upload className="h-5 w-5" />
-              Import Variants from VCF
+              Import Variant Associations
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Import variants from VCF file for gene {geneId}. Step {step} of{" "}
+              Import variant associations from CSV file. Step {step} of{" "}
               {STEPS.length}
             </DialogDescription>
             <p className="text-teal-100 text-sm mt-1">
-              Gene: {geneId} • Step {step} of {STEPS.length}
+              Step {step} of {STEPS.length}
             </p>
           </DialogHeader>
         </div>
@@ -401,30 +472,49 @@ const VariantImportWizard = ({
             <div className="space-y-6">
               <div
                 className="border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center hover:border-teal-500 hover:bg-teal-50/30 transition-all cursor-pointer"
-                onClick={() => document.getElementById("vcf-file")?.click()}
+                onClick={() =>
+                  document.getElementById("variant-association-csv")?.click()
+                }
               >
                 <div className="p-4 bg-teal-50 rounded-2xl w-fit mx-auto mb-4">
                   <FileText className="h-8 w-8 text-teal-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  Upload VCF File
+                  Upload CSV File
                 </h3>
                 <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">
-                  Select a VCF file to import variants. INFO fields will be
-                  automatically detected in the next step.
+                  Select a CSV file with variant associations. Map columns in
+                  the next step.
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <span className="px-3 py-1 bg-slate-100 rounded-full text-xs text-slate-600">
-                    .vcf
+                    .csv
                   </span>
                 </div>
                 <input
                   type="file"
-                  accept=".vcf"
-                  onChange={handleVcfUpload}
+                  accept=".csv"
+                  onChange={handleFileUpload}
                   className="hidden"
-                  id="vcf-file"
+                  id="variant-association-csv"
                 />
+              </div>
+
+              <div className="bg-slate-50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-slate-700 mb-2">
+                  Expected Columns
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {TARGET_COLUMNS.map((col) => (
+                    <Badge
+                      key={col.value}
+                      variant="secondary"
+                      className="bg-teal-100 text-teal-700"
+                    >
+                      {col.label}
+                    </Badge>
+                  ))}
+                </div>
               </div>
 
               {error && (
@@ -441,17 +531,17 @@ const VariantImportWizard = ({
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">
-                    Map INFO Fields
+                    Map CSV Columns
                   </h3>
                   <p className="text-sm text-slate-500">
-                    {detectedFields.length} field(s) detected in VCF
+                    {rawHeaders.length} column(s) detected in CSV
                   </p>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setVcfFile(null);
+                    setCsvFile(null);
                     setStep(1);
                   }}
                 >
@@ -460,15 +550,15 @@ const VariantImportWizard = ({
                 </Button>
               </div>
 
-              {vcfFile && (
+              {csvFile && (
                 <div className="flex items-center gap-3 p-4 bg-teal-50 rounded-xl border border-teal-200">
                   <FileText className="h-5 w-5 text-teal-600" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-900">
-                      {vcfFile.name}
+                      {csvFile.name}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {detectedFields.length} INFO field(s)
+                      {rawHeaders.length} column(s)
                     </p>
                   </div>
                 </div>
@@ -478,28 +568,28 @@ const VariantImportWizard = ({
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
                   <div className="bg-slate-50 px-4 py-2 border-b border-slate-200">
                     <h4 className="text-sm font-medium text-slate-700">
-                      Field Mapping
+                      Column Mapping
                     </h4>
                     <p className="text-xs text-slate-500">
-                      Map each INFO field to the corresponding variant column
+                      Map each CSV column to the corresponding field
                     </p>
                   </div>
                   <div className="divide-y divide-slate-100">
                     {fieldMappings.map((mapping) => (
                       <div
-                        key={mapping.vcfField}
+                        key={mapping.csvField}
                         className="grid grid-cols-3 gap-3 px-4 py-3 items-center"
                       >
                         <div className="col-span-1">
                           <span className="text-sm font-mono text-slate-700 bg-slate-100 px-2 py-1 rounded">
-                            {mapping.vcfField}
+                            {mapping.csvField}
                           </span>
                         </div>
                         <div className="col-span-2">
                           <Select
                             value={mapping.targetColumn}
                             onValueChange={(value) =>
-                              handleMappingChange(mapping.vcfField, value)
+                              handleMappingChange(mapping.csvField, value)
                             }
                           >
                             <SelectTrigger className="h-8 text-sm">
@@ -528,15 +618,13 @@ const VariantImportWizard = ({
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No INFO fields detected in the VCF file.
+                  No columns detected in the CSV file.
                 </p>
               )}
 
               {mappedColumns.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  <span className="text-sm text-slate-500 mr-2">
-                    Mapped fields:
-                  </span>
+                  <span className="text-sm text-slate-500 mr-2">Mapped:</span>
                   {mappedColumns.map((col) => {
                     const target = TARGET_COLUMNS.find((t) => t.value === col);
                     return (
@@ -572,10 +660,15 @@ const VariantImportWizard = ({
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">
-                    Preview Variants
+                    Preview Variant Associations
                   </h3>
                   <p className="text-sm text-slate-500">
-                    {parsedVariants.length} variant(s) ready to import
+                    {parsedData.length} row(s) ready to import
+                    {validationErrors.length > 0 && (
+                      <span className="text-red-600 ml-2">
+                        ({validationErrors.length} validation error(s))
+                      </span>
+                    )}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => setStep(2)}>
@@ -584,74 +677,87 @@ const VariantImportWizard = ({
                 </Button>
               </div>
 
-              {parsedVariants.length > 0 ? (
+              {validationErrors.length > 0 && (
+                <div className="max-h-32 overflow-y-auto border border-red-200 rounded-lg bg-red-50">
+                  <div className="bg-red-100 px-3 py-2 border-b border-red-200">
+                    <h4 className="text-sm font-medium text-red-700">
+                      Validation Errors ({validationErrors.length})
+                    </h4>
+                  </div>
+                  <div className="px-3 py-2 space-y-1">
+                    {validationErrors.slice(0, 10).map((err, i) => (
+                      <p
+                        key={i}
+                        className="text-xs text-red-600 bg-white px-2 py-1 rounded"
+                      >
+                        Row {err.row}, {err.field}: {err.message}
+                      </p>
+                    ))}
+                    {validationErrors.length > 10 && (
+                      <p className="text-xs text-slate-500">
+                        ...and {validationErrors.length - 10} more
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {parsedData.length > 0 ? (
                 <div className="border-2 border-slate-200 rounded-xl overflow-hidden">
                   <div className="overflow-x-auto max-h-64">
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 sticky top-0">
                         <tr>
                           <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">
-                            Chrom
+                            Variant ID
                           </th>
                           <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">
-                            Position
+                            Literature
                           </th>
                           <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">
-                            Ref
+                            Clinical Sig
                           </th>
                           <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">
-                            Alt
+                            Disease
                           </th>
-                          {mappedColumns.slice(0, 3).map((col) => (
-                            <th
-                              key={col}
-                              className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase"
-                            >
-                              {TARGET_COLUMNS.find((t) => t.value === col)
-                                ?.label || col}
-                            </th>
-                          ))}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {parsedVariants.slice(0, 10).map((variant, i) => (
-                          <tr key={i} className="hover:bg-slate-50">
-                            <td className="px-3 py-2 text-slate-700 font-mono text-xs">
-                              {variant.chrom}
+                        {parsedData.slice(0, 10).map((row, i) => (
+                          <tr
+                            key={i}
+                            className={`hover:bg-slate-50 ${
+                              validationErrors.some((e) => e.row === i + 2)
+                                ? "bg-red-50"
+                                : ""
+                            }`}
+                          >
+                            <td className="px-3 py-2 text-slate-700 text-xs font-mono max-w-[150px] truncate">
+                              {row.variant_id}
                             </td>
-                            <td className="px-3 py-2 text-slate-700 font-mono text-xs">
-                              {variant.pos}
+                            <td className="px-3 py-2 text-slate-700 text-xs max-w-[150px] truncate">
+                              {row.literature_id}
                             </td>
-                            <td className="px-3 py-2 text-slate-700 font-mono text-xs">
-                              {variant.ref}
+                            <td className="px-3 py-2 text-slate-700 text-xs">
+                              {row.clinical_significance || "-"}
                             </td>
-                            <td className="px-3 py-2 text-slate-700 font-mono text-xs">
-                              {variant.alt}
+                            <td className="px-3 py-2 text-slate-700 text-xs">
+                              {row.disease || "-"}
                             </td>
-                            {mappedColumns.slice(0, 3).map((col) => (
-                              <td
-                                key={col}
-                                className="px-3 py-2 text-slate-700 text-xs"
-                              >
-                                {variant[col] !== undefined
-                                  ? String(variant[col])
-                                  : "-"}
-                              </td>
-                            ))}
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  {parsedVariants.length > 10 && (
+                  {parsedData.length > 10 && (
                     <div className="px-4 py-2 bg-slate-50 text-center text-xs text-slate-500 border-t">
-                      Showing 10 of {parsedVariants.length} variants
+                      Showing 10 of {parsedData.length} records
                     </div>
                   )}
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No variants found in the VCF file.
+                  No data found with the current column mapping.
                 </p>
               )}
 
@@ -668,21 +774,21 @@ const VariantImportWizard = ({
                 </Button>
                 <Button
                   onClick={handleImport}
-                  disabled={loading || parsedVariants.length === 0}
+                  disabled={loading || parsedData.length === 0}
                   className="bg-teal-600 hover:bg-teal-700 text-white"
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
-                    <Upload className="h-4 w-4 mr-2" />
+                    <ArrowRight className="h-4 w-4 mr-2" />
                   )}
-                  Import {parsedVariants.length} Variants
+                  Import {parsedData.length} Records
                 </Button>
               </div>
             </div>
           )}
 
-          {importResult && (
+          {step === 4 && importResult && (
             <div className="space-y-5">
               <div
                 className={`flex items-center gap-3 p-4 rounded-lg ${
@@ -701,7 +807,7 @@ const VariantImportWizard = ({
                     Import {importResult.success ? "Successful" : "Failed"}
                   </h3>
                   <p className="text-sm text-slate-500">
-                    {importResult.imported_count} variants imported,{" "}
+                    {importResult.imported_count} records imported,{" "}
                     {importResult.skipped_count} skipped
                     {importResult.errors.length > 0 &&
                       `, ${importResult.errors.length} errors`}
@@ -750,4 +856,4 @@ const VariantImportWizard = ({
   );
 };
 
-export default VariantImportWizard;
+export default VariantAssociationImportWizard;

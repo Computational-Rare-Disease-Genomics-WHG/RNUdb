@@ -100,7 +100,6 @@ def seed_test_data(test_db):
         position=120291764,
         ref="C",
         alt="T",
-        clinical_significance="Pathogenic",
     )
     v_upd = Variant(
         id="V-UPD-001",
@@ -108,7 +107,6 @@ def seed_test_data(test_db):
         position=120291782,
         ref="A",
         alt="C",
-        clinical_significance="VUS",
     )
     test_db.add_all([gene, v_del, v_upd])
     test_db.commit()
@@ -156,7 +154,7 @@ def sample_gene():
         "id": "RNU4-2",
         "name": "RNU4-2",
         "fullName": "RNA, U4 small nuclear 2",
-        "chromosome": "12",
+        "chromosome": "chr12",
         "start": 120291759,
         "end": 120291903,
         "strand": "-",
@@ -174,24 +172,18 @@ def valid_variant_rows():
             "ref": "C",
             "alt": "T",
             "hgvs": "n.140G>T",
-            "clinical_significance": "VUS",
-            "zygosity": "hom",
         },
         {
             "position": 120291785,
             "ref": "T",
             "alt": "C",
             "hgvs": "n.119A>G",
-            "clinical_significance": "Pathogenic",
-            "zygosity": "het",
         },
         {
             "position": 120291782,
             "ref": "A",
             "alt": "C",
             "hgvs": "n.122T>G",
-            "clinical_significance": "Likely Pathogenic",
-            "zygosity": "het",
             "function_score": -1.234,
             "cadd_score": 15.6,
         },
@@ -206,19 +198,11 @@ def invalid_variant_rows():
             "position": 120291000,  # Out of bounds
             "ref": "C",
             "alt": "T",
-            "clinical_significance": "VUS",
         },
         {
             "position": 120291785,
             "ref": "X",  # Invalid nucleotide
             "alt": "T",
-            "clinical_significance": "Pathogenic",
-        },
-        {
-            "position": 120291790,
-            "ref": "G",
-            "alt": "A",
-            "clinical_significance": "Unknown",  # Invalid classification
         },
     ]
 
@@ -310,3 +294,79 @@ def invalid_bed_intervals():
             "score": 1500,
         },  # Score > 1000
     ]
+
+
+# ---------------------------------------------------------------------------
+# Variant Classification fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def sample_literature():
+    """Return a sample literature record for testing."""
+    from api.models import Literature
+
+    return Literature(
+        id="10.1101/2025.08.13.25333306",
+        title="Test Paper on Retinitis Pigmentosa",
+        authors="Smith J, Doe A",
+        journal="bioRxiv",
+        year="2025",
+        doi="10.1101/2025.08.13.25333306",
+        pmid="12345678",
+    )
+
+
+@pytest.fixture
+def sample_variant_with_data(test_db, sample_gene):
+    """Return a variant with population data for testing."""
+    from api.models import Variant
+
+    variant = Variant(
+        id="chr12-120291764-C-T",
+        geneId="RNU4-2",
+        position=120291764,
+        ref="C",
+        alt="T",
+        gnomad_ac=5,
+        gnomad_hom=0,
+        aou_ac=37,
+        aou_hom=0,
+    )
+    test_db.add(variant)
+    test_db.commit()
+    return variant
+
+
+@pytest.fixture
+def sample_variant_classification(test_db, sample_variant_with_data, sample_literature):
+    """Return a sample variant classification for testing."""
+    from api.models import VariantClassification
+
+    test_db.add(sample_literature)
+    test_db.commit()
+
+    classification = VariantClassification(
+        variant_id="chr12-120291764-C-T",
+        literature_id="10.1101/2025.08.13.25333306",
+        clinical_significance="VUS",
+        zygosity="Heterozygous",
+        disease="Retinitis Pigmentosa",
+        counts=2,
+        linked_variant_ids=None,
+    )
+    test_db.add(classification)
+    test_db.commit()
+    return classification
+
+
+@pytest.fixture
+def sample_import_payload():
+    """Return sample import payload for testing."""
+    return {
+        "geneId": "RNU4-2",
+        "variants": [
+            {"position": 120291764, "ref": "C", "alt": "T", "hgvs": "n.140G>T"}
+        ],
+        "skip_invalid": True,
+    }

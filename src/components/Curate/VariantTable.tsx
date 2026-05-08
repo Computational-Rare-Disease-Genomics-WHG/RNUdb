@@ -176,22 +176,6 @@ export function VariantTable({
           )}
         </Button>
       ),
-      cell: ({ row }) => {
-        const zyg = row.getValue("zygosity") as string;
-        return (
-          <span
-            className={
-              zyg === "hom"
-                ? "text-purple-600 font-medium"
-                : zyg === "het"
-                  ? "text-blue-600 font-medium"
-                  : "text-slate-400"
-            }
-          >
-            {zyg === "hom" ? "Hom" : zyg === "het" ? "Het" : "—"}
-          </span>
-        );
-      },
       size: 80,
     },
     {
