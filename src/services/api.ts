@@ -58,15 +58,23 @@ class ApiService {
     return this.fetchFromApi<Literature[]>(`/genes/${geneId}/literature`);
   }
 
-  async getGeneStructure(geneId: string): Promise<RNAStructure> {
-    const structures = await this.fetchFromApi<RNAStructure[]>(
-      `/genes/${geneId}/structures`,
-    );
-    return structures[0];
+  async getGeneStructure(geneId: string): Promise<RNAStructure | null> {
+    try {
+      const structures = await this.fetchFromApi<RNAStructure[]>(
+        `/genes/${geneId}/structures`,
+      );
+      return structures.length > 0 ? structures[0] : null;
+    } catch {
+      return null;
+    }
   }
 
-  async getGenePDB(geneId: string): Promise<PDBStructure> {
-    return this.fetchFromApi<PDBStructure>(`/genes/${geneId}/pdb`);
+  async getGenePDB(geneId: string): Promise<PDBStructure | null> {
+    try {
+      return await this.fetchFromApi<PDBStructure>(`/genes/${geneId}/pdb`);
+    } catch {
+      return null;
+    }
   }
 
   async getLiteratureCounts(): Promise<LiteratureCounts[]> {
