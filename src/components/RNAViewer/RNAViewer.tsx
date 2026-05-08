@@ -172,8 +172,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           if (selectedZygosity !== "all") {
             if (selectedZygosity === "het") {
               if (variant.zygosity !== "het") return false;
-            } else if (selectedZygosity === "hom") {
-              if (variant.zygosity !== "hom") return false;
             } else if (selectedZygosity === "biallelic") {
               const isBiallelic =
                 variant.zygosity === "hom" ||
@@ -732,9 +730,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                             <SelectContent>
                               <SelectItem value="all">All</SelectItem>
                               <SelectItem value="het">Dominant</SelectItem>
-                              <SelectItem value="hom">Biallelic</SelectItem>
                               <SelectItem value="biallelic">
-                                Compound Het.
+                                Biallelic
                               </SelectItem>
                             </SelectContent>
                           </Select>
