@@ -35,3 +35,12 @@ repos:
         language: node
         files: ^src/.*\.(ts|tsx)$
         pass_filenames: true
+
+  - repo: local
+    hooks:
+      - id: vitest
+        name: Vitest
+        entry: npx vitest run
+        language: node
+        files: ^src/.*\.(ts|tsx)$
+        pass_filenames: false
