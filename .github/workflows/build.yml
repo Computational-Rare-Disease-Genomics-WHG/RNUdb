@@ -68,6 +68,62 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Image digest
+      - name: Output digest
         if: github.event_name != 'pull_request'
-        run: echo "Build completed"
+        run: echo "${{ matrix.platform }}_digest=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+
+  manifest:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          AMD64_DIGEST="${{ needs.build.outputs.amd64_digest }}"
+          ARM64_DIGEST="${{ needs.build.outputs.arm64_digest }}"
+
+          # Extract SHA256 from digests
+          AMD64_SHA=$(echo "$AMD64_DIGEST" | grep -oP 'sha256:[a-f0-9]+' | head -1)
+          ARM64_SHA=$(echo "$ARM64_DIGEST" | grep -oP 'sha256:[a-f0-9]+' | head -1)
+
+          echo "Pulling amd64: $AMD64_SHA"
+          echo "Pulling arm64: $ARM64_SHA"
+
+          # Pull both images
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$AMD64_SHA || echo "AMD64 pull failed"
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$ARM64_SHA || echo "ARM64 pull failed"
+
+          # Create manifest list for latest
+          docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$AMD64_SHA \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@$ARM64_SHA || true
+
+          # Push manifest
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || echo "Manifest push completed"

@@ -125,28 +125,30 @@ def clear_session_token(response: Response) -> None:
 
 
 def get_user_from_request(request: Request) -> dict | None:
-    """Decode JWT from cookie and return user, or None if invalid/expired."""
-    token = request.cookies.get(JWT_COOKIE_NAME)
-    if not token:
+    """Get user from session (set by Authlib OAuth), or None if not authenticated."""
+    # Use session from SessionMiddleware (request.session)
+    session = getattr(request, "session", {})
+
+    # Check for user in session
+    login = session.get("user")
+
+    # Fallback: also check JWT cookie for backwards compatibility
+    if not login:
+        token = request.cookies.get(JWT_COOKIE_NAME)
+        if token:
+            try:
+                payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+                login = payload.get("sub")
+            except jwt.ExpiredSignatureError:
+                pass
+            except jwt.InvalidTokenError:
+                pass
+
+    if not login:
         return None
 
-    try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-
-        # Verify token type
-        if payload.get("type") != "access":
-            return None
-
-        login = payload.get("sub")
-        if not login:
-            return None
-
-        user = get_user(login)
-        return user
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
+    user = get_user(login)
+    return user
 
 
 def require_auth(request: Request) -> dict:
@@ -236,16 +238,23 @@ async def auth_callback(request: Request, response: Response):
         )
         user = get_user(login)
 
-    # Issue session token
+    # Store user in session (SessionMiddleware provides this)
+    request.session["user"] = login
+    request.session["access_token"] = access_token
+
+    # Issue session token (also set cookie for compatibility)
     redirect_response = RedirectResponse(url=f"{FRONTEND_URL}/")
     create_session_token(redirect_response, login, access_token)
     return redirect_response
 
 
 @router.post("/logout")
-async def auth_logout(response: Response):
+async def auth_logout(request: Request, response: Response):
     """Clear session token."""
     clear_session_token(response)
+    # Also clear session if available
+    if hasattr(request, "session") and request.session:
+        request.session.clear()
     return {"message": "Logged out"}
 
 
