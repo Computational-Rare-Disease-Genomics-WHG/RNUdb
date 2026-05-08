@@ -1,3 +1,8 @@
+---
+name: testing
+description: Write and run tests with pytest and Playwright
+---
+
 # Testing
 
 Test rules and conventions.

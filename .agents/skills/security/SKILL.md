@@ -1,3 +1,8 @@
+---
+name: security
+description: Handle security-sensitive code and secrets
+---
+
 # Security
 
 Security rules.

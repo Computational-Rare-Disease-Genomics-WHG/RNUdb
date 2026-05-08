@@ -1,3 +1,8 @@
+---
+name: alembic
+description: Handle database schema migrations with Alembic
+---
+
 # Alembic Migrations
 
 Workflow for schema changes.

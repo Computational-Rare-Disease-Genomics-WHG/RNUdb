@@ -1,3 +1,8 @@
+---
+name: documentation
+description: Update documentation when code changes
+---
+
 # Documentation
 
 When to update which docs.

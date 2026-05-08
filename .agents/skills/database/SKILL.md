@@ -1,3 +1,8 @@
+---
+name: database
+description: Work with SQLAlchemy models and database patterns
+---
+
 # Database
 
 SQLAlchemy patterns and conventions.

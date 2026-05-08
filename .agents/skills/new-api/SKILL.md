@@ -1,3 +1,8 @@
+---
+name: new-api
+description: Create new API endpoints with FastAPI
+---
+
 # New API Endpoints
 
 Workflow for adding new API endpoints.

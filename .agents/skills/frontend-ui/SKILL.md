@@ -1,3 +1,8 @@
+---
+name: frontend-ui
+description: Build frontend UI with React, Tailwind, and Radix components
+---
+
 # Frontend UI
 
 UI patterns and conventions.

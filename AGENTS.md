@@ -76,11 +76,11 @@ Before commit, verify:
 
 For complex workflows, see `.agents/skills/`:
 
-- alembic.md — migrations
-- auth.md — auth changes
-- new-api.md — API endpoints
-- testing.md — test rules
-- documentation.md — doc updates
-- frontend-ui.md — UI patterns
-- database.md — SQLAlchemy
-- security.md — security rules
+- `alembic/` — migrations
+- `auth/` — auth changes
+- `new-api/` — API endpoints
+- `testing/` — test rules
+- `documentation/` — doc updates
+- `frontend-ui/` — UI patterns
+- `database/` — SQLAlchemy
+- `security/` — security rules

@@ -1,3 +1,8 @@
+---
+name: auth
+description: Handle authentication and authorization changes
+---
+
 # Authentication
 
 Workflow for auth changes.
