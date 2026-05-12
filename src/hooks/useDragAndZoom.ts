@@ -106,7 +106,7 @@ export const useDragAndZoom = ({
 
       return null;
     },
-     
+
     [
       isPanning,
       draggedNucleotide,
