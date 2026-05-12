@@ -24,17 +24,16 @@ interface DragAndZoomProps {
 export const useDragAndZoom = ({
   canvasRef,
   mode,
-  zoomLevel,
-  panOffset,
+  zoomLevel: _zoomLevel,
+  panOffset: _panOffset,
   onUpdateNucleotidePosition,
-  findSnapPosition,
-  nucleotides,
-  rnaData,
+  findSnapPosition: _findSnapPosition,
+  nucleotides: _nucleotides,
+  rnaData: _rnaData,
 }: DragAndZoomProps) => {
   const [draggedNucleotide, setDraggedNucleotide] = useState<number | null>(
     null,
   );
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const animationFrameRef = useRef<number | null>(null);
@@ -42,7 +41,6 @@ export const useDragAndZoom = ({
     null,
   );
 
-  // Use requestAnimationFrame to batch position updates
   useEffect(() => {
     const updatePosition = () => {
       if (pendingUpdateRef.current) {
@@ -77,12 +75,6 @@ export const useDragAndZoom = ({
       if (mode === "select") {
         e.preventDefault();
         setDraggedNucleotide(nucleotideId);
-
-        // Use the same approach as labels - just store the starting mouse position
-        setDragOffset({
-          x: e.clientX,
-          y: e.clientY,
-        });
       }
     },
     [mode],
@@ -101,54 +93,27 @@ export const useDragAndZoom = ({
           newPanPoint: { x: e.clientX, y: e.clientY },
         };
       } else if (draggedNucleotide && mode === "select") {
-        const nucleotide = nucleotides.find((n) => n.id === draggedNucleotide);
-        if (nucleotide) {
-          // With no transforms, just use the mouse delta directly
-          const deltaX = e.clientX - dragOffset.x;
-          const deltaY = e.clientY - dragOffset.y;
-
-          // Convert screen pixels to SVG units (account for both viewBox and CSS transform)
-          const rect = canvasRef.current?.getBoundingClientRect();
-          if (rect) {
-            // Simple approach: just use the zoomLevel since we know it works
-            const logicalDeltaX = deltaX / zoomLevel;
-            const logicalDeltaY = deltaY / zoomLevel;
-
-            // Update nucleotide position by adding the delta
-            const newX = nucleotide.x + logicalDeltaX;
-            const newY = nucleotide.y + logicalDeltaY;
-
-            // Remove debug logging
-            // console.log('Drag:', { ... });
-
-            // Update nucleotide position
-            onUpdateNucleotidePosition(draggedNucleotide, newX, newY);
-
-            // Update the drag start position
-            setDragOffset({
-              x: e.clientX,
-              y: e.clientY,
-            });
-          }
+        const svg =
+          canvasRef.current?.querySelector<SVGSVGElement>("svg[viewBox]");
+        if (svg) {
+          const pt = new DOMPoint(e.clientX, e.clientY);
+          const svgPoint = pt.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          onUpdateNucleotidePosition(draggedNucleotide, svgPoint.x, svgPoint.y);
         }
       }
 
       return null;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [
       isPanning,
       draggedNucleotide,
       lastPanPoint,
       mode,
       canvasRef,
-      dragOffset,
-      panOffset,
-      zoomLevel,
-      findSnapPosition,
       onUpdateNucleotidePosition,
-      nucleotides,
-      rnaData,
     ],
   );
 
@@ -173,7 +138,6 @@ export const useDragAndZoom = ({
 
   return {
     draggedNucleotide,
-    dragOffset,
     isPanning,
     lastPanPoint,
     handleNucleotideMouseDown,

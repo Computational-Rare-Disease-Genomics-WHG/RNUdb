@@ -107,6 +107,10 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
       x: number;
       y: number;
     } | null>(null);
+    const [labelInitialPosition, setLabelInitialPosition] = useState<{
+      x: number;
+      y: number;
+    } | null>(null);
     const [pendingLabelPosition, setPendingLabelPosition] = useState<{
       x: number;
       y: number;
@@ -114,6 +118,10 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
     const labelUpdateRef = React.useRef<number | null>(null);
     const [draggingFeature, setDraggingFeature] = useState<string | null>(null);
     const [featureDragStart, setFeatureDragStart] = useState<{
+      x: number;
+      y: number;
+    } | null>(null);
+    const [featureInitialPosition, setFeatureInitialPosition] = useState<{
       x: number;
       y: number;
     } | null>(null);
@@ -240,38 +248,46 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
         onLabelClick(e, labelId);
         setDraggingLabel(labelId);
         setLabelDragStart({ x: e.clientX, y: e.clientY });
+        const label = rnaData.annotations?.find((a) => a.id === labelId);
+        if (label) {
+          setLabelInitialPosition({ x: label.x, y: label.y });
+        }
       }
     };
 
     const handleLabelMouseMove = (e: React.MouseEvent) => {
-      if (draggingLabel && labelDragStart) {
+      if (draggingLabel && labelDragStart && labelInitialPosition) {
         e.preventDefault();
-        // Calculate delta in screen coordinates
-        const screenDeltaX = e.clientX - labelDragStart.x;
-        const screenDeltaY = e.clientY - labelDragStart.y;
-
-        // Use the same simple approach as nucleotides
-        const logicalDeltaX = screenDeltaX / zoomLevel;
-        const logicalDeltaY = screenDeltaY / zoomLevel;
-
-        // Update immediately without throttling
-        onUpdateRnaData({
-          ...rnaData,
-          annotations:
-            rnaData.annotations?.map((a) =>
-              a.id === draggingLabel
-                ? { ...a, x: a.x + logicalDeltaX, y: a.y + logicalDeltaY }
-                : a,
-            ) || [],
-        });
-
-        setLabelDragStart({ x: e.clientX, y: e.clientY });
+        const svg =
+          e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+        if (svg) {
+          const pt = new DOMPoint(e.clientX, e.clientY);
+          const currentSvgPoint = pt.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          const pt2 = new DOMPoint(labelDragStart.x, labelDragStart.y);
+          const initialSvgPoint = pt2.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          const newX =
+            labelInitialPosition.x + (currentSvgPoint.x - initialSvgPoint.x);
+          const newY =
+            labelInitialPosition.y + (currentSvgPoint.y - initialSvgPoint.y);
+          onUpdateRnaData({
+            ...rnaData,
+            annotations:
+              rnaData.annotations?.map((a) =>
+                a.id === draggingLabel ? { ...a, x: newX, y: newY } : a,
+              ) || [],
+          });
+        }
       }
     };
 
     const handleLabelMouseUp = () => {
       setDraggingLabel(null);
       setLabelDragStart(null);
+      setLabelInitialPosition(null);
       if (labelUpdateRef.current) {
         cancelAnimationFrame(labelUpdateRef.current);
         labelUpdateRef.current = null;
@@ -286,43 +302,50 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
         e.stopPropagation();
         setDraggingFeature(featureId);
         setFeatureDragStart({ x: e.clientX, y: e.clientY });
+        const feature = rnaData.structural_features?.find(
+          (f) => f.id === featureId,
+        );
+        if (feature) {
+          setFeatureInitialPosition({ x: feature.label_x, y: feature.label_y });
+        }
       }
     };
 
     const handleFeatureLabelMouseMove = (e: React.MouseEvent) => {
-      if (draggingFeature && featureDragStart) {
+      if (draggingFeature && featureDragStart && featureInitialPosition) {
         e.preventDefault();
-        const screenDeltaX = e.clientX - featureDragStart.x;
-        const screenDeltaY = e.clientY - featureDragStart.y;
-
-        const logicalDeltaX = screenDeltaX / zoomLevel;
-        const logicalDeltaY = screenDeltaY / zoomLevel;
-
-        const feature = rnaData.structural_features?.find(
-          (f) => f.id === draggingFeature,
-        );
-        if (feature) {
-          const updatedFeature = {
-            ...feature,
-            label_x: feature.label_x + logicalDeltaX,
-            label_y: feature.label_y + logicalDeltaY,
-          };
+        const svg =
+          e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+        if (svg) {
+          const pt = new DOMPoint(e.clientX, e.clientY);
+          const currentSvgPoint = pt.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          const pt2 = new DOMPoint(featureDragStart.x, featureDragStart.y);
+          const initialSvgPoint = pt2.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          const newX =
+            featureInitialPosition.x + (currentSvgPoint.x - initialSvgPoint.x);
+          const newY =
+            featureInitialPosition.y + (currentSvgPoint.y - initialSvgPoint.y);
 
           onUpdateRnaData({
             ...rnaData,
             structural_features: rnaData.structural_features?.map((f) =>
-              f.id === draggingFeature ? updatedFeature : f,
+              f.id === draggingFeature
+                ? { ...f, label_x: newX, label_y: newY }
+                : f,
             ),
           });
         }
-
-        setFeatureDragStart({ x: e.clientX, y: e.clientY });
       }
     };
 
     const handleFeatureLabelMouseUp = () => {
       setDraggingFeature(null);
       setFeatureDragStart(null);
+      setFeatureInitialPosition(null);
     };
 
     const handleAddLabel = (text: string, fontSize: number) => {
@@ -829,12 +852,17 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
           }}
           onClick={(e) => {
             if (mode === "label") {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = (e.clientX - rect.left - panOffset.x) / zoomLevel;
-              const y = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-              setPendingLabelPosition({ x, y });
-              setShowLabelModal(true);
-              onSetLabelModalOpen(true);
+              const svg =
+                e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+              if (svg) {
+                const pt = new DOMPoint(e.clientX, e.clientY);
+                const svgPoint = pt.matrixTransform(
+                  svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+                );
+                setPendingLabelPosition({ x: svgPoint.x, y: svgPoint.y });
+                setShowLabelModal(true);
+                onSetLabelModalOpen(true);
+              }
             } else {
               onCanvasClick(e);
             }

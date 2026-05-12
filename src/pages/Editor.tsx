@@ -202,10 +202,15 @@ const Editor: React.FC = () => {
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (mode === "add") {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = (e.clientX - rect.left - panOffset.x) / zoomLevel;
-        const y = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-        addNucleotide(x, y);
+        const svg =
+          canvasRef.current?.querySelector<SVGSVGElement>("svg[viewBox]");
+        if (svg) {
+          const pt = new DOMPoint(e.clientX, e.clientY);
+          const svgPoint = pt.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          addNucleotide(svgPoint.x, svgPoint.y);
+        }
         setMode("select");
       } else if (mode === "pair") {
         setSelectedNucleotides([]);
@@ -215,14 +220,7 @@ const Editor: React.FC = () => {
         setCurrentLabel(null);
       }
     },
-    [
-      mode,
-      addNucleotide,
-      panOffset,
-      zoomLevel,
-      setSelectedNucleotides,
-      setCurrentNucleotide,
-    ],
+    [mode, addNucleotide, setSelectedNucleotides, setCurrentNucleotide],
   );
 
   const handleMouseMoveWithPan = useCallback(
