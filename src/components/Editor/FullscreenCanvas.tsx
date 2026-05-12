@@ -107,6 +107,10 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
       x: number;
       y: number;
     } | null>(null);
+    const [labelInitialPosition, setLabelInitialPosition] = useState<{
+      x: number;
+      y: number;
+    } | null>(null);
     const [pendingLabelPosition, setPendingLabelPosition] = useState<{
       x: number;
       y: number;
@@ -240,38 +244,46 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
         onLabelClick(e, labelId);
         setDraggingLabel(labelId);
         setLabelDragStart({ x: e.clientX, y: e.clientY });
+        const label = rnaData.annotations?.find((a) => a.id === labelId);
+        if (label) {
+          setLabelInitialPosition({ x: label.x, y: label.y });
+        }
       }
     };
 
     const handleLabelMouseMove = (e: React.MouseEvent) => {
-      if (draggingLabel && labelDragStart) {
+      if (draggingLabel && labelDragStart && labelInitialPosition) {
         e.preventDefault();
-        // Calculate delta in screen coordinates
-        const screenDeltaX = e.clientX - labelDragStart.x;
-        const screenDeltaY = e.clientY - labelDragStart.y;
-
-        // Use the same simple approach as nucleotides
-        const logicalDeltaX = screenDeltaX / zoomLevel;
-        const logicalDeltaY = screenDeltaY / zoomLevel;
-
-        // Update immediately without throttling
-        onUpdateRnaData({
-          ...rnaData,
-          annotations:
-            rnaData.annotations?.map((a) =>
-              a.id === draggingLabel
-                ? { ...a, x: a.x + logicalDeltaX, y: a.y + logicalDeltaY }
-                : a,
-            ) || [],
-        });
-
-        setLabelDragStart({ x: e.clientX, y: e.clientY });
+        const svg =
+          e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+        if (svg) {
+          const pt = new DOMPoint(e.clientX, e.clientY);
+          const currentSvgPoint = pt.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          const pt2 = new DOMPoint(labelDragStart.x, labelDragStart.y);
+          const initialSvgPoint = pt2.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          const newX =
+            labelInitialPosition.x + (currentSvgPoint.x - initialSvgPoint.x);
+          const newY =
+            labelInitialPosition.y + (currentSvgPoint.y - initialSvgPoint.y);
+          onUpdateRnaData({
+            ...rnaData,
+            annotations:
+              rnaData.annotations?.map((a) =>
+                a.id === draggingLabel ? { ...a, x: newX, y: newY } : a,
+              ) || [],
+          });
+        }
       }
     };
 
     const handleLabelMouseUp = () => {
       setDraggingLabel(null);
       setLabelDragStart(null);
+      setLabelInitialPosition(null);
       if (labelUpdateRef.current) {
         cancelAnimationFrame(labelUpdateRef.current);
         labelUpdateRef.current = null;
