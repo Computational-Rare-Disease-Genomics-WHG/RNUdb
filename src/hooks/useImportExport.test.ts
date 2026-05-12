@@ -93,7 +93,7 @@ describe("useImportExport", () => {
         name: "Test",
         nucleotides: [{ id: 1, base: "A", x: 100, y: 100 }],
         base_pairs: [
-          { from: "not-a-number", to: 2 }, // invalid from
+          { from_pos: "not-a-number", to_pos: 2 }, // invalid from_pos
         ],
       });
 

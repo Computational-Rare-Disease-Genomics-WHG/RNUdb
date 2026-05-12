@@ -53,7 +53,7 @@ export const useImportExport = () => {
         !parsed.id ||
         !parsed.name ||
         !Array.isArray(parsed.nucleotides) ||
-        !Array.isArray(parsed.basePairs)
+        !Array.isArray(parsed.base_pairs)
       ) {
         throw new Error("Invalid RNA data structure");
       }
@@ -70,10 +70,10 @@ export const useImportExport = () => {
       }
 
       // Validate base pairs
-      for (const basePair of parsed.basePairs) {
+      for (const basePair of parsed.base_pairs) {
         if (
-          typeof basePair.from !== "number" ||
-          typeof basePair.to !== "number"
+          typeof basePair.from_pos !== "number" ||
+          typeof basePair.to_pos !== "number"
         ) {
           throw new Error("Invalid base pair structure");
         }
