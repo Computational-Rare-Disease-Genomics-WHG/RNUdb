@@ -829,12 +829,17 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
           }}
           onClick={(e) => {
             if (mode === "label") {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = (e.clientX - rect.left - panOffset.x) / zoomLevel;
-              const y = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-              setPendingLabelPosition({ x, y });
-              setShowLabelModal(true);
-              onSetLabelModalOpen(true);
+              const svg =
+                e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+              if (svg) {
+                const pt = new DOMPoint(e.clientX, e.clientY);
+                const svgPoint = pt.matrixTransform(
+                  svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+                );
+                setPendingLabelPosition({ x: svgPoint.x, y: svgPoint.y });
+                setShowLabelModal(true);
+                onSetLabelModalOpen(true);
+              }
             } else {
               onCanvasClick(e);
             }
