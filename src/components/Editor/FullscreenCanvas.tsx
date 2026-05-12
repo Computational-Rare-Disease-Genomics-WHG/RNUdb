@@ -121,6 +121,10 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
       x: number;
       y: number;
     } | null>(null);
+    const [featureInitialPosition, setFeatureInitialPosition] = useState<{
+      x: number;
+      y: number;
+    } | null>(null);
 
     const handleLabelModalClose = useCallback(() => {
       setShowLabelModal(false);
@@ -298,43 +302,50 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
         e.stopPropagation();
         setDraggingFeature(featureId);
         setFeatureDragStart({ x: e.clientX, y: e.clientY });
+        const feature = rnaData.structural_features?.find(
+          (f) => f.id === featureId,
+        );
+        if (feature) {
+          setFeatureInitialPosition({ x: feature.label_x, y: feature.label_y });
+        }
       }
     };
 
     const handleFeatureLabelMouseMove = (e: React.MouseEvent) => {
-      if (draggingFeature && featureDragStart) {
+      if (draggingFeature && featureDragStart && featureInitialPosition) {
         e.preventDefault();
-        const screenDeltaX = e.clientX - featureDragStart.x;
-        const screenDeltaY = e.clientY - featureDragStart.y;
-
-        const logicalDeltaX = screenDeltaX / zoomLevel;
-        const logicalDeltaY = screenDeltaY / zoomLevel;
-
-        const feature = rnaData.structural_features?.find(
-          (f) => f.id === draggingFeature,
-        );
-        if (feature) {
-          const updatedFeature = {
-            ...feature,
-            label_x: feature.label_x + logicalDeltaX,
-            label_y: feature.label_y + logicalDeltaY,
-          };
+        const svg =
+          e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+        if (svg) {
+          const pt = new DOMPoint(e.clientX, e.clientY);
+          const currentSvgPoint = pt.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          const pt2 = new DOMPoint(featureDragStart.x, featureDragStart.y);
+          const initialSvgPoint = pt2.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          const newX =
+            featureInitialPosition.x + (currentSvgPoint.x - initialSvgPoint.x);
+          const newY =
+            featureInitialPosition.y + (currentSvgPoint.y - initialSvgPoint.y);
 
           onUpdateRnaData({
             ...rnaData,
             structural_features: rnaData.structural_features?.map((f) =>
-              f.id === draggingFeature ? updatedFeature : f,
+              f.id === draggingFeature
+                ? { ...f, label_x: newX, label_y: newY }
+                : f,
             ),
           });
         }
-
-        setFeatureDragStart({ x: e.clientX, y: e.clientY });
       }
     };
 
     const handleFeatureLabelMouseUp = () => {
       setDraggingFeature(null);
       setFeatureDragStart(null);
+      setFeatureInitialPosition(null);
     };
 
     const handleAddLabel = (text: string, fontSize: number) => {
