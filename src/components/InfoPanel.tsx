@@ -411,6 +411,54 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                         {variant.ukbb_ac.toLocaleString()}
                                       </span>
                                     )}
+                                  {variant.function_score !== undefined &&
+                                    variant.function_score !== null && (
+                                      <span>
+                                        <span className="font-medium">
+                                          Func. Score:
+                                        </span>{" "}
+                                        {variant.function_score.toFixed(3)}
+                                      </span>
+                                    )}
+                                  {variant.depletion_group && (
+                                    <span>
+                                      <span className="font-medium">
+                                        Depletion:
+                                      </span>{" "}
+                                      {variant.depletion_group}
+                                    </span>
+                                  )}
+                                  {variant.pvalues !== undefined &&
+                                    variant.pvalues !== null && (
+                                      <span>
+                                        <span className="font-medium">
+                                          P-Value:
+                                        </span>{" "}
+                                        {variant.pvalues < 0.001
+                                          ? "<0.001"
+                                          : variant.pvalues.toFixed(3)}
+                                      </span>
+                                    )}
+                                  {variant.qvalues !== undefined &&
+                                    variant.qvalues !== null && (
+                                      <span>
+                                        <span className="font-medium">
+                                          Q-Value:
+                                        </span>{" "}
+                                        {variant.qvalues < 0.001
+                                          ? "<0.001"
+                                          : variant.qvalues.toFixed(3)}
+                                      </span>
+                                    )}
+                                  {variant.cadd_score !== undefined &&
+                                    variant.cadd_score !== null && (
+                                      <span>
+                                        <span className="font-medium">
+                                          CADD:
+                                        </span>{" "}
+                                        {variant.cadd_score.toFixed(2)}
+                                      </span>
+                                    )}
                                 </div>
 
                                 {variantLiterature.length > 0 && (
@@ -488,6 +536,24 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                     {variant.ukbb_ac !== undefined &&
                                       variant.ukbb_ac > 0 && (
                                         <span>UKBB: {variant.ukbb_ac}</span>
+                                      )}
+                                    {variant.function_score !== undefined &&
+                                      variant.function_score !== null && (
+                                        <span>
+                                          Func.{" "}
+                                          {variant.function_score.toFixed(2)}
+                                        </span>
+                                      )}
+                                    {variant.depletion_group && (
+                                      <span>
+                                        Depletion: {variant.depletion_group}
+                                      </span>
+                                    )}
+                                    {variant.cadd_score !== undefined &&
+                                      variant.cadd_score !== null && (
+                                        <span>
+                                          CADD: {variant.cadd_score.toFixed(1)}
+                                        </span>
                                       )}
                                   </div>
                                 </div>
