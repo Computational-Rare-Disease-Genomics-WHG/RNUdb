@@ -172,7 +172,15 @@ async def delete_variant(
 )
 async def get_variant_classifications(db: Session = Depends(get_db)):
     """Get all variant classifications linking variants to literature"""
-    classifications = db.execute(select(VariantClassification)).scalars().all()
+    classifications = (
+        db.execute(
+            select(VariantClassification).order_by(
+                text("variant_classifications.rowid")
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [VariantClassificationPublic.model_validate(c) for c in classifications]
 
 
@@ -186,9 +194,9 @@ async def get_variant_classifications_for_variant(
     """Get all classifications for a specific variant"""
     classifications = (
         db.execute(
-            select(VariantClassification).where(
-                VariantClassification.variant_id == variant_id
-            )
+            select(VariantClassification)
+            .where(VariantClassification.variant_id == variant_id)
+            .order_by(text("variant_classifications.rowid"))
         )
         .scalars()
         .all()
@@ -199,7 +207,15 @@ async def get_variant_classifications_for_variant(
 @router.get("/literature-counts", response_model=list[VariantClassificationPublic])
 async def get_literature_counts(db: Session = Depends(get_db)):
     """Get all variant classifications (legacy, use /variant-classifications)"""
-    classifications = db.execute(select(VariantClassification)).scalars().all()
+    classifications = (
+        db.execute(
+            select(VariantClassification).order_by(
+                text("variant_classifications.rowid")
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [VariantClassificationPublic.model_validate(c) for c in classifications]
 
 
@@ -374,6 +390,7 @@ async def get_gene_variant_classifications(gene_id: str, db: Session = Depends(g
             select(VariantClassification)
             .join(Variant, Variant.id == VariantClassification.variant_id)
             .where(Variant.geneId == gene_id)
+            .order_by(text("variant_classifications.rowid"))
         )
         .scalars()
         .all()
