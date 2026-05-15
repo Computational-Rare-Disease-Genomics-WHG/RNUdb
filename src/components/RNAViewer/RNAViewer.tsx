@@ -151,20 +151,19 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
           if (!variant.clinical_significance) return false;
 
-          // Filter based on Group by selection
-          if (clinvarGroupBy === "significance") {
-            if (
-              selectedClinicalSig !== "all" &&
-              variant.clinical_significance !== selectedClinicalSig
-            )
-              return false;
-          } else if (clinvarGroupBy === "disease") {
-            if (
-              selectedDiseaseType !== "all" &&
-              variant.disease_type !== selectedDiseaseType
-            )
-              return false;
-          }
+          // Filter by Significance
+          if (
+            selectedClinicalSig !== "all" &&
+            variant.clinical_significance !== selectedClinicalSig
+          )
+            return false;
+
+          // Filter by Disease
+          if (
+            selectedDiseaseType !== "all" &&
+            variant.disease_type !== selectedDiseaseType
+          )
+            return false;
 
           // Filter by zygosity
           if (selectedZygosity !== "all") {
