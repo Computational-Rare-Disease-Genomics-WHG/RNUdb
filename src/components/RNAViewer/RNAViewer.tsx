@@ -620,21 +620,22 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                 {overlayMode === "clinvar" && (
                   <>
                     <div className="flex items-center gap-1 flex-wrap">
-                      <span className="text-xs text-slate-400">Group:</span>
                       <Select
                         value={clinvarGroupBy}
                         onValueChange={setClinvarGroupBy}
                       >
                         <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
                           <SelectValue>
-                            {clinvarGroupBy === "all" ? "All" : clinvarGroupBy}
+                            {clinvarGroupBy === "all"
+                              ? "Group"
+                              : clinvarGroupBy === "significance"
+                                ? "Sig."
+                                : "Disease"}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="significance">
-                            Significance
-                          </SelectItem>
+                          <SelectItem value="all">Group</SelectItem>
+                          <SelectItem value="significance">Sig.</SelectItem>
                           <SelectItem value="disease">Disease</SelectItem>
                         </SelectContent>
                       </Select>
@@ -644,7 +645,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         <span className="text-slate-300">|</span>
                         {clinvarGroupBy === "significance" && (
                           <div className="flex items-center gap-1 flex-wrap">
-                            <span className="text-xs text-slate-400">Sig:</span>
                             <Select
                               value={selectedClinicalSig}
                               onValueChange={setSelectedClinicalSig}
@@ -669,9 +669,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         )}
                         {clinvarGroupBy === "disease" && (
                           <div className="flex items-center gap-1 flex-wrap">
-                            <span className="text-xs text-slate-400">
-                              Disease:
-                            </span>
                             <Select
                               value={selectedDiseaseType}
                               onValueChange={setSelectedDiseaseType}
@@ -696,7 +693,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         )}
                         <span className="text-slate-300">|</span>
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-xs text-slate-400">Zyg:</span>
                           <Select
                             value={selectedZygosity}
                             onValueChange={setSelectedZygosity}
