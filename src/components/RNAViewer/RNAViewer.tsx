@@ -466,25 +466,11 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           <div className="bg-white rounded-lg border border-slate-200 p-3">
             {/* Header row with title and mode buttons */}
             <div className="flex items-center justify-between gap-4 mb-2 min-w-0">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 shrink-0">
-                  <Layers className="h-4 w-4 text-teal-600" />
-                  <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">
-                    Data Overlay
-                  </span>
-                </div>
-
-                {/* Structural Features Toggle */}
-                <div className="flex items-center gap-2 px-2 py-1 rounded border border-slate-200 bg-slate-50">
-                  <span className="text-xs font-medium text-slate-600">
-                    Domains
-                  </span>
-                  <Switch
-                    checked={showStructuralFeatures}
-                    onCheckedChange={setShowStructuralFeatures}
-                    className="data-[state=checked]:bg-purple-600"
-                  />
-                </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Layers className="h-4 w-4 text-teal-600" />
+                <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">
+                  Data Overlay
+                </span>
               </div>
 
               {/* Mode toggle buttons - fixed width container */}
@@ -610,6 +596,18 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                     </p>
                   </TooltipContent>
                 </Tooltip>
+              </div>
+
+              {/* Structural Features Toggle */}
+              <div className="flex items-center gap-2 px-2 py-1 rounded border-dashed border-slate-300 bg-slate-100">
+                <span className="text-xs font-medium text-slate-500">
+                  Domains
+                </span>
+                <Switch
+                  checked={showStructuralFeatures}
+                  onCheckedChange={setShowStructuralFeatures}
+                  className="data-[state=checked]:bg-purple-600"
+                />
               </div>
             </div>
 
