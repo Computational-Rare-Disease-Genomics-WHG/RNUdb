@@ -20,7 +20,6 @@ import { findNucleotideById } from "../../lib/rnaUtils";
 import type { RNAData, Nucleotide, OverlayData, Variant } from "../../types";
 import BasePairBond from "./BasePairBond";
 import NucleotideComponent from "./NucleotideComponent";
-import PDBViewer from "./PDBViewer";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -71,7 +70,7 @@ const cyclesFromMode = (mode: string): number => {
 
 const RNAViewer: React.FC<RNAViewerProps> = ({
   rnaData,
-  pdbData,
+  pdbData: _pdbData,
   overlayData = {},
   onNucleotideClick,
   onNucleotideHover,
@@ -93,7 +92,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [show3D, setShow3D] = useState(false);
   const [showStructuralFeatures, setShowStructuralFeatures] = useState(true);
 
   const [diseaseTypes, setDiseaseTypes] = useState<string[]>([]);
@@ -106,7 +104,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
     useState<string>("all");
 
   // Clinical Variants filters
-  const [clinvarGroupBy, setClinvarGroupBy] = useState<string>("all");
+  const [clinvarGroupBy] = useState<string>("all");
   const [selectedZygosity, setSelectedZygosity] = useState<string>("all");
 
   useEffect(() => {
@@ -153,20 +151,19 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
           if (!variant.clinical_significance) return false;
 
-          // Filter based on Group by selection
-          if (clinvarGroupBy === "significance") {
-            if (
-              selectedClinicalSig !== "all" &&
-              variant.clinical_significance !== selectedClinicalSig
-            )
-              return false;
-          } else if (clinvarGroupBy === "disease") {
-            if (
-              selectedDiseaseType !== "all" &&
-              variant.disease_type !== selectedDiseaseType
-            )
-              return false;
-          }
+          // Filter by Significance
+          if (
+            selectedClinicalSig !== "all" &&
+            variant.clinical_significance !== selectedClinicalSig
+          )
+            return false;
+
+          // Filter by Disease
+          if (
+            selectedDiseaseType !== "all" &&
+            variant.disease_type !== selectedDiseaseType
+          )
+            return false;
 
           // Filter by zygosity
           if (selectedZygosity !== "all") {
@@ -462,53 +459,12 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
   return (
     <div className="rna-viewer space-y-4">
-      {/* Toggle 2D/3D Button and Overlay Controls */}
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-        {/* Toggle 2D/3D Switch */}
-        <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-md border border-slate-200">
-          <span
-            className={`text-sm font-medium transition-colors ${!show3D ? "text-teal-600" : "text-slate-500"}`}
-          >
-            2D Structure
-          </span>
-          <Switch
-            checked={show3D}
-            onCheckedChange={setShow3D}
-            className="data-[state=checked]:bg-teal-600"
-          />
-          <span
-            className={`text-sm font-medium transition-colors ${show3D ? "text-teal-600" : "text-slate-500"}`}
-          >
-            3D Structure
-          </span>
-        </div>
-
-        {/* Divider */}
-        <div className="h-4 w-px bg-slate-300 mx-2" />
-
-        {/* Structural Features Toggle */}
-        {!show3D && (
-          <>
-            <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-md border border-slate-200">
-              <span className="text-sm font-medium text-slate-500">
-                Structural Features
-              </span>
-              <Switch
-                checked={showStructuralFeatures}
-                onCheckedChange={setShowStructuralFeatures}
-                className="data-[state=checked]:bg-purple-600"
-              />
-            </div>
-            {/* Divider */}
-            <div className="h-4 w-px bg-slate-300 mx-2" />
-          </>
-        )}
-
-        {/* Data Overlay Panel */}
+      {/* Controls */}
+      <div className="w-full p-3 bg-slate-50 rounded-lg border border-slate-200">
         {onCycleOverlay && (
           <div className="bg-white rounded-lg border border-slate-200 p-3">
             {/* Header row with title and mode buttons */}
-            <div className="flex items-center gap-4 mb-2 min-w-0">
+            <div className="flex items-center justify-between gap-4 mb-2 min-w-0">
               <div className="flex items-center gap-2 shrink-0">
                 <Layers className="h-4 w-4 text-teal-600" />
                 <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">
@@ -640,540 +596,500 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   </TooltipContent>
                 </Tooltip>
               </div>
+
+              {/* Structural Features Toggle */}
+              <div className="flex items-center gap-2 px-2 py-1 rounded border-dashed border-slate-300 bg-slate-100">
+                <span className="text-xs font-medium text-slate-500">
+                  Domains
+                </span>
+                <Switch
+                  checked={showStructuralFeatures}
+                  onCheckedChange={setShowStructuralFeatures}
+                  className="data-[state=checked]:bg-purple-600"
+                />
+              </div>
             </div>
 
             {/* Current mode label and filters */}
             {overlayMode !== "none" && (
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 min-w-0">
-                <span className="text-xs font-medium text-slate-500 shrink-0">
-                  Filter:
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                <span className="text-xs font-medium text-slate-500 shrink-0 mr-1">
+                  Filters
                 </span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {overlayMode === "clinvar" && (
-                    <>
-                      <span className="text-xs font-medium text-slate-500">
-                        Group by
-                      </span>
-                      <Select
-                        value={clinvarGroupBy}
-                        onValueChange={setClinvarGroupBy}
-                      >
-                        <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                          <SelectValue placeholder="All" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="significance">
-                            Significance
+                {overlayMode === "clinvar" && (
+                  <>
+                    <span className="text-xs text-slate-400">Disease</span>
+                    <Select
+                      value={selectedDiseaseType}
+                      onValueChange={setSelectedDiseaseType}
+                    >
+                      <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue>
+                          {selectedDiseaseType === "all"
+                            ? "All"
+                            : selectedDiseaseType}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {diseaseTypes.map((disease) => (
+                          <SelectItem key={disease} value={disease}>
+                            {disease}
                           </SelectItem>
-                          <SelectItem value="disease">Disease</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {clinvarGroupBy !== "all" && (
-                        <>
-                          {clinvarGroupBy === "significance" && (
-                            <>
-                              <span className="text-xs font-medium text-slate-500">
-                                Significance
-                              </span>
-                              <Select
-                                value={selectedClinicalSig}
-                                onValueChange={setSelectedClinicalSig}
-                              >
-                                <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                                  <SelectValue placeholder="All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">All</SelectItem>
-                                  {clinicalSignificances.map((sig) => (
-                                    <SelectItem key={sig} value={sig}>
-                                      {sig}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </>
-                          )}
-                          {clinvarGroupBy === "disease" && (
-                            <>
-                              <span className="text-xs font-medium text-slate-500">
-                                Disease
-                              </span>
-                              <Select
-                                value={selectedDiseaseType}
-                                onValueChange={setSelectedDiseaseType}
-                              >
-                                <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                                  <SelectValue placeholder="All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">All</SelectItem>
-                                  {diseaseTypes.map((disease) => (
-                                    <SelectItem key={disease} value={disease}>
-                                      {disease}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </>
-                          )}
-                          <span className="text-xs font-medium text-slate-500">
-                            Zygosity
-                          </span>
-                          <Select
-                            value={selectedZygosity}
-                            onValueChange={setSelectedZygosity}
-                          >
-                            <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                              <SelectValue placeholder="All" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All</SelectItem>
-                              <SelectItem value="het">Dominant</SelectItem>
-                              <SelectItem value="biallelic">
-                                Biallelic
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </>
-                      )}
-                    </>
-                  )}
-                  {overlayMode === "gnomad" && (
-                    <>
-                      <span className="text-xs font-medium text-slate-500">
-                        Source
-                      </span>
-                      <Select
-                        value={selectedPopulationSource}
-                        onValueChange={setSelectedPopulationSource}
-                      >
-                        <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                          <SelectValue placeholder="All" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="gnomad">gnomAD</SelectItem>
-                          <SelectItem value="aou">All of Us</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                  {overlayMode === "depletion_group" && (
-                    <div className="flex items-center gap-3 text-xs">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2.5 h-2.5 rounded bg-red-500" />
-                        <span className="text-slate-600">Strong</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2.5 h-2.5 rounded bg-amber-500" />
-                        <span className="text-slate-600">Moderate</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2.5 h-2.5 rounded bg-emerald-500" />
-                        <span className="text-slate-600">Normal</span>
-                      </div>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-xs text-slate-400">Significance</span>
+                    <Select
+                      value={selectedClinicalSig}
+                      onValueChange={setSelectedClinicalSig}
+                    >
+                      <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue>
+                          {selectedClinicalSig === "all"
+                            ? "All"
+                            : selectedClinicalSig}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {clinicalSignificances.map((sig) => (
+                          <SelectItem key={sig} value={sig}>
+                            {sig}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-xs text-slate-400">Zygosity</span>
+                    <Select
+                      value={selectedZygosity}
+                      onValueChange={setSelectedZygosity}
+                    >
+                      <SelectTrigger className="h-5 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue>
+                          {selectedZygosity === "all"
+                            ? "All"
+                            : selectedZygosity === "het"
+                              ? "Dom"
+                              : selectedZygosity}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="het">Dominant</SelectItem>
+                        <SelectItem value="biallelic">Biallelic</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+                {overlayMode === "gnomad" && (
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-xs text-slate-400">Source:</span>
+                    <Select
+                      value={selectedPopulationSource}
+                      onValueChange={setSelectedPopulationSource}
+                    >
+                      <SelectTrigger className="h-5 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue>
+                          {selectedPopulationSource === "all"
+                            ? "All"
+                            : selectedPopulationSource === "gnomad"
+                              ? "gnomAD"
+                              : "AoU"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="gnomad">gnomAD</SelectItem>
+                        <SelectItem value="aou">All of Us</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {overlayMode === "depletion_group" && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">Depletion:</span>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <span className="text-xs text-slate-600">Strong</span>
                     </div>
-                  )}
-                </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-amber-500" />
+                      <span className="text-xs text-slate-600">Moderate</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-xs text-slate-600">Normal</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
 
-        {!show3D && (
-          <>
-            {/* Divider */}
-            <div className="h-4 w-px bg-slate-300 mx-2" />
+        {/* Divider */}
+        <div className="h-4 w-px mx-2" />
 
-            {/* 2D-specific controls (Zoom Controls) */}
-            <div className="flex items-center gap-1">
-              {/* Zoom Controls */}
-              <div className="flex items-center gap-1">
-                <Button
-                  onClick={() => handleZoom(0.1)}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3"
-                >
-                  <ZoomIn className="h-3 w-3" />
-                </Button>
-                <Button
-                  onClick={() => handleZoom(-0.1)}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3"
-                >
-                  <ZoomOut className="h-3 w-3" />
-                </Button>
-                <Button
-                  onClick={resetView}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                </Button>
-                <span className="text-xs text-slate-600 ml-2">
-                  {Math.round(zoomLevel * 100)}%
-                </span>
-              </div>
+        {/* 2D-specific controls (Zoom Controls) */}
+        <div className="flex items-center gap-1">
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1">
+            <Button
+              onClick={() => handleZoom(0.1)}
+              variant="outline"
+              size="sm"
+              className="h-8 px-3"
+            >
+              <ZoomIn className="h-3 w-3" />
+            </Button>
+            <Button
+              onClick={() => handleZoom(-0.1)}
+              variant="outline"
+              size="sm"
+              className="h-8 px-3"
+            >
+              <ZoomOut className="h-3 w-3" />
+            </Button>
+            <Button
+              onClick={resetView}
+              variant="outline"
+              size="sm"
+              className="h-8 px-3"
+            >
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+            <span className="text-xs text-slate-600 ml-2">
+              {Math.round(zoomLevel * 100)}%
+            </span>
+          </div>
 
-              {/* Divider */}
-              <div className="h-4 w-px bg-slate-300 mx-2" />
+          {/* Divider */}
+          <div className="h-4 w-px mx-2" />
 
-              {/* Export Controls */}
-              <div className="flex items-center gap-1">
-                <Button
-                  onClick={saveAsSVG}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3"
-                >
-                  <Download className="h-3 w-3 mr-1" />
-                  <span className="text-xs">SVG</span>
-                </Button>
-                <Button
-                  onClick={saveAsPNG}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3"
-                >
-                  <FileImage className="h-3 w-3 mr-1" />
-                  <span className="text-xs">PNG</span>
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
+          {/* Export Controls */}
+          <div className="flex items-center gap-1">
+            <Button
+              onClick={saveAsSVG}
+              variant="outline"
+              size="sm"
+              className="h-8 px-3"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              <span className="text-xs">SVG</span>
+            </Button>
+            <Button
+              onClick={saveAsPNG}
+              variant="outline"
+              size="sm"
+              className="h-8 px-3"
+            >
+              <FileImage className="h-3 w-3 mr-1" />
+              <span className="text-xs">PNG</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area */}
-      {show3D && (
-        <PDBViewer
-          pdbData={pdbData}
-          height="600px"
-          overlayData={overlayData}
-          overlayMode={overlayMode}
-          selectedNucleotide={selectedNucleotide}
-          onNucleotideClick={handleNucleotideClick}
-          onNucleotideHover={handleNucleotideHover}
-          variantData={variantData}
-          gnomadVariants={gnomadVariants}
-        />
-      )}
+      <div
+        ref={containerRef}
+        className="rna-svg-container relative"
+        style={{
+          width: "100%",
+          height: "500px",
+          border: "1px solid #ccc",
+          overflow: "hidden",
+          cursor: isPanning ? "grabbing" : "grab",
+          backgroundColor: "#f8fafc",
+        }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <svg
+          ref={svgRef}
+          viewBox={(() => {
+            if (rnaData.nucleotides.length === 0) return "0 0 2000 2000";
+            const minX = Math.min(...rnaData.nucleotides.map((n) => n.x));
+            const maxX = Math.max(...rnaData.nucleotides.map((n) => n.x));
+            const minY = Math.min(...rnaData.nucleotides.map((n) => n.y));
+            const maxY = Math.max(...rnaData.nucleotides.map((n) => n.y));
+            const padding = 100;
+            return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
+          })()}
+          className="rna-svg"
+          style={{
+            width: "100%",
+            height: "100%",
+            transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+            transformOrigin: "center center",
+          }}
+        >
+          <g className="bonds-layer">
+            {rnaData.base_pairs.map(({ from_pos, to_pos }, index) => {
+              const fromNuc = findNucleotideById(rnaData.nucleotides, from_pos);
+              const toNuc = findNucleotideById(rnaData.nucleotides, to_pos);
 
-      {!show3D && (
-        <>
-          <div
-            ref={containerRef}
-            className="rna-svg-container relative"
-            style={{
-              width: "100%",
-              height: "500px",
-              border: "1px solid #ccc",
-              overflow: "hidden",
-              cursor: isPanning ? "grabbing" : "grab",
-              backgroundColor: "#f8fafc",
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
-            <svg
-              ref={svgRef}
-              viewBox={(() => {
-                if (rnaData.nucleotides.length === 0) return "0 0 2000 2000";
-                const minX = Math.min(...rnaData.nucleotides.map((n) => n.x));
-                const maxX = Math.max(...rnaData.nucleotides.map((n) => n.x));
-                const minY = Math.min(...rnaData.nucleotides.map((n) => n.y));
-                const maxY = Math.max(...rnaData.nucleotides.map((n) => n.y));
-                const padding = 100;
-                return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
-              })()}
-              className="rna-svg"
-              style={{
-                width: "100%",
-                height: "100%",
-                transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
-                transformOrigin: "center center",
-              }}
-            >
-              <g className="bonds-layer">
-                {rnaData.base_pairs.map(({ from_pos, to_pos }, index) => {
-                  const fromNuc = findNucleotideById(
-                    rnaData.nucleotides,
-                    from_pos,
-                  );
-                  const toNuc = findNucleotideById(rnaData.nucleotides, to_pos);
+              if (!fromNuc || !toNuc) return null;
 
-                  if (!fromNuc || !toNuc) return null;
+              // Create unique key using index and sorted nucleotide IDs to avoid duplicates
+              const sortedKey =
+                from_pos < to_pos
+                  ? `${from_pos}-${to_pos}`
+                  : `${to_pos}-${from_pos}`;
+              return (
+                <BasePairBond
+                  key={`bond-${index}-${sortedKey}`}
+                  from={fromNuc}
+                  to={toNuc}
+                />
+              );
+            })}
+          </g>
 
-                  // Create unique key using index and sorted nucleotide IDs to avoid duplicates
-                  const sortedKey =
-                    from_pos < to_pos
-                      ? `${from_pos}-${to_pos}`
-                      : `${to_pos}-${from_pos}`;
-                  return (
-                    <BasePairBond
-                      key={`bond-${index}-${sortedKey}`}
-                      from={fromNuc}
-                      to={toNuc}
-                    />
-                  );
-                })}
-              </g>
-
-              <g className="nucleotides-layer">
-                {rnaData.nucleotides.map((nucleotide) => {
-                  const variantInfo = getVariantInfoForNucleotide(
+          <g className="nucleotides-layer">
+            {rnaData.nucleotides.map((nucleotide) => {
+              const variantInfo = getVariantInfoForNucleotide(nucleotide.id);
+              const totalVariants =
+                variantInfo.clinvarVariants.length +
+                variantInfo.gnomadVariants.length;
+              return (
+                <NucleotideComponent
+                  key={nucleotide.id}
+                  nucleotide={nucleotide}
+                  color={getOverlayColor(nucleotide)}
+                  isHovered={hoveredNucleotide?.id === nucleotide.id}
+                  isSelected={selectedNucleotide?.id === nucleotide.id}
+                  isHighlighted={highlightedNucleotideIds.includes(
                     nucleotide.id,
-                  );
-                  const totalVariants =
-                    variantInfo.clinvarVariants.length +
-                    variantInfo.gnomadVariants.length;
-                  return (
-                    <NucleotideComponent
-                      key={nucleotide.id}
-                      nucleotide={nucleotide}
-                      color={getOverlayColor(nucleotide)}
-                      isHovered={hoveredNucleotide?.id === nucleotide.id}
-                      isSelected={selectedNucleotide?.id === nucleotide.id}
-                      isHighlighted={highlightedNucleotideIds.includes(
-                        nucleotide.id,
-                      )}
-                      onHover={handleNucleotideHover}
-                      onClick={handleNucleotideClick}
-                      hasVariants={totalVariants > 0}
-                      variantCount={totalVariants}
+                  )}
+                  onHover={handleNucleotideHover}
+                  onClick={handleNucleotideClick}
+                  hasVariants={totalVariants > 0}
+                  variantCount={totalVariants}
+                />
+              );
+            })}
+          </g>
+
+          {/* Structural Features Layer */}
+          {showStructuralFeatures &&
+            rnaData.structural_features?.map((feature) => {
+              const nucleotides = feature.nucleotide_ids
+                .map((id) => rnaData.nucleotides.find((n) => n.id === id))
+                .filter(Boolean);
+
+              if (nucleotides.length === 0) return null;
+
+              // Calculate bounding box
+              const xs = nucleotides.map((n) => n!.x);
+              const ys = nucleotides.map((n) => n!.y);
+              const minX = Math.min(...xs);
+              const maxX = Math.max(...xs);
+              const minY = Math.min(...ys);
+              const maxY = Math.max(...ys);
+              const centerX = (minX + maxX) / 2;
+              const centerY = (minY + maxY) / 2;
+
+              return (
+                <g key={feature.id} className="structural-feature">
+                  {/* Highlight individual nucleotides */}
+                  {nucleotides.map((nuc) => (
+                    <circle
+                      key={`feature-${feature.id}-nuc-${nuc!.id}`}
+                      cx={nuc!.x}
+                      cy={nuc!.y}
+                      r={22}
+                      fill={feature.color || "#8b5cf6"}
+                      opacity={0.25}
+                      className="pointer-events-none"
                     />
-                  );
-                })}
-              </g>
+                  ))}
 
-              {/* Structural Features Layer */}
-              {showStructuralFeatures &&
-                rnaData.structural_features?.map((feature) => {
-                  const nucleotides = feature.nucleotide_ids
-                    .map((id) => rnaData.nucleotides.find((n) => n.id === id))
-                    .filter(Boolean);
+                  {/* Feature label with background */}
+                  <g className="pointer-events-none">
+                    <rect
+                      x={
+                        feature.label_x -
+                        (feature.label_text.length * feature.label_font_size) /
+                          3
+                      }
+                      y={feature.label_y - feature.label_font_size / 1.5}
+                      width={
+                        (feature.label_text.length * feature.label_font_size) /
+                        1.5
+                      }
+                      height={feature.label_font_size + 8}
+                      fill="rgba(255, 255, 255, 0.9)"
+                      stroke={feature.label_color || "#6d28d9"}
+                      strokeWidth="2"
+                      rx="4"
+                    />
+                    <text
+                      x={feature.label_x}
+                      y={feature.label_y}
+                      fontSize={feature.label_font_size}
+                      fill={feature.label_color || "#6d28d9"}
+                      fontWeight="600"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className="select-none"
+                    >
+                      {feature.label_text}
+                    </text>
+                  </g>
 
-                  if (nucleotides.length === 0) return null;
+                  {/* Connector line from label to feature center */}
+                  <line
+                    x1={feature.label_x}
+                    y1={feature.label_y + feature.label_font_size / 2}
+                    x2={centerX}
+                    y2={centerY}
+                    stroke={feature.label_color || "#6d28d9"}
+                    strokeWidth="1"
+                    strokeDasharray="2,2"
+                    opacity="0.5"
+                    className="pointer-events-none"
+                  />
+                </g>
+              );
+            })}
 
-                  // Calculate bounding box
-                  const xs = nucleotides.map((n) => n!.x);
-                  const ys = nucleotides.map((n) => n!.y);
-                  const minX = Math.min(...xs);
-                  const maxX = Math.max(...xs);
-                  const minY = Math.min(...ys);
-                  const maxY = Math.max(...ys);
-                  const centerX = (minX + maxX) / 2;
-                  const centerY = (minY + maxY) / 2;
+          <g className="annotations-layer">
+            {rnaData.annotations?.map((annotation) => (
+              <text
+                key={annotation.id}
+                x={annotation.x}
+                y={annotation.y}
+                fontSize={annotation.font_size}
+                fill={annotation.color || "#374151"}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="pointer-events-none select-none font-medium"
+              >
+                {annotation.text}
+              </text>
+            ))}
+          </g>
+        </svg>
+      </div>
 
-                  return (
-                    <g key={feature.id} className="structural-feature">
-                      {/* Highlight individual nucleotides */}
-                      {nucleotides.map((nuc) => (
-                        <circle
-                          key={`feature-${feature.id}-nuc-${nuc!.id}`}
-                          cx={nuc!.x}
-                          cy={nuc!.y}
-                          r={22}
-                          fill={feature.color || "#8b5cf6"}
-                          opacity={0.25}
-                          className="pointer-events-none"
-                        />
-                      ))}
-
-                      {/* Feature label with background */}
-                      <g className="pointer-events-none">
-                        <rect
-                          x={
-                            feature.label_x -
-                            (feature.label_text.length *
-                              feature.label_font_size) /
-                              3
-                          }
-                          y={feature.label_y - feature.label_font_size / 1.5}
-                          width={
-                            (feature.label_text.length *
-                              feature.label_font_size) /
-                            1.5
-                          }
-                          height={feature.label_font_size + 8}
-                          fill="rgba(255, 255, 255, 0.9)"
-                          stroke={feature.label_color || "#6d28d9"}
-                          strokeWidth="2"
-                          rx="4"
-                        />
-                        <text
-                          x={feature.label_x}
-                          y={feature.label_y}
-                          fontSize={feature.label_font_size}
-                          fill={feature.label_color || "#6d28d9"}
-                          fontWeight="600"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          className="select-none"
-                        >
-                          {feature.label_text}
-                        </text>
-                      </g>
-
-                      {/* Connector line from label to feature center */}
-                      <line
-                        x1={feature.label_x}
-                        y1={feature.label_y + feature.label_font_size / 2}
-                        x2={centerX}
-                        y2={centerY}
-                        stroke={feature.label_color || "#6d28d9"}
-                        strokeWidth="1"
-                        strokeDasharray="2,2"
-                        opacity="0.5"
-                        className="pointer-events-none"
-                      />
-                    </g>
-                  );
-                })}
-
-              <g className="annotations-layer">
-                {rnaData.annotations?.map((annotation) => (
-                  <text
-                    key={annotation.id}
-                    x={annotation.x}
-                    y={annotation.y}
-                    fontSize={annotation.font_size}
-                    fill={annotation.color || "#374151"}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    className="pointer-events-none select-none font-medium"
-                  >
-                    {annotation.text}
-                  </text>
-                ))}
-              </g>
-            </svg>
+      {/* Legend */}
+      {overlayMode !== "none" && (
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="text-sm font-medium text-gray-700 mb-2">
+            {overlayMode === "clinvar"
+              ? "ClinVar Legend:"
+              : overlayMode === "gnomad"
+                ? "gnomAD Legend:"
+                : overlayMode === "depletion_group"
+                  ? "Depletion Group Legend:"
+                  : "Legend:"}
           </div>
-
-          {/* Legend */}
-          {overlayMode !== "none" && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="text-sm font-medium text-gray-700 mb-2">
-                {overlayMode === "clinvar"
-                  ? "ClinVar Legend:"
-                  : overlayMode === "gnomad"
-                    ? "gnomAD Legend:"
-                    : overlayMode === "depletion_group"
-                      ? "Depletion Group Legend:"
-                      : "Legend:"}
-              </div>
-              <div className="flex flex-wrap gap-4 text-xs">
-                {overlayMode === "clinvar" ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC,
-                        }}
-                      ></div>
-                      <span>Pathogenic</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.CLINVAR
-                              .LIKELY_PATHOGENIC,
-                        }}
-                      ></div>
-                      <span>Likely Pathogenic</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS,
-                        }}
-                      ></div>
-                      <span>Uncertain Significance</span>
-                    </div>
-                  </>
-                ) : overlayMode === "gnomad" ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW,
-                        }}
-                      ></div>
-                      <span>Low frequency</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
-                        }}
-                      ></div>
-                      <span>Medium frequency</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH,
-                        }}
-                      ></div>
-                      <span>High frequency</span>
-                    </div>
-                  </>
-                ) : overlayMode === "depletion_group" ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG,
-                        }}
-                      ></div>
-                      <span>Strong</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE,
-                        }}
-                      ></div>
-                      <span>Moderate</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-sm"
-                        style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL,
-                        }}
-                      ></div>
-                      <span>Normal</span>
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          )}
-        </>
+          <div className="flex flex-wrap gap-4 text-xs">
+            {overlayMode === "clinvar" ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor:
+                        COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC,
+                    }}
+                  ></div>
+                  <span>Pathogenic</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor:
+                        COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC,
+                    }}
+                  ></div>
+                  <span>Likely Pathogenic</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS,
+                    }}
+                  ></div>
+                  <span>Uncertain Significance</span>
+                </div>
+              </>
+            ) : overlayMode === "gnomad" ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW,
+                    }}
+                  ></div>
+                  <span>Low frequency</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor:
+                        COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
+                    }}
+                  ></div>
+                  <span>Medium frequency</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH,
+                    }}
+                  ></div>
+                  <span>High frequency</span>
+                </div>
+              </>
+            ) : overlayMode === "depletion_group" ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor:
+                        COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG,
+                    }}
+                  ></div>
+                  <span>Strong</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor:
+                        COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE,
+                    }}
+                  ></div>
+                  <span>Moderate</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-sm"
+                    style={{
+                      backgroundColor:
+                        COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL,
+                    }}
+                  ></div>
+                  <span>Normal</span>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
       )}
     </div>
   );
