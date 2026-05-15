@@ -624,7 +624,11 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                       onValueChange={setClinvarGroupBy}
                     >
                       <SelectTrigger className="h-7 w-32 text-xs bg-white">
-                        <SelectValue placeholder="Group by" />
+                        <SelectValue>
+                          {clinvarGroupBy === "all"
+                            ? "Group by"
+                            : clinvarGroupBy}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All</SelectItem>
@@ -642,7 +646,11 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                             onValueChange={setSelectedClinicalSig}
                           >
                             <SelectTrigger className="h-7 w-32 text-xs bg-white">
-                              <SelectValue placeholder="Significance" />
+                              <SelectValue>
+                                {selectedClinicalSig === "all"
+                                  ? "Significance"
+                                  : selectedClinicalSig}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">All</SelectItem>
@@ -660,7 +668,11 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                             onValueChange={setSelectedDiseaseType}
                           >
                             <SelectTrigger className="h-7 w-32 text-xs bg-white">
-                              <SelectValue placeholder="Disease" />
+                              <SelectValue>
+                                {selectedDiseaseType === "all"
+                                  ? "Disease"
+                                  : selectedDiseaseType}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">All</SelectItem>
@@ -677,7 +689,13 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                           onValueChange={setSelectedZygosity}
                         >
                           <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                            <SelectValue placeholder="Zygosity" />
+                            <SelectValue>
+                              {selectedZygosity === "all"
+                                ? "Zygosity"
+                                : selectedZygosity === "het"
+                                  ? "Dominant"
+                                  : selectedZygosity}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All</SelectItem>
@@ -695,7 +713,13 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                     onValueChange={setSelectedPopulationSource}
                   >
                     <SelectTrigger className="h-7 w-32 text-xs bg-white">
-                      <SelectValue placeholder="Source" />
+                      <SelectValue>
+                        {selectedPopulationSource === "all"
+                          ? "Source"
+                          : selectedPopulationSource === "gnomad"
+                            ? "gnomAD"
+                            : "All of Us"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All</SelectItem>
