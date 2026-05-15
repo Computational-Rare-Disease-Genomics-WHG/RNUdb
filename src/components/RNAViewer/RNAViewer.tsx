@@ -10,6 +10,8 @@ import {
   AlertTriangle,
   Activity,
   Users,
+  BarChart3,
+  Dna,
 } from "lucide-react";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
@@ -613,22 +615,17 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
             {/* Current mode label and filters */}
             {overlayMode !== "none" && (
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 min-w-0">
-                <span className="text-xs font-medium text-slate-500 shrink-0">
-                  Filter:
-                </span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {overlayMode === "clinvar" && (
-                    <>
-                      <span className="text-xs font-medium text-slate-500">
-                        Group by
-                      </span>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                {overlayMode === "clinvar" && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-100">
+                      <BarChart3 className="h-3.5 w-3.5 text-slate-500" />
                       <Select
                         value={clinvarGroupBy}
                         onValueChange={setClinvarGroupBy}
                       >
-                        <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                          <SelectValue placeholder="All" />
+                        <SelectTrigger className="h-6 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
+                          <SelectValue placeholder="Group" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All</SelectItem>
@@ -638,113 +635,107 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                           <SelectItem value="disease">Disease</SelectItem>
                         </SelectContent>
                       </Select>
-                      {clinvarGroupBy !== "all" && (
-                        <>
-                          {clinvarGroupBy === "significance" && (
-                            <>
-                              <span className="text-xs font-medium text-slate-500">
-                                Significance
-                              </span>
-                              <Select
-                                value={selectedClinicalSig}
-                                onValueChange={setSelectedClinicalSig}
-                              >
-                                <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                                  <SelectValue placeholder="All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">All</SelectItem>
-                                  {clinicalSignificances.map((sig) => (
-                                    <SelectItem key={sig} value={sig}>
-                                      {sig}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </>
-                          )}
-                          {clinvarGroupBy === "disease" && (
-                            <>
-                              <span className="text-xs font-medium text-slate-500">
-                                Disease
-                              </span>
-                              <Select
-                                value={selectedDiseaseType}
-                                onValueChange={setSelectedDiseaseType}
-                              >
-                                <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                                  <SelectValue placeholder="All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">All</SelectItem>
-                                  {diseaseTypes.map((disease) => (
-                                    <SelectItem key={disease} value={disease}>
-                                      {disease}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </>
-                          )}
-                          <span className="text-xs font-medium text-slate-500">
-                            Zygosity
-                          </span>
+                    </div>
+                    {clinvarGroupBy !== "all" && (
+                      <>
+                        {clinvarGroupBy === "significance" && (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-100">
+                            <AlertTriangle className="h-3.5 w-3.5 text-slate-500" />
+                            <Select
+                              value={selectedClinicalSig}
+                              onValueChange={setSelectedClinicalSig}
+                            >
+                              <SelectTrigger className="h-6 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
+                                <SelectValue placeholder="Sig" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                {clinicalSignificances.map((sig) => (
+                                  <SelectItem key={sig} value={sig}>
+                                    {sig}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                        {clinvarGroupBy === "disease" && (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-100">
+                            <Activity className="h-3.5 w-3.5 text-slate-500" />
+                            <Select
+                              value={selectedDiseaseType}
+                              onValueChange={setSelectedDiseaseType}
+                            >
+                              <SelectTrigger className="h-6 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
+                                <SelectValue placeholder="Disease" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                {diseaseTypes.map((disease) => (
+                                  <SelectItem key={disease} value={disease}>
+                                    {disease}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-100">
+                          <Dna className="h-3.5 w-3.5 text-slate-500" />
                           <Select
                             value={selectedZygosity}
                             onValueChange={setSelectedZygosity}
                           >
-                            <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                              <SelectValue placeholder="All" />
+                            <SelectTrigger className="h-6 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
+                              <SelectValue placeholder="Zyg" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">All</SelectItem>
-                              <SelectItem value="het">Dominant</SelectItem>
+                              <SelectItem value="het">Dom</SelectItem>
                               <SelectItem value="biallelic">
                                 Biallelic
                               </SelectItem>
                             </SelectContent>
                           </Select>
-                        </>
-                      )}
-                    </>
-                  )}
-                  {overlayMode === "gnomad" && (
-                    <>
-                      <span className="text-xs font-medium text-slate-500">
-                        Source
-                      </span>
-                      <Select
-                        value={selectedPopulationSource}
-                        onValueChange={setSelectedPopulationSource}
-                      >
-                        <SelectTrigger className="h-7 w-28 text-xs bg-white">
-                          <SelectValue placeholder="All" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="gnomad">gnomAD</SelectItem>
-                          <SelectItem value="aou">All of Us</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                  {overlayMode === "depletion_group" && (
-                    <div className="flex items-center gap-3 text-xs">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2.5 h-2.5 rounded bg-red-500" />
-                        <span className="text-slate-600">Strong</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2.5 h-2.5 rounded bg-amber-500" />
-                        <span className="text-slate-600">Moderate</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2.5 h-2.5 rounded bg-emerald-500" />
-                        <span className="text-slate-600">Normal</span>
-                      </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+                {overlayMode === "gnomad" && (
+                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-100">
+                    <Users className="h-3.5 w-3.5 text-slate-500" />
+                    <Select
+                      value={selectedPopulationSource}
+                      onValueChange={setSelectedPopulationSource}
+                    >
+                      <SelectTrigger className="h-6 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue placeholder="Source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="gnomad">gnomAD</SelectItem>
+                        <SelectItem value="aou">All of Us</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {overlayMode === "depletion_group" && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-50 border border-red-200">
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <span className="text-xs text-red-700">Strong</span>
                     </div>
-                  )}
-                </div>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 border border-amber-200">
+                      <div className="w-2 h-2 rounded-full bg-amber-500" />
+                      <span className="text-xs text-amber-700">Moderate</span>
+                    </div>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-xs text-emerald-700">Normal</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
