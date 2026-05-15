@@ -614,6 +614,9 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             {/* Current mode label and filters */}
             {overlayMode !== "none" && (
               <div className="flex items-center gap-3 pt-2 border-t border-slate-100 flex-wrap">
+                <span className="text-xs font-medium text-slate-500 shrink-0">
+                  Filters:
+                </span>
                 {overlayMode === "clinvar" && (
                   <div className="flex items-center gap-2 flex-wrap">
                     <Select
