@@ -753,7 +753,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         )}
 
         {/* Divider */}
-        <div className="h-4 w-px border border-slate-300 mx-2" />
+        <div className="h-4 w-px mx-2" />
 
         {/* 2D-specific controls (Zoom Controls) */}
         <div className="flex items-center gap-1">
@@ -789,7 +789,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           </div>
 
           {/* Divider */}
-          <div className="h-4 w-px border border-slate-300 mx-2" />
+          <div className="h-4 w-px mx-2" />
 
           {/* Export Controls */}
           <div className="flex items-center gap-1">
