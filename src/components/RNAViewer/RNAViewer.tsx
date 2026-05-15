@@ -104,7 +104,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
     useState<string>("all");
 
   // Clinical Variants filters
-  const [clinvarGroupBy, setClinvarGroupBy] = useState<string>("all");
+  const [clinvarGroupBy] = useState<string>("all");
   const [selectedZygosity, setSelectedZygosity] = useState<string>("all");
 
   useEffect(() => {
@@ -619,104 +619,70 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                 </span>
                 {overlayMode === "clinvar" && (
                   <>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      <Select
-                        value={clinvarGroupBy}
-                        onValueChange={setClinvarGroupBy}
-                      >
-                        <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
-                          <SelectValue>
-                            {clinvarGroupBy === "all"
-                              ? "Group"
-                              : clinvarGroupBy === "significance"
-                                ? "Sig."
-                                : "Disease"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Group</SelectItem>
-                          <SelectItem value="significance">Sig.</SelectItem>
-                          <SelectItem value="disease">Disease</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {clinvarGroupBy !== "all" && (
-                      <>
-                        <span className="text-slate-300">|</span>
-                        {clinvarGroupBy === "significance" && (
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <Select
-                              value={selectedClinicalSig}
-                              onValueChange={setSelectedClinicalSig}
-                            >
-                              <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
-                                <SelectValue>
-                                  {selectedClinicalSig === "all"
-                                    ? "All"
-                                    : selectedClinicalSig}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All</SelectItem>
-                                {clinicalSignificances.map((sig) => (
-                                  <SelectItem key={sig} value={sig}>
-                                    {sig}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                        {clinvarGroupBy === "disease" && (
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <Select
-                              value={selectedDiseaseType}
-                              onValueChange={setSelectedDiseaseType}
-                            >
-                              <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
-                                <SelectValue>
-                                  {selectedDiseaseType === "all"
-                                    ? "All"
-                                    : selectedDiseaseType}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All</SelectItem>
-                                {diseaseTypes.map((disease) => (
-                                  <SelectItem key={disease} value={disease}>
-                                    {disease}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                        <span className="text-slate-300">|</span>
-                        <div className="flex items-center gap-1 flex-wrap">
-                          <Select
-                            value={selectedZygosity}
-                            onValueChange={setSelectedZygosity}
-                          >
-                            <SelectTrigger className="h-5 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
-                              <SelectValue>
-                                {selectedZygosity === "all"
-                                  ? "All"
-                                  : selectedZygosity === "het"
-                                    ? "Dom"
-                                    : selectedZygosity}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All</SelectItem>
-                              <SelectItem value="het">Dominant</SelectItem>
-                              <SelectItem value="biallelic">
-                                Biallelic
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </>
-                    )}
+                    <span className="text-xs text-slate-400">Disease</span>
+                    <Select
+                      value={selectedDiseaseType}
+                      onValueChange={setSelectedDiseaseType}
+                    >
+                      <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue>
+                          {selectedDiseaseType === "all"
+                            ? "All"
+                            : selectedDiseaseType}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {diseaseTypes.map((disease) => (
+                          <SelectItem key={disease} value={disease}>
+                            {disease}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-xs text-slate-400">Significance</span>
+                    <Select
+                      value={selectedClinicalSig}
+                      onValueChange={setSelectedClinicalSig}
+                    >
+                      <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue>
+                          {selectedClinicalSig === "all"
+                            ? "All"
+                            : selectedClinicalSig}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {clinicalSignificances.map((sig) => (
+                          <SelectItem key={sig} value={sig}>
+                            {sig}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-xs text-slate-400">Zygosity</span>
+                    <Select
+                      value={selectedZygosity}
+                      onValueChange={setSelectedZygosity}
+                    >
+                      <SelectTrigger className="h-5 w-20 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue>
+                          {selectedZygosity === "all"
+                            ? "All"
+                            : selectedZygosity === "het"
+                              ? "Dom"
+                              : selectedZygosity}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="het">Dominant</SelectItem>
+                        <SelectItem value="biallelic">Biallelic</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </>
                 )}
                 {overlayMode === "gnomad" && (
