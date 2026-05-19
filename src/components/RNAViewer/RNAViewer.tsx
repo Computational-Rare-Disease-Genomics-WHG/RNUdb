@@ -231,28 +231,28 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           if (nucleotidePos !== nucleotideId) return false;
 
           if (selectedPopulationSource === "gnomad") {
-            return (variant.gnomad_ac ?? 0) > 0;
+            return (variant.gnomad_af ?? 0) > 0;
           } else if (selectedPopulationSource === "aou") {
-            return (variant.aou_ac ?? 0) > 0;
+            return (variant.aou_af ?? 0) > 0;
           } else {
-            return (variant.gnomad_ac ?? 0) > 0 || (variant.aou_ac ?? 0) > 0;
+            return (variant.gnomad_af ?? 0) > 0 || (variant.aou_af ?? 0) > 0;
           }
         });
 
         if (filteredVariants.length === 0) return { value: 0 };
 
-        const totalAc = filteredVariants.reduce((sum, v) => {
+        const totalAf = filteredVariants.reduce((sum, v) => {
           if (selectedPopulationSource === "gnomad") {
-            return sum + (v.gnomad_ac ?? 0);
+            return sum + (v.gnomad_af ?? 0);
           } else if (selectedPopulationSource === "aou") {
-            return sum + (v.aou_ac ?? 0);
+            return sum + (v.aou_af ?? 0);
           } else {
-            return sum + (v.gnomad_ac ?? 0) + (v.aou_ac ?? 0);
+            return sum + (v.gnomad_af ?? 0) + (v.aou_af ?? 0);
           }
         }, 0);
 
         return {
-          value: Math.log10(totalAc + 1) / 10,
+          value: totalAf,
           variant: filteredVariants[0],
         };
       }
@@ -706,6 +706,42 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         <SelectItem value="aou">All of Us</SelectItem>
                       </SelectContent>
                     </Select>
+                    <div className="flex items-center gap-1.5 ml-2">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{
+                          backgroundColor:
+                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH,
+                        }}
+                      />
+                      <span className="text-xs text-slate-600">
+                        Common (≥0.01)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{
+                          backgroundColor:
+                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
+                        }}
+                      />
+                      <span className="text-xs text-slate-600">
+                        Rare (0.001-0.01)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{
+                          backgroundColor:
+                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW,
+                        }}
+                      />
+                      <span className="text-xs text-slate-600">
+                        Very Rare (&lt;0.001)
+                      </span>
+                    </div>
                   </div>
                 )}
                 {overlayMode === "depletion_group" && (

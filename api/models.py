@@ -134,8 +134,10 @@ class VariantBase(SQLModel):
     depletion_group: str | None = None
     gnomad_ac: int | None = None
     gnomad_hom: int | None = None
+    gnomad_af: float | None = None
     aou_ac: int | None = None
     aou_hom: int | None = None
+    aou_af: float | None = None
 
 
 class Variant(VariantBase, table=True):

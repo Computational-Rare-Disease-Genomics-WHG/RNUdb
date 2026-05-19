@@ -36,8 +36,10 @@ export interface Variant {
   // Population genetics fields (nullable)
   gnomad_ac?: number; // gnomAD allele count
   gnomad_hom?: number; // gnomAD homozygote count
+  gnomad_af?: number; // gnomAD allele frequency
   aou_ac?: number; // All of Us allele count
   aou_hom?: number; // All of Us homozygote count
+  aou_af?: number; // All of Us allele frequency
   ukbb_ac?: number; // UK Biobank allele count
   ukbb_hom?: number; // UK Biobank homozygote count
 

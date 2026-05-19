@@ -73,18 +73,25 @@ describe("generateGnomadColor", () => {
 });
 
 describe("generateGnomadColorWithAlpha", () => {
-  it("returns background for frequency 0", () => {
+  it("returns background for AF 0", () => {
     expect(generateGnomadColorWithAlpha(0)).toBe("#FFFFFF");
   });
 
-  it("returns blue with alpha for non-zero frequencies", () => {
-    expect(generateGnomadColorWithAlpha(0.5)).toContain("rgba(37, 99, 235,");
-    expect(generateGnomadColorWithAlpha(1)).toContain("rgba(37, 99, 235, 1)");
+  it("returns LOW (very light blue) for Very Rare AF < 0.001", () => {
+    expect(generateGnomadColorWithAlpha(0.0001)).toBe("#DBEAFE");
+    expect(generateGnomadColorWithAlpha(0.0009)).toBe("#DBEAFE");
   });
 
-  it("uses minimum alpha of 0.1 for very small frequencies", () => {
-    const result = generateGnomadColorWithAlpha(0.01);
-    expect(result).toContain("0.1)");
+  it("returns MEDIUM (blue) for Rare AF 0.001-0.01", () => {
+    expect(generateGnomadColorWithAlpha(0.001)).toBe("#3B82F6");
+    expect(generateGnomadColorWithAlpha(0.005)).toBe("#3B82F6");
+    expect(generateGnomadColorWithAlpha(0.009)).toBe("#3B82F6");
+  });
+
+  it("returns HIGH (very dark blue) for Common AF >= 0.01", () => {
+    expect(generateGnomadColorWithAlpha(0.01)).toBe("#1E3A8A");
+    expect(generateGnomadColorWithAlpha(0.5)).toBe("#1E3A8A");
+    expect(generateGnomadColorWithAlpha(1)).toBe("#1E3A8A");
   });
 });
 
