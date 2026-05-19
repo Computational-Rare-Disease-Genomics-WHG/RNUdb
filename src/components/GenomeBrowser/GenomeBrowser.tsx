@@ -16,7 +16,6 @@ interface GenomeBrowserProps {
   aouVariants: any[];
   functionScoreTrackData: any;
   depletionGroupTrackData: any;
-  caddScoreTrackData: any;
   geneData: {
     id: string;
     name: string;
@@ -35,7 +34,6 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   aouVariants,
   functionScoreTrackData,
   depletionGroupTrackData,
-  caddScoreTrackData,
   geneData,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -257,14 +255,6 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               title="Function Score"
               height={80}
               data={functionScoreTrackData}
-              regions={regions}
-              displayType="bars"
-              geneStart={geneData.start}
-            />
-            <GenericTrack
-              title="CADD Score"
-              height={80}
-              data={caddScoreTrackData}
               regions={regions}
               displayType="bars"
               geneStart={geneData.start}

@@ -185,7 +185,6 @@ def valid_variant_rows():
             "alt": "C",
             "hgvs": "n.122T>G",
             "function_score": -1.234,
-            "cadd_score": 15.6,
         },
     ]
 

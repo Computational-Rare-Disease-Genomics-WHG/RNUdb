@@ -35,7 +35,6 @@ const Gene: React.FC = () => {
   >("clinvar");
   const [functionScoreTrackData, setFunctionScoreTrackData] = useState({});
   const [depletionGroupTrackData, setDepletionGroupTrackData] = useState({});
-  const [caddScoreTrackData, setCaddScoreTrackData] = useState({});
   const [clinvarOverlayData, setClinvarOverlayData] = useState({});
   const [gnomadOverlayData, setGnomadOverlayData] = useState({});
 
@@ -218,7 +217,6 @@ const Gene: React.FC = () => {
               (v.nucleotidePosition !== undefined || v.position !== undefined),
           )
           .map((v) => {
-            // Get nucleotide position - either directly or convert from genomic position
             let nucleotidePos = v.nucleotidePosition;
             if (nucleotidePos === undefined && v.position !== undefined) {
               if (geneData.strand === "-") {
@@ -230,7 +228,7 @@ const Gene: React.FC = () => {
             return [
               nucleotidePos!,
               {
-                value: Math.log10((v.gnomad_ac || 0) + 1) / 10, // Normalize for color scale
+                value: Math.log10((v.gnomad_ac || 0) + 1) / 10,
                 label: `gnomAD AC: ${v.gnomad_ac}`,
                 variantId: v.id,
               },
@@ -239,50 +237,8 @@ const Gene: React.FC = () => {
       );
     };
 
-    const createCaddScoreTrackData = (
-      variants: Variant[],
-      geneData: SnRNAGene,
-    ) => {
-      return Object.fromEntries(
-        variants
-          .filter(
-            (v) =>
-              v.cadd_score !== undefined &&
-              v.cadd_score !== null &&
-              (v.nucleotidePosition !== undefined || v.position !== undefined),
-          )
-          .map((v) => {
-            // Get nucleotide position - either directly or convert from genomic position
-            let nucleotidePos = v.nucleotidePosition;
-            if (nucleotidePos === undefined && v.position !== undefined) {
-              if (geneData.strand === "-") {
-                nucleotidePos = geneData.end - v.position + 1;
-              } else {
-                nucleotidePos = v.position - geneData.start + 1;
-              }
-            }
-            return [
-              nucleotidePos!,
-              {
-                value: v.cadd_score!,
-                label: `CADD Score: ${v.cadd_score!.toFixed(2)}`,
-                color:
-                  v.cadd_score! > 20
-                    ? "#dc2626"
-                    : v.cadd_score! > 15
-                      ? "#f97316"
-                      : "#10b981",
-              },
-            ];
-          }),
-      );
-    };
-
     const funcScoreData = createFunctionScoreTrackData(variantData);
     const depletionData = createDepletionGroupTrackData(variantData);
-    const caddData = currentData
-      ? createCaddScoreTrackData(variantData, currentData)
-      : {};
     const clinvarData = currentData
       ? createClinvarOverlayData(variantData, currentData)
       : {};
@@ -291,7 +247,6 @@ const Gene: React.FC = () => {
       : {};
     setFunctionScoreTrackData(funcScoreData);
     setDepletionGroupTrackData(depletionData);
-    setCaddScoreTrackData(caddData);
     setClinvarOverlayData(clinvarData);
     setGnomadOverlayData(gnomadData);
   }, [variantData, currentData]);
@@ -410,7 +365,6 @@ const Gene: React.FC = () => {
             cycleOverlayMode={cycleOverlayMode}
             functionScoreTrackData={functionScoreTrackData}
             depletionGroupTrackData={depletionGroupTrackData}
-            caddScoreTrackData={caddScoreTrackData}
             aouVariants={aouVariants}
           />
         </div>

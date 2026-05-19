@@ -36,7 +36,6 @@ interface MainContentProps {
   cycleOverlayMode: () => void;
   functionScoreTrackData?: OverlayData;
   depletionGroupTrackData: OverlayData;
-  caddScoreTrackData: OverlayData;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -53,7 +52,6 @@ const MainContent: React.FC<MainContentProps> = ({
   cycleOverlayMode,
   functionScoreTrackData,
   depletionGroupTrackData,
-  caddScoreTrackData,
 }) => {
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(
     null,
@@ -221,7 +219,6 @@ const MainContent: React.FC<MainContentProps> = ({
                 aouVariants={aouVariants}
                 functionScoreTrackData={functionScoreTrackData}
                 depletionGroupTrackData={depletionGroupTrackData}
-                caddScoreTrackData={caddScoreTrackData}
                 geneData={{
                   id: currentData.id,
                   name: currentData.name,

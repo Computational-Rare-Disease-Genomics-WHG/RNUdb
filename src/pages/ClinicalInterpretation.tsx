@@ -59,7 +59,7 @@ const RECOMMENDATIONS = [
     id: 6,
     title: "Use In Silico Tools with Caution",
     description:
-      "Current tools (CADD, etc.) are NOT calibrated for snRNAs. They perform poorly - CADD thresholds that capture pathogenic variants also flag 55-62% of population variants as deleterious.",
+      "Current tools are NOT calibrated for snRNAs. They perform poorly - thresholds that capture pathogenic variants also flag 55-62% of population variants as deleterious.",
     acmg: "PP3/BP4",
     severity: "critical",
   },
@@ -433,7 +433,7 @@ const ClinicalInterpretation: React.FC = () => {
                   },
                   {
                     title: "In Silico Tools Unreliable",
-                    desc: "CADD NOT calibrated for snRNAs. Thresholds capture 55-62% of population variants as deleterious.",
+                    desc: "Tools are NOT calibrated for snRNAs. Thresholds capture 55-62% of population variants as deleterious.",
                   },
                   {
                     title: "Complex Inheritance",

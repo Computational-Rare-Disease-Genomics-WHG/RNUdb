@@ -40,7 +40,6 @@ export interface Variant {
   aou_hom?: number; // All of Us homozygote count
   ukbb_ac?: number; // UK Biobank allele count
   ukbb_hom?: number; // UK Biobank homozygote count
-  cadd_score?: number; // CADD pathogenicity score
 
   // Biallelic variant fields
   zygosity?: "hom" | "het"; // Zygosity (homozygous/heterozygous)

@@ -160,9 +160,6 @@ async def import_variant_batch(
             "ukbb_hom": int(row["ukbb_hom"])
             if row.get("ukbb_hom") is not None
             else None,
-            "cadd_score": float(row["cadd_score"])
-            if row.get("cadd_score") is not None
-            else None,
             "zygosity": row.get("zygosity"),
             "cohort": row.get("cohort") or "curated",
         }
@@ -455,6 +452,8 @@ async def import_variants_vcf(
 
     mappings = None
     if field_mappings:
+        import json
+
         try:
             import json
 
@@ -498,28 +497,27 @@ async def import_variants_vcf(
                 INSERT INTO variants
                 (id, geneId, position, ref, alt, nucleotidePosition, hgvs,
                  function_score, pvalues, qvalues, depletion_group,
-                 gnomad_ac, gnomad_hom, aou_ac, aou_hom, cadd_score)
+                 gnomad_ac, gnomad_hom, aou_ac, aou_hom)
                 VALUES
                 (:id, :geneId, :position, :ref, :alt, :nucleotidePosition,
                  :hgvs, :function_score, :pvalues, :qvalues, :depletion_group,
-                 :gnomad_ac, :gnomad_hom, :aou_ac, :aou_hom, :cadd_score)
+                 :gnomad_ac, :gnomad_hom, :aou_ac, :aou_hom)
                 ON CONFLICT(id) DO UPDATE SET
-                    hgvs = EXCLUDED.hgvs,
-                    nucleotidePosition = EXCLUDED.nucleotidePosition,
-                    function_score = COALESCE(
-                        EXCLUDED.function_score, variants.function_score
-                    ),
-                    pvalues = COALESCE(EXCLUDED.pvalues, variants.pvalues),
-                    qvalues = COALESCE(EXCLUDED.qvalues, variants.qvalues),
-                    depletion_group = COALESCE(
-                        EXCLUDED.depletion_group, variants.depletion_group
-                    ),
-                    gnomad_ac = COALESCE(EXCLUDED.gnomad_ac, variants.gnomad_ac),
-                    gnomad_hom = COALESCE(EXCLUDED.gnomad_hom, variants.gnomad_hom),
-                    aou_ac = COALESCE(EXCLUDED.aou_ac, variants.aou_ac),
-                    aou_hom = COALESCE(EXCLUDED.aou_hom, variants.aou_hom),
-                    cadd_score = COALESCE(EXCLUDED.cadd_score, variants.cadd_score)
-            """),
+                     hgvs = EXCLUDED.hgvs,
+                     nucleotidePosition = EXCLUDED.nucleotidePosition,
+                     function_score = COALESCE(
+                         EXCLUDED.function_score, variants.function_score
+                     ),
+                     pvalues = COALESCE(EXCLUDED.pvalues, variants.pvalues),
+                     qvalues = COALESCE(EXCLUDED.qvalues, variants.qvalues),
+                     depletion_group = COALESCE(
+                         EXCLUDED.depletion_group, variants.depletion_group
+                     ),
+                     gnomad_ac = COALESCE(EXCLUDED.gnomad_ac, variants.gnomad_ac),
+                     gnomad_hom = COALESCE(EXCLUDED.gnomad_hom, variants.gnomad_hom),
+                     aou_ac = COALESCE(EXCLUDED.aou_ac, variants.aou_ac),
+                     aou_hom = COALESCE(EXCLUDED.aou_hom, variants.aou_hom)
+             """),
             {
                 "id": variant_id,
                 "geneId": geneId,
@@ -536,7 +534,6 @@ async def import_variants_vcf(
                 "gnomad_hom": variant.get("gnomad_hom"),
                 "aou_ac": variant.get("aou_ac"),
                 "aou_hom": variant.get("aou_hom"),
-                "cadd_score": variant.get("cadd_score"),
             },
         )
         imported_count += 1

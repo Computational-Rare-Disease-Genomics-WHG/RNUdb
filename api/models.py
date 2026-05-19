@@ -136,7 +136,6 @@ class VariantBase(SQLModel):
     gnomad_hom: int | None = None
     aou_ac: int | None = None
     aou_hom: int | None = None
-    cadd_score: float | None = None
 
 
 class Variant(VariantBase, table=True):
@@ -166,7 +165,6 @@ class VariantUpdate(SQLModel):
     gnomad_hom: int | None = None
     aou_ac: int | None = None
     aou_hom: int | None = None
-    cadd_score: float | None = None
 
 
 class VariantPublic(VariantBase):

@@ -56,7 +56,6 @@ Stores variant information with clinical and population data.
 | aou_hom               | INTEGER | NULLABLE    | All of Us homozygous count                |
 | ukbb_ac               | INTEGER | NULLABLE    | UK Biobank allele count                   |
 | ukbb_hom              | INTEGER | NULLABLE    | UK Biobank homozygous count               |
-| cadd_score            | REAL    | NULLABLE    | CADD score (1-100)                        |
 | zygosity              | TEXT    | NULLABLE    | Zygosity type                             |
 | cohort                | TEXT    | NULLABLE    | Cohort name                               |
 
