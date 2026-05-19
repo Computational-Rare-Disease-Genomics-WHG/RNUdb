@@ -152,11 +152,17 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           if (!variant.clinical_significance) return false;
 
           // Filter by Significance
-          if (
-            selectedClinicalSig !== "all" &&
-            variant.clinical_significance !== selectedClinicalSig
-          )
-            return false;
+          if (selectedClinicalSig !== "all") {
+            if (selectedClinicalSig === "Pathogenic / Likely Pathogenic") {
+              if (
+                variant.clinical_significance !== "Pathogenic" &&
+                variant.clinical_significance !== "Likely Pathogenic"
+              )
+                return false;
+            } else if (variant.clinical_significance !== selectedClinicalSig) {
+              return false;
+            }
+          }
 
           // Filter by Disease
           if (
@@ -186,19 +192,20 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         const maxSignificance = filteredVariants.reduce((max, v) => {
           const significanceOrder: Record<string, number> = {
             Pathogenic: 4,
-            "Likely Pathogenic": 3,
             VUS: 2,
             "Likely Benign": 1,
             Benign: 0,
           };
           const order = significanceOrder[v.clinical_significance!] ?? -1;
           const maxOrder = significanceOrder[max.clinical_significance!] ?? -1;
-          return order > maxOrder ? v : max;
+          if (order > maxOrder) return v;
+          if (order === maxOrder && v.clinical_significance === "Pathogenic")
+            return v;
+          return max;
         }, filteredVariants[0]);
 
         const valueMap: Record<string, number> = {
           Pathogenic: 1,
-          "Likely Pathogenic": 0.75,
           VUS: 0.25,
           "Likely Benign": 0.125,
           Benign: 0,
@@ -343,8 +350,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
     if (overlayMode === "clinvar") {
       if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC;
-      if (value === 0.75)
-        return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC;
       if (value === 0.125)
         return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN;
       if (value === 0.5) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN;
@@ -649,16 +654,28 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         <SelectValue>
                           {selectedClinicalSig === "all"
                             ? "All"
-                            : selectedClinicalSig}
+                            : selectedClinicalSig ===
+                                "Pathogenic / Likely Pathogenic"
+                              ? "Pathogenic / Likely Pathogenic"
+                              : selectedClinicalSig}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All</SelectItem>
-                        {clinicalSignificances.map((sig) => (
-                          <SelectItem key={sig} value={sig}>
-                            {sig}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="Pathogenic / Likely Pathogenic">
+                          Pathogenic / Likely Pathogenic
+                        </SelectItem>
+                        {clinicalSignificances
+                          .filter(
+                            (sig) =>
+                              sig !== "Pathogenic" &&
+                              sig !== "Likely Pathogenic",
+                          )
+                          .map((sig) => (
+                            <SelectItem key={sig} value={sig}>
+                              {sig}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <span className="text-slate-300">|</span>
@@ -1037,17 +1054,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC,
                     }}
                   ></div>
-                  <span>Pathogenic</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-4 rounded-sm"
-                    style={{
-                      backgroundColor:
-                        COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC,
-                    }}
-                  ></div>
-                  <span>Likely Pathogenic</span>
+                  <span>Pathogenic / Likely Pathogenic</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div
