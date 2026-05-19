@@ -450,15 +450,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                           : variant.qvalues.toFixed(3)}
                                       </span>
                                     )}
-                                  {variant.cadd_score !== undefined &&
-                                    variant.cadd_score !== null && (
-                                      <span>
-                                        <span className="font-medium">
-                                          CADD:
-                                        </span>{" "}
-                                        {variant.cadd_score.toFixed(2)}
-                                      </span>
-                                    )}
                                 </div>
 
                                 {variantLiterature.length > 0 && (
@@ -549,12 +540,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                         Depletion: {variant.depletion_group}
                                       </span>
                                     )}
-                                    {variant.cadd_score !== undefined &&
-                                      variant.cadd_score !== null && (
-                                        <span>
-                                          CADD: {variant.cadd_score.toFixed(1)}
-                                        </span>
-                                      )}
                                   </div>
                                 </div>
                               </div>

@@ -204,7 +204,6 @@ def validate_variant_batch(
         # Validate numeric fields
         numeric_fields = [
             "function_score",
-            "cadd_score",
             "gnomad_ac",
             "gnomad_hom",
             "aou_ac",

@@ -34,7 +34,6 @@ _ALLOWED_VARIANT_COLUMNS = {
     "gnomad_hom",
     "aou_ac",
     "aou_hom",
-    "cadd_score",
 }
 
 

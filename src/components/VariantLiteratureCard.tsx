@@ -750,17 +750,6 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                         </span>
                                       </div>
                                     )}
-                                  {variant.cadd_score !== undefined &&
-                                    variant.cadd_score !== null && (
-                                      <div>
-                                        <span className="font-medium text-slate-600">
-                                          CADD:{" "}
-                                        </span>
-                                        <span className="text-slate-700">
-                                          {variant.cadd_score.toFixed(1)}
-                                        </span>
-                                      </div>
-                                    )}
                                   {variant.function_score !== undefined &&
                                     variant.function_score !== null && (
                                       <div>

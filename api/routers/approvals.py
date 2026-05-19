@@ -56,7 +56,6 @@ _ALLOWED_COLUMNS = {
         "pvalues",
         "qvalues",
         "depletion_group",
-        "cadd_score",
     },
     "gene": {
         "name",
@@ -262,7 +261,6 @@ async def apply_approved_change(
                     "gnomad_hom",
                     "aou_ac",
                     "aou_hom",
-                    "cadd_score",
                 }
                 cols = [c for c in payload.keys() if c in allowed_cols]
                 placeholders = [f":{c}" for c in cols]

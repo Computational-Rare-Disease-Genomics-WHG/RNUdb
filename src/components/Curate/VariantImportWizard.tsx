@@ -85,11 +85,6 @@ const TARGET_COLUMNS = [
     description: "Depletion category",
   },
   {
-    value: "cadd_score",
-    label: "CADD Score",
-    description: "CADD pathogenicity score",
-  },
-  {
     value: "gnomad_ac",
     label: "gnomAD AC",
     description: "gnomAD allele count",
@@ -128,9 +123,6 @@ const COMMON_FIELD_PATTERNS: Record<string, string> = {
   DEPLETION_GROUP: "depletion_group",
   DEPLETION: "depletion_group",
   DEPLETIONGROUP: "depletion_group",
-  CADD_SCORE: "cadd_score",
-  CADD: "cadd_score",
-  CADDSCORE: "cadd_score",
   GNOMAD_AC: "gnomad_ac",
   GNOMADAC: "gnomad_ac",
   GnomAD_AC: "gnomad_ac",

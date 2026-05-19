@@ -77,7 +77,6 @@ Navigate to `/curate` to access the curator dashboard.
    - Reference/Alternate alleles
    - Clinical significance
    - Population frequencies (gnomAD, UK Biobank, All of Us)
-   - CADD score
 5. Save as pending change
 
 ### Adding Literature

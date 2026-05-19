@@ -32,7 +32,6 @@ const VariantForm = ({
     function_score: initialData?.function_score ?? "",
     pvalues: initialData?.pvalues ?? "",
     qvalues: initialData?.qvalues ?? "",
-    cadd_score: initialData?.cadd_score ?? "",
     depletion_group: initialData?.depletion_group || "",
     gnomad_ac: initialData?.gnomad_ac ?? null,
     gnomad_hom: initialData?.gnomad_hom ?? null,
@@ -85,7 +84,6 @@ const VariantForm = ({
         : null,
       pvalues: formData.pvalues ? Number(formData.pvalues) : null,
       qvalues: formData.qvalues ? Number(formData.qvalues) : null,
-      cadd_score: formData.cadd_score ? Number(formData.cadd_score) : null,
     };
     onSubmit(data);
   };
@@ -247,7 +245,7 @@ const VariantForm = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-2 gap-4 mt-4">
         <div>
           <Label className="text-sm font-medium text-slate-700 mb-1">
             P-Value
@@ -270,18 +268,6 @@ const VariantForm = ({
             value={formData.qvalues}
             onChange={(e) => handleChange("qvalues", e.target.value)}
             placeholder="e.g., 0.05"
-          />
-        </div>
-        <div>
-          <Label className="text-sm font-medium text-slate-700 mb-1">
-            CADD Score
-          </Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={formData.cadd_score}
-            onChange={(e) => handleChange("cadd_score", e.target.value)}
-            placeholder="e.g., 15.5"
           />
         </div>
       </div>

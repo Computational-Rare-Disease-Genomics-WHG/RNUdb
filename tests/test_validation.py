@@ -94,15 +94,13 @@ class TestVariantValidation:
                 "ref": "G",
                 "alt": "A",
                 "function_score": "not_a_number",
-                "cadd_score": "also_bad",
             }
         ]
         report = validate_variant_batch(rows, sample_gene)
 
         assert report.valid is False
-        assert len(report.errors) == 2
+        assert len(report.errors) == 1
         assert report.errors[0].field == "function_score"
-        assert report.errors[1].field == "cadd_score"
 
     def test_hgvs_warning(self, sample_gene):
         """Malformed HGVS should produce warning, not error."""
