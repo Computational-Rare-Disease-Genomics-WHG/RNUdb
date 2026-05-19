@@ -123,6 +123,10 @@ def parse_info_field(
                 result["aou_ac"] = int(value) if value and value != "." else None
             elif target_key == "aou_hom":
                 result["aou_hom"] = int(value) if value and value != "." else None
+            elif target_key == "gnomad_af":
+                result["gnomad_af"] = float(value) if value and value != "." else None
+            elif target_key == "aou_af":
+                result["aou_af"] = float(value) if value and value != "." else None
             elif target_key == "hgvs":
                 result["hgvs"] = value if value and value != "." else None
             elif target_key == "depletion_group":

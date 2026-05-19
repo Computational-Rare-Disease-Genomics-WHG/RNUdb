@@ -52,8 +52,10 @@ Stores variant information with clinical and population data.
 | depletion_group       | TEXT    | NULLABLE    | Depletion group                           |
 | gnomad_ac             | INTEGER | NULLABLE    | gnomAD allele count                       |
 | gnomad_hom            | INTEGER | NULLABLE    | gnomAD homozygous count                   |
+| gnomad_af             | REAL    | NULLABLE    | gnomAD allele frequency                   |
 | aou_ac                | INTEGER | NULLABLE    | All of Us allele count                    |
 | aou_hom               | INTEGER | NULLABLE    | All of Us homozygous count                |
+| aou_af                | REAL    | NULLABLE    | All of Us allele frequency                |
 | ukbb_ac               | INTEGER | NULLABLE    | UK Biobank allele count                   |
 | ukbb_hom              | INTEGER | NULLABLE    | UK Biobank homozygous count               |
 | zygosity              | TEXT    | NULLABLE    | Zygosity type                             |

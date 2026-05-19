@@ -497,11 +497,11 @@ async def import_variants_vcf(
                 INSERT INTO variants
                 (id, geneId, position, ref, alt, nucleotidePosition, hgvs,
                  function_score, pvalues, qvalues, depletion_group,
-                 gnomad_ac, gnomad_hom, aou_ac, aou_hom)
+                 gnomad_ac, gnomad_hom, gnomad_af, aou_ac, aou_hom, aou_af)
                 VALUES
                 (:id, :geneId, :position, :ref, :alt, :nucleotidePosition,
                  :hgvs, :function_score, :pvalues, :qvalues, :depletion_group,
-                 :gnomad_ac, :gnomad_hom, :aou_ac, :aou_hom)
+                 :gnomad_ac, :gnomad_hom, :gnomad_af, :aou_ac, :aou_hom, :aou_af)
                 ON CONFLICT(id) DO UPDATE SET
                      hgvs = EXCLUDED.hgvs,
                      nucleotidePosition = EXCLUDED.nucleotidePosition,
@@ -515,8 +515,10 @@ async def import_variants_vcf(
                      ),
                      gnomad_ac = COALESCE(EXCLUDED.gnomad_ac, variants.gnomad_ac),
                      gnomad_hom = COALESCE(EXCLUDED.gnomad_hom, variants.gnomad_hom),
+                     gnomad_af = COALESCE(EXCLUDED.gnomad_af, variants.gnomad_af),
                      aou_ac = COALESCE(EXCLUDED.aou_ac, variants.aou_ac),
-                     aou_hom = COALESCE(EXCLUDED.aou_hom, variants.aou_hom)
+                     aou_hom = COALESCE(EXCLUDED.aou_hom, variants.aou_hom),
+                     aou_af = COALESCE(EXCLUDED.aou_af, variants.aou_af)
              """),
             {
                 "id": variant_id,
@@ -532,8 +534,10 @@ async def import_variants_vcf(
                 "depletion_group": variant.get("depletion_group"),
                 "gnomad_ac": variant.get("gnomad_ac"),
                 "gnomad_hom": variant.get("gnomad_hom"),
+                "gnomad_af": variant.get("gnomad_af"),
                 "aou_ac": variant.get("aou_ac"),
                 "aou_hom": variant.get("aou_hom"),
+                "aou_af": variant.get("aou_af"),
             },
         )
         imported_count += 1

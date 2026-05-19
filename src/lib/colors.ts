@@ -90,12 +90,17 @@ export const generateGnomadColor = (frequency: number): string => {
   return COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH;
 };
 
-export const generateGnomadColorWithAlpha = (frequency: number): string => {
-  if (frequency === 0) return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
-
-  // Use blue with varying opacity for continuous scale
-  const alpha = Math.max(0.1, Math.min(1, frequency));
-  return `rgba(37, 99, 235, ${alpha})`; // Blue with alpha
+export const generateGnomadColorWithAlpha = (af: number): string => {
+  if (af >= 0.01) {
+    return COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH;
+  }
+  if (af >= 0.001) {
+    return COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM;
+  }
+  if (af > 0) {
+    return COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW;
+  }
+  return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
 };
 
 export const getClinvarColor = (significance: string): string => {
