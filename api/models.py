@@ -145,6 +145,8 @@ class Variant(VariantBase, table=True):
 
     __tablename__ = "variants"
 
+    geneId: str = Field(foreign_key="genes.id", index=True)
+
 
 class VariantCreate(VariantBase):
     """Variant creation input."""
@@ -194,10 +196,17 @@ class LiteratureBase(SQLModel):
     title: str
     authors: str
     journal: str
-    year: str
+    year: int
     doi: str
     pmid: str | None = None
     url: str | None = None
+
+    @pydantic.field_validator("year")
+    @classmethod
+    def validate_year(cls, v: int) -> int:
+        if v < 1000 or v > 2100:
+            raise ValueError(f"Year must be between 1000 and 2100, got {v}")
+        return v
 
 
 class Literature(LiteratureBase, table=True):
@@ -216,7 +225,7 @@ class LiteratureUpdate(SQLModel):
     title: str | None = None
     authors: str | None = None
     journal: str | None = None
-    year: str | None = None
+    year: int | None = None
     doi: str | None = None
     pmid: str | None = None
     url: str | None = None
@@ -251,8 +260,8 @@ class VariantClassification(VariantClassificationBase, table=True):
     __tablename__ = "variant_classifications"
     __table_args__ = (PrimaryKeyConstraint("variant_id", "literature_id"),)
 
-    variant_id: str = Field(primary_key=True)
-    literature_id: str = Field(primary_key=True)
+    variant_id: str = Field(primary_key=True, foreign_key="variants.id")
+    literature_id: str = Field(primary_key=True, foreign_key="literature.id")
     clinical_significance: str | None = Field(default=None)
     zygosity: str | None = Field(default=None)
     inheritance: str | None = Field(default=None)
@@ -286,6 +295,8 @@ class RNAStructure(RNAStructureBase, table=True):
 
     __tablename__ = "rna_structures"
 
+    geneId: str = Field(foreign_key="genes.id", index=True)
+
 
 # Nucleotide model (for structure data)
 class Nucleotide(SQLModel, table=True):
@@ -295,7 +306,7 @@ class Nucleotide(SQLModel, table=True):
     __table_args__ = (PrimaryKeyConstraint("id", "structure_id"),)
 
     id: int = Field(primary_key=True)
-    structure_id: str = Field(primary_key=True)
+    structure_id: str = Field(primary_key=True, foreign_key="rna_structures.id")
     base: str
     x: float
     y: float
@@ -308,7 +319,7 @@ class BasePair(SQLModel, table=True):
     __tablename__ = "base_pairs"
     __table_args__ = (PrimaryKeyConstraint("structure_id", "from_pos", "to_pos"),)
 
-    structure_id: str = Field(primary_key=True)
+    structure_id: str = Field(primary_key=True, foreign_key="rna_structures.id")
     from_pos: int = Field(primary_key=True)
     to_pos: int = Field(primary_key=True)
 
@@ -321,7 +332,7 @@ class Annotation(SQLModel, table=True):
     __table_args__ = (PrimaryKeyConstraint("id", "structure_id"),)
 
     id: str = Field(primary_key=True)
-    structure_id: str = Field(primary_key=True)
+    structure_id: str = Field(primary_key=True, foreign_key="rna_structures.id")
     text: str
     x: float
     y: float
@@ -337,7 +348,7 @@ class StructuralFeature(SQLModel, table=True):
     __table_args__ = (PrimaryKeyConstraint("id", "structure_id"),)
 
     id: str = Field(primary_key=True)
-    structure_id: str = Field(primary_key=True)
+    structure_id: str = Field(primary_key=True, foreign_key="rna_structures.id")
     feature_type: str
     nucleotide_ids: str
     label_text: str
@@ -363,8 +374,8 @@ class VariantLink(SQLModel, table=True):
         CheckConstraint("variant_id_1 < variant_id_2"),
     )
 
-    variant_id_1: str = Field(primary_key=True)
-    variant_id_2: str = Field(primary_key=True)
+    variant_id_1: str = Field(primary_key=True, foreign_key="variants.id")
+    variant_id_2: str = Field(primary_key=True, foreign_key="variants.id")
 
 
 # ---------------------------------------------------------------------------
@@ -476,6 +487,8 @@ class BedTrack(BedTrackBase, table=True):
 
     __tablename__ = "bed_tracks"
 
+    geneId: str = Field(foreign_key="genes.id", index=True)
+
     id: int | None = Field(
         default=None,
         sa_column=Column(Integer, primary_key=True, autoincrement=True),
@@ -518,7 +531,7 @@ class PendingChangeBase(SQLModel):
     gene_id: str
     action: str
     payload: dict[str, Any] = Field(sa_column=Column(JSON))
-    requested_by: str
+    requested_by: str = Field(index=True)
     requested_at: datetime | None = Field(default_factory=lambda: datetime.utcnow())
     status: str = "pending"
     reviewed_by: str | None = None
