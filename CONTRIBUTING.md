@@ -30,7 +30,7 @@ Be respectful and constructive in all interactions. We welcome contributors of a
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes following our [Development Guide](docs/DEVELOPMENT.md)
 4. Add tests for new functionality
-5. Ensure all tests pass (`python -m pytest tests/`)
+5. Ensure all tests pass (`uv run pytest`)
 6. Commit with clear messages following [Conventional Commits](https://www.conventionalcommits.org/)
 7. Push to your fork and submit a Pull Request
 
@@ -41,11 +41,13 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed setup instructions.
 ### Code Style
 
 **Python**
+
 - Follow PEP 8
 - Use type hints where possible
 - Document functions with docstrings
 
 **TypeScript/React**
+
 - Use TypeScript strict mode
 - Follow existing component patterns
 - Use TailwindCSS utility classes
@@ -57,10 +59,10 @@ All new features must include tests:
 
 ```bash
 # Run tests
-python -m pytest tests/ -v
+uv run pytest -v
 
 # Run specific test
-python -m pytest tests/test_validation.py::TestVariantValidation::test_valid_variants_pass -v
+uv run pytest tests/test_validation.py::TestVariantValidation::test_valid_variants_pass -v
 ```
 
 ### Commit Message Format
@@ -76,6 +78,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -85,6 +88,7 @@ Types:
 - `chore`: Build process, dependencies, etc.
 
 Examples:
+
 ```
 feat(variants): add batch import wizard
 fix(ui): resolve modal transparency issue
@@ -95,10 +99,11 @@ docs(api): expand endpoint documentation
 
 When making schema changes:
 
-1. Update `rnudb_utils/database.py` `create_database()` function
-2. Create a migration script in `scripts/migrations/`
-3. Test migration on a copy of production data
-4. Document changes in PR description
+1. Update SQLAlchemy models in `api/models.py`
+2. Generate Alembic migration: `uv run alembic revision --autogenerate -m "describe your change"`
+3. Review the generated file in `alembic/versions/`
+4. Apply migration: `uv run alembic upgrade head`
+5. Document changes in PR description
 
 ## Questions?
 
