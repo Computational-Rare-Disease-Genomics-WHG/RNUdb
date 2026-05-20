@@ -63,8 +63,7 @@ const VALID_CHROMOSOMES = [
 const VALID_BASES = /^[ATCGUatcgu]*$/;
 
 const GeneForm = (props: GeneFormProps) => {
-  const { initialData, onSubmit, onCancel, onDelete, onRefreshVariants } =
-    props;
+  const { initialData, onSubmit, onCancel, onDelete, onRefreshVariants } = props;
 
   const [formData, setFormData] = useState({
     id: initialData?.id || "",
@@ -146,9 +145,7 @@ const GeneForm = (props: GeneFormProps) => {
           />
         </div>
         <div>
-          <Label className="block text-sm font-medium text-slate-700 mb-1">
-            Name
-          </Label>
+          <Label className="block text-sm font-medium text-slate-700 mb-1">Name</Label>
           <Input
             value={formData.name}
             onChange={(e) => handleChange("name", e.target.value)}
@@ -186,9 +183,7 @@ const GeneForm = (props: GeneFormProps) => {
           )}
         </div>
         <div>
-          <Label className="block text-sm font-medium text-slate-700 mb-1">
-            Start
-          </Label>
+          <Label className="block text-sm font-medium text-slate-700 mb-1">Start</Label>
           <Input
             type="number"
             value={formData.start}
@@ -196,9 +191,7 @@ const GeneForm = (props: GeneFormProps) => {
             placeholder="Genomic start position"
             required
           />
-          {errors.start && (
-            <p className="text-xs text-red-500 mt-1">{errors.start}</p>
-          )}
+          {errors.start && <p className="text-xs text-red-500 mt-1">{errors.start}</p>}
         </div>
         <div>
           <Label className="text-sm font-medium text-slate-700 mb-1">End</Label>
@@ -209,16 +202,12 @@ const GeneForm = (props: GeneFormProps) => {
             placeholder="Genomic end position"
             required
           />
-          {errors.end && (
-            <p className="text-xs text-red-500 mt-1">{errors.end}</p>
-          )}
+          {errors.end && <p className="text-xs text-red-500 mt-1">{errors.end}</p>}
         </div>
       </div>
 
       <div>
-        <Label className="text-sm font-medium text-slate-700 mb-1">
-          Strand
-        </Label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Strand</Label>
         <Select
           value={formData.strand}
           onValueChange={(value) => handleChange("strand", value)}
@@ -234,9 +223,7 @@ const GeneForm = (props: GeneFormProps) => {
       </div>
 
       <div>
-        <Label className="text-sm font-medium text-slate-700 mb-1">
-          Sequence
-        </Label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Sequence</Label>
         <Textarea
           value={formData.sequence}
           onChange={(e) => handleChange("sequence", e.target.value)}
@@ -250,9 +237,7 @@ const GeneForm = (props: GeneFormProps) => {
       </div>
 
       <div>
-        <Label className="text-sm font-medium text-slate-700 mb-1">
-          Description
-        </Label>
+        <Label className="text-sm font-medium text-slate-700 mb-1">Description</Label>
         <Textarea
           value={formData.description}
           onChange={(e) => handleChange("description", e.target.value)}
@@ -282,10 +267,7 @@ const GeneForm = (props: GeneFormProps) => {
       )}
 
       <div className="flex gap-3 pt-4">
-        <Button
-          type="submit"
-          className="bg-teal-600 hover:bg-teal-700 text-white"
-        >
+        <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white">
           <Save className="h-4 w-4 mr-2" />
           {initialData ? "Update Gene" : "Create Gene"}
         </Button>

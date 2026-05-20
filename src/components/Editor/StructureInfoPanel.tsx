@@ -20,9 +20,7 @@ const StructureInfoPanel: React.FC<StructureInfoPanelProps> = ({
         <div className="space-y-2 text-sm">
           <div>Nucleotides: {rnaData.nucleotides.length}</div>
           <div>Base Pairs: {rnaData.base_pairs.length}</div>
-          <div>
-            Current: {currentNucleotide ? `#${currentNucleotide}` : "None"}
-          </div>
+          <div>Current: {currentNucleotide ? `#${currentNucleotide}` : "None"}</div>
         </div>
       </CardContent>
     </Card>

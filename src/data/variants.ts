@@ -107,9 +107,7 @@ export const getVariants = async (geneId: string): Promise<Variant[]> => {
   }
 };
 
-export const getVariantById = async (
-  variantId: string,
-): Promise<Variant | null> => {
+export const getVariantById = async (variantId: string): Promise<Variant | null> => {
   try {
     return await getVariant(variantId);
   } catch (error) {

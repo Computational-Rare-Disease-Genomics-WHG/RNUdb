@@ -55,27 +55,24 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
     onClose();
   };
 
-  const handleFileUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const f = e.target.files?.[0];
-      if (!f) return;
-      setError("");
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setError("");
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        try {
-          const data = JSON.parse(text);
-          setParsedStructure(data);
-          setStep(2);
-        } catch {
-          setError("Invalid JSON file. Please upload a valid structure file.");
-        }
-      };
-      reader.readAsText(f);
-    },
-    [],
-  );
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      try {
+        const data = JSON.parse(text);
+        setParsedStructure(data);
+        setStep(2);
+      } catch {
+        setError("Invalid JSON file. Please upload a valid structure file.");
+      }
+    };
+    reader.readAsText(f);
+  }, []);
 
   const handleValidate = async () => {
     setLoading(true);
@@ -182,9 +179,7 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
             <div className="space-y-6">
               <div
                 className="border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center hover:border-teal-500 hover:bg-teal-50/30 transition-all cursor-pointer"
-                onClick={() =>
-                  document.getElementById("structure-file")?.click()
-                }
+                onClick={() => document.getElementById("structure-file")?.click()}
               >
                 <div className="p-4 bg-teal-50 rounded-2xl w-fit mx-auto mb-4">
                   <Braces className="h-8 w-8 text-teal-600" />
@@ -326,9 +321,7 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
                 )}
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">
-                    {validationResult.valid
-                      ? "Validation Passed"
-                      : "Validation Failed"}
+                    {validationResult.valid ? "Validation Passed" : "Validation Failed"}
                   </h3>
                   <p className="text-sm text-slate-500">
                     {validationResult.errors.length} errors •{" "}
@@ -349,8 +342,7 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
                     {validationResult.errors.map((e: any, i: number) => (
                       <div key={i} className="px-4 py-3">
                         <p className="text-sm text-red-700">
-                          <span className="font-semibold">{e.field}:</span>{" "}
-                          {e.message}
+                          <span className="font-semibold">{e.field}:</span> {e.message}
                         </p>
                       </div>
                     ))}
@@ -370,8 +362,7 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
                     {validationResult.warnings.map((w: any, i: number) => (
                       <div key={i} className="px-4 py-3">
                         <p className="text-sm text-amber-700">
-                          <span className="font-semibold">{w.field}:</span>{" "}
-                          {w.message}
+                          <span className="font-semibold">{w.field}:</span> {w.message}
                         </p>
                       </div>
                     ))}

@@ -356,10 +356,7 @@ const ENDPOINTS: Endpoint[] = [
   },
 ];
 
-const methodColors: Record<
-  string,
-  { bg: string; text: string; border: string }
-> = {
+const methodColors: Record<string, { bg: string; text: string; border: string }> = {
   GET: {
     bg: "bg-emerald-100",
     text: "text-emerald-700",
@@ -375,9 +372,7 @@ const methodColors: Record<
 };
 
 const APIDocs: React.FC = () => {
-  const [selectedEndpoint, setSelectedEndpoint] = useState<Endpoint>(
-    ENDPOINTS[0],
-  );
+  const [selectedEndpoint, setSelectedEndpoint] = useState<Endpoint>(ENDPOINTS[0]);
   const [tryItPath, setTryItPath] = useState("");
   const [tryItResult, setTryItResult] = useState<any>(null);
   const [tryItLoading, setTryItLoading] = useState(false);
@@ -607,9 +602,7 @@ curl -s -X ${endpoint.method} "${baseUrl}${endpoint.path}" | jq .`;
                                 required
                               </span>
                             )}
-                            <span className="text-sm text-slate-400">
-                              {param.type}
-                            </span>
+                            <span className="text-sm text-slate-400">{param.type}</span>
                           </div>
                           <Input
                             placeholder={param.description}
@@ -635,8 +628,7 @@ curl -s -X ${endpoint.method} "${baseUrl}${endpoint.path}" | jq .`;
                       <div className="px-5 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
                         <span
                           className={`text-sm font-medium ${
-                            tryItResult.status >= 200 &&
-                            tryItResult.status < 300
+                            tryItResult.status >= 200 && tryItResult.status < 300
                               ? "text-emerald-400"
                               : "text-red-400"
                           }`}
@@ -665,11 +657,7 @@ curl -s -X ${endpoint.method} "${baseUrl}${endpoint.path}" | jq .`;
                         </Button>
                       </div>
                       <pre className="p-5 text-sm text-slate-300 overflow-x-auto font-mono">
-                        {JSON.stringify(
-                          tryItResult.data || tryItResult.error,
-                          null,
-                          2,
-                        )}
+                        {JSON.stringify(tryItResult.data || tryItResult.error, null, 2)}
                       </pre>
                     </div>
                   )}
@@ -747,9 +735,7 @@ curl -s -X ${endpoint.method} "${baseUrl}${endpoint.path}" | jq .`;
                           size="sm"
                           variant="ghost"
                           className="absolute top-3 right-3 text-slate-400 hover:text-white h-8 w-8 p-0"
-                          onClick={() =>
-                            copyToClipboard(generateJS(selectedEndpoint))
-                          }
+                          onClick={() => copyToClipboard(generateJS(selectedEndpoint))}
                         >
                           {copied ? (
                             <CheckCircle2 className="h-5 w-5" />
@@ -798,11 +784,7 @@ curl -s -X ${endpoint.method} "${baseUrl}${endpoint.path}" | jq .`;
                   <div className="p-6">
                     <div className="bg-slate-950 rounded-xl p-5">
                       <pre className="text-sm text-slate-300 overflow-x-auto font-mono">
-                        {JSON.stringify(
-                          selectedEndpoint.exampleResponse,
-                          null,
-                          2,
-                        )}
+                        {JSON.stringify(selectedEndpoint.exampleResponse, null, 2)}
                       </pre>
                     </div>
                   </div>
@@ -825,10 +807,9 @@ curl -s -X ${endpoint.method} "${baseUrl}${endpoint.path}" | jq .`;
               </CardHeader>
               <CardContent className="space-y-5">
                 <p className="text-slate-600 text-lg">
-                  The RNUdb REST API provides programmatic access to snRNA
-                  variant data. All public endpoints can be accessed without
-                  authentication, making it ideal for data pipelines and
-                  analysis scripts.
+                  The RNUdb REST API provides programmatic access to snRNA variant data.
+                  All public endpoints can be accessed without authentication, making it
+                  ideal for data pipelines and analysis scripts.
                 </p>
                 <div className="bg-slate-50 rounded-xl p-5">
                   <h4 className="font-semibold text-slate-800 text-lg mb-3">
@@ -866,24 +847,24 @@ curl "https://rnudb.rarediseasegenomics.org/api/genes/RNU4-2/structure"`}
                     </h4>
                     <ul className="text-emerald-700 text-base space-y-2">
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Academic research and educational purposes
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Academic
+                        research and educational purposes
                       </li>
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Clinical variant interpretation workflows
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Clinical
+                        variant interpretation workflows
                       </li>
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Population genetics studies
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Population
+                        genetics studies
                       </li>
                       <li className="flex items-start gap-2">
                         <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
                         Bioinformatics pipeline integration
                       </li>
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Data analysis and visualization projects
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Data
+                        analysis and visualization projects
                       </li>
                     </ul>
                   </div>
@@ -894,24 +875,24 @@ curl "https://rnudb.rarediseasegenomics.org/api/genes/RNU4-2/structure"`}
                     </h4>
                     <ul className="text-red-700 text-base space-y-2">
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Commercial redistribution of API data
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Commercial
+                        redistribution of API data
                       </li>
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Building competing variant databases
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Building
+                        competing variant databases
                       </li>
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Automated scraping without rate limiting
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Automated
+                        scraping without rate limiting
                       </li>
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Attempts to circumvent authentication
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Attempts to
+                        circumvent authentication
                       </li>
                       <li className="flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" />{" "}
-                        Data mining for training ML models without attribution
+                        <ChevronRight className="h-4 w-4 mt-1.5 shrink-0" /> Data mining
+                        for training ML models without attribution
                       </li>
                     </ul>
                   </div>
@@ -922,12 +903,12 @@ curl "https://rnudb.rarediseasegenomics.org/api/genes/RNU4-2/structure"`}
                     Data Attribution Requirements
                   </h4>
                   <p className="text-slate-600 text-base mb-3">
-                    When using RNUdb data in publications, presentations, or
-                    derivative works, please cite:
+                    When using RNUdb data in publications, presentations, or derivative
+                    works, please cite:
                   </p>
                   <code className="text-base bg-white px-4 py-3 rounded-lg border border-slate-200 block text-slate-700">
-                    RNUdb: A curated database of snRNA variants. Rare Disease
-                    Genomics Lab.
+                    RNUdb: A curated database of snRNA variants. Rare Disease Genomics
+                    Lab.
                   </code>
                 </div>
 
@@ -936,12 +917,12 @@ curl "https://rnudb.rarediseasegenomics.org/api/genes/RNU4-2/structure"`}
                     Disclaimer
                   </h4>
                   <p className="text-slate-600 text-base">
-                    RNUdb data is provided for research purposes only. While we
-                    strive for accuracy, variant annotations should be validated
-                    independently before clinical use. The curators of RNUdb
-                    make no warranty regarding the completeness, accuracy, or
-                    timeliness of the data. Always consult current literature
-                    and professional guidelines for clinical decisions.
+                    RNUdb data is provided for research purposes only. While we strive
+                    for accuracy, variant annotations should be validated independently
+                    before clinical use. The curators of RNUdb make no warranty
+                    regarding the completeness, accuracy, or timeliness of the data.
+                    Always consult current literature and professional guidelines for
+                    clinical decisions.
                   </p>
                 </div>
               </CardContent>
@@ -958,8 +939,8 @@ curl "https://rnudb.rarediseasegenomics.org/api/genes/RNU4-2/structure"`}
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-slate-600 text-lg">
-                  Below is a complete example bash script that fetches variant
-                  data for multiple genes and processes the results with jq.
+                  Below is a complete example bash script that fetches variant data for
+                  multiple genes and processes the results with jq.
                 </p>
                 <div className="bg-slate-950 rounded-xl p-5 overflow-x-auto">
                   <pre className="text-base text-slate-300 font-mono">{String.raw`#!/bin/bash
@@ -989,8 +970,7 @@ done`}</pre>
                 <p className="text-slate-600 text-base">
                   Save this script and run:{" "}
                   <code className="bg-slate-100 px-3 py-1.5 rounded text-teal-600">
-                    chmod +x fetch_rnudb_variants.sh &&
-                    ./fetch_rnudb_variants.sh RNU4-2
+                    chmod +x fetch_rnudb_variants.sh && ./fetch_rnudb_variants.sh RNU4-2
                   </code>
                 </p>
 
@@ -1035,8 +1015,8 @@ ls -la "\${OUTPUT_DIR}/\${GENE}_"*`}</pre>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-slate-600 text-lg">
-                  Integrate RNUdb data into your Python-based analysis pipelines
-                  using requests or pyfetch.
+                  Integrate RNUdb data into your Python-based analysis pipelines using
+                  requests or pyfetch.
                 </p>
                 <div className="bg-slate-950 rounded-xl p-5 overflow-x-auto">
                   <pre className="text-base text-slate-300 font-mono">{`#!/usr/bin/env python3
@@ -1101,9 +1081,7 @@ if __name__ == "__main__":
                       </code>
                       <br />
                       Example:{" "}
-                      <code className="bg-white px-2 rounded">
-                        chr12-120291785-T-C
-                      </code>
+                      <code className="bg-white px-2 rounded">chr12-120291785-T-C</code>
                     </p>
                   </div>
                   <div className="bg-slate-50 rounded-xl p-5">
@@ -1111,9 +1089,9 @@ if __name__ == "__main__":
                       Positions
                     </h4>
                     <p className="text-slate-600 text-base">
-                      Genomic positions use <strong>1-based indexing</strong>{" "}
-                      (HGVS convention). Sequence coordinates match the
-                      reference genome (GRCh38).
+                      Genomic positions use <strong>1-based indexing</strong> (HGVS
+                      convention). Sequence coordinates match the reference genome
+                      (GRCh38).
                     </p>
                   </div>
                   <div className="bg-slate-50 rounded-xl p-5">
@@ -1121,8 +1099,7 @@ if __name__ == "__main__":
                       Clinical Significance
                     </h4>
                     <p className="text-slate-600 text-base">
-                      Values: Pathogenic, Likely Pathogenic, VUS, Likely Benign,
-                      Benign
+                      Values: Pathogenic, Likely Pathogenic, VUS, Likely Benign, Benign
                       <br />
                       Short codes: PATH, LP, VUS, LB, B
                     </p>
@@ -1159,8 +1136,8 @@ if __name__ == "__main__":
               <CardContent className="space-y-5">
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
                   <p className="text-amber-800 font-semibold text-lg">
-                    Rate limiting is not yet implemented, but guidelines are
-                    provided for responsible usage.
+                    Rate limiting is not yet implemented, but guidelines are provided
+                    for responsible usage.
                   </p>
                 </div>
                 <h4 className="font-semibold text-slate-800 text-lg">
@@ -1223,9 +1200,7 @@ curl -s --retry 3 --retry-delay 5 "/api/genes/RNU4-2/variants"`}</pre>
 
                 <div className="grid md:grid-cols-2 gap-5">
                   <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-xl">
-                    <h5 className="font-semibold text-emerald-800 text-lg mb-3">
-                      Do
-                    </h5>
+                    <h5 className="font-semibold text-emerald-800 text-lg mb-3">Do</h5>
                     <ul className="text-emerald-700 text-base space-y-2">
                       <li className="flex items-start gap-2">
                         <CheckCircle2 className="h-4 w-4 mt-1.5 shrink-0 text-emerald-600" />{" "}
@@ -1272,8 +1247,8 @@ curl -s --retry 3 --retry-delay 5 "/api/genes/RNU4-2/variants"`}</pre>
                         429 Too Many Requests
                       </h5>
                       <p className="text-slate-600 mt-1">
-                        Rate limit exceeded. Implement exponential backoff and
-                        retry after the reset time.
+                        Rate limit exceeded. Implement exponential backoff and retry
+                        after the reset time.
                       </p>
                     </div>
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -1281,8 +1256,8 @@ curl -s --retry 3 --retry-delay 5 "/api/genes/RNU4-2/variants"`}</pre>
                         503 Service Unavailable
                       </h5>
                       <p className="text-amber-600 mt-1">
-                        Temporary outage. Retry with backoff. Check status page
-                        for ongoing incidents.
+                        Temporary outage. Retry with backoff. Check status page for
+                        ongoing incidents.
                       </p>
                     </div>
                   </div>

@@ -77,9 +77,7 @@ export const VariantLollipopTrack: React.FC<VariantLollipopTrackProps> = ({
           <h3 className="text-base sm:text-lg font-semibold text-slate-900">
             {geneName} Variants
           </h3>
-          <span className="text-sm text-slate-500">
-            ({variants.length} total)
-          </span>
+          <span className="text-sm text-slate-500">({variants.length} total)</span>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
           {Object.entries(sigCounts)
@@ -145,59 +143,57 @@ export const VariantLollipopTrack: React.FC<VariantLollipopTrackProps> = ({
           </text>
 
           {/* Variant lollipops */}
-          {Array.from(positionMap.entries()).map(
-            ([position, variantsAtPos]) => {
-              const x = scale(position);
-              const hasPathogenic = variantsAtPos.some((v) =>
-                v.clinical_significance?.toLowerCase().includes("pathogenic"),
-              );
-              const hasVUS = variantsAtPos.some((v) =>
-                v.clinical_significance?.toLowerCase().includes("vus"),
-              );
+          {Array.from(positionMap.entries()).map(([position, variantsAtPos]) => {
+            const x = scale(position);
+            const hasPathogenic = variantsAtPos.some((v) =>
+              v.clinical_significance?.toLowerCase().includes("pathogenic"),
+            );
+            const hasVUS = variantsAtPos.some((v) =>
+              v.clinical_significance?.toLowerCase().includes("vus"),
+            );
 
-              // Stack multiple variants at same position
-              return variantsAtPos.map((variant, idx) => {
-                const yOffset = idx * 8;
-                const color = getClinicalColor(variant.clinical_significance);
-                const radius = hasPathogenic ? 5 : hasVUS ? 4 : 3;
+            // Stack multiple variants at same position
+            return variantsAtPos.map((variant, idx) => {
+              const yOffset = idx * 8;
+              const color = getClinicalColor(variant.clinical_significance);
+              const radius = hasPathogenic ? 5 : hasVUS ? 4 : 3;
 
-                return (
-                  <g key={`${variant.id}-${idx}`}>
-                    {/* Line */}
-                    <line
-                      x1={x}
-                      y1={trackY}
-                      x2={x}
-                      y2={trackY - 20 - yOffset}
-                      stroke={color}
-                      strokeWidth="1"
-                      opacity="0.6"
-                    />
-                    {/* Circle */}
-                    <circle
-                      cx={x}
-                      cy={trackY - 20 - yOffset}
-                      r={radius}
-                      fill={color}
-                      stroke="white"
-                      strokeWidth="1.5"
-                      className="hover:r-6 transition-all"
-                    >
-                      <title>
-                        {variant.id}: {variant.position.toLocaleString()}
-                        {variant.ref && variant.alt
-                          ? ` (${variant.ref}→${variant.alt})`
-                          : ""}
-                        {variant.clinical_significance
-                          ? `\n${variant.clinical_significance}`
-                          : ""}
-                      </title>
-                    </circle>
-                  </g>
-                );
-              });
-            },
-          )}
+              return (
+                <g key={`${variant.id}-${idx}`}>
+                  {/* Line */}
+                  <line
+                    x1={x}
+                    y1={trackY}
+                    x2={x}
+                    y2={trackY - 20 - yOffset}
+                    stroke={color}
+                    strokeWidth="1"
+                    opacity="0.6"
+                  />
+                  {/* Circle */}
+                  <circle
+                    cx={x}
+                    cy={trackY - 20 - yOffset}
+                    r={radius}
+                    fill={color}
+                    stroke="white"
+                    strokeWidth="1.5"
+                    className="hover:r-6 transition-all"
+                  >
+                    <title>
+                      {variant.id}: {variant.position.toLocaleString()}
+                      {variant.ref && variant.alt
+                        ? ` (${variant.ref}→${variant.alt})`
+                        : ""}
+                      {variant.clinical_significance
+                        ? `\n${variant.clinical_significance}`
+                        : ""}
+                    </title>
+                  </circle>
+                </g>
+              );
+            });
+          })}
         </svg>
       </div>
 

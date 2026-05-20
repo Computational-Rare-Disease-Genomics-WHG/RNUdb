@@ -98,15 +98,12 @@ export const apiService = new ApiService();
 
 export const getAllGenes = () => apiService.getAllGenes();
 export const getGene = (geneId: string) => apiService.getGene(geneId);
-export const getGeneVariants = (geneId: string) =>
-  apiService.getGeneVariants(geneId);
-export const getVariant = (variantId: string) =>
-  apiService.getVariant(variantId);
+export const getGeneVariants = (geneId: string) => apiService.getGeneVariants(geneId);
+export const getVariant = (variantId: string) => apiService.getVariant(variantId);
 export const getAllLiterature = () => apiService.getAllLiterature();
 export const getGeneLiterature = (geneId: string) =>
   apiService.getGeneLiterature(geneId);
-export const getGeneStructure = (geneId: string) =>
-  apiService.getGeneStructure(geneId);
+export const getGeneStructure = (geneId: string) => apiService.getGeneStructure(geneId);
 export const getGenePDB = (geneId: string) => apiService.getGenePDB(geneId);
 export const getLiteratureCounts = () => apiService.getLiteratureCounts();
 export const getMe = () => apiService.getMe();
@@ -115,7 +112,6 @@ export const logout = () =>
     method: "POST",
     credentials: "include",
   });
-export const getDistinctDiseaseTypes = () =>
-  apiService.getDistinctDiseaseTypes();
+export const getDistinctDiseaseTypes = () => apiService.getDistinctDiseaseTypes();
 export const getDistinctClinicalSignificances = () =>
   apiService.getDistinctClinicalSignificances();

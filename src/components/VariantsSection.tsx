@@ -79,8 +79,7 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
               Clinical Variants ({clinicalVariants.length} variants)
             </CardTitle>
             <CardDescription>
-              Curated clinical variants in {currentGene} with ACMG
-              classifications
+              Curated clinical variants in {currentGene} with ACMG classifications
             </CardDescription>
           </div>
           <div className="flex items-center gap-4 text-sm">
@@ -88,8 +87,7 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
               <div
                 className="w-3 h-3 rounded-full"
                 style={{
-                  backgroundColor:
-                    COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC,
+                  backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC,
                 }}
               ></div>
               <span>{clinicalVariantStats.pathogenic} Pathogenic</span>

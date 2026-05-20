@@ -1,9 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/AuthContext";
 import APIDocs from "./pages/APIDocs";
@@ -21,9 +16,7 @@ function ProtectedEditor() {
   const { isCurator, isLoading } = useAuth();
   if (isLoading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
+      <div className="min-h-screen flex items-center justify-center">Loading...</div>
     );
   return isCurator ? <Editor /> : <Navigate to="/login" />;
 }

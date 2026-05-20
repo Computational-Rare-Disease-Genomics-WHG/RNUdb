@@ -462,9 +462,7 @@ const LiteratureImportWizard = ({
             <div className="space-y-6">
               <div
                 className="border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center hover:border-amber-500 hover:bg-amber-50/30 transition-all cursor-pointer"
-                onClick={() =>
-                  document.getElementById("literature-csv")?.click()
-                }
+                onClick={() => document.getElementById("literature-csv")?.click()}
               >
                 <div className="p-4 bg-amber-50 rounded-2xl w-fit mx-auto mb-4">
                   <FileText className="h-8 w-8 text-amber-600" />
@@ -473,8 +471,8 @@ const LiteratureImportWizard = ({
                   Upload CSV File
                 </h3>
                 <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">
-                  Select a CSV file with literature data. You can map columns in
-                  the next step.
+                  Select a CSV file with literature data. You can map columns in the
+                  next step.
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <span className="px-3 py-1 bg-slate-100 rounded-full text-xs text-slate-600">
@@ -544,9 +542,7 @@ const LiteratureImportWizard = ({
                 <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
                   <FileText className="h-5 w-5 text-amber-600" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">
-                      {csvFile.name}
-                    </p>
+                    <p className="text-sm font-medium text-slate-900">{csvFile.name}</p>
                     <p className="text-xs text-slate-500">
                       {rawHeaders.length} column(s)
                     </p>
@@ -590,9 +586,7 @@ const LiteratureImportWizard = ({
                               {TARGET_COLUMNS.map((col) => (
                                 <SelectItem key={col.value} value={col.value}>
                                   <div>
-                                    <span className="font-medium">
-                                      {col.label}
-                                    </span>
+                                    <span className="font-medium">{col.label}</span>
                                     <span className="text-slate-500 text-xs ml-1">
                                       - {col.description}
                                     </span>

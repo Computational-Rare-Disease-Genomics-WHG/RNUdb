@@ -14,12 +14,7 @@ interface PDBViewerProps {
   width?: string;
   height?: string;
   overlayData?: OverlayData;
-  overlayMode?:
-    | "none"
-    | "clinvar"
-    | "gnomad"
-    | "function_score"
-    | "depletion_group";
+  overlayMode?: "none" | "clinvar" | "gnomad" | "function_score" | "depletion_group";
   selectedNucleotide?: Nucleotide | null;
   onNucleotideClick?: (nucleotide: Nucleotide) => void;
   onNucleotideHover?: (nucleotide: Nucleotide | null) => void;
@@ -284,10 +279,7 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
       });
 
       // Force stage to update
-      if (
-        nglStageRef.current &&
-        typeof nglStageRef.current.viewer === "object"
-      ) {
+      if (nglStageRef.current && typeof nglStageRef.current.viewer === "object") {
         nglStageRef.current.viewer.requestRender();
       }
 
@@ -325,10 +317,7 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
     };
 
     type NGLStageType = {
-      loadFile: (
-        file: Blob,
-        params: { ext: string },
-      ) => Promise<NGLComponentType>;
+      loadFile: (file: Blob, params: { ext: string }) => Promise<NGLComponentType>;
       setParameters: (params: {
         backgroundColor?: string;
         lightPreset?: string;
@@ -476,9 +465,7 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
                     const chainIndex = Array.from(rnaChains.keys()).indexOf(
                       atom.chainname,
                     );
-                    const chainColors = [
-                      0x4a90e2, 0xe24a90, 0x90e24a, 0xe2904a,
-                    ];
+                    const chainColors = [0x4a90e2, 0xe24a90, 0x90e24a, 0xe2904a];
                     return chainColors[chainIndex % chainColors.length];
                   }
                   return 0xcccccc; // Gray for non-RNA chains
@@ -496,10 +483,7 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
             );
             colorScheme = String(schemeId);
             console.log("Custom overlay color scheme registered successfully");
-            console.log(
-              "Overlay data keys:",
-              Object.keys(overlayData).slice(0, 10),
-            );
+            console.log("Overlay data keys:", Object.keys(overlayData).slice(0, 10));
             console.log("Overlay mode:", overlayMode);
           } catch (e) {
             console.warn("Could not create custom overlay color scheme:", e);
@@ -528,10 +512,7 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
 
           console.log("Added cartoon + licorice representations");
         } catch (error) {
-          console.warn(
-            "Advanced representations failed, using basic cartoon",
-            error,
-          );
+          console.warn("Advanced representations failed, using basic cartoon", error);
           // Fallback to basic cartoon representation
           component.addRepresentation("cartoon", {
             color: colorScheme,
@@ -539,44 +520,38 @@ const PDBViewer: React.FC<PDBViewerProps> = ({
         }
 
         // Add click and hover event handlers
-        stage.mouseControls.add(
-          "clickPick-left",
-          (_stage: any, pickingProxy: any) => {
-            if (pickingProxy && pickingProxy.atom) {
-              const atom = pickingProxy.atom;
-              if (atom.residue && atom.residue.resno) {
-                // Create a mock nucleotide object for compatibility
-                const nucleotide: Nucleotide = {
-                  id: atom.residue.resno,
-                  x: atom.x || 0,
-                  y: atom.y || 0,
-                  base: (atom.residue.resname || "N") as "A" | "U" | "G" | "C",
-                };
-                onNucleotideClick?.(nucleotide);
-              }
+        stage.mouseControls.add("clickPick-left", (_stage: any, pickingProxy: any) => {
+          if (pickingProxy && pickingProxy.atom) {
+            const atom = pickingProxy.atom;
+            if (atom.residue && atom.residue.resno) {
+              // Create a mock nucleotide object for compatibility
+              const nucleotide: Nucleotide = {
+                id: atom.residue.resno,
+                x: atom.x || 0,
+                y: atom.y || 0,
+                base: (atom.residue.resname || "N") as "A" | "U" | "G" | "C",
+              };
+              onNucleotideClick?.(nucleotide);
             }
-          },
-        );
+          }
+        });
 
-        stage.mouseControls.add(
-          "hoverPick",
-          (_stage: any, pickingProxy: any) => {
-            if (pickingProxy && pickingProxy.atom) {
-              const atom = pickingProxy.atom;
-              if (atom.residue && atom.residue.resno) {
-                const nucleotide: Nucleotide = {
-                  id: atom.residue.resno,
-                  base: (atom.residue.resname || "N") as "A" | "U" | "G" | "C",
-                  x: atom.x || 0,
-                  y: atom.y || 0,
-                };
-                handleNucleotideHover(nucleotide);
-              }
-            } else {
-              handleNucleotideHover(null);
+        stage.mouseControls.add("hoverPick", (_stage: any, pickingProxy: any) => {
+          if (pickingProxy && pickingProxy.atom) {
+            const atom = pickingProxy.atom;
+            if (atom.residue && atom.residue.resno) {
+              const nucleotide: Nucleotide = {
+                id: atom.residue.resno,
+                base: (atom.residue.resname || "N") as "A" | "U" | "G" | "C",
+                x: atom.x || 0,
+                y: atom.y || 0,
+              };
+              handleNucleotideHover(nucleotide);
             }
-          },
-        );
+          } else {
+            handleNucleotideHover(null);
+          }
+        });
 
         component.autoView();
       })

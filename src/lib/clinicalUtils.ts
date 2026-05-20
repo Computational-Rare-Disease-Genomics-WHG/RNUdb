@@ -25,11 +25,7 @@ export const getClinicalCategory = (sig?: string | null): ClinicalCategory => {
     normalized === "LIKELYPATHOGENIC"
   )
     return "LIKELY_PATHOGENIC";
-  if (
-    normalized === "PATH" ||
-    normalized === "PATHOGENIC" ||
-    normalized === "P"
-  )
+  if (normalized === "PATH" || normalized === "PATHOGENIC" || normalized === "P")
     return "PATHOGENIC";
   if (
     normalized === "LB" ||
@@ -51,8 +47,7 @@ export const getClinicalCategory = (sig?: string | null): ClinicalCategory => {
     return "LIKELY_PATHOGENIC";
   if (normalized.includes("PATH")) return "PATHOGENIC";
   if (normalized.includes("BENIGN")) return "BENIGN";
-  if (normalized.includes("VUS") || normalized.includes("UNCERTAIN"))
-    return "VUS";
+  if (normalized.includes("VUS") || normalized.includes("UNCERTAIN")) return "VUS";
 
   return "OTHER";
 };

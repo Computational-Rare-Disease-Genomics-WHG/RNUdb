@@ -136,11 +136,7 @@ const CLINICAL_SIG_OPTIONS = [
 
 const INHERITANCE_OPTIONS = ["Dominant", "Biallelic"];
 
-const ZYGOSITY_OPTIONS = [
-  "Heterozygous",
-  "Homozygous",
-  "Compound Heterozygous",
-];
+const ZYGOSITY_OPTIONS = ["Heterozygous", "Homozygous", "Compound Heterozygous"];
 
 const VariantAssociationImportWizard = ({
   open,
@@ -422,8 +418,7 @@ const VariantAssociationImportWizard = ({
               Import Variant Associations
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Import variant associations from CSV file. Step {step} of{" "}
-              {STEPS.length}
+              Import variant associations from CSV file. Step {step} of {STEPS.length}
             </DialogDescription>
             <p className="text-teal-100 text-sm mt-1">
               Step {step} of {STEPS.length}
@@ -483,8 +478,8 @@ const VariantAssociationImportWizard = ({
                   Upload CSV File
                 </h3>
                 <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">
-                  Select a CSV file with variant associations. Map columns in
-                  the next step.
+                  Select a CSV file with variant associations. Map columns in the next
+                  step.
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <span className="px-3 py-1 bg-slate-100 rounded-full text-xs text-slate-600">
@@ -554,9 +549,7 @@ const VariantAssociationImportWizard = ({
                 <div className="flex items-center gap-3 p-4 bg-teal-50 rounded-xl border border-teal-200">
                   <FileText className="h-5 w-5 text-teal-600" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">
-                      {csvFile.name}
-                    </p>
+                    <p className="text-sm font-medium text-slate-900">{csvFile.name}</p>
                     <p className="text-xs text-slate-500">
                       {rawHeaders.length} column(s)
                     </p>
@@ -600,9 +593,7 @@ const VariantAssociationImportWizard = ({
                               {TARGET_COLUMNS.map((col) => (
                                 <SelectItem key={col.value} value={col.value}>
                                   <div>
-                                    <span className="font-medium">
-                                      {col.label}
-                                    </span>
+                                    <span className="font-medium">{col.label}</span>
                                     <span className="text-slate-500 text-xs ml-1">
                                       - {col.description}
                                     </span>

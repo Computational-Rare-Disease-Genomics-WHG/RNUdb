@@ -62,9 +62,9 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
   const [diseaseFilter, setDiseaseFilter] = useState("All");
   const [zygosityFilter, setZygosityFilter] = useState<ZygosityFilter>("all");
   const [expandedVariant, setExpandedVariant] = useState<string | null>(null);
-  const [selectedBiallelicLink, setSelectedBiallelicLink] = useState<
-    string | null
-  >(null);
+  const [selectedBiallelicLink, setSelectedBiallelicLink] = useState<string | null>(
+    null,
+  );
   const [expandedPaper, setExpandedPaper] = useState<string | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -82,9 +82,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
     () =>
       variantData.filter(
         (variant) =>
-          variant.clinical_significance ||
-          variant.disease_type ||
-          variant.cohort,
+          variant.clinical_significance || variant.disease_type || variant.cohort,
       ),
     [variantData],
   );
@@ -109,9 +107,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
     let variants = clinicalVariants;
 
     if (selectedBiallelicLink) {
-      const linkedVariant = variantData.find(
-        (v) => v.id === selectedBiallelicLink,
-      );
+      const linkedVariant = variantData.find((v) => v.id === selectedBiallelicLink);
       if (linkedVariant?.linkedVariantIds) {
         const linkedSet = new Set(linkedVariant.linkedVariantIds);
         linkedSet.add(linkedVariant.id);
@@ -126,30 +122,19 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
           variant.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           variant.ref?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           variant.alt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          variant.consequence
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          variant.disease_type
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
+          variant.consequence?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          variant.disease_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           getVariantLiterature(variant.id).some(
             (p) =>
-              (p as any).title
-                ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-              (p as any).authors
-                ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()),
+              (p as any).title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (p as any).authors?.toLowerCase().includes(searchQuery.toLowerCase()),
           );
 
         const matchesSig =
           sigFilter === "All" ||
-          variant.clinical_significance?.toLowerCase() ===
-            sigFilter.toLowerCase() ||
+          variant.clinical_significance?.toLowerCase() === sigFilter.toLowerCase() ||
           (sigFilter === "Pathogenic" &&
-            variant.clinical_significance
-              ?.toLowerCase()
-              .includes("pathogenic") &&
+            variant.clinical_significance?.toLowerCase().includes("pathogenic") &&
             !variant.clinical_significance?.toLowerCase().includes("likely")) ||
           (sigFilter === "Likely Pathogenic" &&
             (variant.clinical_significance
@@ -158,19 +143,13 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
               variant.clinical_significance?.toLowerCase() === "lp")) ||
           (sigFilter === "VUS" &&
             (variant.clinical_significance?.toLowerCase().includes("vus") ||
-              variant.clinical_significance
-                ?.toLowerCase()
-                .includes("uncertain"))) ||
+              variant.clinical_significance?.toLowerCase().includes("uncertain"))) ||
           (sigFilter === "Likely Benign" &&
-            (variant.clinical_significance
-              ?.toLowerCase()
-              .includes("likely benign") ||
+            (variant.clinical_significance?.toLowerCase().includes("likely benign") ||
               variant.clinical_significance?.toLowerCase() === "lb")) ||
           (sigFilter === "Benign" &&
             ((variant.clinical_significance?.toLowerCase().includes("benign") &&
-              !variant.clinical_significance
-                ?.toLowerCase()
-                .includes("likely")) ||
+              !variant.clinical_significance?.toLowerCase().includes("likely")) ||
               variant.clinical_significance?.toLowerCase() === "b"));
 
         const matchesDisease =
@@ -216,24 +195,16 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
 
         if (zygosityFilter === "biallelic") {
           const aBiallelic =
-            a.zygosity === "hom" || (a.linkedVariantIds?.length ?? 0) > 0
-              ? 1
-              : 0;
+            a.zygosity === "hom" || (a.linkedVariantIds?.length ?? 0) > 0 ? 1 : 0;
           const bBiallelic =
-            b.zygosity === "hom" || (b.linkedVariantIds?.length ?? 0) > 0
-              ? 1
-              : 0;
+            b.zygosity === "hom" || (b.linkedVariantIds?.length ?? 0) > 0 ? 1 : 0;
           return bBiallelic - aBiallelic;
         }
         if (zygosityFilter === "hom") {
-          return (
-            (b.zygosity === "hom" ? 1 : 0) - (a.zygosity === "hom" ? 1 : 0)
-          );
+          return (b.zygosity === "hom" ? 1 : 0) - (a.zygosity === "hom" ? 1 : 0);
         }
         if (zygosityFilter === "het") {
-          return (
-            (b.zygosity === "het" ? 1 : 0) - (a.zygosity === "het" ? 1 : 0)
-          );
+          return (b.zygosity === "het" ? 1 : 0) - (a.zygosity === "het" ? 1 : 0);
         }
         return 0;
       });
@@ -252,9 +223,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
 
   const filteredLiterature = useMemo(() => {
     const literatureWithCounts = paperData.map((paper) => {
-      const counts = literatureCounts.filter(
-        (lc) => lc.literature_id === paper.id,
-      );
+      const counts = literatureCounts.filter((lc) => lc.literature_id === paper.id);
       const totalCounts = counts.reduce((sum, lc) => sum + lc.counts, 0);
       const linkedVariantIds = counts.map((lc) => lc.variant_id);
       return { ...paper, totalCounts, linkedVariantIds, countDetails: counts };
@@ -285,11 +254,9 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
     }
     if (lower.includes("likely pathogenic") || lower === "lp") {
       return {
-        backgroundColor:
-          COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC + "20",
+        backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC + "20",
         color: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC,
-        borderColor:
-          COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC + "40",
+        borderColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC + "40",
       };
     }
     if (lower.includes("benign") && !lower.includes("likely")) {
@@ -301,8 +268,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
     }
     if (lower.includes("likely benign") || lower === "lb") {
       return {
-        backgroundColor:
-          COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN + "20",
+        backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN + "20",
         color: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN,
         borderColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN + "40",
       };
@@ -341,9 +307,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
   };
 
   const handleBiallelicLinkClick = (variantId: string) => {
-    setSelectedBiallelicLink(
-      variantId === selectedBiallelicLink ? null : variantId,
-    );
+    setSelectedBiallelicLink(variantId === selectedBiallelicLink ? null : variantId);
   };
 
   return (
@@ -406,9 +370,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
               <LinkIcon className="h-4 w-4 text-indigo-600" />
               <span className="text-sm text-indigo-700">
                 Showing linked variants for:{" "}
-                <span className="font-mono font-medium">
-                  {selectedBiallelicLink}
-                </span>
+                <span className="font-mono font-medium">{selectedBiallelicLink}</span>
               </span>
               <button
                 onClick={() => setSelectedBiallelicLink(null)}
@@ -512,9 +474,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                 <FileText className="h-5 w-5 text-slate-400" />
               </div>
               <div className="text-sm font-medium">No variants found</div>
-              <div className="text-xs text-slate-400">
-                Try adjusting your filters
-              </div>
+              <div className="text-xs text-slate-400">Try adjusting your filters</div>
             </div>
           ) : (
             <div className="overflow-auto max-h-[600px]">
@@ -843,13 +803,10 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                         <button
                                           key={linkedVariant.id}
                                           onClick={() =>
-                                            handleBiallelicLinkClick(
-                                              linkedVariant.id,
-                                            )
+                                            handleBiallelicLinkClick(linkedVariant.id)
                                           }
                                           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
-                                            selectedBiallelicLink ===
-                                            linkedVariant.id
+                                            selectedBiallelicLink === linkedVariant.id
                                               ? "bg-indigo-100 border-indigo-300 text-indigo-700"
                                               : "bg-white border-slate-200 text-slate-700 hover:border-indigo-200"
                                           }`}
@@ -859,8 +816,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                             {linkedVariant.id}
                                           </span>
                                           <span className="text-xs text-slate-500">
-                                            ({linkedVariant.ref}→
-                                            {linkedVariant.alt})
+                                            ({linkedVariant.ref}→{linkedVariant.alt})
                                           </span>
                                         </button>
                                       ))}
@@ -874,64 +830,59 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                       Linked Literature ({variantLit.length})
                                     </div>
                                     <div className="space-y-2">
-                                      {variantLit.map(
-                                        (paper: any, idx: number) => (
-                                          <div
-                                            key={idx}
-                                            className="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200"
-                                          >
-                                            <div className="flex-1 min-w-0">
-                                              <h4 className="text-sm font-medium text-slate-900 leading-snug mb-1 line-clamp-2">
-                                                {paper.title}
-                                              </h4>
-                                              <p className="text-xs text-slate-600 mb-2">
-                                                <span className="text-slate-700 font-medium">
-                                                  {paper.authors}
-                                                </span>
-                                                <span className="mx-1">·</span>
-                                                <span className="italic">
-                                                  {paper.journal}
-                                                </span>
-                                                <span className="mx-1">·</span>
-                                                <span>{paper.year}</span>
-                                              </p>
-                                              <div className="flex items-center gap-3">
-                                                <Badge
-                                                  variant="outline"
-                                                  className="text-xs bg-white border-slate-300 text-slate-600 font-mono"
-                                                >
-                                                  DOI: {paper.doi}
-                                                </Badge>
-                                                <span
-                                                  className="text-xs text-slate-500 flex items-center gap-1"
-                                                  title="Number of individuals with this variant assessed in published studies"
-                                                >
-                                                  <Users className="h-3 w-3" />
-                                                  {paper.count} individual
-                                                  {paper.count !== 1
-                                                    ? "s"
-                                                    : ""}{" "}
-                                                  assessed
-                                                </span>
-                                              </div>
-                                            </div>
-                                            <a
-                                              href={`https://doi.org/${paper.doi}`}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="shrink-0"
-                                            >
-                                              <Button
-                                                size="sm"
+                                      {variantLit.map((paper: any, idx: number) => (
+                                        <div
+                                          key={idx}
+                                          className="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200"
+                                        >
+                                          <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-medium text-slate-900 leading-snug mb-1 line-clamp-2">
+                                              {paper.title}
+                                            </h4>
+                                            <p className="text-xs text-slate-600 mb-2">
+                                              <span className="text-slate-700 font-medium">
+                                                {paper.authors}
+                                              </span>
+                                              <span className="mx-1">·</span>
+                                              <span className="italic">
+                                                {paper.journal}
+                                              </span>
+                                              <span className="mx-1">·</span>
+                                              <span>{paper.year}</span>
+                                            </p>
+                                            <div className="flex items-center gap-3">
+                                              <Badge
                                                 variant="outline"
-                                                className="h-8 w-8 p-0 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-600"
+                                                className="text-xs bg-white border-slate-300 text-slate-600 font-mono"
                                               >
-                                                <ExternalLink className="h-4 w-4" />
-                                              </Button>
-                                            </a>
+                                                DOI: {paper.doi}
+                                              </Badge>
+                                              <span
+                                                className="text-xs text-slate-500 flex items-center gap-1"
+                                                title="Number of individuals with this variant assessed in published studies"
+                                              >
+                                                <Users className="h-3 w-3" />
+                                                {paper.count} individual
+                                                {paper.count !== 1 ? "s" : ""} assessed
+                                              </span>
+                                            </div>
                                           </div>
-                                        ),
-                                      )}
+                                          <a
+                                            href={`https://doi.org/${paper.doi}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="shrink-0"
+                                          >
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="h-8 w-8 p-0 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-600"
+                                            >
+                                              <ExternalLink className="h-4 w-4" />
+                                            </Button>
+                                          </a>
+                                        </div>
+                                      ))}
                                     </div>
                                   </div>
                                 ) : (
@@ -956,9 +907,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
               <BookOpen className="h-5 w-5 text-slate-400" />
             </div>
             <div className="text-sm font-medium">No papers found</div>
-            <div className="text-xs text-slate-400">
-              Try adjusting your search
-            </div>
+            <div className="text-xs text-slate-400">Try adjusting your search</div>
           </div>
         ) : (
           <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
@@ -971,9 +920,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                 >
                   <div
                     className="flex items-start justify-between gap-3 p-4 cursor-pointer hover:bg-slate-100/50"
-                    onClick={() =>
-                      setExpandedPaper(isExpanded ? null : paper.id)
-                    }
+                    onClick={() => setExpandedPaper(isExpanded ? null : paper.id)}
                   >
                     <div className="flex items-start gap-2">
                       <button className="text-slate-400 hover:text-slate-600 mt-0.5">
@@ -1068,9 +1015,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                       <div className="flex flex-wrap gap-2">
                         {paper.linkedVariantIds.map(
                           (variantId: string, vIdx: number) => {
-                            const variant = variantData.find(
-                              (v) => v.id === variantId,
-                            );
+                            const variant = variantData.find((v) => v.id === variantId);
                             return (
                               <div
                                 key={vIdx}

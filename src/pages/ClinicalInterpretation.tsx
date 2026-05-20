@@ -88,8 +88,7 @@ const EXAMPLES = [
     variant: "n.76C>T",
     position: "chr12:120291828 G>A",
     inheritance: "Heterozygous",
-    phenotype:
-      "Moderate global developmental delay and intellectual disability",
+    phenotype: "Moderate global developmental delay and intellectual disability",
     classification: "Pathogenic",
     criteria: ["PS2_VeryStrong", "PM1", "PS3_Mod"],
     reasoning: [
@@ -317,12 +316,10 @@ const ClinicalInterpretation: React.FC = () => {
           <div className="flex items-center gap-3 mb-4">
             <Stethoscope className="h-8 w-8 text-teal-300" />
           </div>
-          <h1 className="text-4xl font-bold mb-3">
-            Clinical Variant Classification
-          </h1>
+          <h1 className="text-4xl font-bold mb-3">Clinical Variant Classification</h1>
           <p className="text-teal-100 text-lg max-w-2xl">
-            Guidance for clinical variant classification in genes for
-            spliceosomal small nuclear RNAs
+            Guidance for clinical variant classification in genes for spliceosomal small
+            nuclear RNAs
           </p>
         </div>
       </div>
@@ -352,10 +349,9 @@ const ClinicalInterpretation: React.FC = () => {
                 What are snRNAs?
               </h2>
               <p className="text-slate-600 text-lg leading-relaxed mb-8">
-                Small nuclear RNAs (snRNAs) are RNA components of the
-                spliceosome - a large complex that removes introns from RNA
-                transcripts. Humans have two spliceosomes: Major (&gt;99% of
-                introns) and Minor (~800 introns).
+                Small nuclear RNAs (snRNAs) are RNA components of the spliceosome - a
+                large complex that removes introns from RNA transcripts. Humans have two
+                spliceosomes: Major (&gt;99% of introns) and Minor (~800 introns).
               </p>
               <div className="grid md:grid-cols-2 gap-6">
                 <Card className="bg-white border border-slate-200 shadow-sm">
@@ -410,9 +406,7 @@ const ClinicalInterpretation: React.FC = () => {
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-5">
-                Key Challenges
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-800 mb-5">Key Challenges</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[
                   {
@@ -565,10 +559,10 @@ const ClinicalInterpretation: React.FC = () => {
                       Important Note on De Novo Variants
                     </h4>
                     <p className="text-slate-600 text-base">
-                      Do NOT classify rare de novo variants as Likely Pathogenic
-                      without additional evidence. snRNA genes have an elevated
-                      mutation rate. Apply de novo criteria at "phenotype
-                      consistent" level.
+                      Do NOT classify rare de novo variants as Likely Pathogenic without
+                      additional evidence. snRNA genes have an elevated mutation rate.
+                      Apply de novo criteria at &ldquo;phenotype consistent&rdquo;
+                      level.
                     </p>
                   </div>
                 </div>
@@ -636,8 +630,7 @@ const ClinicalInterpretation: React.FC = () => {
                       </div>
                       <span
                         className={`text-base font-semibold px-4 py-2 rounded-full ${
-                          EXAMPLES[selectedExample].classification ===
-                          "Pathogenic"
+                          EXAMPLES[selectedExample].classification === "Pathogenic"
                             ? "bg-red-100 text-red-700"
                             : EXAMPLES[selectedExample].classification ===
                                 "Likely Pathogenic"
@@ -690,17 +683,15 @@ const ClinicalInterpretation: React.FC = () => {
                         Reasoning
                       </h4>
                       <ul className="space-y-3">
-                        {EXAMPLES[selectedExample].reasoning.map(
-                          (reason, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-start gap-3 text-slate-600 text-base"
-                            >
-                              <ChevronRight className="h-5 w-5 text-teal-500 shrink-0 mt-0.5" />
-                              {reason}
-                            </li>
-                          ),
-                        )}
+                        {EXAMPLES[selectedExample].reasoning.map((reason, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-3 text-slate-600 text-base"
+                          >
+                            <ChevronRight className="h-5 w-5 text-teal-500 shrink-0 mt-0.5" />
+                            {reason}
+                          </li>
+                        ))}
                       </ul>
                     </div>
 
@@ -745,16 +736,11 @@ const ClinicalInterpretation: React.FC = () => {
                     </thead>
                     <tbody>
                       {ACMG_CODES.map((code) => (
-                        <tr
-                          key={code.code}
-                          className="border-b border-slate-100"
-                        >
+                        <tr key={code.code} className="border-b border-slate-100">
                           <td className="py-3 px-4 font-mono text-teal-600 font-medium">
                             {code.code}
                           </td>
-                          <td className="py-3 px-4 text-slate-600">
-                            {code.name}
-                          </td>
+                          <td className="py-3 px-4 text-slate-600">{code.name}</td>
                           <td className="py-3 px-4 text-slate-500">
                             {code.description}
                           </td>

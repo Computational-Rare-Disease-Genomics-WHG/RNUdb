@@ -94,9 +94,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
               variant={mode === "select" ? "default" : "outline"}
               size="sm"
               onClick={() => onModeChange("select")}
-              className={
-                mode === "select" ? "bg-teal-600 hover:bg-teal-700" : ""
-              }
+              className={mode === "select" ? "bg-teal-600 hover:bg-teal-700" : ""}
             >
               <Move className="h-4 w-4 mr-2" />
               Select
@@ -131,10 +129,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 
           <div className="pt-3 border-t border-gray-100">
             <p className="text-xs text-gray-600 leading-relaxed">
-              {mode === "select" &&
-                "Click and drag nucleotides to move them around"}
-              {mode === "add" &&
-                "Click anywhere on the canvas to add a nucleotide"}
+              {mode === "select" && "Click and drag nucleotides to move them around"}
+              {mode === "add" && "Click anywhere on the canvas to add a nucleotide"}
               {mode === "pair" &&
                 "Click two nucleotides to create or remove a base pair"}
               {mode === "delete" && "Click on nucleotides to delete them"}
@@ -205,12 +201,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                         key={base}
                         variant={isSelected ? "default" : "outline"}
                         size="sm"
-                        onClick={() =>
-                          onUpdateNucleotideBase(currentNucleotide, base)
-                        }
-                        className={
-                          isSelected ? "bg-teal-600 hover:bg-teal-700" : ""
-                        }
+                        onClick={() => onUpdateNucleotideBase(currentNucleotide, base)}
+                        className={isSelected ? "bg-teal-600 hover:bg-teal-700" : ""}
                       >
                         {base}
                       </Button>
@@ -270,9 +262,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                     <Badge variant="outline" className="text-xs">
                       {base}
                     </Badge>
-                    <span className="text-sm font-mono text-gray-600">
-                      {count}
-                    </span>
+                    <span className="text-sm font-mono text-gray-600">{count}</span>
                   </div>
                 ))}
               </div>
@@ -297,9 +287,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between">
               <span>Add nucleotide</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
-                N
-              </kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">N</kbd>
             </div>
             <div className="flex items-center justify-between">
               <span>Set base</span>
@@ -315,15 +303,11 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
             </div>
             <div className="flex items-center justify-between">
               <span>Delete</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
-                Del
-              </kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Del</kbd>
             </div>
             <div className="flex items-center justify-between">
               <span>Clear selection</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
-                Esc
-              </kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Esc</kbd>
             </div>
           </div>
         </CardContent>

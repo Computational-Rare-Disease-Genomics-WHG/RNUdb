@@ -247,9 +247,8 @@ const VariantTable = ({
           </div>
           <Select
             value={
-              (table
-                .getColumn("clinical_significance")
-                ?.getFilterValue() as string) ?? "all"
+              (table.getColumn("clinical_significance")?.getFilterValue() as string) ??
+              "all"
             }
             onValueChange={(value) =>
               table
@@ -287,9 +286,7 @@ const VariantTable = ({
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
+                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
                   >
                     {column.id.replace(/_/g, " ")}
                   </DropdownMenuCheckboxItem>
@@ -338,10 +335,7 @@ const VariantTable = ({
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-3 px-4 sm:px-6">
                       <div className="text-sm">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </div>
                     </TableCell>
                   ))}
@@ -378,8 +372,7 @@ const VariantTable = ({
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <span>Page</span>
             <span className="font-medium text-slate-900">
-              {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
+              {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
             </span>
           </div>
           <div className="flex items-center gap-1">

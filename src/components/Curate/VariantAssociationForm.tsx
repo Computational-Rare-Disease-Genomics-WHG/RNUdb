@@ -52,8 +52,7 @@ const VariantAssociationForm = ({
   const [linkedVariantSearch, setLinkedVariantSearch] = useState("");
   const [showVariantDropdown, setShowVariantDropdown] = useState(false);
   const [showLiteratureDropdown, setShowLiteratureDropdown] = useState(false);
-  const [showLinkedVariantDropdown, setShowLinkedVariantDropdown] =
-    useState(false);
+  const [showLinkedVariantDropdown, setShowLinkedVariantDropdown] = useState(false);
 
   const [formData, setFormData] = useState({
     variant_id: initialData?.variant_id || "",
@@ -91,8 +90,7 @@ const VariantAssociationForm = ({
     if (!linkedVariantSearch) return variants;
     const search = linkedVariantSearch.toLowerCase();
     return variants.filter(
-      (v) =>
-        v.id.toLowerCase().includes(search) && v.id !== formData.variant_id,
+      (v) => v.id.toLowerCase().includes(search) && v.id !== formData.variant_id,
     );
   }, [variants, linkedVariantSearch, formData.variant_id]);
 
@@ -111,9 +109,7 @@ const VariantAssociationForm = ({
     if (!formData.literature_id.trim()) {
       newErrors.literature_id = "Literature is required";
     } else {
-      const literatureExists = literature.some(
-        (l) => l.id === formData.literature_id,
-      );
+      const literatureExists = literature.some((l) => l.id === formData.literature_id);
       if (!literatureExists) {
         newErrors.literature_id = "Literature does not exist";
       }
@@ -234,9 +230,7 @@ const VariantAssociationForm = ({
                     }`}
                   >
                     <div className="font-medium">{v.id}</div>
-                    {v.hgvs && (
-                      <div className="text-xs text-slate-500">{v.hgvs}</div>
-                    )}
+                    {v.hgvs && <div className="text-xs text-slate-500">{v.hgvs}</div>}
                   </button>
                 ))}
               </div>
@@ -276,9 +270,7 @@ const VariantAssociationForm = ({
                   >
                     <div className="font-medium truncate">{l.id}</div>
                     {l.title && (
-                      <div className="text-xs text-slate-500 truncate">
-                        {l.title}
-                      </div>
+                      <div className="text-xs text-slate-500 truncate">{l.title}</div>
                     )}
                   </button>
                 ))}
@@ -296,9 +288,7 @@ const VariantAssociationForm = ({
           <Label htmlFor="clinical_significance">Clinical Significance</Label>
           <Select
             value={formData.clinical_significance}
-            onValueChange={(value) =>
-              handleChange("clinical_significance", value)
-            }
+            onValueChange={(value) => handleChange("clinical_significance", value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select significance" />
@@ -374,9 +364,7 @@ const VariantAssociationForm = ({
             placeholder="e.g., 1"
             className={errors.counts ? "border-red-500" : ""}
           />
-          {errors.counts && (
-            <p className="text-xs text-red-500">{errors.counts}</p>
-          )}
+          {errors.counts && <p className="text-xs text-red-500">{errors.counts}</p>}
         </div>
 
         <div className="col-span-2 space-y-2">
@@ -392,28 +380,25 @@ const VariantAssociationForm = ({
               onFocus={() => setShowLinkedVariantDropdown(true)}
               className={errors.linked_variant_ids ? "border-red-500" : ""}
             />
-            {showLinkedVariantDropdown &&
-              availableLinkedVariants.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-48 overflow-auto">
-                  {availableLinkedVariants.slice(0, 20).map((v) => (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => toggleLinkedVariant(v.id)}
-                      className={`w-full px-3 py-2 text-left hover:bg-slate-100 flex items-center justify-between ${
-                        selectedLinkedVariants.includes(v.id)
-                          ? "bg-teal-50"
-                          : ""
-                      }`}
-                    >
-                      <span>{v.id}</span>
-                      {selectedLinkedVariants.includes(v.id) && (
-                        <span className="text-teal-600 text-xs">✓</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {showLinkedVariantDropdown && availableLinkedVariants.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-48 overflow-auto">
+                {availableLinkedVariants.slice(0, 20).map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => toggleLinkedVariant(v.id)}
+                    className={`w-full px-3 py-2 text-left hover:bg-slate-100 flex items-center justify-between ${
+                      selectedLinkedVariants.includes(v.id) ? "bg-teal-50" : ""
+                    }`}
+                  >
+                    <span>{v.id}</span>
+                    {selectedLinkedVariants.includes(v.id) && (
+                      <span className="text-teal-600 text-xs">✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           {selectedLinkedVariants.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">

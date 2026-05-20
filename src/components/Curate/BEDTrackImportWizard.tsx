@@ -61,38 +61,33 @@ const BEDTrackImportWizard: React.FC<BEDTrackImportWizardProps> = ({
     onClose();
   };
 
-  const handleFileUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const f = e.target.files?.[0];
-      if (!f) return;
-      setError("");
-      setTrackName(f.name.replace(/\.bed$/i, ""));
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setError("");
+    setTrackName(f.name.replace(/\.bed$/i, ""));
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        const lines = text
-          .split("\n")
-          .filter((l) => l.trim() && !l.startsWith("#"));
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
 
-        const intervals = lines.map((line) => {
-          const cols = line.split("\t");
-          return {
-            chrom: cols[0],
-            chromStart: cols[1],
-            chromEnd: cols[2],
-            name: cols[3] || null,
-            score: cols[4] || null,
-          };
-        });
+      const intervals = lines.map((line) => {
+        const cols = line.split("\t");
+        return {
+          chrom: cols[0],
+          chromStart: cols[1],
+          chromEnd: cols[2],
+          name: cols[3] || null,
+          score: cols[4] || null,
+        };
+      });
 
-        setParsedIntervals(intervals);
-        setStep(2);
-      };
-      reader.readAsText(f);
-    },
-    [],
-  );
+      setParsedIntervals(intervals);
+      setStep(2);
+    };
+    reader.readAsText(f);
+  }, []);
 
   const handleValidate = async () => {
     if (!trackName.trim()) {
@@ -240,12 +235,8 @@ const BEDTrackImportWizard: React.FC<BEDTrackImportWizardProps> = ({
                     />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-mono text-slate-600">
-                      {trackColor}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      Click to change color
-                    </p>
+                    <p className="text-sm font-mono text-slate-600">{trackColor}</p>
+                    <p className="text-xs text-slate-400">Click to change color</p>
                   </div>
                 </div>
               </div>
@@ -394,8 +385,8 @@ const BEDTrackImportWizard: React.FC<BEDTrackImportWizardProps> = ({
                       : "Validation Issues Found"}
                   </h3>
                   <p className="text-sm text-slate-500">
-                    {validationResult.valid_count} of{" "}
-                    {validationResult.total_count} intervals valid
+                    {validationResult.valid_count} of {validationResult.total_count}{" "}
+                    intervals valid
                     {validationResult.errors.length > 0 &&
                       ` • ${validationResult.errors.length} errors`}
                   </p>
@@ -453,7 +444,8 @@ const BEDTrackImportWizard: React.FC<BEDTrackImportWizardProps> = ({
                 Import Complete!
               </h3>
               <p className="text-slate-500 mb-8 max-w-sm mx-auto">
-                Successfully imported the BED track "{trackName}" into {geneId}
+                Successfully imported the BED track &ldquo;{trackName}&rdquo; into{" "}
+                {geneId}
               </p>
               <Button
                 onClick={handleClose}

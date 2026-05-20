@@ -13,12 +13,7 @@ interface VariantFormProps {
   onCancel: () => void;
 }
 
-const VariantForm = ({
-  geneId,
-  initialData,
-  onSubmit,
-  onCancel,
-}: VariantFormProps) => {
+const VariantForm = ({ geneId, initialData, onSubmit, onCancel }: VariantFormProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
@@ -42,10 +37,7 @@ const VariantForm = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (
-      formData.id &&
-      !/^chr\d+-\d+-[ATCGatcg]+-[ATCGatcg]+$/.test(formData.id)
-    ) {
+    if (formData.id && !/^chr\d+-\d+-[ATCGatcg]+-[ATCGatcg]+$/.test(formData.id)) {
       newErrors.id =
         "Invalid format. Use chrCHR-POS-REF-ALT (e.g., chr12-120291764-C-T)";
     }
@@ -79,9 +71,7 @@ const VariantForm = ({
       nucleotidePosition: formData.nucleotidePosition
         ? Number(formData.nucleotidePosition)
         : null,
-      function_score: formData.function_score
-        ? Number(formData.function_score)
-        : null,
+      function_score: formData.function_score ? Number(formData.function_score) : null,
       pvalues: formData.pvalues ? Number(formData.pvalues) : null,
       qvalues: formData.qvalues ? Number(formData.qvalues) : null,
     };
@@ -111,26 +101,20 @@ const VariantForm = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label className="text-sm font-medium text-slate-700 mb-1">
-            Variant ID
-          </Label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Variant ID</Label>
           <Input
             value={formData.id}
             onChange={(e) => handleChange("id", e.target.value)}
             placeholder="e.g., chr12-120291764-C-T"
             disabled={!!initialData}
           />
-          {errors.id && (
-            <p className="text-xs text-red-500 mt-1">{errors.id}</p>
-          )}
+          {errors.id && <p className="text-xs text-red-500 mt-1">{errors.id}</p>}
           <p className="text-xs text-slate-500 mt-1">
             Auto-generated from position/ref/alt if empty
           </p>
         </div>
         <div>
-          <Label className="text-sm font-medium text-slate-700 mb-1">
-            Gene ID
-          </Label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Gene ID</Label>
           <Input
             value={formData.geneId}
             onChange={(e) => handleChange("geneId", e.target.value)}
@@ -166,9 +150,7 @@ const VariantForm = ({
             required
             maxLength={10}
           />
-          {errors.ref && (
-            <p className="text-xs text-red-500 mt-1">{errors.ref}</p>
-          )}
+          {errors.ref && <p className="text-xs text-red-500 mt-1">{errors.ref}</p>}
         </div>
         <div>
           <Label className="text-sm font-medium text-slate-700 mb-1">Alt</Label>
@@ -180,9 +162,7 @@ const VariantForm = ({
             required
             maxLength={10}
           />
-          {errors.alt && (
-            <p className="text-xs text-red-500 mt-1">{errors.alt}</p>
-          )}
+          {errors.alt && <p className="text-xs text-red-500 mt-1">{errors.alt}</p>}
         </div>
       </div>
 
@@ -199,9 +179,7 @@ const VariantForm = ({
           />
         </div>
         <div>
-          <Label className="text-sm font-medium text-slate-700 mb-1">
-            HGVS
-          </Label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">HGVS</Label>
           <Input
             value={formData.hgvs}
             onChange={(e) => handleChange("hgvs", e.target.value)}
@@ -247,9 +225,7 @@ const VariantForm = ({
 
       <div className="grid grid-cols-2 gap-4 mt-4">
         <div>
-          <Label className="text-sm font-medium text-slate-700 mb-1">
-            P-Value
-          </Label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">P-Value</Label>
           <Input
             type="number"
             step="0.001"
@@ -259,9 +235,7 @@ const VariantForm = ({
           />
         </div>
         <div>
-          <Label className="text-sm font-medium text-slate-700 mb-1">
-            Q-Value
-          </Label>
+          <Label className="text-sm font-medium text-slate-700 mb-1">Q-Value</Label>
           <Input
             type="number"
             step="0.001"
@@ -317,10 +291,7 @@ const VariantForm = ({
       </div>
 
       <div className="flex gap-3 pt-4">
-        <Button
-          type="submit"
-          className="bg-teal-600 hover:bg-teal-700 text-white"
-        >
+        <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white">
           <Save className="h-4 w-4 mr-2" />
           {initialData ? "Update Variant" : "Create Variant"}
         </Button>

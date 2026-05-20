@@ -31,8 +31,8 @@ const Login: React.FC = () => {
               Account Pending Approval
             </h1>
             <p className="text-gray-600 mb-6">
-              Hi {user.name}, your GitHub account ({user.github_login}) is
-              awaiting curator approval.
+              Hi {user.name}, your GitHub account ({user.github_login}) is awaiting
+              curator approval.
             </p>
             <p className="text-gray-600 mb-6">
               Please contact Nicky Whiffin to request access:
@@ -87,9 +87,7 @@ const Login: React.FC = () => {
           <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <LogIn className="w-10 h-10 text-teal-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Curator Sign In
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Curator Sign In</h1>
           <p className="text-gray-600 mb-8">
             Sign in with your GitHub account to access the curator dashboard.
           </p>

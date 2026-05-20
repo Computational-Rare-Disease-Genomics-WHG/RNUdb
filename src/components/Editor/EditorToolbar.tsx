@@ -1,12 +1,4 @@
-import {
-  Move,
-  Plus,
-  Link,
-  Trash2,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-} from "lucide-react";
+import { Move, Plus, Link, Trash2, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import React from "react";
 import { Button } from "../ui/button";
 

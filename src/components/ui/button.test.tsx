@@ -24,26 +24,18 @@ describe("Button", () => {
     const { container: destructive } = render(
       <Button variant="destructive">Delete</Button>,
     );
-    expect(destructive.querySelector("button")?.className).toContain(
-      "bg-red-600",
-    );
+    expect(destructive.querySelector("button")?.className).toContain("bg-red-600");
 
-    const { container: outline } = render(
-      <Button variant="outline">Outline</Button>,
-    );
+    const { container: outline } = render(<Button variant="outline">Outline</Button>);
     expect(outline.querySelector("button")?.className).toContain("border");
 
     const { container: ghost } = render(<Button variant="ghost">Ghost</Button>);
-    expect(ghost.querySelector("button")?.className).toContain(
-      "hover:bg-slate-100",
-    );
+    expect(ghost.querySelector("button")?.className).toContain("hover:bg-slate-100");
 
     const { container: secondary } = render(
       <Button variant="secondary">Secondary</Button>,
     );
-    expect(secondary.querySelector("button")?.className).toContain(
-      "bg-slate-200",
-    );
+    expect(secondary.querySelector("button")?.className).toContain("bg-slate-200");
 
     const { container: link } = render(<Button variant="link">Link</Button>);
     expect(link.querySelector("button")?.className).toContain("text-blue-600");

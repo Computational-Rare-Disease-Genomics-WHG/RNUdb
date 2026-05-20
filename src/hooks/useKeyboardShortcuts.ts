@@ -18,9 +18,7 @@ interface KeyboardShortcutsProps {
   onRemoveNucleotide: (id: number) => void;
   onRemoveLabel: (labelId: string) => void;
   onClearSelection: () => void;
-  onModeChange: (
-    mode: "select" | "add" | "pair" | "delete" | "label" | "pan",
-  ) => void;
+  onModeChange: (mode: "select" | "add" | "pair" | "delete" | "label" | "pan") => void;
 }
 
 export const useKeyboardShortcuts = ({

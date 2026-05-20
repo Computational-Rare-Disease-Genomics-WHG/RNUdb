@@ -82,13 +82,9 @@ const NucleotideInfoPanel: React.FC<NucleotideInfoPanelProps> = ({
                   return (
                     <Button
                       key={base}
-                      variant={
-                        nucleotide?.base === base ? "default" : "outline"
-                      }
+                      variant={nucleotide?.base === base ? "default" : "outline"}
                       size="sm"
-                      onClick={() =>
-                        onUpdateNucleotideBase(currentNucleotide, base)
-                      }
+                      onClick={() => onUpdateNucleotideBase(currentNucleotide, base)}
                       className="flex-1"
                     >
                       {base}
@@ -101,9 +97,7 @@ const NucleotideInfoPanel: React.FC<NucleotideInfoPanelProps> = ({
         )}
 
         {!currentNucleotide && (
-          <p className="text-sm text-gray-500">
-            Click on a nucleotide to edit it
-          </p>
+          <p className="text-sm text-gray-500">Click on a nucleotide to edit it</p>
         )}
       </CardContent>
     </Card>

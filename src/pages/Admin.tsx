@@ -53,9 +53,7 @@ const Admin: React.FC = () => {
   const [changeLog, setChangeLog] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [changeLogPage, setChangeLogPage] = useState(1);
-  const [expandedPayloads, setExpandedPayloads] = useState<Set<number>>(
-    new Set(),
-  );
+  const [expandedPayloads, setExpandedPayloads] = useState<Set<number>>(new Set());
   const [slackEnabled, setSlackEnabled] = useState(false);
   const [testSlackLoading, setTestSlackLoading] = useState(false);
   const [testSlackResult, setTestSlackResult] = useState<string | null>(null);
@@ -215,9 +213,7 @@ const Admin: React.FC = () => {
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">
-              Admin Dashboard
-            </h1>
+            <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
             <p className="text-slate-500">
               Manage users, approvals, and system settings
             </p>
@@ -236,10 +232,7 @@ const Admin: React.FC = () => {
               <span className="text-xs text-slate-600">{testSlackResult}</span>
             )}
             {slackEnabled && (
-              <Badge
-                variant="secondary"
-                className="bg-emerald-100 text-emerald-700"
-              >
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
                 Slack Enabled
               </Badge>
             )}
@@ -255,10 +248,7 @@ const Admin: React.FC = () => {
               <Clock className="h-4 w-4 mr-2" />
               Pending Approvals
               {pendingApprovals.length > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="ml-1 bg-slate-100 text-slate-600"
-                >
+                <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-600">
                   {pendingApprovals.length}
                 </Badge>
               )}
@@ -323,12 +313,8 @@ const Admin: React.FC = () => {
                             </div>
                             <p className="text-sm text-slate-600 mb-1">
                               Requested by{" "}
-                              <span className="font-medium">
-                                {change.requested_by}
-                              </span>{" "}
-                              {new Date(
-                                change.requested_at,
-                              ).toLocaleDateString()}
+                              <span className="font-medium">{change.requested_by}</span>{" "}
+                              {new Date(change.requested_at).toLocaleDateString()}
                             </p>
                             <pre className="text-xs bg-slate-50 p-2 rounded mt-2 overflow-x-auto max-h-60 break-all">
                               {JSON.stringify(change.payload, null, 2)}
@@ -391,10 +377,7 @@ const Admin: React.FC = () => {
                         <div className="flex items-center gap-4">
                           <Avatar>
                             {user.avatar_url && (
-                              <AvatarImage
-                                src={user.avatar_url}
-                                alt={user.name}
-                              />
+                              <AvatarImage src={user.avatar_url} alt={user.name} />
                             )}
                             <AvatarFallback>{user.name[0]}</AvatarFallback>
                           </Avatar>
@@ -403,9 +386,7 @@ const Admin: React.FC = () => {
                             <p className="text-sm text-slate-500">
                               @{user.github_login}
                             </p>
-                            <p className="text-sm text-slate-500">
-                              {user.email}
-                            </p>
+                            <p className="text-sm text-slate-500">{user.email}</p>
                           </div>
                         </div>
                         <Button
@@ -451,10 +432,7 @@ const Admin: React.FC = () => {
                             <div className="flex items-center gap-3">
                               <Avatar size="sm">
                                 {user.avatar_url && (
-                                  <AvatarImage
-                                    src={user.avatar_url}
-                                    alt={user.name}
-                                  />
+                                  <AvatarImage src={user.avatar_url} alt={user.name} />
                                 )}
                                 <AvatarFallback className="bg-teal-100 text-teal-700">
                                   {user.name[0]}
@@ -580,10 +558,7 @@ const Admin: React.FC = () => {
 
                         {/* Entity */}
                         <div className="col-span-2 mb-2 md:mb-0">
-                          <Badge
-                            variant="outline"
-                            className="capitalize bg-white mb-1"
-                          >
+                          <Badge variant="outline" className="capitalize bg-white mb-1">
                             {change.entity_type}
                           </Badge>
                           <p className="text-sm text-slate-600">
@@ -629,9 +604,7 @@ const Admin: React.FC = () => {
                             <span className="text-slate-500">By: </span>
                             <span
                               className={`font-medium ${
-                                change.reviewed_by
-                                  ? "text-slate-700"
-                                  : "text-slate-400"
+                                change.reviewed_by ? "text-slate-700" : "text-slate-400"
                               }`}
                             >
                               {change.reviewed_by || "— pending —"}
@@ -646,25 +619,20 @@ const Admin: React.FC = () => {
                             {new Date(change.requested_at).toLocaleDateString()}
                           </p>
                           <p className="text-xs text-slate-400">
-                            {new Date(change.requested_at).toLocaleTimeString(
-                              [],
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )}
+                            {new Date(change.requested_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </p>
                           {change.reviewed_at && (
                             <p className="text-xs text-slate-500 mt-1">
                               Reviewed:{" "}
-                              {new Date(
-                                change.reviewed_at,
-                              ).toLocaleDateString()}
+                              {new Date(change.reviewed_at).toLocaleDateString()}
                             </p>
                           )}
                           {change.review_notes && (
                             <p className="text-xs text-teal-600 mt-1 italic">
-                              "{change.review_notes}"
+                              &ldquo;{change.review_notes}&rdquo;
                             </p>
                           )}
                         </div>
@@ -675,16 +643,14 @@ const Admin: React.FC = () => {
                     {totalPages > 1 && (
                       <div className="flex items-center justify-between pt-4 border-t border-slate-200">
                         <p className="text-sm text-slate-500">
-                          Page {changeLogPage} of {totalPages} (
-                          {changeLog.length} total)
+                          Page {changeLogPage} of {totalPages} ({changeLog.length}{" "}
+                          total)
                         </p>
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              setChangeLogPage((p) => Math.max(1, p - 1))
-                            }
+                            onClick={() => setChangeLogPage((p) => Math.max(1, p - 1))}
                             disabled={changeLogPage === 1}
                           >
                             <ChevronLeft className="h-4 w-4" />
@@ -694,9 +660,7 @@ const Admin: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              setChangeLogPage((p) =>
-                                Math.min(totalPages, p + 1),
-                              )
+                              setChangeLogPage((p) => Math.min(totalPages, p + 1))
                             }
                             disabled={changeLogPage === totalPages}
                           >

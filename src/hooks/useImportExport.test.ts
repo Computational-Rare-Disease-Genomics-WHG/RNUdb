@@ -152,9 +152,7 @@ describe("useImportExport", () => {
       };
       localStorage.setItem("rna_editor_load-test", JSON.stringify(testData));
 
-      const loaded = result.current.loadFromLocalStorage(
-        "rna_editor_load-test",
-      );
+      const loaded = result.current.loadFromLocalStorage("rna_editor_load-test");
       expect(loaded).not.toBeNull();
       expect(loaded?.id).toBe("load-test");
       expect(loaded?.name).toBe("Load Test");
@@ -192,14 +190,9 @@ describe("useImportExport", () => {
 
     it("deletes saved structure", () => {
       const { result } = renderHook(() => useImportExport());
-      localStorage.setItem(
-        "rna_editor_delete-test",
-        JSON.stringify({ name: "Test" }),
-      );
+      localStorage.setItem("rna_editor_delete-test", JSON.stringify({ name: "Test" }));
 
-      const deleted = result.current.deleteSavedStructure(
-        "rna_editor_delete-test",
-      );
+      const deleted = result.current.deleteSavedStructure("rna_editor_delete-test");
       expect(deleted).toBe(true);
       expect(localStorage.getItem("rna_editor_delete-test")).toBeNull();
     });

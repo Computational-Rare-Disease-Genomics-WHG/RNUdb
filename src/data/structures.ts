@@ -2,9 +2,7 @@
 import { getGeneStructure, getGenePDB } from "../services/api";
 import type { RNAStructure } from "../types";
 
-export const getRNAStructure = async (
-  geneId: string,
-): Promise<RNAStructure | null> => {
+export const getRNAStructure = async (geneId: string): Promise<RNAStructure | null> => {
   try {
     return await getGeneStructure(geneId);
   } catch (error) {

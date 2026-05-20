@@ -38,3 +38,11 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "S", "UP"]
 ignore = ["S101", "B008", "N815", "S608"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--cov=api",
+    "--cov=rnudb_utils",
+    "--cov-report=term",
+]

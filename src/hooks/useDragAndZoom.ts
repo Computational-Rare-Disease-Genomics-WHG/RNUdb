@@ -1,10 +1,4 @@
-import {
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-  type RefObject,
-} from "react";
+import { useState, useCallback, useRef, useEffect, type RefObject } from "react";
 
 interface DragAndZoomProps {
   canvasRef: RefObject<HTMLDivElement | null>;
@@ -31,15 +25,11 @@ export const useDragAndZoom = ({
   nucleotides: _nucleotides,
   rnaData: _rnaData,
 }: DragAndZoomProps) => {
-  const [draggedNucleotide, setDraggedNucleotide] = useState<number | null>(
-    null,
-  );
+  const [draggedNucleotide, setDraggedNucleotide] = useState<number | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const animationFrameRef = useRef<number | null>(null);
-  const pendingUpdateRef = useRef<{ id: number; x: number; y: number } | null>(
-    null,
-  );
+  const pendingUpdateRef = useRef<{ id: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
     const updatePosition = () => {
@@ -93,8 +83,7 @@ export const useDragAndZoom = ({
           newPanPoint: { x: e.clientX, y: e.clientY },
         };
       } else if (draggedNucleotide && mode === "select") {
-        const svg =
-          canvasRef.current?.querySelector<SVGSVGElement>("svg[viewBox]");
+        const svg = canvasRef.current?.querySelector<SVGSVGElement>("svg[viewBox]");
         if (svg) {
           const pt = new DOMPoint(e.clientX, e.clientY);
           const svgPoint = pt.matrixTransform(

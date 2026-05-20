@@ -46,9 +46,7 @@ describe("ApiService", () => {
     });
 
     it("should return null when API returns 404", async () => {
-      mockFetch.mockRejectedValueOnce(
-        new Error("API request failed: 404 Not Found"),
-      );
+      mockFetch.mockRejectedValueOnce(new Error("API request failed: 404 Not Found"));
 
       const result = await apiService.getGeneStructure("RNU4-2");
 
@@ -83,9 +81,7 @@ describe("ApiService", () => {
     });
 
     it("should return null when API returns 404", async () => {
-      mockFetch.mockRejectedValueOnce(
-        new Error("API request failed: 404 Not Found"),
-      );
+      mockFetch.mockRejectedValueOnce(new Error("API request failed: 404 Not Found"));
 
       const result = await apiService.getGenePDB("RNU4-2");
 

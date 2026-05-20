@@ -104,9 +104,7 @@ describe("searchService", () => {
 
     it("finds gene by name", async () => {
       const results = await searchService.search("U4 small nuclear");
-      expect(results.some((r) => r.matchedFields.includes("fullName"))).toBe(
-        true,
-      );
+      expect(results.some((r) => r.matchedFields.includes("fullName"))).toBe(true);
     });
 
     it("finds variant by HGVS", async () => {

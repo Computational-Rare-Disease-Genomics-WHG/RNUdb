@@ -39,9 +39,7 @@ const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(
   ) => {
     const renderBasePairs = useCallback(() => {
       return rnaData.base_pairs.map((bp, index) => {
-        const nucleotide1 = rnaData.nucleotides.find(
-          (n) => n.id === bp.from_pos,
-        );
+        const nucleotide1 = rnaData.nucleotides.find((n) => n.id === bp.from_pos);
         const nucleotide2 = rnaData.nucleotides.find((n) => n.id === bp.to_pos);
 
         if (!nucleotide1 || !nucleotide2) return null;
@@ -72,9 +70,7 @@ const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(
           C: "#f59e0b",
         };
 
-        const fillColor = nucleotide.base
-          ? baseColors[nucleotide.base]
-          : "#9ca3af";
+        const fillColor = nucleotide.base ? baseColors[nucleotide.base] : "#9ca3af";
         const displayText = nucleotide.base || nucleotide.id.toString();
 
         return (
@@ -84,9 +80,7 @@ const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(
               cy={nucleotide.y + 15}
               r="15"
               fill={fillColor}
-              stroke={
-                isCurrent ? "#8b5cf6" : isSelected ? "#6366f1" : "#374151"
-              }
+              stroke={isCurrent ? "#8b5cf6" : isSelected ? "#6366f1" : "#374151"}
               strokeWidth={isCurrent ? "4" : isSelected ? "3" : "2"}
               className="cursor-pointer"
               onMouseDown={(e) => onNucleotideMouseDown(e, nucleotide.id)}
@@ -133,11 +127,7 @@ const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(
         style={{
           width: "100%",
           height: "500px",
-          cursor: isPanning
-            ? "grabbing"
-            : mode === "select"
-              ? "grab"
-              : "crosshair",
+          cursor: isPanning ? "grabbing" : mode === "select" ? "grab" : "crosshair",
         }}
         onClick={onCanvasClick}
         onMouseDown={onCanvasMouseDown}

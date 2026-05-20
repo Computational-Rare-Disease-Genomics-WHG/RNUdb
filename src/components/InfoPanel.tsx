@@ -32,12 +32,7 @@ interface InfoPanelProps {
   paperData: Literature[];
   literatureCounts: LiteratureCounts[];
   variantData: Variant[];
-  overlayMode:
-    | "none"
-    | "clinvar"
-    | "gnomad"
-    | "function_score"
-    | "depletion_group";
+  overlayMode: "none" | "clinvar" | "gnomad" | "function_score" | "depletion_group";
   onCycleOverlay: () => void;
   hoveredNucleotide: Nucleotide | null;
   onNavigateToVariant?: (nucleotideId: number) => void;
@@ -81,9 +76,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         variant.ukbb_ac,
     );
 
-    const clinicalVariants = filteredVariants.filter(
-      (v) => v.clinical_significance,
-    );
+    const clinicalVariants = filteredVariants.filter((v) => v.clinical_significance);
     const populationVariants = filteredVariants.filter(
       (v) => !v.clinical_significance && (v.gnomad_ac || v.aou_ac || v.ukbb_ac),
     );
@@ -200,12 +193,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               </div>
             </div>
             <div className="text-center p-2 bg-white/10 rounded-lg border border-white/20 shadow-sm backdrop-blur-sm">
-              <div className="text-[10px] text-teal-300 font-medium mb-1">
-                Length
-              </div>
-              <div className="text-xs font-bold text-white">
-                {geneLength} bp
-              </div>
+              <div className="text-[10px] text-teal-300 font-medium mb-1">Length</div>
+              <div className="text-xs font-bold text-white">{geneLength} bp</div>
             </div>
           </div>
 
@@ -282,9 +271,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             </CardHeader>
             <CardContent className="p-4">
               {(() => {
-                const variantInfo = getVariantInfoForNucleotide(
-                  hoveredNucleotide.id,
-                );
+                const variantInfo = getVariantInfoForNucleotide(hoveredNucleotide.id);
                 const totalVariants = variantInfo.allVariants.length;
 
                 if (totalVariants === 0) {
@@ -360,20 +347,15 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                               : "text-blue-600"
                                           }`}
                                         >
-                                          {variant.zygosity === "hom"
-                                            ? "Hom"
-                                            : "Het"}
+                                          {variant.zygosity === "hom" ? "Hom" : "Het"}
                                         </span>
                                       )}
                                     </div>
                                     <div className="text-sm font-semibold text-slate-900 mb-0.5">
-                                      {variant.hgvs ||
-                                        `${variant.ref}>${variant.alt}`}
+                                      {variant.hgvs || `${variant.ref}>${variant.alt}`}
                                     </div>
                                     <button
-                                      onClick={() =>
-                                        handleVariantClick(variant)
-                                      }
+                                      onClick={() => handleVariantClick(variant)}
                                       className="text-xs text-slate-400 hover:text-slate-600 hover:underline"
                                     >
                                       {normalizeVariantId(variant.id)}
@@ -386,28 +368,24 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                     <span className="text-slate-500 font-medium">
                                       Compound Het:{" "}
                                     </span>
-                                    {linkedVariants.map(
-                                      (linked, linkedIndex) => {
-                                        const nucPos =
-                                          getNucleotidePosition(linked);
-                                        return (
-                                          <button
-                                            key={linkedIndex}
-                                            onClick={() =>
-                                              nucPos !== null &&
-                                              onNavigateToVariant?.(nucPos)
-                                            }
-                                            className="text-slate-700 hover:text-slate-900 hover:underline cursor-pointer bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300 hover:border-slate-400 rounded px-1 py-0.5 mr-1"
-                                            disabled={nucPos === null}
-                                          >
-                                            {linked.hgvs ||
-                                              `${linked.ref}>${linked.alt}`}
-                                            {linkedIndex <
-                                              linkedVariants.length - 1 && ", "}
-                                          </button>
-                                        );
-                                      },
-                                    )}
+                                    {linkedVariants.map((linked, linkedIndex) => {
+                                      const nucPos = getNucleotidePosition(linked);
+                                      return (
+                                        <button
+                                          key={linkedIndex}
+                                          onClick={() =>
+                                            nucPos !== null &&
+                                            onNavigateToVariant?.(nucPos)
+                                          }
+                                          className="text-slate-700 hover:text-slate-900 hover:underline cursor-pointer bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300 hover:border-slate-400 rounded px-1 py-0.5 mr-1"
+                                          disabled={nucPos === null}
+                                        >
+                                          {linked.hgvs || `${linked.ref}>${linked.alt}`}
+                                          {linkedIndex < linkedVariants.length - 1 &&
+                                            ", "}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
                                 )}
 
@@ -415,27 +393,21 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                   {variant.gnomad_ac !== undefined &&
                                     variant.gnomad_ac > 0 && (
                                       <span>
-                                        <span className="font-medium">
-                                          gnomAD AC:
-                                        </span>{" "}
+                                        <span className="font-medium">gnomAD AC:</span>{" "}
                                         {variant.gnomad_ac.toLocaleString()}
                                       </span>
                                     )}
                                   {variant.aou_ac !== undefined &&
                                     variant.aou_ac > 0 && (
                                       <span>
-                                        <span className="font-medium">
-                                          AoU AC:
-                                        </span>{" "}
+                                        <span className="font-medium">AoU AC:</span>{" "}
                                         {variant.aou_ac.toLocaleString()}
                                       </span>
                                     )}
                                   {variant.ukbb_ac !== undefined &&
                                     variant.ukbb_ac > 0 && (
                                       <span>
-                                        <span className="font-medium">
-                                          UKBB AC:
-                                        </span>{" "}
+                                        <span className="font-medium">UKBB AC:</span>{" "}
                                         {variant.ukbb_ac.toLocaleString()}
                                       </span>
                                     )}
@@ -450,18 +422,14 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                     )}
                                   {variant.depletion_group && (
                                     <span>
-                                      <span className="font-medium">
-                                        Depletion:
-                                      </span>{" "}
+                                      <span className="font-medium">Depletion:</span>{" "}
                                       {variant.depletion_group}
                                     </span>
                                   )}
                                   {variant.pvalues !== undefined &&
                                     variant.pvalues !== null && (
                                       <span>
-                                        <span className="font-medium">
-                                          P-Value:
-                                        </span>{" "}
+                                        <span className="font-medium">P-Value:</span>{" "}
                                         {variant.pvalues < 0.001
                                           ? "<0.001"
                                           : variant.pvalues.toFixed(3)}
@@ -470,9 +438,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                   {variant.qvalues !== undefined &&
                                     variant.qvalues !== null && (
                                       <span>
-                                        <span className="font-medium">
-                                          Q-Value:
-                                        </span>{" "}
+                                        <span className="font-medium">Q-Value:</span>{" "}
                                         {variant.qvalues < 0.001
                                           ? "<0.001"
                                           : variant.qvalues.toFixed(3)}
@@ -486,26 +452,24 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                       Literature ({variantLiterature.length})
                                     </div>
                                     <div className="space-y-1">
-                                      {variantLiterature.map(
-                                        (lit, litIndex) => (
-                                          <div
-                                            key={litIndex}
-                                            className="flex items-center justify-between gap-2 text-xs"
+                                      {variantLiterature.map((lit, litIndex) => (
+                                        <div
+                                          key={litIndex}
+                                          className="flex items-center justify-between gap-2 text-xs"
+                                        >
+                                          <span className="text-slate-600 truncate">
+                                            {lit.authors} ({lit.year})
+                                          </span>
+                                          <a
+                                            href={`https://doi.org/${lit.doi}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-slate-400 hover:text-slate-600 shrink-0"
                                           >
-                                            <span className="text-slate-600 truncate">
-                                              {lit.authors} ({lit.year})
-                                            </span>
-                                            <a
-                                              href={`https://doi.org/${lit.doi}`}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-slate-400 hover:text-slate-600 shrink-0"
-                                            >
-                                              <ExternalLink className="h-3 w-3" />
-                                            </a>
-                                          </div>
-                                        ),
-                                      )}
+                                            <ExternalLink className="h-3 w-3" />
+                                          </a>
+                                        </div>
+                                      ))}
                                     </div>
                                   </div>
                                 )}
@@ -531,13 +495,10 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                 <div className="flex items-center justify-between">
                                   <div>
                                     <div className="text-sm text-slate-700">
-                                      {variant.hgvs ||
-                                        `${variant.ref}>${variant.alt}`}
+                                      {variant.hgvs || `${variant.ref}>${variant.alt}`}
                                     </div>
                                     <button
-                                      onClick={() =>
-                                        handleVariantClick(variant)
-                                      }
+                                      onClick={() => handleVariantClick(variant)}
                                       className="text-xs text-slate-400 hover:text-slate-600"
                                     >
                                       {normalizeVariantId(variant.id)}
@@ -559,14 +520,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                     {variant.function_score !== undefined &&
                                       variant.function_score !== null && (
                                         <span>
-                                          Func.{" "}
-                                          {variant.function_score.toFixed(2)}
+                                          Func. {variant.function_score.toFixed(2)}
                                         </span>
                                       )}
                                     {variant.depletion_group && (
-                                      <span>
-                                        Depletion: {variant.depletion_group}
-                                      </span>
+                                      <span>Depletion: {variant.depletion_group}</span>
                                     )}
                                   </div>
                                 </div>
@@ -612,20 +570,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                     strokeWidth="2"
                     strokeLinecap="round"
                   />
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="8"
-                    fill="currentColor"
-                    opacity="0.3"
-                  />
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="4"
-                    fill="currentColor"
-                    opacity="0.5"
-                  />
+                  <circle cx="32" cy="32" r="8" fill="currentColor" opacity="0.3" />
+                  <circle cx="32" cy="32" r="4" fill="currentColor" opacity="0.5" />
                 </svg>
                 <div className="text-sm font-medium text-slate-600">
                   Hover over a nucleotide
