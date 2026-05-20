@@ -7,20 +7,11 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    exclude: [
-      "src/components/ui/button.test.tsx",
-      "src/hooks/useImportExport.test.ts",
-    ],
+    exclude: ["src/components/ui/button.test.tsx", "src/hooks/useImportExport.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      exclude: [
-        "node_modules/",
-        "dist/",
-        "src/test/",
-        "**/*.d.ts",
-        "**/*.stories.tsx",
-      ],
+      exclude: ["node_modules/", "dist/", "src/test/", "**/*.d.ts", "**/*.stories.tsx"],
     },
   },
   resolve: {
