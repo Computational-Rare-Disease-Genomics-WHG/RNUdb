@@ -17,15 +17,9 @@ interface DomainsTrackProps {
   domains: StructuralFeature[];
   regions: { start: number; stop: number }[];
   geneStart: number;
-  geneStrand: string;
 }
 
-const DomainsTrack: React.FC<DomainsTrackProps> = ({
-  domains,
-  regions,
-  geneStart,
-  geneStrand,
-}) => {
+const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart }) => {
   const height = 50;
   const currentRegion = regions[0];
 
@@ -35,9 +29,6 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({
   };
 
   const getGenomicPos = (nucleotideId: number): number => {
-    if (geneStrand === "-") {
-      return geneStart - nucleotideId + 1;
-    }
     return geneStart + nucleotideId - 1;
   };
 
