@@ -17,7 +17,6 @@ interface GenomeBrowserProps {
   aouVariants: any[];
   structuralFeatures: any[];
   functionScoreTrackData: any;
-  depletionGroupTrackData: any;
   geneData: {
     id: string;
     name: string;
@@ -36,7 +35,6 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   aouVariants,
   structuralFeatures,
   functionScoreTrackData,
-  depletionGroupTrackData,
   geneData,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -234,15 +232,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               height={80}
               data={functionScoreTrackData}
               regions={regions}
-              displayType="bars"
-              geneStart={geneData.start}
-            />
-            <GenericTrack
-              title="Depletion Group"
-              height={30}
-              data={depletionGroupTrackData}
-              regions={regions}
-              displayType="bars"
+              displayType="points"
               geneStart={geneData.start}
             />
             <SnRNAVariantTrack

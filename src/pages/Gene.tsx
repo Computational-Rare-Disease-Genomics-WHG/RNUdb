@@ -350,7 +350,6 @@ const Gene: React.FC = () => {
             getCurrentOverlayData={getCurrentOverlayData}
             cycleOverlayMode={cycleOverlayMode}
             functionScoreTrackData={functionScoreTrackData}
-            depletionGroupTrackData={depletionGroupTrackData}
             aouVariants={aouVariants}
           />
         </div>
