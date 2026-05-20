@@ -3,6 +3,7 @@ import { RegionViewer, PositionAxisTrack, Cursor } from "@gnomad/region-viewer";
 import domtoimage from "dom-to-image-more";
 import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
+import DomainsTrack from "./DomainsTrack";
 import GenericTrack from "./GenericTrack";
 import SequenceTrack from "./SequenceTrack";
 import SnRNAVariantTrack from "./SnRNAVariantTrack";
@@ -14,6 +15,7 @@ interface GenomeBrowserProps {
   variants: any[];
   gnomadVariants: any[];
   aouVariants: any[];
+  structuralFeatures: any[];
   functionScoreTrackData: any;
   depletionGroupTrackData: any;
   geneData: {
@@ -32,6 +34,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   variants,
   gnomadVariants,
   aouVariants,
+  structuralFeatures,
   functionScoreTrackData,
   depletionGroupTrackData,
   geneData,
@@ -221,32 +224,11 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
             }}
             renderCursor={renderCustomCursor}
           >
-            {/* <GenesTrack
-              title="Genes"
-              genes={genes}
-              renderGeneLabel={(gene) => (
-                <g>
-                  <text className="genes-track-label">
-                    {gene.gene_name}
-                  </text>
-                  <text className="genes-track-type" dy={10}>
-                    {gene.gene_type || 'gene'}
-                  </text>
-                </g>
-              )}
-              renderGene={(gene) => {
-                const color = gene.gene_type === 'snRNA' ? COLORBLIND_FRIENDLY_PALETTE.GENES.SNRNA :
-                             gene.gene_type === 'protein_coding' ? COLORBLIND_FRIENDLY_PALETTE.GENES.PROTEIN_CODING :
-                             COLORBLIND_FRIENDLY_PALETTE.GENES.OTHER;
-                return (
-                  <rect
-                    fill={color}
-                    stroke={color}
-                    strokeWidth={1}
-                  />
-                );
-              }}
-            /> */}
+            <DomainsTrack
+              domains={structuralFeatures}
+              regions={regions}
+              geneStart={geneData.start}
+            />
             <GenericTrack
               title="Function Score"
               height={80}

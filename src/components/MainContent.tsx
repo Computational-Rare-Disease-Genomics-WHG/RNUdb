@@ -222,6 +222,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 variants={variantData}
                 gnomadVariants={gnomadVariants}
                 aouVariants={aouVariants}
+                structuralFeatures={rnaStructureData?.structural_features || []}
                 functionScoreTrackData={functionScoreTrackData}
                 depletionGroupTrackData={depletionGroupTrackData}
                 geneData={{
