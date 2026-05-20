@@ -4,7 +4,6 @@ import domtoimage from "dom-to-image-more";
 import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import DomainsTrack from "./DomainsTrack";
-import GeneBodyTrack from "./GeneBodyTrack";
 import GenericTrack from "./GenericTrack";
 import SequenceTrack from "./SequenceTrack";
 import SnRNAVariantTrack from "./SnRNAVariantTrack";
@@ -225,12 +224,6 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
             }}
             renderCursor={renderCustomCursor}
           >
-            <GeneBodyTrack
-              geneStart={geneData.start}
-              geneEnd={geneData.end}
-              geneName={geneData.name}
-              regions={regions}
-            />
             <DomainsTrack
               domains={structuralFeatures}
               regions={regions}
