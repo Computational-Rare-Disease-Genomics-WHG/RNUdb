@@ -220,10 +220,11 @@ async def refresh_gene_variants(
     if not gene:
         raise HTTPException(status_code=404, detail="Gene not found")
 
-    chrom = gene.chromosome
-    if not chrom.startswith("chr"):
-        chrom = chrom[3:]
-    chrom = f"chr{chrom}"
+    chrom = (
+        gene.chromosome
+        if not gene.chromosome.startswith("chr")
+        else gene.chromosome[3:]
+    )
 
     from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
 
