@@ -40,6 +40,7 @@ interface InfoPanelProps {
     | "depletion_group";
   onCycleOverlay: () => void;
   hoveredNucleotide: Nucleotide | null;
+  onNavigateToVariant?: (nucleotideId: number) => void;
 }
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
@@ -48,6 +49,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   literatureCounts,
   hoveredNucleotide,
   variantData,
+  onNavigateToVariant,
 }) => {
   const navigate = useNavigate();
   const geneLength = currentData.end - currentData.start + 1;
@@ -91,6 +93,23 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       populationVariants,
       allVariants: filteredVariants,
     };
+  };
+
+  const getNucleotidePosition = (variant: Variant): number | null => {
+    if (
+      variant.nucleotidePosition !== undefined &&
+      variant.nucleotidePosition !== null
+    ) {
+      return variant.nucleotidePosition;
+    }
+    if (variant.position) {
+      if (currentData.strand === "-") {
+        return currentData.end - variant.position + 1;
+      } else {
+        return variant.position - currentData.start + 1;
+      }
+    }
+    return null;
   };
 
   const normalizeVariantId = (id: string) => id.replace(/^chr/, "");
@@ -368,17 +387,26 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                       Compound Het:{" "}
                                     </span>
                                     {linkedVariants.map(
-                                      (linked, linkedIndex) => (
-                                        <span
-                                          key={linkedIndex}
-                                          className="text-slate-700"
-                                        >
-                                          {linked.hgvs ||
-                                            `${linked.ref}>${linked.alt}`}
-                                          {linkedIndex <
-                                            linkedVariants.length - 1 && ", "}
-                                        </span>
-                                      ),
+                                      (linked, linkedIndex) => {
+                                        const nucPos =
+                                          getNucleotidePosition(linked);
+                                        return (
+                                          <button
+                                            key={linkedIndex}
+                                            onClick={() =>
+                                              nucPos !== null &&
+                                              onNavigateToVariant?.(nucPos)
+                                            }
+                                            className="text-slate-700 hover:text-slate-900 hover:underline cursor-pointer bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300 hover:border-slate-400 rounded px-1 py-0.5 mr-1"
+                                            disabled={nucPos === null}
+                                          >
+                                            {linked.hgvs ||
+                                              `${linked.ref}>${linked.alt}`}
+                                            {linkedIndex <
+                                              linkedVariants.length - 1 && ", "}
+                                          </button>
+                                        );
+                                      },
                                     )}
                                   </div>
                                 )}

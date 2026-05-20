@@ -157,6 +157,14 @@ const MainContent: React.FC<MainContentProps> = ({
               hoveredNucleotide={getDisplayNucleotide()}
               overlayMode={overlayMode}
               onCycleOverlay={cycleOverlayMode}
+              onNavigateToVariant={(nucleotideId) => {
+                const nucleotide = rnaStructureData?.nucleotides.find(
+                  (n) => n.id === nucleotideId,
+                );
+                if (nucleotide) {
+                  setHoveredNucleotide(nucleotide);
+                }
+              }}
             />
           </div>
 
