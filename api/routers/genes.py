@@ -25,6 +25,8 @@ from api.models import (
     RNAStructureCreate,
     StructuralFeature,
     StructuralFeatureModel,
+    Variant,
+    VariantClassification,
     VariantPublic,
 )
 from api.routers.auth import require_admin
@@ -359,11 +361,15 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
     rows = db.execute(sql, {"gene_id": gene_id}).fetchall()
 
     variant_classifications_sql = text("""
-        SELECT variant_id, literature_id, clinical_significance, zygosity,
-               disease, linked_variant_ids, inheritance
-        FROM variant_classifications
+        SELECT vc.variant_id, vc.literature_id, vc.clinical_significance, vc.zygosity,
+               vc.disease, vc.linked_variant_ids, vc.inheritance
+        FROM variant_classifications vc
+        JOIN variants v ON vc.variant_id = v.id
+        WHERE v.geneId = :gene_id
     """)
-    classifications_rows = db.execute(variant_classifications_sql).fetchall()
+    classifications_rows = db.execute(
+        variant_classifications_sql, {"gene_id": gene_id}
+    ).fetchall()
 
     classifications_by_variant = {}
     for row in classifications_rows:
@@ -418,8 +424,21 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
 
 @router.get("/genes/{gene_id}/literature", response_model=list[LiteraturePublic])
 async def get_gene_literature(gene_id: str, db: Session = Depends(get_db)):
-    """Get all literature (gene associations removed)"""
-    literature = db.execute(select(Literature)).scalars().all()
+    """Get all literature for a specific gene"""
+    literature = (
+        db.execute(
+            select(Literature)
+            .join(
+                VariantClassification,
+                Literature.id == VariantClassification.literature_id,
+            )
+            .join(Variant, VariantClassification.variant_id == Variant.id)
+            .where(Variant.geneId == gene_id)
+            .distinct()
+        )
+        .scalars()
+        .all()
+    )
     return [LiteraturePublic.model_validate(lit) for lit in literature]
 
 
@@ -447,50 +466,75 @@ async def get_gene_structures(gene_id: str, db: Session = Depends(get_db)):
     )
 
     result = []
-    for structure in structures:
-        # Query nucleotides
-        nucleotide_rows = (
-            db.execute(
-                select(Nucleotide).where(Nucleotide.structure_id == structure.id)
-            )
-            .scalars()
-            .all()
-        )
-        nucleotides = [NucleotideModel.model_validate(row) for row in nucleotide_rows]
+    if not structures:
+        return result
 
-        # Query base pairs
-        base_pair_rows = (
-            db.execute(select(BasePair).where(BasePair.structure_id == structure.id))
-            .scalars()
-            .all()
+    structure_ids = [s.id for s in structures]
+
+    nucleotide_rows = (
+        db.execute(select(Nucleotide).where(Nucleotide.structure_id.in_(structure_ids)))
+        .scalars()
+        .all()
+    )
+    base_pair_rows = (
+        db.execute(select(BasePair).where(BasePair.structure_id.in_(structure_ids)))
+        .scalars()
+        .all()
+    )
+    annotation_rows = (
+        db.execute(select(Annotation).where(Annotation.structure_id.in_(structure_ids)))
+        .scalars()
+        .all()
+    )
+    feature_rows = (
+        db.execute(
+            select(StructuralFeature).where(
+                StructuralFeature.structure_id.in_(structure_ids)
+            )
         )
+        .scalars()
+        .all()
+    )
+
+    nucleotides_by_structure: dict[str, list[Nucleotide]] = {
+        sid: [] for sid in structure_ids
+    }
+    for n in nucleotide_rows:
+        nucleotides_by_structure[n.structure_id].append(n)
+
+    base_pairs_by_structure: dict[str, list[BasePair]] = {
+        sid: [] for sid in structure_ids
+    }
+    for bp in base_pair_rows:
+        base_pairs_by_structure[bp.structure_id].append(bp)
+
+    annotations_by_structure: dict[str, list[Annotation]] = {
+        sid: [] for sid in structure_ids
+    }
+    for a in annotation_rows:
+        annotations_by_structure[a.structure_id].append(a)
+
+    features_by_structure: dict[str, list[StructuralFeature]] = {
+        sid: [] for sid in structure_ids
+    }
+    for f in feature_rows:
+        features_by_structure[f.structure_id].append(f)
+
+    for structure in structures:
+        nucleotides = [
+            NucleotideModel.model_validate(row)
+            for row in nucleotides_by_structure[structure.id]
+        ]
         base_pairs = [
             BasePairModel(from_pos=row.from_pos, to_pos=row.to_pos)
-            for row in base_pair_rows
+            for row in base_pairs_by_structure[structure.id]
         ]
-
-        # Query annotations
-        annotation_rows = (
-            db.execute(
-                select(Annotation).where(Annotation.structure_id == structure.id)
-            )
-            .scalars()
-            .all()
-        )
-        annotations = [AnnotationModel.model_validate(row) for row in annotation_rows]
-
-        # Query structural features
-        feature_rows = (
-            db.execute(
-                select(StructuralFeature).where(
-                    StructuralFeature.structure_id == structure.id
-                )
-            )
-            .scalars()
-            .all()
-        )
+        annotations = [
+            AnnotationModel.model_validate(row)
+            for row in annotations_by_structure[structure.id]
+        ]
         structural_features = []
-        for row in feature_rows:
+        for row in features_by_structure[structure.id]:
             feature = {
                 "id": row.id,
                 "feature_type": row.feature_type,

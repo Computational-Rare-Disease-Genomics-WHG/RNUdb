@@ -33,6 +33,30 @@ class TestGenesAPI:
         response = test_client.get("/api/genes/RNU4-2/literature")
         assert response.status_code in (200, 404)
 
+    def test_gene_literature_scoped(self, test_client, sample_variant_classification):
+        """GET /api/genes/{id}/literature returns only data for that gene."""
+        response = test_client.get("/api/genes/RNU4-2/literature")
+        assert response.status_code == 200
+        assert len(response.json()) >= 1
+
+        response_other = test_client.get("/api/genes/NONEXISTENT/literature")
+        assert response_other.status_code == 200
+        assert response_other.json() == []
+
+    def test_gene_variants_classifications_scoped(
+        self, test_client, sample_variant_classification
+    ):
+        """GET /api/genes/{id}/variants returns only classifications for that gene."""
+        response = test_client.get("/api/genes/RNU4-2/variants")
+        assert response.status_code == 200
+        data = response.json()
+        for variant in data:
+            assert variant.get("clinical_significance") is not None
+
+        response_other = test_client.get("/api/genes/NONEXISTENT/variants")
+        assert response_other.status_code == 200
+        assert response_other.json() == []
+
     def test_get_gene_structures(self, test_client, seed_gene):
         """GET /api/genes/{id}/structures returns structures for gene."""
         response = test_client.get("/api/genes/RNU4-2/structures")
@@ -107,6 +131,36 @@ class TestLiteratureAPI:
         """GET /api/literature returns list of literature."""
         response = test_client.get("/api/literature")
         assert response.status_code == 200
+
+    def test_literature_year_rejects_string(self, test_client, seed_gene):
+        """POST /api/literature with non-integer year returns 422."""
+        response = test_client.post(
+            "/api/literature",
+            json={
+                "id": "10.1000/test.invalid.year",
+                "title": "Bad Year Test",
+                "authors": "Test Author",
+                "journal": "Test Journal",
+                "year": "not-a-year",
+                "doi": "10.1000/test.invalid.year",
+            },
+        )
+        assert response.status_code == 422
+
+    def test_literature_year_out_of_range(self, test_client, seed_gene):
+        """POST /api/literature with out-of-range year returns 422."""
+        response = test_client.post(
+            "/api/literature",
+            json={
+                "id": "10.1000/test.out.of.range",
+                "title": "Bad Year Test",
+                "authors": "Test Author",
+                "journal": "Test Journal",
+                "year": 999,
+                "doi": "10.1000/test.out.of.range",
+            },
+        )
+        assert response.status_code == 422
 
 
 class TestBedTracksAPI:
@@ -307,7 +361,7 @@ class TestLiteratureBulkImport:
                         "title": "Test Paper 1",
                         "authors": "Author A, Author B",
                         "journal": "Nature",
-                        "year": "2024",
+                        "year": 2024,
                         "doi": "10.1000/test.doi.1",
                     }
                 ]

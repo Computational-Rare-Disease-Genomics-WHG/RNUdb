@@ -312,7 +312,7 @@ def sample_literature():
         title="Test Paper on Retinitis Pigmentosa",
         authors="Smith J, Doe A",
         journal="bioRxiv",
-        year="2025",
+        year=2025,
         doi="10.1101/2025.08.13.25333306",
         pmid="12345678",
     )
