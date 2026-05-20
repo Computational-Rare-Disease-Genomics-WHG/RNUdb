@@ -183,6 +183,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         const maxSignificance = filteredVariants.reduce((max, v) => {
           const significanceOrder: Record<string, number> = {
             Pathogenic: 4,
+            "Likely Pathogenic": 4,
             VUS: 2,
             "Likely Benign": 1,
             Benign: 0,
@@ -196,6 +197,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
         const valueMap: Record<string, number> = {
           Pathogenic: 1,
+          "Likely Pathogenic": 1,
           VUS: 0.25,
           "Likely Benign": 0.125,
           Benign: 0,
