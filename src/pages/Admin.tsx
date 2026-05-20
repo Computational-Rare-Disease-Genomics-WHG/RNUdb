@@ -204,7 +204,11 @@ const Admin: React.FC = () => {
   const totalPages = Math.ceil(changeLog.length / ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen flex flex-col bg-slate-50"
+    >
       <Header showSearch={false} />
 
       <div className="max-w-7xl mx-auto px-4 py-6 pt-12 flex-1 w-full">

@@ -342,7 +342,11 @@ const Editor: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100">
+    <div
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100"
+    >
       <EditorHeader onExport={handleExport} onImport={handleImport} />
 
       <FullscreenCanvas

@@ -136,6 +136,15 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
         <input
           ref={inputRef}
           type="text"
+          role="combobox"
+          aria-expanded={showResults}
+          aria-haspopup="listbox"
+          aria-controls="search-results-listbox"
+          aria-activedescendant={
+            showResults && selectedIndex >= 0
+              ? `search-result-${results[selectedIndex].type}-${results[selectedIndex].item.id}`
+              : undefined
+          }
           placeholder={placeholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -171,11 +180,18 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
 
       {showResults && results.length > 0 && (
         <div className="absolute top-full left-0 right-0 z-[100] mt-3">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden">
+          <div
+            id="search-results-listbox"
+            role="listbox"
+            className="bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden"
+          >
             <div className="max-h-72 overflow-y-auto">
               {results.map((result, index) => (
                 <button
                   key={`${result.type}-${result.item.id}`}
+                  id={`search-result-${result.type}-${result.item.id}`}
+                  role="option"
+                  aria-selected={selectedIndex === index}
                   onClick={() => handleResultSelect(result)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`

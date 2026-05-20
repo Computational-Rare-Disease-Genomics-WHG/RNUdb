@@ -113,6 +113,7 @@ const Curate: React.FC = () => {
   const [editingVariantAssociation, setEditingVariantAssociation] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const regionViewerRef = useRef<HTMLDivElement>(null);
+  const tabPanelRef = useRef<HTMLDivElement>(null);
   const [regionViewerWidth, setRegionViewerWidth] = useState(1100);
   const { submitChange } = useApprovals();
 
@@ -157,6 +158,13 @@ const Curate: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Focus tab panel when a gene is selected
+  useEffect(() => {
+    if (selectedGene) {
+      tabPanelRef.current?.focus();
+    }
+  }, [selectedGene]);
 
   const loadGenes = async () => {
     try {
@@ -524,7 +532,11 @@ const Curate: React.FC = () => {
   if (!isCurator) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-slate-50 flex flex-col"
+    >
       <Header showSearch={false} />
 
       <div className="max-w-7xl mx-auto px-4 py-6 pt-12 flex-1 w-full">
@@ -716,637 +728,639 @@ const Curate: React.FC = () => {
               </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-6 bg-slate-100 p-1 rounded-lg">
-                <TabsTrigger
-                  value="variants"
-                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Variants
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 bg-slate-100 text-slate-600"
+            <div ref={tabPanelRef} tabIndex={-1} className="outline-none">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="mb-6 bg-slate-100 p-1 rounded-lg">
+                  <TabsTrigger
+                    value="variants"
+                    className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                   >
-                    {variants.length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="structures"
-                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-                >
-                  <Layers className="h-4 w-4 mr-2" />
-                  Structures
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 bg-slate-100 text-slate-600"
+                    <FileText className="h-4 w-4 mr-2" />
+                    Variants
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-slate-100 text-slate-600"
+                    >
+                      {variants.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="structures"
+                    className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                   >
-                    {structures.length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="literature"
-                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-                >
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Literature
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 bg-slate-100 text-slate-600"
+                    <Layers className="h-4 w-4 mr-2" />
+                    Structures
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-slate-100 text-slate-600"
+                    >
+                      {structures.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="literature"
+                    className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                   >
-                    {literature.length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="bedtracks"
-                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-                >
-                  <DnaIcon className="h-4 w-4 mr-2" />
-                  BED Tracks
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 bg-slate-100 text-slate-600"
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Literature
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-slate-100 text-slate-600"
+                    >
+                      {literature.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="bedtracks"
+                    className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                   >
-                    {bedTracks.length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="variant_associations"
-                  className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
-                >
-                  <Layers className="h-4 w-4 mr-2" />
-                  Variant Associations
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 bg-slate-100 text-slate-600"
+                    <DnaIcon className="h-4 w-4 mr-2" />
+                    BED Tracks
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-slate-100 text-slate-600"
+                    >
+                      {bedTracks.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="variant_associations"
+                    className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
                   >
-                    {variantAssociations.length}
-                  </Badge>
-                </TabsTrigger>
-              </TabsList>
+                    <Layers className="h-4 w-4 mr-2" />
+                    Variant Associations
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-slate-100 text-slate-600"
+                    >
+                      {variantAssociations.length}
+                    </Badge>
+                  </TabsTrigger>
+                </TabsList>
 
-              {/* Variants Tab */}
-              <TabsContent value="variants" className="mt-0">
-                <Card className="bg-white border border-slate-200 shadow-sm">
-                  <div className="p-6 border-b border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          Variants
-                        </h3>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                          {selectedVariants.size > 0
-                            ? `${selectedVariants.size} selected`
-                            : `${variants.length} total variants`}
-                        </p>
-                      </div>
-                      <div className="flex gap-3">
-                        {selectedVariants.size > 0 && (
+                {/* Variants Tab */}
+                <TabsContent value="variants" className="mt-0">
+                  <Card className="bg-white border border-slate-200 shadow-sm">
+                    <div className="p-6 border-b border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            Variants
+                          </h3>
+                          <p className="text-sm text-slate-500 mt-0.5">
+                            {selectedVariants.size > 0
+                              ? `${selectedVariants.size} selected`
+                              : `${variants.length} total variants`}
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          {selectedVariants.size > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleDeleteVariants}
+                              className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete {selectedVariants.size}
+                            </Button>
+                          )}
                           <Button
-                            variant="outline"
                             size="sm"
-                            onClick={handleDeleteVariants}
-                            className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingVariant(null);
+                              setShowVariantForm(true);
+                            }}
+                            className="border-teal-200 text-teal-700 hover:bg-teal-50 hover:border-teal-300"
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete {selectedVariants.size}
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Variant
                           </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingVariant(null);
-                            setShowVariantForm(true);
-                          }}
-                          className="border-teal-200 text-teal-700 hover:bg-teal-50 hover:border-teal-300"
+                          <Button
+                            size="sm"
+                            onClick={() => setShowVariantImport(true)}
+                            className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import Variants
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    {selectedGene && variants.length > 0 && (
+                      <div className="px-6 pb-4">
+                        <div className="text-xs text-slate-500 mb-2 px-1">
+                          {selectedGene.name}: {selectedGene.start.toLocaleString()} –{" "}
+                          {selectedGene.end.toLocaleString()}
+                        </div>
+                        <div
+                          ref={regionViewerRef}
+                          className="genome-browser-viewer w-full"
                         >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Variant
-                        </Button>
+                          <RegionViewer
+                            regions={[
+                              {
+                                start: selectedGene.start,
+                                stop: selectedGene.end,
+                              },
+                            ]}
+                            width={regionViewerWidth || 1100}
+                            leftPanelWidth={80}
+                            rightPanelWidth={0}
+                          >
+                            <PositionAxisTrack />
+                            <CuratorVariantTrack
+                              variants={variants}
+                              title={selectedGene.name}
+                            />
+                          </RegionViewer>
+                        </div>
+                      </div>
+                    )}
+                    {loading ? (
+                      <div className="p-6 space-y-3">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Skeleton key={i} className="h-12 w-full" />
+                        ))}
+                      </div>
+                    ) : variants.length === 0 ? (
+                      <div className="text-center py-16">
+                        <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
+                          <FileText className="h-8 w-8 text-slate-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                          No variants yet
+                        </h3>
+                        <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                          This gene doesn&apos;t have any variants. Import a CSV file to
+                          add variants.
+                        </p>
                         <Button
-                          size="sm"
                           onClick={() => setShowVariantImport(true)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
+                          className="bg-teal-600 hover:bg-teal-700 text-white"
                         >
                           <Upload className="h-4 w-4 mr-2" />
                           Import Variants
                         </Button>
                       </div>
-                    </div>
-                  </div>
-                  {selectedGene && variants.length > 0 && (
-                    <div className="px-6 pb-4">
-                      <div className="text-xs text-slate-500 mb-2 px-1">
-                        {selectedGene.name}: {selectedGene.start.toLocaleString()} –{" "}
-                        {selectedGene.end.toLocaleString()}
-                      </div>
-                      <div
-                        ref={regionViewerRef}
-                        className="genome-browser-viewer w-full"
-                      >
-                        <RegionViewer
-                          regions={[
-                            {
-                              start: selectedGene.start,
-                              stop: selectedGene.end,
-                            },
-                          ]}
-                          width={regionViewerWidth || 1100}
-                          leftPanelWidth={80}
-                          rightPanelWidth={0}
-                        >
-                          <PositionAxisTrack />
-                          <CuratorVariantTrack
-                            variants={variants}
-                            title={selectedGene.name}
-                          />
-                        </RegionViewer>
-                      </div>
-                    </div>
-                  )}
-                  {loading ? (
-                    <div className="p-6 space-y-3">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Skeleton key={i} className="h-12 w-full" />
-                      ))}
-                    </div>
-                  ) : variants.length === 0 ? (
-                    <div className="text-center py-16">
-                      <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
-                        <FileText className="h-8 w-8 text-slate-400" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                        No variants yet
-                      </h3>
-                      <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                        This gene doesn&apos;t have any variants. Import a CSV file to
-                        add variants.
-                      </p>
-                      <Button
-                        onClick={() => setShowVariantImport(true)}
-                        className="bg-teal-600 hover:bg-teal-700 text-white"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Import Variants
-                      </Button>
-                    </div>
-                  ) : (
-                    <VariantTable
-                      data={variants}
-                      selectedVariants={selectedVariants}
-                      onToggleVariant={toggleVariantSelection}
-                      onEdit={handleEditVariant}
-                      getClinicalSigColor={getClinicalSigColor}
-                    />
-                  )}
-                </Card>
-              </TabsContent>
+                    ) : (
+                      <VariantTable
+                        data={variants}
+                        selectedVariants={selectedVariants}
+                        onToggleVariant={toggleVariantSelection}
+                        onEdit={handleEditVariant}
+                        getClinicalSigColor={getClinicalSigColor}
+                      />
+                    )}
+                  </Card>
+                </TabsContent>
 
-              {/* Structures Tab */}
-              <TabsContent value="structures" className="mt-0">
-                <Card className="bg-white border border-slate-200 shadow-sm">
-                  <div className="p-6 border-b border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          RNA Structures
-                        </h3>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                          {structures.length} structure(s) available
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => setShowStructureImport(true)}
-                        className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Import Structure
-                      </Button>
-                    </div>
-                  </div>
-                  <CardContent className="p-6">
-                    {loading ? (
-                      <Skeleton className="h-32 w-full" />
-                    ) : structures.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
-                          <Layers className="h-8 w-8 text-slate-400" />
+                {/* Structures Tab */}
+                <TabsContent value="structures" className="mt-0">
+                  <Card className="bg-white border border-slate-200 shadow-sm">
+                    <div className="p-6 border-b border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            RNA Structures
+                          </h3>
+                          <p className="text-sm text-slate-500 mt-0.5">
+                            {structures.length} structure(s) available
+                          </p>
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                          No structures yet
-                        </h3>
-                        <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                          Import a JSON structure file from the RNA Editor to visualize
-                          and store it.
-                        </p>
                         <Button
+                          size="sm"
                           onClick={() => setShowStructureImport(true)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white"
+                          className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
                         >
                           <Upload className="h-4 w-4 mr-2" />
                           Import Structure
                         </Button>
                       </div>
-                    ) : (
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {structures.map((structure: any) => (
-                          <div
-                            key={structure.id}
-                            className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-md transition-all group relative"
-                          >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="p-2 bg-teal-50 rounded-lg group-hover:bg-teal-100 transition-colors">
-                                <Layers className="h-5 w-5 text-teal-600" />
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                                <button
-                                  onClick={() => handleDeleteStructure(structure.id)}
-                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                                  title="Delete structure"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </div>
-                            <h4 className="font-semibold text-slate-900 mb-1">
-                              {structure.id}
-                            </h4>
-                            <div className="text-sm text-slate-500 space-y-1">
-                              <p>{structure.nucleotides?.length || 0} nucleotides</p>
-                              <p>{structure.basePairs?.length || 0} base pairs</p>
-                              {structure.annotations?.length > 0 && (
-                                <p>{structure.annotations.length} annotations</p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Literature Tab */}
-              <TabsContent value="literature" className="mt-0">
-                <Card className="bg-white border border-slate-200 shadow-sm">
-                  <div className="p-6 border-b border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          Literature
-                        </h3>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                          {literature.length} paper(s) linked
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingLiterature(null);
-                            setShowLiteratureForm(true);
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowLiteratureImport(true)}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Import CSV
-                        </Button>
-                      </div>
                     </div>
-                  </div>
-                  <CardContent className="p-6">
-                    {loading ? (
-                      <div className="space-y-3">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                          <Skeleton key={i} className="h-20 w-full" />
-                        ))}
-                      </div>
-                    ) : literature.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
-                          <BookOpen className="h-8 w-8 text-slate-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                          No literature yet
-                        </h3>
-                        <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                          Add research papers and publications related to this gene.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {literature.map((paper: any) => (
-                          <div
-                            key={paper.id}
-                            className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-sm transition-all group relative"
+                    <CardContent className="p-6">
+                      {loading ? (
+                        <Skeleton className="h-32 w-full" />
+                      ) : structures.length === 0 ? (
+                        <div className="text-center py-16">
+                          <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
+                            <Layers className="h-8 w-8 text-slate-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            No structures yet
+                          </h3>
+                          <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                            Import a JSON structure file from the RNA Editor to
+                            visualize and store it.
+                          </p>
+                          <Button
+                            onClick={() => setShowStructureImport(true)}
+                            className="bg-teal-600 hover:bg-teal-700 text-white"
                           >
-                            <div className="flex items-start gap-4">
-                              <div className="p-2 bg-amber-50 rounded-lg shrink-0">
-                                <BookOpen className="h-5 w-5 text-amber-600" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-slate-900 mb-1">
-                                  {paper.title}
-                                </h4>
-                                <p className="text-sm text-slate-500 mb-2">
-                                  {paper.authors} •{" "}
-                                  <span className="font-medium text-slate-700">
-                                    {paper.journal}
-                                  </span>{" "}
-                                  • {paper.year}
-                                </p>
-                                {paper.doi && (
-                                  <a
-                                    href={`https://doi.org/${paper.doi}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm text-teal-600 hover:text-teal-700 font-medium inline-flex items-center gap-1"
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import Structure
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {structures.map((structure: any) => (
+                            <div
+                              key={structure.id}
+                              className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-md transition-all group relative"
+                            >
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="p-2 bg-teal-50 rounded-lg group-hover:bg-teal-100 transition-colors">
+                                  <Layers className="h-5 w-5 text-teal-600" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                                  <button
+                                    onClick={() => handleDeleteStructure(structure.id)}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                    title="Delete structure"
                                   >
-                                    DOI: {paper.doi}
-                                    <ChevronRight className="h-3 w-3" />
-                                  </a>
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              <h4 className="font-semibold text-slate-900 mb-1">
+                                {structure.id}
+                              </h4>
+                              <div className="text-sm text-slate-500 space-y-1">
+                                <p>{structure.nucleotides?.length || 0} nucleotides</p>
+                                <p>{structure.basePairs?.length || 0} base pairs</p>
+                                {structure.annotations?.length > 0 && (
+                                  <p>{structure.annotations.length} annotations</p>
                                 )}
                               </div>
-                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-slate-400 hover:text-slate-600"
-                                  onClick={() => {
-                                    setEditingLiterature(paper);
-                                    setShowLiteratureForm(true);
-                                  }}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-slate-400 hover:text-red-600"
-                                  onClick={async () => {
-                                    if (
-                                      confirm(`Delete literature "${paper.title}"?`)
-                                    ) {
-                                      try {
-                                        const res = await fetch(
-                                          `/api/literature?literature_id=${encodeURIComponent(paper.id)}`,
-                                          {
-                                            method: "DELETE",
-                                            credentials: "include",
-                                          },
-                                        );
-                                        if (res.ok) {
-                                          setLiterature(
-                                            literature.filter(
-                                              (l: any) => l.id !== paper.id,
-                                            ),
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Literature Tab */}
+                <TabsContent value="literature" className="mt-0">
+                  <Card className="bg-white border border-slate-200 shadow-sm">
+                    <div className="p-6 border-b border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            Literature
+                          </h3>
+                          <p className="text-sm text-slate-500 mt-0.5">
+                            {literature.length} paper(s) linked
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingLiterature(null);
+                              setShowLiteratureForm(true);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowLiteratureImport(true)}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import CSV
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <CardContent className="p-6">
+                      {loading ? (
+                        <div className="space-y-3">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <Skeleton key={i} className="h-20 w-full" />
+                          ))}
+                        </div>
+                      ) : literature.length === 0 ? (
+                        <div className="text-center py-16">
+                          <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
+                            <BookOpen className="h-8 w-8 text-slate-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            No literature yet
+                          </h3>
+                          <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                            Add research papers and publications related to this gene.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {literature.map((paper: any) => (
+                            <div
+                              key={paper.id}
+                              className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-sm transition-all group relative"
+                            >
+                              <div className="flex items-start gap-4">
+                                <div className="p-2 bg-amber-50 rounded-lg shrink-0">
+                                  <BookOpen className="h-5 w-5 text-amber-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-slate-900 mb-1">
+                                    {paper.title}
+                                  </h4>
+                                  <p className="text-sm text-slate-500 mb-2">
+                                    {paper.authors} •{" "}
+                                    <span className="font-medium text-slate-700">
+                                      {paper.journal}
+                                    </span>{" "}
+                                    • {paper.year}
+                                  </p>
+                                  {paper.doi && (
+                                    <a
+                                      href={`https://doi.org/${paper.doi}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm text-teal-600 hover:text-teal-700 font-medium inline-flex items-center gap-1"
+                                    >
+                                      DOI: {paper.doi}
+                                      <ChevronRight className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                </div>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                                    onClick={() => {
+                                      setEditingLiterature(paper);
+                                      setShowLiteratureForm(true);
+                                    }}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-400 hover:text-red-600"
+                                    onClick={async () => {
+                                      if (
+                                        confirm(`Delete literature "${paper.title}"?`)
+                                      ) {
+                                        try {
+                                          const res = await fetch(
+                                            `/api/literature?literature_id=${encodeURIComponent(paper.id)}`,
+                                            {
+                                              method: "DELETE",
+                                              credentials: "include",
+                                            },
                                           );
-                                        } else {
-                                          const err = await res.text();
-                                          alert(
-                                            `Failed to delete: ${res.status} ${err}`,
-                                          );
+                                          if (res.ok) {
+                                            setLiterature(
+                                              literature.filter(
+                                                (l: any) => l.id !== paper.id,
+                                              ),
+                                            );
+                                          } else {
+                                            const err = await res.text();
+                                            alert(
+                                              `Failed to delete: ${res.status} ${err}`,
+                                            );
+                                          }
+                                        } catch {
+                                          alert("Failed to delete");
                                         }
-                                      } catch {
-                                        alert("Failed to delete");
                                       }
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              {/* BED Tracks Tab */}
-              <TabsContent value="bedtracks" className="mt-0">
-                <Card className="bg-white border border-slate-200 shadow-sm">
-                  <div className="p-6 border-b border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          BED Tracks
-                        </h3>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                          {bedTracks.length} annotation track(s)
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => setShowBEDImport(true)}
-                        className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Import BED Track
-                      </Button>
-                    </div>
-                  </div>
-                  <CardContent className="p-6">
-                    {loading ? (
-                      <Skeleton className="h-32 w-full" />
-                    ) : bedTracks.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
-                          <DnaIcon className="h-8 w-8 text-slate-400" />
+                          ))}
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                          No BED tracks yet
-                        </h3>
-                        <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                          Import BED files to add genomic annotation tracks like
-                          conservation scores or regulatory elements.
-                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                {/* BED Tracks Tab */}
+                <TabsContent value="bedtracks" className="mt-0">
+                  <Card className="bg-white border border-slate-200 shadow-sm">
+                    <div className="p-6 border-b border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            BED Tracks
+                          </h3>
+                          <p className="text-sm text-slate-500 mt-0.5">
+                            {bedTracks.length} annotation track(s)
+                          </p>
+                        </div>
                         <Button
+                          size="sm"
                           onClick={() => setShowBEDImport(true)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white"
+                          className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
                         >
                           <Upload className="h-4 w-4 mr-2" />
                           Import BED Track
                         </Button>
                       </div>
-                    ) : (
-                      <BEDTrackViewer
-                        tracks={nestedBedTracks}
-                        geneStart={selectedGene?.start || 0}
-                        geneEnd={selectedGene?.end || 0}
-                        onDeleteTrack={handleDeleteBedTrack}
-                        onAnnotateInterval={handleAnnotateInterval}
-                      />
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                    </div>
+                    <CardContent className="p-6">
+                      {loading ? (
+                        <Skeleton className="h-32 w-full" />
+                      ) : bedTracks.length === 0 ? (
+                        <div className="text-center py-16">
+                          <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
+                            <DnaIcon className="h-8 w-8 text-slate-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            No BED tracks yet
+                          </h3>
+                          <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                            Import BED files to add genomic annotation tracks like
+                            conservation scores or regulatory elements.
+                          </p>
+                          <Button
+                            onClick={() => setShowBEDImport(true)}
+                            className="bg-teal-600 hover:bg-teal-700 text-white"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import BED Track
+                          </Button>
+                        </div>
+                      ) : (
+                        <BEDTrackViewer
+                          tracks={nestedBedTracks}
+                          geneStart={selectedGene?.start || 0}
+                          geneEnd={selectedGene?.end || 0}
+                          onDeleteTrack={handleDeleteBedTrack}
+                          onAnnotateInterval={handleAnnotateInterval}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-              {/* Variant Associations Tab */}
-              <TabsContent value="variant_associations" className="mt-0">
-                <Card className="bg-white border border-slate-200 shadow-sm">
-                  <div className="p-6 border-b border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          Variant Associations
-                        </h3>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                          {variantAssociations.length} classification(s) linked
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingVariantAssociation(null);
-                            setShowVariantAssociationForm(true);
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowVariantAssociationImport(true)}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Import CSV
-                        </Button>
+                {/* Variant Associations Tab */}
+                <TabsContent value="variant_associations" className="mt-0">
+                  <Card className="bg-white border border-slate-200 shadow-sm">
+                    <div className="p-6 border-b border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            Variant Associations
+                          </h3>
+                          <p className="text-sm text-slate-500 mt-0.5">
+                            {variantAssociations.length} classification(s) linked
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingVariantAssociation(null);
+                              setShowVariantAssociationForm(true);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowVariantAssociationImport(true)}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import CSV
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <CardContent className="p-6">
-                    {loading ? (
-                      <div className="space-y-3">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                          <Skeleton key={i} className="h-20 w-full" />
-                        ))}
-                      </div>
-                    ) : variantAssociations.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
-                          <Layers className="h-8 w-8 text-slate-400" />
+                    <CardContent className="p-6">
+                      {loading ? (
+                        <div className="space-y-3">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <Skeleton key={i} className="h-20 w-full" />
+                          ))}
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                          No variant associations yet
-                        </h3>
-                        <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                          Link variants to literature with clinical significance
-                          classifications.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {variantAssociations.map((va: any) => (
-                          <div
-                            key={`${va.variant_id}-${va.literature_id}`}
-                            className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-sm transition-all group relative"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <span className="font-semibold text-slate-900">
-                                    {va.variant_id}
-                                  </span>
-                                  <span className="text-slate-400">→</span>
-                                  <span className="text-slate-600">
-                                    {va.literature_id}
-                                  </span>
-                                  <span
-                                    className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getClinicalSigColor(va.clinical_significance)}`}
-                                  >
-                                    {va.clinical_significance}
-                                  </span>
+                      ) : variantAssociations.length === 0 ? (
+                        <div className="text-center py-16">
+                          <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
+                            <Layers className="h-8 w-8 text-slate-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            No variant associations yet
+                          </h3>
+                          <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                            Link variants to literature with clinical significance
+                            classifications.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {variantAssociations.map((va: any) => (
+                            <div
+                              key={`${va.variant_id}-${va.literature_id}`}
+                              className="p-5 bg-white border-2 border-slate-100 rounded-xl hover:border-teal-200 hover:shadow-sm transition-all group relative"
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <span className="font-semibold text-slate-900">
+                                      {va.variant_id}
+                                    </span>
+                                    <span className="text-slate-400">→</span>
+                                    <span className="text-slate-600">
+                                      {va.literature_id}
+                                    </span>
+                                    <span
+                                      className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getClinicalSigColor(va.clinical_significance)}`}
+                                    >
+                                      {va.clinical_significance}
+                                    </span>
+                                  </div>
+                                  {va.disease && (
+                                    <p className="text-sm text-slate-500">
+                                      Disease: {va.disease}
+                                    </p>
+                                  )}
+                                  {va.zygosity && (
+                                    <p className="text-sm text-slate-500">
+                                      Zygosity: {va.zygosity}
+                                    </p>
+                                  )}
+                                  {va.inheritance && (
+                                    <p className="text-sm text-slate-500">
+                                      Inheritance: {va.inheritance}
+                                    </p>
+                                  )}
                                 </div>
-                                {va.disease && (
-                                  <p className="text-sm text-slate-500">
-                                    Disease: {va.disease}
-                                  </p>
-                                )}
-                                {va.zygosity && (
-                                  <p className="text-sm text-slate-500">
-                                    Zygosity: {va.zygosity}
-                                  </p>
-                                )}
-                                {va.inheritance && (
-                                  <p className="text-sm text-slate-500">
-                                    Inheritance: {va.inheritance}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-slate-400 hover:text-slate-600"
-                                  onClick={() => {
-                                    setEditingVariantAssociation(va);
-                                    setShowVariantAssociationForm(true);
-                                  }}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-slate-400 hover:text-red-600"
-                                  onClick={async () => {
-                                    if (confirm(`Delete this variant association?`)) {
-                                      try {
-                                        const res = await fetch(
-                                          `/api/variant-classifications?variant_id=${encodeURIComponent(va.variant_id)}&literature_id=${encodeURIComponent(va.literature_id)}`,
-                                          {
-                                            method: "DELETE",
-                                            credentials: "include",
-                                          },
-                                        );
-                                        if (res.ok) {
-                                          setVariantAssociations(
-                                            variantAssociations.filter(
-                                              (a: any) =>
-                                                a.variant_id !== va.variant_id ||
-                                                a.literature_id !== va.literature_id,
-                                            ),
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                                    onClick={() => {
+                                      setEditingVariantAssociation(va);
+                                      setShowVariantAssociationForm(true);
+                                    }}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-400 hover:text-red-600"
+                                    onClick={async () => {
+                                      if (confirm(`Delete this variant association?`)) {
+                                        try {
+                                          const res = await fetch(
+                                            `/api/variant-classifications?variant_id=${encodeURIComponent(va.variant_id)}&literature_id=${encodeURIComponent(va.literature_id)}`,
+                                            {
+                                              method: "DELETE",
+                                              credentials: "include",
+                                            },
                                           );
-                                        } else {
-                                          const err = await res.text();
-                                          alert(
-                                            `Failed to delete: ${res.status} ${err}`,
-                                          );
+                                          if (res.ok) {
+                                            setVariantAssociations(
+                                              variantAssociations.filter(
+                                                (a: any) =>
+                                                  a.variant_id !== va.variant_id ||
+                                                  a.literature_id !== va.literature_id,
+                                              ),
+                                            );
+                                          } else {
+                                            const err = await res.text();
+                                            alert(
+                                              `Failed to delete: ${res.status} ${err}`,
+                                            );
+                                          }
+                                        } catch {
+                                          alert("Failed to delete");
                                         }
-                                      } catch {
-                                        alert("Failed to delete");
                                       }
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </div>
           </>
         )}
       </div>
