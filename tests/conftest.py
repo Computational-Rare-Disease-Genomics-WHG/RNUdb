@@ -1,6 +1,7 @@
 """Pytest configuration and fixtures for RNUdb tests"""
 
 # Add parent directory to path for imports
+import os
 import sys
 from collections.abc import Generator
 from pathlib import Path
@@ -12,6 +13,7 @@ from sqlmodel import Session as SQLModelSession
 from sqlmodel import SQLModel
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-key-for-pytest-only")
 
 
 import api.models  # noqa: F401 - registers SQLModel table models

@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
+from .config import JWT_SECRET_KEY
 from .routers import genes, literature, variants
 from .routers.admin import router as admin_router
 from .routers.approvals import router as approvals_router
@@ -25,7 +26,6 @@ app = FastAPI(
 )
 
 # Session middleware for OAuth state (using JWT_SECRET_KEY as secret)
-JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-secret-key")
 app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET_KEY, max_age=86400 * 7)
 
 # CORS: locked origin with credentials for cookie-based auth
