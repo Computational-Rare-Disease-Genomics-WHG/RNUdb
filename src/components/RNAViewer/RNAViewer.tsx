@@ -817,6 +817,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
       >
         <svg
           ref={svgRef}
+          role="img"
+          aria-label={`RNA secondary structure diagram for ${geneData.name}`}
           viewBox={(() => {
             if (rnaData.nucleotides.length === 0) return "0 0 2000 2000";
             const minX = Math.min(...rnaData.nucleotides.map((n) => n.x));
@@ -871,6 +873,12 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   onClick={handleNucleotideClick}
                   hasVariants={totalVariants > 0}
                   variantCount={totalVariants}
+                  clinicalSignificance={
+                    overlayMode === "clinvar"
+                      ? (getFilteredOverlayValue(nucleotide.id) as any).variant
+                          ?.clinical_significance
+                      : undefined
+                  }
                 />
               );
             })}

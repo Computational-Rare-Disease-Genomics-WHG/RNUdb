@@ -206,6 +206,7 @@ const Header: React.FC<HeaderProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label="Search"
                 className="md:hidden text-slate-600"
                 onClick={() => {}}
               >
@@ -234,6 +235,7 @@ const Header: React.FC<HeaderProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={logout}
+                  aria-label="Log out"
                   className="text-slate-500 hover:text-slate-700"
                 >
                   <LogOut className="h-4 w-4" />
@@ -254,6 +256,9 @@ const Header: React.FC<HeaderProps> = ({
             <Button
               variant="ghost"
               size="sm"
+              aria-label={
+                isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"
+              }
               className="lg:hidden text-slate-600"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >

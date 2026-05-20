@@ -13,6 +13,7 @@ interface NucleotideComponentProps {
   onClick: (nucleotide: Nucleotide) => void;
   hasVariants?: boolean;
   variantCount?: number;
+  clinicalSignificance?: string;
 }
 
 const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
@@ -23,6 +24,7 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
   isHighlighted = false,
   onHover,
   onClick,
+  clinicalSignificance,
 }) => {
   // Determine visual state priority: selected > highlighted > hovered > default
   const getStrokeColor = () => {
@@ -46,8 +48,23 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
     return 18;
   };
 
+  const label = `Nucleotide ${nucleotide.base} at position ${nucleotide.id}${clinicalSignificance ? `, clinical significance: ${clinicalSignificance}` : ""}`;
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick(nucleotide);
+    }
+  };
+
   return (
-    <g className="nucleotide-group">
+    <g
+      className="nucleotide-group"
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      onKeyDown={handleKeyDown}
+    >
       {/* Outer glow ring for highlighted nucleotides */}
       {isHighlighted && (
         <circle
@@ -66,6 +83,7 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
       )}
 
       <circle
+        role="presentation"
         cx={nucleotide.x}
         cy={nucleotide.y}
         r={getRadius()}
@@ -82,6 +100,7 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
       />
 
       <text
+        aria-hidden="true"
         x={nucleotide.x}
         y={nucleotide.y + 4}
         textAnchor="middle"

@@ -104,7 +104,11 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen flex flex-col bg-slate-50"
+    >
       <Header showSearch={false} />
       <main className="pt-20">{renderContent()}</main>
       <Footer />

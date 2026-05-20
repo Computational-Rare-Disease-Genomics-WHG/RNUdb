@@ -437,7 +437,11 @@ curl -s -X ${endpoint.method} "${baseUrl}${endpoint.path}" | jq .`;
   const categories = [...new Set(ENDPOINTS.map((e) => e.category))];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-slate-50 flex flex-col"
+    >
       <Header showSearch={false} />
 
       <div className="bg-gradient-to-br from-teal-700 via-teal-800 to-teal-900 text-white">
