@@ -56,9 +56,8 @@ const Home: React.FC = () => {
             </h1>
           </div>
           <p className="text-base sm:text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
-            A comprehensive database for RNA structure visualization and
-            analysis. Explore RNA sequences, variants, and clinical data with
-            interactive tools.
+            A comprehensive database for RNA structure visualization and analysis.
+            Explore RNA sequences, variants, and clinical data with interactive tools.
           </p>
           <div className="max-w-2xl mx-auto mb-8">
             <AdvancedSearch

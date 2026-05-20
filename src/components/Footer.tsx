@@ -43,8 +43,8 @@ const Footer: React.FC = () => {
 
         <div className="border-t border-slate-200 mt-3 pt-3 text-center">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Computational Rare Disease Genomics.
-            All rights reserved.
+            © {new Date().getFullYear()} Computational Rare Disease Genomics. All rights
+            reserved.
           </p>
         </div>
       </div>

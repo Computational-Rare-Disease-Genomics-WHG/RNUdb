@@ -1,17 +1,10 @@
 import { useState, useCallback } from "react";
-import type {
-  RNAData,
-  Nucleotide,
-  BasePair,
-  StructuralFeature,
-} from "../types/rna";
+import type { RNAData, Nucleotide, BasePair, StructuralFeature } from "../types/rna";
 
 export const useNucleotideManager = (initialData: RNAData) => {
   const [rnaData, setRnaData] = useState<RNAData>(initialData);
   const [selectedNucleotides, setSelectedNucleotides] = useState<number[]>([]);
-  const [currentNucleotide, setCurrentNucleotide] = useState<number | null>(
-    null,
-  );
+  const [currentNucleotide, setCurrentNucleotide] = useState<number | null>(null);
   const [snapDistance] = useState(40);
 
   const findSnapPosition = useCallback(
@@ -43,15 +36,9 @@ export const useNucleotideManager = (initialData: RNAData) => {
     (x: number, y: number) => {
       // Priority 1: Snap to currently selected nucleotide
       if (currentNucleotide) {
-        const selectedNuc = rnaData.nucleotides.find(
-          (n) => n.id === currentNucleotide,
-        );
+        const selectedNuc = rnaData.nucleotides.find((n) => n.id === currentNucleotide);
         if (selectedNuc) {
-          return findSnapPosition(
-            selectedNuc.x + 40,
-            selectedNuc.y,
-            currentNucleotide,
-          );
+          return findSnapPosition(selectedNuc.x + 40, selectedNuc.y, currentNucleotide);
         }
       }
 
@@ -108,17 +95,12 @@ export const useNucleotideManager = (initialData: RNAData) => {
     setCurrentNucleotide(null);
   }, []);
 
-  const updateNucleotidePosition = useCallback(
-    (id: number, x: number, y: number) => {
-      setRnaData((prev) => ({
-        ...prev,
-        nucleotides: prev.nucleotides.map((n) =>
-          n.id === id ? { ...n, x, y } : n,
-        ),
-      }));
-    },
-    [],
-  );
+  const updateNucleotidePosition = useCallback((id: number, x: number, y: number) => {
+    setRnaData((prev) => ({
+      ...prev,
+      nucleotides: prev.nucleotides.map((n) => (n.id === id ? { ...n, x, y } : n)),
+    }));
+  }, []);
 
   const updateNucleotideBase = useCallback(
     (nucleotideId: number, newBase: "A" | "C" | "G" | "U") => {
@@ -178,21 +160,18 @@ export const useNucleotideManager = (initialData: RNAData) => {
     [rnaData.base_pairs],
   );
 
-  const removeBasePair = useCallback(
-    (nucleotide1: number, nucleotide2: number) => {
-      setRnaData((prev) => ({
-        ...prev,
-        base_pairs: prev.base_pairs.filter(
-          (bp) =>
-            !(
-              (bp.from_pos === nucleotide1 && bp.to_pos === nucleotide2) ||
-              (bp.from_pos === nucleotide2 && bp.to_pos === nucleotide1)
-            ),
-        ),
-      }));
-    },
-    [],
-  );
+  const removeBasePair = useCallback((nucleotide1: number, nucleotide2: number) => {
+    setRnaData((prev) => ({
+      ...prev,
+      base_pairs: prev.base_pairs.filter(
+        (bp) =>
+          !(
+            (bp.from_pos === nucleotide1 && bp.to_pos === nucleotide2) ||
+            (bp.from_pos === nucleotide2 && bp.to_pos === nucleotide1)
+          ),
+      ),
+    }));
+  }, []);
 
   const navigateNucleotides = useCallback(
     (direction: string) => {
@@ -208,16 +187,12 @@ export const useNucleotideManager = (initialData: RNAData) => {
         case "ArrowUp":
         case "ArrowLeft":
           newIndex =
-            currentIndex <= 0
-              ? rnaData.nucleotides.length - 1
-              : currentIndex - 1;
+            currentIndex <= 0 ? rnaData.nucleotides.length - 1 : currentIndex - 1;
           break;
         case "ArrowDown":
         case "ArrowRight":
           newIndex =
-            currentIndex >= rnaData.nucleotides.length - 1
-              ? 0
-              : currentIndex + 1;
+            currentIndex >= rnaData.nucleotides.length - 1 ? 0 : currentIndex + 1;
           break;
       }
 
@@ -237,22 +212,19 @@ export const useNucleotideManager = (initialData: RNAData) => {
   );
 
   // Structural Features Management
-  const addStructuralFeature = useCallback(
-    (feature: Omit<StructuralFeature, "id">) => {
-      const newFeature: StructuralFeature = {
-        ...feature,
-        id: `feature-${Date.now()}`,
-      };
+  const addStructuralFeature = useCallback((feature: Omit<StructuralFeature, "id">) => {
+    const newFeature: StructuralFeature = {
+      ...feature,
+      id: `feature-${Date.now()}`,
+    };
 
-      setRnaData((prev) => ({
-        ...prev,
-        structural_features: [...(prev.structural_features || []), newFeature],
-      }));
+    setRnaData((prev) => ({
+      ...prev,
+      structural_features: [...(prev.structural_features || []), newFeature],
+    }));
 
-      return newFeature.id;
-    },
-    [],
-  );
+    return newFeature.id;
+  }, []);
 
   const updateStructuralFeature = useCallback(
     (featureId: string, updates: Partial<StructuralFeature>) => {
@@ -269,9 +241,7 @@ export const useNucleotideManager = (initialData: RNAData) => {
   const removeStructuralFeature = useCallback((featureId: string) => {
     setRnaData((prev) => ({
       ...prev,
-      structural_features: prev.structural_features?.filter(
-        (f) => f.id !== featureId,
-      ),
+      structural_features: prev.structural_features?.filter((f) => f.id !== featureId),
     }));
   }, []);
 

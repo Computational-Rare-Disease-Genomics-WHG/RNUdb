@@ -8,10 +8,7 @@ interface RNAViewerPanelProps {
   rna2dProps?: React.ComponentProps<typeof RNAViewer>;
 }
 
-const RNAViewerPanel: React.FC<RNAViewerPanelProps> = ({
-  pdbData,
-  rna2dProps,
-}) => {
+const RNAViewerPanel: React.FC<RNAViewerPanelProps> = ({ pdbData, rna2dProps }) => {
   const [show3D, setShow3D] = useState(false);
 
   return (

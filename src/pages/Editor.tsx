@@ -58,12 +58,8 @@ const Editor: React.FC = () => {
     updateStructuralFeature,
   } = nucleotideManager;
 
-  const {
-    downloadJSON,
-    importFromFile,
-    saveToLocalStorage,
-    loadFromLocalStorage,
-  } = importExport;
+  const { downloadJSON, importFromFile, saveToLocalStorage, loadFromLocalStorage } =
+    importExport;
 
   // Load autosave on component mount
   useEffect(() => {
@@ -125,16 +121,7 @@ const Editor: React.FC = () => {
   }, []);
 
   const handleModeChange = useCallback(
-    (
-      newMode:
-        | "select"
-        | "add"
-        | "pair"
-        | "delete"
-        | "label"
-        | "pan"
-        | "feature",
-    ) => {
+    (newMode: "select" | "add" | "pair" | "delete" | "label" | "pan" | "feature") => {
       setMode(newMode);
       setSelectedNucleotides([]);
       if (newMode !== "feature") {
@@ -155,9 +142,7 @@ const Editor: React.FC = () => {
 
       if (mode === "pair") {
         if (selectedNucleotides.includes(nucleotideId)) {
-          setSelectedNucleotides((prev) =>
-            prev.filter((id) => id !== nucleotideId),
-          );
+          setSelectedNucleotides((prev) => prev.filter((id) => id !== nucleotideId));
         } else {
           setSelectedNucleotides((prev) => {
             const newSelected = [...prev, nucleotideId];
@@ -202,8 +187,7 @@ const Editor: React.FC = () => {
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (mode === "add") {
-        const svg =
-          canvasRef.current?.querySelector<SVGSVGElement>("svg[viewBox]");
+        const svg = canvasRef.current?.querySelector<SVGSVGElement>("svg[viewBox]");
         if (svg) {
           const pt = new DOMPoint(e.clientX, e.clientY);
           const svgPoint = pt.matrixTransform(
@@ -279,9 +263,7 @@ const Editor: React.FC = () => {
   const handleFeatureLabelClick = useCallback(
     (e: React.MouseEvent, featureId: string) => {
       e.stopPropagation();
-      const feature = rnaData.structural_features?.find(
-        (f) => f.id === featureId,
-      );
+      const feature = rnaData.structural_features?.find((f) => f.id === featureId);
       if (feature) {
         setEditingFeature(featureId);
         setSelectedFeatureNucleotides(feature.nucleotide_ids);
@@ -412,9 +394,7 @@ const Editor: React.FC = () => {
           nucleotides={rnaData.nucleotides}
           initialFeature={
             editingFeature
-              ? rnaData.structural_features?.find(
-                  (f) => f.id === editingFeature,
-                )
+              ? rnaData.structural_features?.find((f) => f.id === editingFeature)
               : undefined
           }
           onSubmit={handleFeatureSubmit}

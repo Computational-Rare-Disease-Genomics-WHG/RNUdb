@@ -29,11 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import "./RNAViewer.css";
 import {
   getDistinctDiseaseTypes,
@@ -82,9 +78,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   highlightedNucleotideIds = [],
   geneData,
 }) => {
-  const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(
-    null,
-  );
+  const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -95,9 +89,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   const [showStructuralFeatures, setShowStructuralFeatures] = useState(true);
 
   const [diseaseTypes, setDiseaseTypes] = useState<string[]>([]);
-  const [clinicalSignificances, setClinicalSignificances] = useState<string[]>(
-    [],
-  );
+  const [clinicalSignificances, setClinicalSignificances] = useState<string[]>([]);
   const [selectedDiseaseType, setSelectedDiseaseType] = useState<string>("all");
   const [selectedClinicalSig, setSelectedClinicalSig] = useState<string>("all");
   const [selectedPopulationSource, setSelectedPopulationSource] =
@@ -178,8 +170,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             } else if (selectedZygosity === "biallelic") {
               const isBiallelic =
                 variant.zygosity === "hom" ||
-                (variant.linkedVariantIds &&
-                  variant.linkedVariantIds.length > 0);
+                (variant.linkedVariantIds && variant.linkedVariantIds.length > 0);
               if (!isBiallelic) return false;
             }
           }
@@ -199,8 +190,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           const order = significanceOrder[v.clinical_significance!] ?? -1;
           const maxOrder = significanceOrder[max.clinical_significance!] ?? -1;
           if (order > maxOrder) return v;
-          if (order === maxOrder && v.clinical_significance === "Pathogenic")
-            return v;
+          if (order === maxOrder && v.clinical_significance === "Pathogenic") return v;
           return max;
         }, filteredVariants[0]);
 
@@ -268,9 +258,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         const overlayValue = overlayData[nucleotideId];
         if (overlayValue) {
           const val =
-            typeof overlayValue === "number"
-              ? overlayValue
-              : overlayValue.value;
+            typeof overlayValue === "number" ? overlayValue : overlayValue.value;
           return { value: val || 0 };
         }
         return { value: 0 };
@@ -350,8 +338,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
     if (overlayMode === "clinvar") {
       if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC;
-      if (value === 0.125)
-        return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN;
+      if (value === 0.125) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN;
       if (value === 0.5) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN;
       if (value === 0.25) return COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS;
       return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
@@ -485,12 +472,9 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                       onClick={() => {
                         if (overlayMode !== "none") {
                           const cycles =
-                            [
+                            ["none", "clinvar", "gnomad", "depletion_group"].indexOf(
                               "none",
-                              "clinvar",
-                              "gnomad",
-                              "depletion_group",
-                            ].indexOf("none") - cyclesFromMode(overlayMode);
+                            ) - cyclesFromMode(overlayMode);
                           for (let i = 0; i < Math.abs(cycles || 1); i++)
                             onCycleOverlay();
                         }
@@ -516,25 +500,18 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                           "depletion_group",
                         ].indexOf("clinvar");
                         const current = cyclesFromMode(overlayMode);
-                        for (
-                          let i = 0;
-                          i < (targetIndex - current + 4) % 4;
-                          i++
-                        )
+                        for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
                           onCycleOverlay();
                       }}
                       className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "clinvar" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
                     >
                       <AlertTriangle className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">
-                        Clinical Variants
-                      </span>
+                      <span className="hidden sm:inline">Clinical Variants</span>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      Show ClinVar clinical variants with pathogenicity
-                      classifications
+                      Show ClinVar clinical variants with pathogenicity classifications
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -549,25 +526,17 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                           "depletion_group",
                         ].indexOf("gnomad");
                         const current = cyclesFromMode(overlayMode);
-                        for (
-                          let i = 0;
-                          i < (targetIndex - current + 4) % 4;
-                          i++
-                        )
+                        for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
                           onCycleOverlay();
                       }}
                       className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "gnomad" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
                     >
                       <Users className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">
-                        Population Variants
-                      </span>
+                      <span className="hidden sm:inline">Population Variants</span>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>
-                      Show population frequency data from gnomAD and All of Us
-                    </p>
+                    <p>Show population frequency data from gnomAD and All of Us</p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -581,11 +550,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                           "depletion_group",
                         ].indexOf("depletion_group");
                         const current = cyclesFromMode(overlayMode);
-                        for (
-                          let i = 0;
-                          i < (targetIndex - current + 4) % 4;
-                          i++
-                        )
+                        for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
                           onCycleOverlay();
                       }}
                       className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "depletion_group" ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
@@ -595,18 +560,14 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>
-                      Show depletion group categories: Strong, Moderate, Normal
-                    </p>
+                    <p>Show depletion group categories: Strong, Moderate, Normal</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
 
               {/* Structural Features Toggle */}
               <div className="flex items-center gap-2 px-2 py-1 rounded border-dashed border-slate-300 bg-slate-100">
-                <span className="text-xs font-medium text-slate-500">
-                  Domains
-                </span>
+                <span className="text-xs font-medium text-slate-500">Domains</span>
                 <Switch
                   checked={showStructuralFeatures}
                   onCheckedChange={setShowStructuralFeatures}
@@ -630,9 +591,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                     >
                       <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
                         <SelectValue>
-                          {selectedDiseaseType === "all"
-                            ? "All"
-                            : selectedDiseaseType}
+                          {selectedDiseaseType === "all" ? "All" : selectedDiseaseType}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -654,8 +613,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         <SelectValue>
                           {selectedClinicalSig === "all"
                             ? "All"
-                            : selectedClinicalSig ===
-                                "Pathogenic / Likely Pathogenic"
+                            : selectedClinicalSig === "Pathogenic / Likely Pathogenic"
                               ? "Pathogenic / Likely Pathogenic"
                               : selectedClinicalSig}
                         </SelectValue>
@@ -668,8 +626,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         {clinicalSignificances
                           .filter(
                             (sig) =>
-                              sig !== "Pathogenic" &&
-                              sig !== "Likely Pathogenic",
+                              sig !== "Pathogenic" && sig !== "Likely Pathogenic",
                           )
                           .map((sig) => (
                             <SelectItem key={sig} value={sig}>
@@ -727,32 +684,25 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                       <div
                         className="w-2 h-2 rounded-full"
                         style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH,
+                          backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH,
                         }}
                       />
-                      <span className="text-xs text-slate-600">
-                        Common (≥0.01)
-                      </span>
+                      <span className="text-xs text-slate-600">Common (≥0.01)</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div
                         className="w-2 h-2 rounded-full"
                         style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
+                          backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
                         }}
                       />
-                      <span className="text-xs text-slate-600">
-                        Rare (0.001-0.01)
-                      </span>
+                      <span className="text-xs text-slate-600">Rare (0.001-0.01)</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div
                         className="w-2 h-2 rounded-full"
                         style={{
-                          backgroundColor:
-                            COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW,
+                          backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW,
                         }}
                       />
                       <span className="text-xs text-slate-600">
@@ -891,9 +841,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
               // Create unique key using index and sorted nucleotide IDs to avoid duplicates
               const sortedKey =
-                from_pos < to_pos
-                  ? `${from_pos}-${to_pos}`
-                  : `${to_pos}-${from_pos}`;
+                from_pos < to_pos ? `${from_pos}-${to_pos}` : `${to_pos}-${from_pos}`;
               return (
                 <BasePairBond
                   key={`bond-${index}-${sortedKey}`}
@@ -908,8 +856,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             {rnaData.nucleotides.map((nucleotide) => {
               const variantInfo = getVariantInfoForNucleotide(nucleotide.id);
               const totalVariants =
-                variantInfo.clinvarVariants.length +
-                variantInfo.gnomadVariants.length;
+                variantInfo.clinvarVariants.length + variantInfo.gnomadVariants.length;
               return (
                 <NucleotideComponent
                   key={nucleotide.id}
@@ -917,9 +864,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   color={getOverlayColor(nucleotide)}
                   isHovered={hoveredNucleotide?.id === nucleotide.id}
                   isSelected={selectedNucleotide?.id === nucleotide.id}
-                  isHighlighted={highlightedNucleotideIds.includes(
-                    nucleotide.id,
-                  )}
+                  isHighlighted={highlightedNucleotideIds.includes(nucleotide.id)}
                   onHover={handleNucleotideHover}
                   onClick={handleNucleotideClick}
                   hasVariants={totalVariants > 0}
@@ -968,13 +913,11 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                     <rect
                       x={
                         feature.label_x -
-                        (feature.label_text.length * feature.label_font_size) /
-                          3
+                        (feature.label_text.length * feature.label_font_size) / 3
                       }
                       y={feature.label_y - feature.label_font_size / 1.5}
                       width={
-                        (feature.label_text.length * feature.label_font_size) /
-                        1.5
+                        (feature.label_text.length * feature.label_font_size) / 1.5
                       }
                       height={feature.label_font_size + 8}
                       fill="rgba(255, 255, 255, 0.9)"
@@ -1050,8 +993,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <div
                     className="w-4 h-4 rounded-sm"
                     style={{
-                      backgroundColor:
-                        COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC,
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC,
                     }}
                   ></div>
                   <span>Pathogenic / Likely Pathogenic</span>
@@ -1081,8 +1023,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <div
                     className="w-4 h-4 rounded-sm"
                     style={{
-                      backgroundColor:
-                        COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
                     }}
                   ></div>
                   <span>Medium frequency</span>
@@ -1103,8 +1044,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <div
                     className="w-4 h-4 rounded-sm"
                     style={{
-                      backgroundColor:
-                        COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG,
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG,
                     }}
                   ></div>
                   <span>Strong</span>
@@ -1113,8 +1053,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <div
                     className="w-4 h-4 rounded-sm"
                     style={{
-                      backgroundColor:
-                        COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE,
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE,
                     }}
                   ></div>
                   <span>Moderate</span>
@@ -1123,8 +1062,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <div
                     className="w-4 h-4 rounded-sm"
                     style={{
-                      backgroundColor:
-                        COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL,
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL,
                     }}
                   ></div>
                   <span>Normal</span>

@@ -1,10 +1,6 @@
 import { X } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import type {
-  StructuralFeature,
-  FeatureType,
-  Nucleotide,
-} from "../../types/rna";
+import type { StructuralFeature, FeatureType, Nucleotide } from "../../types/rna";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
@@ -125,10 +121,7 @@ export const StructuralFeatureModal: React.FC<StructuralFeatureModalProps> = ({
           <h2 className="text-xl font-bold text-slate-900">
             {initialFeature ? "Edit" : "Add"} Structural Feature
           </h2>
-          <button
-            onClick={onCancel}
-            className="text-slate-400 hover:text-slate-600"
-          >
+          <button onClick={onCancel} className="text-slate-400 hover:text-slate-600">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -211,14 +204,8 @@ export const StructuralFeatureModal: React.FC<StructuralFeatureModalProps> = ({
                     selectedNucleotides.includes(n.id),
                   );
                   if (selectedNucs.length > 0) {
-                    const sumX = selectedNucs.reduce(
-                      (sum, n) => sum + (n.x + 15),
-                      0,
-                    );
-                    const sumY = selectedNucs.reduce(
-                      (sum, n) => sum + (n.y + 15),
-                      0,
-                    );
+                    const sumX = selectedNucs.reduce((sum, n) => sum + (n.x + 15), 0);
+                    const sumY = selectedNucs.reduce((sum, n) => sum + (n.y + 15), 0);
                     setLabelX(Math.round(sumX / selectedNucs.length));
                     setLabelY(Math.round(sumY / selectedNucs.length - 40));
                   }
@@ -267,9 +254,7 @@ export const StructuralFeatureModal: React.FC<StructuralFeatureModalProps> = ({
                 className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
               />
               <div className="w-16 text-center bg-slate-100 rounded py-1">
-                <span className="text-xs font-medium text-slate-600">
-                  {fontSize}px
-                </span>
+                <span className="text-xs font-medium text-slate-600">{fontSize}px</span>
               </div>
             </div>
           </div>
@@ -286,9 +271,7 @@ export const StructuralFeatureModal: React.FC<StructuralFeatureModalProps> = ({
                     key={color}
                     onClick={() => setLabelColor(color)}
                     className={`w-8 h-8 rounded-full border-2 ${
-                      labelColor === color
-                        ? "border-slate-900"
-                        : "border-slate-300"
+                      labelColor === color ? "border-slate-900" : "border-slate-300"
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -305,9 +288,7 @@ export const StructuralFeatureModal: React.FC<StructuralFeatureModalProps> = ({
                     key={color}
                     onClick={() => setFeatureColor(color)}
                     className={`w-8 h-8 rounded-full border-2 ${
-                      featureColor === color
-                        ? "border-slate-900"
-                        : "border-slate-300"
+                      featureColor === color ? "border-slate-900" : "border-slate-300"
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -337,10 +318,7 @@ export const StructuralFeatureModal: React.FC<StructuralFeatureModalProps> = ({
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            className="bg-teal-600 hover:bg-teal-700"
-          >
+          <Button onClick={handleSubmit} className="bg-teal-600 hover:bg-teal-700">
             {initialFeature ? "Update" : "Add"} Feature
           </Button>
         </div>

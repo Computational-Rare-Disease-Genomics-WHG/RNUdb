@@ -10,11 +10,7 @@ interface LiteratureFormProps {
   onCancel: () => void;
 }
 
-const LiteratureForm = ({
-  initialData,
-  onSubmit,
-  onCancel,
-}: LiteratureFormProps) => {
+const LiteratureForm = ({ initialData, onSubmit, onCancel }: LiteratureFormProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState("");
@@ -173,9 +169,7 @@ const LiteratureForm = ({
           placeholder="e.g., Smith J, Doe A"
           className={errors.authors ? "border-red-500" : ""}
         />
-        {errors.authors && (
-          <p className="text-xs text-red-500">{errors.authors}</p>
-        )}
+        {errors.authors && <p className="text-xs text-red-500">{errors.authors}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -190,9 +184,7 @@ const LiteratureForm = ({
             placeholder="e.g., Nature"
             className={errors.journal ? "border-red-500" : ""}
           />
-          {errors.journal && (
-            <p className="text-xs text-red-500">{errors.journal}</p>
-          )}
+          {errors.journal && <p className="text-xs text-red-500">{errors.journal}</p>}
         </div>
 
         <div className="space-y-2">

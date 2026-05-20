@@ -67,9 +67,7 @@ const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
   const [annotationText, setAnnotationText] = useState("");
   const [editingColor, setEditingColor] = useState<BEDTrack | null>(null);
   const [selectedPalette, setSelectedPalette] = useState("");
-  const [displayMode, setDisplayMode] = useState<Record<string, DisplayMode>>(
-    {},
-  );
+  const [displayMode, setDisplayMode] = useState<Record<string, DisplayMode>>({});
 
   const handleAnnotate = (track: BEDTrack, interval: BEDInterval) => {
     setAnnotating({ track, interval });
@@ -78,11 +76,7 @@ const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
 
   const handleSaveAnnotation = () => {
     if (annotating && onAnnotateInterval) {
-      onAnnotateInterval(
-        annotating.track.id,
-        annotating.interval,
-        annotationText,
-      );
+      onAnnotateInterval(annotating.track.id, annotating.interval, annotationText);
     }
     setAnnotating(null);
     setAnnotationText("");
@@ -176,9 +170,7 @@ const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
     const sortedIntervals = [...intervals].sort((a, b) => a.start - b.start);
     const points = sortedIntervals
       .map((interval) => {
-        const x = getScale(
-          interval.start + (interval.end - interval.start) / 2,
-        );
+        const x = getScale(interval.start + (interval.end - interval.start) / 2);
         const y =
           interval.score !== null && interval.score !== undefined
             ? 100 - ((interval.score - scoreMin) / scoreRange) * 100
@@ -198,10 +190,7 @@ const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
         <div className="absolute bottom-0 right-0 text-[10px] text-slate-400 px-1">
           {geneEnd.toLocaleString()}
         </div>
-        <svg
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="none"
-        >
+        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
           {points.length > 0 && (
             <>
               <polyline
@@ -251,14 +240,10 @@ const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
         const trackColor = track.color || "#0d9488";
         const hasScoreData = hasScores(intervals);
         const scoreMin = hasScoreData
-          ? Math.min(
-              ...intervals.filter((i) => i.score != null).map((i) => i.score!),
-            )
+          ? Math.min(...intervals.filter((i) => i.score != null).map((i) => i.score!))
           : 0;
         const scoreMax = hasScoreData
-          ? Math.max(
-              ...intervals.filter((i) => i.score != null).map((i) => i.score!),
-            )
+          ? Math.max(...intervals.filter((i) => i.score != null).map((i) => i.score!))
           : 1;
         const mode = displayMode[track.id] || "bars";
 
@@ -382,9 +367,7 @@ const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
                   <span>Track color</span>
                 </div>
               )}
-              <span className="text-xs text-slate-400">
-                Click bar to annotate
-              </span>
+              <span className="text-xs text-slate-400">Click bar to annotate</span>
             </div>
           </div>
         );
@@ -457,8 +440,7 @@ const BEDTrackViewer: React.FC<BEDTrackViewerProps> = ({
             <div className="space-y-4 pt-2">
               <div className="text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
                 <p>
-                  <span className="font-medium">Track:</span>{" "}
-                  {editingColor.name}
+                  <span className="font-medium">Track:</span> {editingColor.name}
                 </p>
               </div>
               <div className="space-y-3">

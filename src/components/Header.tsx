@@ -57,11 +57,9 @@ const Header: React.FC<HeaderProps> = ({
   useEffect(() => {
     if (isAdmin) {
       Promise.all([
-        fetch("/api/users/pending", { credentials: "include" }).then((r) =>
+        fetch("/api/users/pending", { credentials: "include" }).then((r) => r.json()),
+        fetch("/api/approvals?status=pending", { credentials: "include" }).then((r) =>
           r.json(),
-        ),
-        fetch("/api/approvals?status=pending", { credentials: "include" }).then(
-          (r) => r.json(),
         ),
       ])
         .then(([users, changes]) => {

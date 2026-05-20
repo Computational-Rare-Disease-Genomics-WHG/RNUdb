@@ -12,9 +12,7 @@ export const getAllSnRNAIds = async (): Promise<string[]> => {
   }
 };
 
-export const getGeneData = async (
-  geneId: string,
-): Promise<SnRNAGene | null> => {
+export const getGeneData = async (geneId: string): Promise<SnRNAGene | null> => {
   try {
     return await getGene(geneId);
   } catch (error) {

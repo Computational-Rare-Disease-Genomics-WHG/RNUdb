@@ -184,10 +184,7 @@ class SearchService {
     // Position match (for numeric queries)
     if (/^\d+$/.test(query)) {
       const position = parseInt(query);
-      if (
-        variant.position === position ||
-        variant.nucleotidePosition === position
-      ) {
+      if (variant.position === position || variant.nucleotidePosition === position) {
         matchedFields.push("position");
         relevanceScore += 70;
       }
@@ -211,10 +208,7 @@ class SearchService {
     }
 
     // Allele match
-    if (
-      variant.ref.toLowerCase() === query ||
-      variant.alt.toLowerCase() === query
-    ) {
+    if (variant.ref.toLowerCase() === query || variant.alt.toLowerCase() === query) {
       matchedFields.push("allele");
       relevanceScore += 40;
     }
@@ -227,10 +221,7 @@ class SearchService {
     }
 
     // Consequence match
-    if (
-      variant.consequence &&
-      variant.consequence.toLowerCase().includes(query)
-    ) {
+    if (variant.consequence && variant.consequence.toLowerCase().includes(query)) {
       matchedFields.push("consequence");
       relevanceScore += 30;
     }
@@ -287,5 +278,4 @@ class SearchService {
 export const searchService = new SearchService();
 
 // Convenience exports
-export const { search, searchGenes, searchVariants, getSuggestions } =
-  searchService;
+export const { search, searchGenes, searchVariants, getSuggestions } = searchService;

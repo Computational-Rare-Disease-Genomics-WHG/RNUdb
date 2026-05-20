@@ -91,9 +91,7 @@ export const GnomADVariantViewer: React.FC<GnomADVariantViewerProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-teal-600" />
-          <h3 className="text-lg font-semibold text-slate-900">
-            Variant Track
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-900">Variant Track</h3>
           <span className="text-sm text-slate-500">{geneName}</span>
         </div>
         <div className="flex items-center gap-3 text-sm">
@@ -194,14 +192,12 @@ export const GnomADVariantViewer: React.FC<GnomADVariantViewerProps> = ({
                     className="cursor-pointer hover:r-3"
                   >
                     <title>
-                      {variant.id}: {variant.position.toLocaleString()} (
-                      {variant.ref}→{variant.alt})
+                      {variant.id}: {variant.position.toLocaleString()} ({variant.ref}→
+                      {variant.alt})
                       {variant.clinical_significance
                         ? `\nClinical: ${variant.clinical_significance}`
                         : ""}
-                      {variant.gnomad_ac
-                        ? `\ngnomAD AC: ${variant.gnomad_ac}`
-                        : ""}
+                      {variant.gnomad_ac ? `\ngnomAD AC: ${variant.gnomad_ac}` : ""}
                     </title>
                   </circle>
                 </g>
@@ -226,9 +222,7 @@ export const GnomADVariantViewer: React.FC<GnomADVariantViewerProps> = ({
         </div>
         <div className="flex items-center gap-1 text-slate-400">
           <Info className="h-3.5 w-3.5" />
-          <span className="text-xs">
-            Hover over circles for variant details
-          </span>
+          <span className="text-xs">Hover over circles for variant details</span>
         </div>
       </div>
     </div>

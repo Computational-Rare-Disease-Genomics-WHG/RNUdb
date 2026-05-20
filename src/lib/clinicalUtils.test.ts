@@ -59,9 +59,7 @@ describe("getClinicalCategory", () => {
   it("returns VUS for uncertain significance", () => {
     expect(getClinicalCategory("VUS")).toBe("VUS");
     expect(getClinicalCategory("uncertain significance")).toBe("VUS");
-    expect(getClinicalCategory("variant of uncertain significance")).toBe(
-      "VUS",
-    );
+    expect(getClinicalCategory("variant of uncertain significance")).toBe("VUS");
     expect(getClinicalCategory("unknown significance")).toBe("VUS");
   });
 
@@ -105,18 +103,14 @@ describe("clinicalCategoryToValue", () => {
 describe("clinicalCategoryToDisplay", () => {
   it("returns display string for each category", () => {
     expect(clinicalCategoryToDisplay("PATHOGENIC")).toBe("Pathogenic");
-    expect(clinicalCategoryToDisplay("LIKELY_PATHOGENIC")).toBe(
-      "Likely Pathogenic",
-    );
+    expect(clinicalCategoryToDisplay("LIKELY_PATHOGENIC")).toBe("Likely Pathogenic");
     expect(clinicalCategoryToDisplay("BENIGN")).toBe("Benign");
     expect(clinicalCategoryToDisplay("LIKELY_BENIGN")).toBe("Likely Benign");
     expect(clinicalCategoryToDisplay("VUS")).toBe("VUS");
   });
 
   it("returns original string for OTHER if provided", () => {
-    expect(clinicalCategoryToDisplay("OTHER", "custom value")).toBe(
-      "custom value",
-    );
+    expect(clinicalCategoryToDisplay("OTHER", "custom value")).toBe("custom value");
   });
 
   it("returns 'Unknown' for OTHER without original", () => {

@@ -95,9 +95,7 @@ const Curate: React.FC = () => {
     return Array.from(grouped.values());
   }, [bedTracks]);
   const [loading, setLoading] = useState(false);
-  const [selectedVariants, setSelectedVariants] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set());
   const [showVariantImport, setShowVariantImport] = useState(false);
   const [showStructureImport, setShowStructureImport] = useState(false);
   const [showBEDImport, setShowBEDImport] = useState(false);
@@ -106,15 +104,13 @@ const Curate: React.FC = () => {
   const [showVariantForm, setShowVariantForm] = useState(false);
   const [showLiteratureForm, setShowLiteratureForm] = useState(false);
   const [showLiteratureImport, setShowLiteratureImport] = useState(false);
-  const [showVariantAssociationForm, setShowVariantAssociationForm] =
-    useState(false);
+  const [showVariantAssociationForm, setShowVariantAssociationForm] = useState(false);
   const [showVariantAssociationImport, setShowVariantAssociationImport] =
     useState(false);
   const [editingGene, setEditingGene] = useState<any>(null);
   const [editingVariant, setEditingVariant] = useState<any>(null);
   const [editingLiterature, setEditingLiterature] = useState<any>(null);
-  const [editingVariantAssociation, setEditingVariantAssociation] =
-    useState<any>(null);
+  const [editingVariantAssociation, setEditingVariantAssociation] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const regionViewerRef = useRef<HTMLDivElement>(null);
   const [regionViewerWidth, setRegionViewerWidth] = useState(1100);
@@ -154,10 +150,7 @@ const Curate: React.FC = () => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowGeneDropdown(false);
       }
     };
@@ -180,21 +173,19 @@ const Curate: React.FC = () => {
   const loadGeneData = async (geneId: string) => {
     setLoading(true);
     try {
-      const [variantsRes, litRes, structRes, bedRes, vaRes] = await Promise.all(
-        [
-          fetch(`/api/genes/${geneId}/variants`, { credentials: "include" }),
-          fetch(`/api/genes/${geneId}/literature`, { credentials: "include" }),
-          fetch(`/api/genes/${geneId}/structures`, {
-            credentials: "include",
-          }).catch(() => null),
-          fetch(`/api/genes/${geneId}/bed-tracks`, {
-            credentials: "include",
-          }).catch(() => null),
-          fetch(`/api/genes/${geneId}/variant-classifications`, {
-            credentials: "include",
-          }).catch(() => null),
-        ],
-      );
+      const [variantsRes, litRes, structRes, bedRes, vaRes] = await Promise.all([
+        fetch(`/api/genes/${geneId}/variants`, { credentials: "include" }),
+        fetch(`/api/genes/${geneId}/literature`, { credentials: "include" }),
+        fetch(`/api/genes/${geneId}/structures`, {
+          credentials: "include",
+        }).catch(() => null),
+        fetch(`/api/genes/${geneId}/bed-tracks`, {
+          credentials: "include",
+        }).catch(() => null),
+        fetch(`/api/genes/${geneId}/variant-classifications`, {
+          credentials: "include",
+        }).catch(() => null),
+      ]);
       if (variantsRes.ok) setVariants(await variantsRes.json());
       if (litRes.ok) setLiterature(await litRes.json());
       if (structRes?.ok) {
@@ -253,10 +244,7 @@ const Curate: React.FC = () => {
   };
 
   const handleDeleteStructure = async (structureId: string) => {
-    if (
-      !selectedGene ||
-      !confirm(`Are you sure you want to delete this structure?`)
-    )
+    if (!selectedGene || !confirm(`Are you sure you want to delete this structure?`))
       return;
     try {
       await submitChange(
@@ -460,12 +448,9 @@ const Curate: React.FC = () => {
       if (res.ok) {
         setShowLiteratureForm(false);
         setEditingLiterature(null);
-        const litRes = await fetch(
-          `/api/genes/${selectedGene?.id}/literature`,
-          {
-            credentials: "include",
-          },
-        );
+        const litRes = await fetch(`/api/genes/${selectedGene?.id}/literature`, {
+          credentials: "include",
+        });
         if (litRes.ok) setLiterature(await litRes.json());
       } else {
         const err = await res.json();
@@ -490,12 +475,9 @@ const Curate: React.FC = () => {
       if (res.ok) {
         setShowLiteratureForm(false);
         setEditingLiterature(null);
-        const litRes = await fetch(
-          `/api/genes/${selectedGene?.id}/literature`,
-          {
-            credentials: "include",
-          },
-        );
+        const litRes = await fetch(`/api/genes/${selectedGene?.id}/literature`, {
+          credentials: "include",
+        });
         if (litRes.ok) setLiterature(await litRes.json());
       } else {
         const err = await res.json();
@@ -557,8 +539,7 @@ const Curate: React.FC = () => {
             </h1>
           </div>
           <p className="text-slate-500 ml-12">
-            Manage gene data, variants, structures, literature, and annotation
-            tracks
+            Manage gene data, variants, structures, literature, and annotation tracks
           </p>
         </div>
 
@@ -605,7 +586,7 @@ const Curate: React.FC = () => {
                   <div className="px-6 py-8 text-center">
                     <AlertCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm text-slate-500">
-                      No genes found matching "{geneSearch}"
+                      No genes found matching &ldquo;{geneSearch}&rdquo;
                     </p>
                   </div>
                 ) : (
@@ -628,9 +609,8 @@ const Curate: React.FC = () => {
                             {gene.name}
                           </div>
                           <div className="text-xs text-slate-500">
-                            Chromosome {gene.chromosome} •{" "}
-                            {gene.start.toLocaleString()} -{" "}
-                            {gene.end.toLocaleString()}
+                            Chromosome {gene.chromosome} • {gene.start.toLocaleString()}{" "}
+                            - {gene.end.toLocaleString()}
                           </div>
                         </div>
                         <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-teal-600 transition-colors" />
@@ -858,8 +838,7 @@ const Curate: React.FC = () => {
                   {selectedGene && variants.length > 0 && (
                     <div className="px-6 pb-4">
                       <div className="text-xs text-slate-500 mb-2 px-1">
-                        {selectedGene.name}:{" "}
-                        {selectedGene.start.toLocaleString()} –{" "}
+                        {selectedGene.name}: {selectedGene.start.toLocaleString()} –{" "}
                         {selectedGene.end.toLocaleString()}
                       </div>
                       <div
@@ -901,8 +880,8 @@ const Curate: React.FC = () => {
                         No variants yet
                       </h3>
                       <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                        This gene doesn't have any variants. Import a CSV file
-                        to add variants.
+                        This gene doesn&apos;t have any variants. Import a CSV file to
+                        add variants.
                       </p>
                       <Button
                         onClick={() => setShowVariantImport(true)}
@@ -959,8 +938,8 @@ const Curate: React.FC = () => {
                           No structures yet
                         </h3>
                         <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                          Import a JSON structure file from the RNA Editor to
-                          visualize and store it.
+                          Import a JSON structure file from the RNA Editor to visualize
+                          and store it.
                         </p>
                         <Button
                           onClick={() => setShowStructureImport(true)}
@@ -984,9 +963,7 @@ const Curate: React.FC = () => {
                               <div className="flex items-center gap-2">
                                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                                 <button
-                                  onClick={() =>
-                                    handleDeleteStructure(structure.id)
-                                  }
+                                  onClick={() => handleDeleteStructure(structure.id)}
                                   className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                                   title="Delete structure"
                                 >
@@ -998,16 +975,10 @@ const Curate: React.FC = () => {
                               {structure.id}
                             </h4>
                             <div className="text-sm text-slate-500 space-y-1">
-                              <p>
-                                {structure.nucleotides?.length || 0} nucleotides
-                              </p>
-                              <p>
-                                {structure.basePairs?.length || 0} base pairs
-                              </p>
+                              <p>{structure.nucleotides?.length || 0} nucleotides</p>
+                              <p>{structure.basePairs?.length || 0} base pairs</p>
                               {structure.annotations?.length > 0 && (
-                                <p>
-                                  {structure.annotations.length} annotations
-                                </p>
+                                <p>{structure.annotations.length} annotations</p>
                               )}
                             </div>
                           </div>
@@ -1070,8 +1041,7 @@ const Curate: React.FC = () => {
                           No literature yet
                         </h3>
                         <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                          Add research papers and publications related to this
-                          gene.
+                          Add research papers and publications related to this gene.
                         </p>
                       </div>
                     ) : (
@@ -1126,9 +1096,7 @@ const Curate: React.FC = () => {
                                   className="h-8 w-8 text-slate-400 hover:text-red-600"
                                   onClick={async () => {
                                     if (
-                                      confirm(
-                                        `Delete literature "${paper.title}"?`,
-                                      )
+                                      confirm(`Delete literature "${paper.title}"?`)
                                     ) {
                                       try {
                                         const res = await fetch(
@@ -1338,11 +1306,7 @@ const Curate: React.FC = () => {
                                   size="icon"
                                   className="h-8 w-8 text-slate-400 hover:text-red-600"
                                   onClick={async () => {
-                                    if (
-                                      confirm(
-                                        `Delete this variant association?`,
-                                      )
-                                    ) {
+                                    if (confirm(`Delete this variant association?`)) {
                                       try {
                                         const res = await fetch(
                                           `/api/variant-classifications?variant_id=${encodeURIComponent(va.variant_id)}&literature_id=${encodeURIComponent(va.literature_id)}`,
@@ -1355,10 +1319,8 @@ const Curate: React.FC = () => {
                                           setVariantAssociations(
                                             variantAssociations.filter(
                                               (a: any) =>
-                                                a.variant_id !==
-                                                  va.variant_id ||
-                                                a.literature_id !==
-                                                  va.literature_id,
+                                                a.variant_id !== va.variant_id ||
+                                                a.literature_id !== va.literature_id,
                                             ),
                                           );
                                         } else {
@@ -1446,9 +1408,7 @@ const Curate: React.FC = () => {
                 editingGene ? () => handleDeleteGene(editingGene.id) : undefined
               }
               onRefreshVariants={
-                editingGene
-                  ? () => handleRefreshVariants(editingGene.id)
-                  : undefined
+                editingGene ? () => handleRefreshVariants(editingGene.id) : undefined
               }
             />
           </div>
@@ -1467,9 +1427,7 @@ const Curate: React.FC = () => {
             <VariantForm
               geneId={selectedGene?.id}
               initialData={editingVariant}
-              onSubmit={
-                editingVariant ? handleUpdateVariant : handleCreateVariant
-              }
+              onSubmit={editingVariant ? handleUpdateVariant : handleCreateVariant}
               onCancel={() => {
                 setShowVariantForm(false);
                 setEditingVariant(null);
@@ -1491,9 +1449,7 @@ const Curate: React.FC = () => {
             <LiteratureForm
               initialData={editingLiterature}
               onSubmit={
-                editingLiterature
-                  ? handleUpdateLiterature
-                  : handleCreateLiterature
+                editingLiterature ? handleUpdateLiterature : handleCreateLiterature
               }
               onCancel={() => {
                 setShowLiteratureForm(false);
@@ -1509,12 +1465,9 @@ const Curate: React.FC = () => {
         open={showLiteratureImport}
         onClose={() => setShowLiteratureImport(false)}
         onSuccess={async () => {
-          const litRes = await fetch(
-            `/api/genes/${selectedGene?.id}/literature`,
-            {
-              credentials: "include",
-            },
-          );
+          const litRes = await fetch(`/api/genes/${selectedGene?.id}/literature`, {
+            credentials: "include",
+          });
           if (litRes.ok) setLiterature(await litRes.json());
         }}
       />

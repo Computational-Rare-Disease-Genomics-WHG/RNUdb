@@ -325,8 +325,7 @@ const VariantImportWizard = ({
   const mappedColumns = useMemo(() => {
     return fieldMappings
       .filter(
-        (m) =>
-          m.targetColumn && m.targetColumn !== "" && m.targetColumn !== "skip",
+        (m) => m.targetColumn && m.targetColumn !== "" && m.targetColumn !== "skip",
       )
       .map((m) => m.targetColumn);
   }, [fieldMappings]);
@@ -456,9 +455,7 @@ const VariantImportWizard = ({
                 <div className="flex items-center gap-3 p-4 bg-teal-50 rounded-xl border border-teal-200">
                   <FileText className="h-5 w-5 text-teal-600" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">
-                      {vcfFile.name}
-                    </p>
+                    <p className="text-sm font-medium text-slate-900">{vcfFile.name}</p>
                     <p className="text-xs text-slate-500">
                       {detectedFields.length} INFO field(s)
                     </p>
@@ -502,9 +499,7 @@ const VariantImportWizard = ({
                               {TARGET_COLUMNS.map((col) => (
                                 <SelectItem key={col.value} value={col.value}>
                                   <div>
-                                    <span className="font-medium">
-                                      {col.label}
-                                    </span>
+                                    <span className="font-medium">{col.label}</span>
                                     <span className="text-slate-500 text-xs ml-1">
                                       - {col.description}
                                     </span>
@@ -526,9 +521,7 @@ const VariantImportWizard = ({
 
               {mappedColumns.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  <span className="text-sm text-slate-500 mr-2">
-                    Mapped fields:
-                  </span>
+                  <span className="text-sm text-slate-500 mr-2">Mapped fields:</span>
                   {mappedColumns.map((col) => {
                     const target = TARGET_COLUMNS.find((t) => t.value === col);
                     return (
@@ -599,8 +592,8 @@ const VariantImportWizard = ({
                               key={col}
                               className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase"
                             >
-                              {TARGET_COLUMNS.find((t) => t.value === col)
-                                ?.label || col}
+                              {TARGET_COLUMNS.find((t) => t.value === col)?.label ||
+                                col}
                             </th>
                           ))}
                         </tr>

@@ -54,8 +54,8 @@ const HowToUse: React.FC = () => {
           </div>
           <h1 className="text-4xl font-bold mb-3">How to Use RNUdb</h1>
           <p className="text-teal-100 text-lg max-w-2xl">
-            A comprehensive guide to navigating RNUdb, searching for variants,
-            and managing data
+            A comprehensive guide to navigating RNUdb, searching for variants, and
+            managing data
           </p>
         </div>
       </div>
@@ -90,8 +90,8 @@ const HowToUse: React.FC = () => {
                     Search Genes
                   </h3>
                   <p className="text-slate-500 text-base leading-relaxed">
-                    Use the search bar on the home page to find snRNA genes by
-                    name or variant notation.
+                    Use the search bar on the home page to find snRNA genes by name or
+                    variant notation.
                   </p>
                   <div className="mt-4 text-sm text-teal-600 font-mono bg-teal-50 px-3 py-2 rounded-lg inline-block">
                     Try: RNU4-2, RNU2-2
@@ -108,8 +108,8 @@ const HowToUse: React.FC = () => {
                     View Structures
                   </h3>
                   <p className="text-slate-500 text-base leading-relaxed">
-                    Each gene page displays the RNA secondary structure. Hover
-                    over nucleotides to see associated variants.
+                    Each gene page displays the RNA secondary structure. Hover over
+                    nucleotides to see associated variants.
                   </p>
                   <div className="mt-4 text-sm text-teal-600 bg-teal-50 px-3 py-2 rounded-lg inline-block">
                     Interactive nucleotide-level detail
@@ -126,8 +126,8 @@ const HowToUse: React.FC = () => {
                     Data Overlays
                   </h3>
                   <p className="text-slate-500 text-base leading-relaxed">
-                    Toggle ClinVar, gnomAD, or function score overlays to
-                    identify potentially pathogenic variants.
+                    Toggle ClinVar, gnomAD, or function score overlays to identify
+                    potentially pathogenic variants.
                   </p>
                   <div className="mt-4 text-sm text-teal-600 bg-teal-50 px-3 py-2 rounded-lg inline-block">
                     Multiple annotation layers
@@ -146,8 +146,8 @@ const HowToUse: React.FC = () => {
                     </h4>
                     <p className="text-slate-600 text-base">
                       RNUdb aggregates data from gnomAD, ClinVar, and published
-                      literature. Variant classifications reflect current
-                      knowledge and may change as new evidence emerges.
+                      literature. Variant classifications reflect current knowledge and
+                      may change as new evidence emerges.
                     </p>
                   </div>
                 </div>
@@ -169,8 +169,7 @@ const HowToUse: React.FC = () => {
               </CardHeader>
               <CardContent className="pt-5 space-y-5">
                 <p className="text-slate-600 text-lg">
-                  Browse RNUdb without an account. Here&apos;s how to get
-                  started:
+                  Browse RNUdb without an account. Here&apos;s how to get started:
                 </p>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="p-5 border border-slate-200 rounded-xl hover:border-teal-200 transition-colors">
@@ -181,8 +180,8 @@ const HowToUse: React.FC = () => {
                       Browse Genes
                     </h4>
                     <p className="text-slate-500 text-base">
-                      Use the home page search to find snRNA genes by name or
-                      variant notation.
+                      Use the home page search to find snRNA genes by name or variant
+                      notation.
                     </p>
                   </div>
                   <div className="p-5 border border-slate-200 rounded-xl hover:border-teal-200 transition-colors">
@@ -193,8 +192,8 @@ const HowToUse: React.FC = () => {
                       View Gene Page
                     </h4>
                     <p className="text-slate-500 text-base">
-                      Each gene page shows the RNA secondary structure with
-                      interactive detail.
+                      Each gene page shows the RNA secondary structure with interactive
+                      detail.
                     </p>
                   </div>
                   <div className="p-5 border border-slate-200 rounded-xl hover:border-teal-200 transition-colors">
@@ -224,8 +223,8 @@ const HowToUse: React.FC = () => {
               </CardHeader>
               <CardContent className="pt-5 space-y-6">
                 <p className="text-slate-600 text-lg">
-                  Curators manage variants and literature. Requires sign-in and
-                  curator permissions.
+                  Curators manage variants and literature. Requires sign-in and curator
+                  permissions.
                 </p>
 
                 <div>
@@ -253,23 +252,15 @@ const HowToUse: React.FC = () => {
                       </thead>
                       <tbody className="text-slate-600">
                         <tr className="border-b border-slate-100">
-                          <td className="py-4 px-5 font-mono text-base">
-                            gene_id
-                          </td>
+                          <td className="py-4 px-5 font-mono text-base">gene_id</td>
                           <td className="py-4 px-5">
                             <CheckCircle2 className="h-5 w-5 text-teal-500" />
                           </td>
-                          <td className="py-4 px-5 text-base">
-                            snRNA gene name
-                          </td>
-                          <td className="py-4 px-5 font-mono text-base">
-                            RNU4-2
-                          </td>
+                          <td className="py-4 px-5 text-base">snRNA gene name</td>
+                          <td className="py-4 px-5 font-mono text-base">RNU4-2</td>
                         </tr>
                         <tr className="border-b border-slate-100">
-                          <td className="py-4 px-5 font-mono text-base">
-                            position
-                          </td>
+                          <td className="py-4 px-5 font-mono text-base">position</td>
                           <td className="py-4 px-5">
                             <CheckCircle2 className="h-5 w-5 text-teal-500" />
                           </td>
@@ -285,9 +276,7 @@ const HowToUse: React.FC = () => {
                           <td className="py-4 px-5">
                             <CheckCircle2 className="h-5 w-5 text-teal-500" />
                           </td>
-                          <td className="py-4 px-5 text-base">
-                            Reference allele
-                          </td>
+                          <td className="py-4 px-5 text-base">Reference allele</td>
                           <td className="py-4 px-5 font-mono text-base">G</td>
                         </tr>
                         <tr className="border-b border-slate-100">
@@ -295,9 +284,7 @@ const HowToUse: React.FC = () => {
                           <td className="py-4 px-5">
                             <CheckCircle2 className="h-5 w-5 text-teal-500" />
                           </td>
-                          <td className="py-4 px-5 text-base">
-                            Alternate allele
-                          </td>
+                          <td className="py-4 px-5 text-base">Alternate allele</td>
                           <td className="py-4 px-5 font-mono text-base">A</td>
                         </tr>
                         <tr>
@@ -306,9 +293,7 @@ const HowToUse: React.FC = () => {
                           </td>
                           <td className="py-4 px-5 text-slate-400">Optional</td>
                           <td className="py-4 px-5 text-base">HGVS notation</td>
-                          <td className="py-4 px-5 font-mono text-base">
-                            n.76C&gt;T
-                          </td>
+                          <td className="py-4 px-5 font-mono text-base">n.76C&gt;T</td>
                         </tr>
                       </tbody>
                     </table>
@@ -366,7 +351,7 @@ const HowToUse: React.FC = () => {
                 <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
                   <Download className="h-5 w-5 text-teal-500" />
                   <p className="text-slate-600 text-base">
-                    Use "Export CSV" in the Curate dashboard to download
+                    Use &ldquo;Export CSV&rdquo; in the Curate dashboard to download
                     variants.
                   </p>
                 </div>
@@ -384,8 +369,7 @@ const HowToUse: React.FC = () => {
               </CardHeader>
               <CardContent className="pt-5">
                 <p className="text-slate-600 text-lg mb-5">
-                  Admins have full control over database content and user
-                  management.
+                  Admins have full control over database content and user management.
                 </p>
                 <div className="grid md:grid-cols-2 gap-5">
                   <div className="p-5 border border-slate-200 rounded-xl bg-slate-50">

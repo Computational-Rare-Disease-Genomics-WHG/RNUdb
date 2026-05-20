@@ -52,7 +52,5 @@ export const placeholderStructure: RNAStructure = {
     { id: 3, base: "A", x: 140, y: 100 },
   ],
   base_pairs: [{ from_pos: 1, to_pos: 3 }],
-  annotations: [
-    { id: "test_annotation", text: "Test", x: 120, y: 70, font_size: 12 },
-  ],
+  annotations: [{ id: "test_annotation", text: "Test", x: 120, y: 70, font_size: 12 }],
 };

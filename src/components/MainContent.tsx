@@ -53,14 +53,11 @@ const MainContent: React.FC<MainContentProps> = ({
   functionScoreTrackData,
   depletionGroupTrackData,
 }) => {
-  const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(
-    null,
+  const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
+  const [selectedNucleotide, setSelectedNucleotide] = useState<Nucleotide | null>(null);
+  const [highlightedNucleotideIds, setHighlightedNucleotideIds] = useState<number[]>(
+    [],
   );
-  const [selectedNucleotide, setSelectedNucleotide] =
-    useState<Nucleotide | null>(null);
-  const [highlightedNucleotideIds, setHighlightedNucleotideIds] = useState<
-    number[]
-  >([]);
 
   const handleNucleotideClick = (nucleotide: Nucleotide) => {
     if (selectedNucleotide?.id === nucleotide.id) {
@@ -176,8 +173,8 @@ const MainContent: React.FC<MainContentProps> = ({
                   RNA Secondary Structure
                 </CardTitle>
                 <CardDescription>
-                  Interactive visualization of {currentData.name} structure with
-                  overlay data
+                  Interactive visualization of {currentData.name} structure with overlay
+                  data
                 </CardDescription>
               </CardHeader>
               <CardContent>

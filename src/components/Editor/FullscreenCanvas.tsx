@@ -201,9 +201,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                 className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
               />
               <div className="w-12 text-center bg-slate-100 rounded py-1">
-                <span className="text-xs font-medium text-slate-600">
-                  {fontSize}px
-                </span>
+                <span className="text-xs font-medium text-slate-600">{fontSize}px</span>
               </div>
             </div>
           </div>
@@ -258,8 +256,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
     const handleLabelMouseMove = (e: React.MouseEvent) => {
       if (draggingLabel && labelDragStart && labelInitialPosition) {
         e.preventDefault();
-        const svg =
-          e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+        const svg = e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
         if (svg) {
           const pt = new DOMPoint(e.clientX, e.clientY);
           const currentSvgPoint = pt.matrixTransform(
@@ -269,10 +266,8 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
           const initialSvgPoint = pt2.matrixTransform(
             svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
           );
-          const newX =
-            labelInitialPosition.x + (currentSvgPoint.x - initialSvgPoint.x);
-          const newY =
-            labelInitialPosition.y + (currentSvgPoint.y - initialSvgPoint.y);
+          const newX = labelInitialPosition.x + (currentSvgPoint.x - initialSvgPoint.x);
+          const newY = labelInitialPosition.y + (currentSvgPoint.y - initialSvgPoint.y);
           onUpdateRnaData({
             ...rnaData,
             annotations:
@@ -294,17 +289,12 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
       }
     };
 
-    const handleFeatureLabelMouseDown = (
-      e: React.MouseEvent,
-      featureId: string,
-    ) => {
+    const handleFeatureLabelMouseDown = (e: React.MouseEvent, featureId: string) => {
       if (mode === "select") {
         e.stopPropagation();
         setDraggingFeature(featureId);
         setFeatureDragStart({ x: e.clientX, y: e.clientY });
-        const feature = rnaData.structural_features?.find(
-          (f) => f.id === featureId,
-        );
+        const feature = rnaData.structural_features?.find((f) => f.id === featureId);
         if (feature) {
           setFeatureInitialPosition({ x: feature.label_x, y: feature.label_y });
         }
@@ -314,8 +304,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
     const handleFeatureLabelMouseMove = (e: React.MouseEvent) => {
       if (draggingFeature && featureDragStart && featureInitialPosition) {
         e.preventDefault();
-        const svg =
-          e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+        const svg = e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
         if (svg) {
           const pt = new DOMPoint(e.clientX, e.clientY);
           const currentSvgPoint = pt.matrixTransform(
@@ -333,9 +322,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
           onUpdateRnaData({
             ...rnaData,
             structural_features: rnaData.structural_features?.map((f) =>
-              f.id === draggingFeature
-                ? { ...f, label_x: newX, label_y: newY }
-                : f,
+              f.id === draggingFeature ? { ...f, label_x: newX, label_y: newY } : f,
             ),
           });
         }
@@ -398,9 +385,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
 
     const renderBasePairs = () => {
       return rnaData.base_pairs.map((bp, index) => {
-        const nucleotide1 = rnaData.nucleotides.find(
-          (n) => n.id === bp.from_pos,
-        );
+        const nucleotide1 = rnaData.nucleotides.find((n) => n.id === bp.from_pos);
         const nucleotide2 = rnaData.nucleotides.find((n) => n.id === bp.to_pos);
 
         if (!nucleotide1 || !nucleotide2) return null;
@@ -436,9 +421,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
       return rnaData.nucleotides.map((nucleotide) => {
         const isSelected = selectedNucleotides.includes(nucleotide.id);
         const isCurrent = currentNucleotide === nucleotide.id;
-        const isFeatureSelected = selectedFeatureNucleotides.includes(
-          nucleotide.id,
-        );
+        const isFeatureSelected = selectedFeatureNucleotides.includes(nucleotide.id);
         const baseColors = {
           A: "#ef4444",
           U: "#3b82f6",
@@ -446,9 +429,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
           C: "#f59e0b",
         };
 
-        const fillColor = nucleotide.base
-          ? baseColors[nucleotide.base]
-          : "#9ca3af";
+        const fillColor = nucleotide.base ? baseColors[nucleotide.base] : "#9ca3af";
         const displayText = nucleotide.base || nucleotide.id.toString();
 
         return (
@@ -468,13 +449,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                       : "#374151"
               }
               strokeWidth={
-                isCurrent
-                  ? "4"
-                  : isFeatureSelected
-                    ? "3"
-                    : isSelected
-                      ? "3"
-                      : "2"
+                isCurrent ? "4" : isFeatureSelected ? "3" : isSelected ? "3" : "2"
               }
               className="cursor-pointer"
               style={{ pointerEvents: "auto" }}
@@ -665,9 +640,8 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                       onUpdateRnaData({
                         ...rnaData,
                         annotations:
-                          rnaData.annotations?.filter(
-                            (a) => a.id !== currentLabel,
-                          ) || [],
+                          rnaData.annotations?.filter((a) => a.id !== currentLabel) ||
+                          [],
                       });
                       onClearSelection();
                     }
@@ -852,8 +826,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
           }}
           onClick={(e) => {
             if (mode === "label") {
-              const svg =
-                e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+              const svg = e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
               if (svg) {
                 const pt = new DOMPoint(e.clientX, e.clientY);
                 const svgPoint = pt.matrixTransform(
@@ -889,12 +862,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
           <div className="absolute inset-0 opacity-5">
             <svg width="100%" height="100%" className="pointer-events-none">
               <defs>
-                <pattern
-                  id="grid"
-                  width="20"
-                  height="20"
-                  patternUnits="userSpaceOnUse"
-                >
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
                   <path
                     d="M 20 0 L 0 0 0 20"
                     fill="none"
@@ -938,10 +906,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
             {/* Structural Features Layer */}
             {mode !== "add" &&
               rnaData.structural_features?.map((feature) => {
-                if (
-                  !feature.nucleotide_ids ||
-                  feature.nucleotide_ids.length === 0
-                )
+                if (!feature.nucleotide_ids || feature.nucleotide_ids.length === 0)
                   return null;
 
                 const nucleotides = feature.nucleotide_ids
@@ -980,15 +945,11 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                       <rect
                         x={
                           feature.label_x -
-                          (feature.label_text.length *
-                            feature.label_font_size) /
-                            3
+                          (feature.label_text.length * feature.label_font_size) / 3
                         }
                         y={feature.label_y - feature.label_font_size / 1.5}
                         width={
-                          (feature.label_text.length *
-                            feature.label_font_size) /
-                          1.5
+                          (feature.label_text.length * feature.label_font_size) / 1.5
                         }
                         height={feature.label_font_size + 8}
                         fill="rgba(255, 255, 255, 0.9)"
@@ -997,9 +958,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                         rx="4"
                         className="cursor-move hover:fill-purple-50"
                         onClick={(e) => onFeatureLabelClick(e, feature.id)}
-                        onMouseDown={(e) =>
-                          handleFeatureLabelMouseDown(e, feature.id)
-                        }
+                        onMouseDown={(e) => handleFeatureLabelMouseDown(e, feature.id)}
                       />
                       <text
                         x={feature.label_x}
@@ -1011,9 +970,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                         dominantBaseline="middle"
                         className="cursor-move select-none"
                         onClick={(e) => onFeatureLabelClick(e, feature.id)}
-                        onMouseDown={(e) =>
-                          handleFeatureLabelMouseDown(e, feature.id)
-                        }
+                        onMouseDown={(e) => handleFeatureLabelMouseDown(e, feature.id)}
                       >
                         {feature.label_text}
                       </text>
@@ -1062,26 +1019,19 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                 <g key={annotation.id}>
                   <rect
                     x={
-                      annotation.x -
-                      (annotation.text.length * annotation.font_size) / 3
+                      annotation.x - (annotation.text.length * annotation.font_size) / 3
                     }
                     y={annotation.y - annotation.font_size / 1.5}
-                    width={
-                      (annotation.text.length * annotation.font_size) / 1.5
-                    }
+                    width={(annotation.text.length * annotation.font_size) / 1.5}
                     height={annotation.font_size + 8}
                     fill={
                       currentLabel === annotation.id
                         ? "rgba(20, 184, 166, 0.1)"
                         : "transparent"
                     }
-                    stroke={
-                      currentLabel === annotation.id ? "#14b8a6" : "transparent"
-                    }
+                    stroke={currentLabel === annotation.id ? "#14b8a6" : "transparent"}
                     strokeWidth="2"
-                    strokeDasharray={
-                      currentLabel === annotation.id ? "3,3" : "none"
-                    }
+                    strokeDasharray={currentLabel === annotation.id ? "3,3" : "none"}
                     className={`cursor-pointer ${mode === "select" ? "hover:fill-teal-50 hover:stroke-teal-300" : ""}`}
                     style={{ pointerEvents: "auto" }}
                     onClick={(e) => handleLabelClickInternal(e, annotation.id)}
@@ -1163,8 +1113,8 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                   <kbd className="px-2 py-1 bg-slate-100 rounded text-xs font-mono">
                     N
                   </kbd>{" "}
-                  to add your first nucleotide or click the Add tool and click
-                  on the canvas
+                  to add your first nucleotide or click the Add tool and click on the
+                  canvas
                 </p>
               </div>
             </div>

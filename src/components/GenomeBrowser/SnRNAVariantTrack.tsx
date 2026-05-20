@@ -39,9 +39,7 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
 
   // Transform gnomAD variants to the expected format
   const transformedGnomadVariants = gnomadVariants
-    .filter(
-      (variant) => variant.position && typeof variant.position === "number",
-    )
+    .filter((variant) => variant.position && typeof variant.position === "number")
     .map((variant, index) => ({
       variant_id: `gnomad-${variant.id}-${index}`,
       pos: variant.position,
@@ -54,9 +52,7 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
 
   // Transform All of Us variants to the expected format
   const transformedAouVariants = aouVariants
-    .filter(
-      (variant) => variant.position && typeof variant.position === "number",
-    )
+    .filter((variant) => variant.position && typeof variant.position === "number")
     .map((variant, index) => ({
       variant_id: `aou-${variant.id}-${index}`,
       pos: variant.position,

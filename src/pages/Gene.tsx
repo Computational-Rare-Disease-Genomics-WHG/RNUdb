@@ -45,12 +45,8 @@ const Gene: React.FC = () => {
   const [currentData, setCurrentData] = useState<SnRNAGene | null>(null);
   const [variantData, setVariantData] = useState<Variant[]>([]);
   const [paperData, setPaperData] = useState<Literature[]>([]);
-  const [literatureCounts, setLiteratureCounts] = useState<LiteratureCounts[]>(
-    [],
-  );
-  const [rnaStructureData, setRnaStructureData] = useState<RNAStructure | null>(
-    null,
-  );
+  const [literatureCounts, setLiteratureCounts] = useState<LiteratureCounts[]>([]);
+  const [rnaStructureData, setRnaStructureData] = useState<RNAStructure | null>(null);
   const [pdbData, setPdbData] = useState<PDBStructure | null>(null);
 
   // Load data when selectedSnRNA changes
@@ -90,9 +86,7 @@ const Gene: React.FC = () => {
         setPdbData(pdbStructure);
       } catch (err) {
         console.error("Error loading gene data:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load gene data",
-        );
+        setError(err instanceof Error ? err.message : "Failed to load gene data");
       } finally {
         setLoading(false);
       }
@@ -113,8 +107,7 @@ const Gene: React.FC = () => {
         variants
           .filter(
             (v) =>
-              v.depletion_group !== undefined &&
-              v.nucleotidePosition !== undefined,
+              v.depletion_group !== undefined && v.nucleotidePosition !== undefined,
           )
           .map((v) => [
             v.nucleotidePosition!,
@@ -137,10 +130,7 @@ const Gene: React.FC = () => {
       );
     };
 
-    const createClinvarOverlayData = (
-      variants: Variant[],
-      geneData: SnRNAGene,
-    ) => {
+    const createClinvarOverlayData = (variants: Variant[], geneData: SnRNAGene) => {
       return Object.fromEntries(
         variants
           .filter(
@@ -204,10 +194,7 @@ const Gene: React.FC = () => {
       );
     };
 
-    const createGnomadOverlayData = (
-      variants: Variant[],
-      geneData: SnRNAGene,
-    ) => {
+    const createGnomadOverlayData = (variants: Variant[], geneData: SnRNAGene) => {
       return Object.fromEntries(
         variants
           .filter(
@@ -284,8 +271,7 @@ const Gene: React.FC = () => {
   // Separate gnomAD variants from clinical variants
   const getGnomadVariants = () => {
     return variantData.filter(
-      (v) =>
-        v.gnomad_ac !== undefined && v.gnomad_ac !== null && v.gnomad_ac > 0,
+      (v) => v.gnomad_ac !== undefined && v.gnomad_ac !== null && v.gnomad_ac > 0,
     );
   };
 
@@ -308,9 +294,7 @@ const Gene: React.FC = () => {
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <div className="text-lg text-muted-foreground">
-            Loading gene data...
-          </div>
+          <div className="text-lg text-muted-foreground">Loading gene data...</div>
         </div>
       </div>
     );
@@ -320,9 +304,7 @@ const Gene: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-stone-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-lg mb-4">
-            Error loading gene data
-          </div>
+          <div className="text-red-600 text-lg mb-4">Error loading gene data</div>
           <div className="text-muted-foreground mb-4">{error}</div>
           <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>

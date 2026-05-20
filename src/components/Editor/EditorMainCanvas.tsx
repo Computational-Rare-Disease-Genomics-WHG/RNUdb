@@ -2,13 +2,7 @@ import { ZoomIn, ZoomOut, RotateCcw, Palette, Grid, Eye } from "lucide-react";
 import React, { forwardRef } from "react";
 import type { RNAData } from "../../types/rna";
 import { Button } from "../ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 
 interface EditorMainCanvasProps {
   rnaData: RNAData;
@@ -52,9 +46,7 @@ const EditorMainCanvas = forwardRef<HTMLDivElement, EditorMainCanvasProps>(
   ) => {
     const renderBasePairs = () => {
       return rnaData.base_pairs.map((bp, index) => {
-        const nucleotide1 = rnaData.nucleotides.find(
-          (n) => n.id === bp.from_pos,
-        );
+        const nucleotide1 = rnaData.nucleotides.find((n) => n.id === bp.from_pos);
         const nucleotide2 = rnaData.nucleotides.find((n) => n.id === bp.to_pos);
 
         if (!nucleotide1 || !nucleotide2) return null;
@@ -85,9 +77,7 @@ const EditorMainCanvas = forwardRef<HTMLDivElement, EditorMainCanvasProps>(
           C: "#f59e0b",
         };
 
-        const fillColor = nucleotide.base
-          ? baseColors[nucleotide.base]
-          : "#9ca3af";
+        const fillColor = nucleotide.base ? baseColors[nucleotide.base] : "#9ca3af";
         const displayText = nucleotide.base || nucleotide.id.toString();
 
         return (
@@ -97,9 +87,7 @@ const EditorMainCanvas = forwardRef<HTMLDivElement, EditorMainCanvasProps>(
               cy={nucleotide.y + 15}
               r="15"
               fill={fillColor}
-              stroke={
-                isCurrent ? "#0d9488" : isSelected ? "#0891b2" : "#374151"
-              }
+              stroke={isCurrent ? "#0d9488" : isSelected ? "#0891b2" : "#374151"}
               strokeWidth={isCurrent ? "4" : isSelected ? "3" : "2"}
               className="cursor-pointer"
               onMouseDown={(e) => onNucleotideMouseDown(e, nucleotide.id)}
@@ -215,11 +203,7 @@ const EditorMainCanvas = forwardRef<HTMLDivElement, EditorMainCanvasProps>(
             style={{
               width: "100%",
               height: "600px",
-              cursor: isPanning
-                ? "grabbing"
-                : mode === "select"
-                  ? "grab"
-                  : "crosshair",
+              cursor: isPanning ? "grabbing" : mode === "select" ? "grab" : "crosshair",
             }}
             onClick={onCanvasClick}
             onMouseDown={onCanvasMouseDown}
@@ -266,10 +250,7 @@ const EditorMainCanvas = forwardRef<HTMLDivElement, EditorMainCanvasProps>(
               <g className="bonds-layer">{renderBasePairs()}</g>
 
               {/* Nucleotides Layer */}
-              <g
-                className="nucleotides-layer"
-                style={{ pointerEvents: "auto" }}
-              >
+              <g className="nucleotides-layer" style={{ pointerEvents: "auto" }}>
                 {renderNucleotides()}
               </g>
 
@@ -305,8 +286,8 @@ const EditorMainCanvas = forwardRef<HTMLDivElement, EditorMainCanvasProps>(
                     <kbd className="px-2 py-1 bg-slate-100 rounded text-xs font-mono">
                       N
                     </kbd>{" "}
-                    to add your first nucleotide or click the Add tool and click
-                    on the canvas
+                    to add your first nucleotide or click the Add tool and click on the
+                    canvas
                   </p>
                 </div>
               </div>

@@ -70,8 +70,7 @@ export function useApprovals() {
         const params = new URLSearchParams();
         if (filters?.status) params.set("status", filters.status);
         if (filters?.gene_id) params.set("gene_id", filters.gene_id);
-        if (filters?.entity_type)
-          params.set("entity_type", filters.entity_type);
+        if (filters?.entity_type) params.set("entity_type", filters.entity_type);
 
         const res = await fetch(`/api/approvals?${params}`, {
           credentials: "include",

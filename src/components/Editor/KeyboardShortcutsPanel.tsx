@@ -13,24 +13,22 @@ const KeyboardShortcutsPanel: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         <div>
-          <kbd className="px-2 py-1 bg-gray-100 rounded">N</kbd> - Create new
-          nucleotide
+          <kbd className="px-2 py-1 bg-gray-100 rounded">N</kbd> - Create new nucleotide
         </div>
         <div>
-          <kbd className="px-2 py-1 bg-gray-100 rounded">A/C/G/U</kbd> - Set
-          base of current nucleotide
-        </div>
-        <div>
-          <kbd className="px-2 py-1 bg-gray-100 rounded">←/→/↑/↓</kbd> -
-          Navigate nucleotides
-        </div>
-        <div>
-          <kbd className="px-2 py-1 bg-gray-100 rounded">Del</kbd> - Delete
+          <kbd className="px-2 py-1 bg-gray-100 rounded">A/C/G/U</kbd> - Set base of
           current nucleotide
         </div>
         <div>
-          <kbd className="px-2 py-1 bg-gray-100 rounded">Esc</kbd> - Clear
-          selection
+          <kbd className="px-2 py-1 bg-gray-100 rounded">←/→/↑/↓</kbd> - Navigate
+          nucleotides
+        </div>
+        <div>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Del</kbd> - Delete current
+          nucleotide
+        </div>
+        <div>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Esc</kbd> - Clear selection
         </div>
       </CardContent>
     </Card>

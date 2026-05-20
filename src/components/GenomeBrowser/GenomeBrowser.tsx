@@ -93,9 +93,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
     if (newRange >= defaultRange) {
       setRegions([defaultRegion]);
     } else {
-      setRegions([
-        { start: center - newRange / 2, stop: center + newRange / 2 },
-      ]);
+      setRegions([{ start: center - newRange / 2, stop: center + newRange / 2 }]);
     }
   };
 
@@ -213,9 +211,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
           <Cursor
             onClick={(cursorPosition) => {
               if (cursorPosition !== null) {
-                setRegions([
-                  { start: cursorPosition - 75, stop: cursorPosition + 75 },
-                ]);
+                setRegions([{ start: cursorPosition - 75, stop: cursorPosition + 75 }]);
                 setIsZoomed(true);
               }
             }}
