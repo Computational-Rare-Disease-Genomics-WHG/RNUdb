@@ -3,6 +3,7 @@ import { RegionViewer, PositionAxisTrack, Cursor } from "@gnomad/region-viewer";
 import domtoimage from "dom-to-image-more";
 import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
+import DomainsTrack from "./DomainsTrack";
 import GenericTrack from "./GenericTrack";
 import SequenceTrack from "./SequenceTrack";
 import SnRNAVariantTrack from "./SnRNAVariantTrack";
@@ -14,6 +15,7 @@ interface GenomeBrowserProps {
   variants: any[];
   gnomadVariants: any[];
   aouVariants: any[];
+  structuralFeatures: any[];
   functionScoreTrackData: any;
   depletionGroupTrackData: any;
   geneData: {
@@ -32,6 +34,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   variants,
   gnomadVariants,
   aouVariants,
+  structuralFeatures,
   functionScoreTrackData,
   depletionGroupTrackData,
   geneData,
@@ -262,6 +265,12 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               regions={regions}
               displayType="bars"
               geneStart={geneData.start}
+            />
+            <DomainsTrack
+              domains={structuralFeatures}
+              regions={regions}
+              geneStart={geneData.start}
+              geneStrand={geneData.strand}
             />
             <SnRNAVariantTrack
               variants={variants}
