@@ -4,7 +4,7 @@ import domtoimage from "dom-to-image-more";
 import { ZoomIn, ZoomOut, RotateCcw, Download, FileImage } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import DomainsTrack from "./DomainsTrack";
-import GenericTrack from "./GenericTrack";
+import FunctionScoreTrack from "./FunctionScoreTrack";
 import SequenceTrack from "./SequenceTrack";
 import SnRNAVariantTrack from "./SnRNAVariantTrack";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,6 @@ interface GenomeBrowserProps {
   gnomadVariants: any[];
   aouVariants: any[];
   structuralFeatures: any[];
-  functionScoreTrackData: any;
   geneData: {
     id: string;
     name: string;
@@ -34,7 +33,6 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   gnomadVariants,
   aouVariants,
   structuralFeatures,
-  functionScoreTrackData,
   geneData,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -227,13 +225,12 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               regions={regions}
               geneStart={geneData.start}
             />
-            <GenericTrack
-              title="Function Score"
-              height={80}
-              data={functionScoreTrackData}
+            <FunctionScoreTrack
+              variants={variants}
               regions={regions}
-              displayType="points"
               geneStart={geneData.start}
+              geneStrand={geneData.strand}
+              geneEnd={geneData.end}
             />
             <SnRNAVariantTrack
               variants={variants}

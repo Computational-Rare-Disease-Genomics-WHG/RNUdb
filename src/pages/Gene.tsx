@@ -33,7 +33,6 @@ const Gene: React.FC = () => {
   const [overlayMode, setOverlayMode] = useState<
     "none" | "clinvar" | "gnomad" | "depletion_group"
   >("clinvar");
-  const [functionScoreTrackData, setFunctionScoreTrackData] = useState({});
   const [depletionGroupTrackData, setDepletionGroupTrackData] = useState({});
   const [clinvarOverlayData, setClinvarOverlayData] = useState({});
   const [gnomadOverlayData, setGnomadOverlayData] = useState({});
@@ -169,31 +168,6 @@ const Gene: React.FC = () => {
       );
     };
 
-    const createFunctionScoreTrackData = (variants: Variant[]) => {
-      return Object.fromEntries(
-        variants
-          .filter(
-            (v) =>
-              v.function_score !== undefined &&
-              v.function_score !== null &&
-              v.nucleotidePosition !== undefined,
-          )
-          .map((v) => [
-            v.nucleotidePosition!,
-            {
-              value: v.function_score!,
-              label: `Function Score: ${v.function_score!.toFixed(3)}`,
-              color:
-                v.function_score! > 0
-                  ? COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL
-                  : v.function_score! < -1
-                    ? COLORBLIND_FRIENDLY_PALETTE.DEPLETION.STRONG
-                    : COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE,
-            },
-          ]),
-      );
-    };
-
     const createGnomadOverlayData = (variants: Variant[], geneData: SnRNAGene) => {
       return Object.fromEntries(
         variants
@@ -224,7 +198,6 @@ const Gene: React.FC = () => {
       );
     };
 
-    const funcScoreData = createFunctionScoreTrackData(variantData);
     const depletionData = createDepletionGroupTrackData(variantData);
     const clinvarData = currentData
       ? createClinvarOverlayData(variantData, currentData)
@@ -232,7 +205,6 @@ const Gene: React.FC = () => {
     const gnomadData = currentData
       ? createGnomadOverlayData(variantData, currentData)
       : {};
-    setFunctionScoreTrackData(funcScoreData);
     setDepletionGroupTrackData(depletionData);
     setClinvarOverlayData(clinvarData);
     setGnomadOverlayData(gnomadData);
@@ -349,7 +321,6 @@ const Gene: React.FC = () => {
             overlayMode={overlayMode}
             getCurrentOverlayData={getCurrentOverlayData}
             cycleOverlayMode={cycleOverlayMode}
-            functionScoreTrackData={functionScoreTrackData}
             aouVariants={aouVariants}
           />
         </div>

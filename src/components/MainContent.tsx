@@ -34,7 +34,6 @@ interface MainContentProps {
   overlayMode: "none" | "clinvar" | "gnomad" | "depletion_group";
   getCurrentOverlayData: () => OverlayData;
   cycleOverlayMode: () => void;
-  functionScoreTrackData?: OverlayData;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -49,7 +48,6 @@ const MainContent: React.FC<MainContentProps> = ({
   overlayMode,
   getCurrentOverlayData,
   cycleOverlayMode,
-  functionScoreTrackData,
 }) => {
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
   const [selectedNucleotide, setSelectedNucleotide] = useState<Nucleotide | null>(null);
@@ -221,7 +219,6 @@ const MainContent: React.FC<MainContentProps> = ({
                 gnomadVariants={gnomadVariants}
                 aouVariants={aouVariants}
                 structuralFeatures={rnaStructureData?.structural_features || []}
-                functionScoreTrackData={functionScoreTrackData}
                 geneData={{
                   id: currentData.id,
                   name: currentData.name,
