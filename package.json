@@ -58,7 +58,7 @@
     "prettier": "^3.8.3",
     "tw-animate-css": "^1.3.4",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.30.1",
+    "typescript-eslint": "^8.59.4",
     "vite": "^6.4.1",
     "vitest": "^4.1.7"
   }
