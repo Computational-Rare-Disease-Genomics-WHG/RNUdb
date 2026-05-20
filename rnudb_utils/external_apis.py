@@ -56,6 +56,7 @@ def query_gnomad_variants(
             ac
             homozygote_count
             an
+            af
           }}
         }}
       }}
@@ -103,6 +104,7 @@ def query_gnomad_variants(
                     "homozygote_count"
                 )
                 processed_variant["gnomad_an"] = variant["joint"].get("an")
+                processed_variant["gnomad_af"] = variant["joint"].get("af")
             elif variant.get("genome"):
                 processed_variant["gnomad_ac"] = variant["genome"].get("ac")
                 processed_variant["gnomad_hom"] = variant["genome"].get("ac_hom")
