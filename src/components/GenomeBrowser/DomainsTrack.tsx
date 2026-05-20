@@ -13,6 +13,17 @@ const FEATURE_TYPE_COLORS: Record<string, string> = {
   custom: "#6b7280",
 };
 
+const FEATURE_TYPE_LABELS: Record<string, string> = {
+  "k-turn": "K-turn",
+  hairpin: "Hairpin",
+  loop: "Loop",
+  stem: "Stem",
+  bulge: "Bulge",
+  "internal-loop": "Internal Loop",
+  "multi-branch-loop": "Multi-branch Loop",
+  custom: "Custom",
+};
+
 interface DomainsTrackProps {
   domains: StructuralFeature[];
   regions: { start: number; stop: number }[];
@@ -20,7 +31,7 @@ interface DomainsTrackProps {
 }
 
 const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart }) => {
-  const height = 50;
+  const height = 60;
   const currentRegion = regions[0];
 
   const getFeatureColor = (feature: StructuralFeature): string => {
@@ -66,11 +77,11 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart
             const x2 = scalePosition(genomicEnd);
             const barWidth = Math.max(x2 - x1, 4);
             const color = getFeatureColor(feature);
-            const barY = 8;
-            const barHeight = height - 16;
-            const labelY = height / 2 + 1;
+            const barY = 12;
+            const barHeight = 24;
+            const labelY = barY + barHeight / 2;
 
-            const showLabel = x2 - x1 > 20;
+            const showLabel = x2 - x1 > 30;
 
             return (
               <g key={feature.id}>
@@ -80,26 +91,52 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart
                   width={barWidth}
                   height={barHeight}
                   fill={color}
-                  fillOpacity={0.3}
+                  fillOpacity={0.15}
                   stroke={color}
-                  strokeWidth={1.5}
-                  rx={4}
+                  strokeWidth={2}
+                  rx={6}
+                  ry={6}
                 />
                 {showLabel && (
-                  <text
-                    x={x1 + barWidth / 2}
-                    y={labelY}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize={11}
-                    fill={color}
-                    fontWeight={600}
-                  >
-                    {feature.label_text}
-                  </text>
+                  <>
+                    <rect
+                      x={x1 + 4}
+                      y={barY + 2}
+                      width={Math.max(barWidth - 8, 0)}
+                      height={barHeight - 4}
+                      fill={color}
+                      fillOpacity={0.08}
+                      rx={4}
+                      ry={4}
+                    />
+                    <text
+                      x={x1 + barWidth / 2}
+                      y={labelY}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize={11}
+                      fill={color}
+                      fontWeight={600}
+                      letterSpacing="0.02em"
+                    >
+                      {feature.label_text}
+                    </text>
+                  </>
+                )}
+                {!showLabel && (
+                  <line
+                    x1={x1 + barWidth / 2}
+                    y1={barY + 2}
+                    x2={x1 + barWidth / 2}
+                    y2={barY + barHeight - 2}
+                    stroke={color}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  />
                 )}
                 <title>
-                  {`${feature.feature_type}: ${feature.label_text} (nucleotides ${Math.min(...feature.nucleotide_ids)}-${Math.max(...feature.nucleotide_ids)})`}
+                  {`${FEATURE_TYPE_LABELS[feature.feature_type] || feature.feature_type}: ${feature.label_text}`}
+                  {`\nNucleotides: ${Math.min(...feature.nucleotide_ids)}-${Math.max(...feature.nucleotide_ids)}`}
                 </title>
               </g>
             );
