@@ -1,13 +1,14 @@
 """External API queries for genomic data"""
 
-import requests
 import time
-from typing import List, Dict, Any
+from typing import Any
+
+import requests
 
 
 def query_gnomad_variants(
     chromosome: str, start: int, end: int, reference_genome: str = "GRCh38"
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Query gnomAD API for variants in a genomic region
 
@@ -24,7 +25,8 @@ def query_gnomad_variants(
     # Construct GraphQL query for region
     query = f"""
     query VariantsInRegion {{
-      region(chrom: "{chromosome}", start: {start}, stop: {end}, reference_genome: {reference_genome}) {{
+      region(chrom: "{chromosome}", start: {start}, stop: {end},
+             reference_genome: {reference_genome}) {{
         variants(dataset: gnomad_r4) {{
           variant_id
           pos
@@ -126,7 +128,7 @@ def query_gnomad_variants(
 
 def query_all_of_us_variants(
     chromosome: str, start: int, end: int, page_size: int = 200
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Query All of Us API for variants in a genomic region
 
@@ -159,7 +161,11 @@ def query_all_of_us_variants(
         "Accept": "*/*",
         "Origin": "https://databrowser.researchallofus.org",
         "Referer": "https://databrowser.researchallofus.org/",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.2 Safari/605.1.15",
+        "User-Agent": (  # noqa: E501
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+            " AppleWebKit/605.1.15 (KHTML, like Gecko)"
+            " Version/26.2 Safari/605.1.15"
+        ),
     }
 
     all_variants = []

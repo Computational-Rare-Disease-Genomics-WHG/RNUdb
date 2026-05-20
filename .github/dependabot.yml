@@ -16,17 +16,3 @@ updates:
       - "dependencies"
       - "npm"
     versioning-strategy: "increase"
-
-  # Python package updates (uv/pip)
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      day: "monday"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "pip"
-    labels:
-      - "dependencies"
-      - "python"
-    versioning-strategy: "increase"

@@ -184,7 +184,7 @@ def validate_vcf_content(content: str) -> tuple[bool, list[str]]:
             continue
 
         try:
-            pos = int(parts[1])
+            _ = int(parts[1])
         except ValueError:
             errors.append(f"Line {i + 1}: Invalid position '{parts[1]}'")
 

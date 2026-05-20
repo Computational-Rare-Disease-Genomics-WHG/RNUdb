@@ -43,7 +43,9 @@ def convert_sge_to_clinical_vcf():
 
         chrom = parts[0]
         pos = parts[1]
-        variant_id = parts[2] if parts[2] != "." else f"{chrom}-{pos}-{parts[3]}-{parts[4]}"
+        variant_id = (
+            parts[2] if parts[2] != "." else f"{chrom}-{pos}-{parts[3]}-{parts[4]}"
+        )
         ref = parts[3]
         alt = parts[4]
         qual = parts[5]
@@ -54,12 +56,22 @@ def convert_sge_to_clinical_vcf():
         for pair in info.split(";"):
             if "=" in pair:
                 key = pair.split("=")[0].upper()
-                if key in ["HGVS", "FUNCTION_SCORE", "PVALUES", "QVALUES", "DEPLETION_GROUP", "CADD_SCORE"]:
+                if key in [
+                    "HGVS",
+                    "FUNCTION_SCORE",
+                    "PVALUES",
+                    "QVALUES",
+                    "DEPLETION_GROUP",
+                    "CADD_SCORE",
+                ]:
                     new_info_parts.append(pair)
 
         new_info = ";".join(new_info_parts) if new_info_parts else "."
 
-        new_line = f"{chrom}\t{pos}\t{variant_id}\t{ref}\t{alt}\t{qual}\t{filter_field}\t{new_info}"
+        new_line = (
+            f"{chrom}\t{pos}\t{variant_id}\t{ref}\t{alt}\t{qual}"
+            f"\t{filter_field}\t{new_info}"
+        )
         output_lines.append(new_line)
 
     OUTPUT_VCF.write_text("\n".join(output_lines))

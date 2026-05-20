@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Convert RNUdb data to new import format - minimal VCF files."""
 
-import json
 import csv
+import json
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "rnu4-2"
@@ -58,15 +58,17 @@ def load_variants() -> list:
             if len(fields) < 8:
                 continue
             chrom, pos, var_id, ref, alt, qual, filter_field, info_str = fields[:8]
-            variants.append({
-                "chrom": chrom,
-                "pos": int(pos),
-                "id": var_id,
-                "ref": ref,
-                "alt": alt,
-                "filter": filter_field,
-                "info": parse_vcf_info(info_str),
-            })
+            variants.append(
+                {
+                    "chrom": chrom,
+                    "pos": int(pos),
+                    "id": var_id,
+                    "ref": ref,
+                    "alt": alt,
+                    "filter": filter_field,
+                    "info": parse_vcf_info(info_str),
+                }
+            )
     return variants
 
 
@@ -75,7 +77,6 @@ def main():
     print("Loading data...")
     sge_data = load_sge_data()
     variants = load_variants()
-    variant_ids_in_clinical = {v["id"] for v in variants}
 
     print(f"Loaded: {len(sge_data)} SGE records, {len(variants)} clinical variants")
 
@@ -83,12 +84,12 @@ def main():
 
     # Minimal VCF - only position/ref/alt and HGVS (clinical variants only)
     vcf_lines = [
-        '##fileformat=VCFv4.2',
-        '##fileDate=20251125',
-        '##source=RNUdb',
-        '##reference=GRCh38',
-        '##INFO=<ID=HGVS,Number=1,Type=String,Description="HGVS nomenclature for the variant">',
-        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO',
+        "##fileformat=VCFv4.2",
+        "##fileDate=20251125",
+        "##source=RNUdb",
+        "##reference=GRCh38",
+        '##INFO=<ID=HGVS,Number=1,Type=String,Description="HGVS nomenclature for the variant">',  # noqa: E501
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
     ]
 
     for v in variants:
@@ -113,18 +114,18 @@ def main():
 
     # SGE VCF - ALL variants with SGE data (not just clinical ones)
     sge_vcf_lines = [
-        '##fileformat=VCFv4.2',
-        '##fileDate=20251125',
-        '##source=RNUdb_SGE',
-        '##reference=GRCh38',
+        "##fileformat=VCFv4.2",
+        "##fileDate=20251125",
+        "##source=RNUdb_SGE",
+        "##reference=GRCh38",
         '##INFO=<ID=HGVS,Number=1,Type=String,Description="HGVS nomenclature">',
-        '##INFO=<ID=NUCLEOTIDE_POSITION,Number=1,Type=Integer,Description="Position in RNA sequence">',
-        '##INFO=<ID=FUNCTION_SCORE,Number=1,Type=Float,Description="Functional impact score">',
-        '##INFO=<ID=PVALUES,Number=1,Type=Float,Description="Statistical p-value">',
-        '##INFO=<ID=QVALUES,Number=1,Type=Float,Description="Adjusted q-value">',
-        '##INFO=<ID=DEPLETION_GROUP,Number=1,Type=String,Description="Depletion category">',
-        '##INFO=<ID=CADD_SCORE,Number=1,Type=Float,Description="CADD pathogenicity score">',
-        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO',
+        '##INFO=<ID=NUCLEOTIDE_POSITION,Number=1,Type=Integer,Description="Position in RNA sequence">',  # noqa: E501
+        '##INFO=<ID=FUNCTION_SCORE,Number=1,Type=Float,Description="Functional impact score">',  # noqa: E501
+        '##INFO=<ID=PVALUES,Number=1,Type=Float,Description="Statistical p-value">',  # noqa: E501
+        '##INFO=<ID=QVALUES,Number=1,Type=Float,Description="Adjusted q-value">',  # noqa: E501
+        '##INFO=<ID=DEPLETION_GROUP,Number=1,Type=String,Description="Depletion category">',  # noqa: E501
+        '##INFO=<ID=CADD_SCORE,Number=1,Type=Float,Description="CADD pathogenicity score">',  # noqa: E501
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
     ]
 
     # Process ALL SGE data records - not just those in clinical VCF
@@ -138,13 +139,13 @@ def main():
             ref = parts[2]
             alt = parts[3] if len(parts) > 3 else ""
 
-            # Skip variants with empty alt (deletions can't be represented in standard VCF)
+            # Skip variants with empty alt (deletions can't be represented in standard VCF)  # noqa: E501
             if not alt:
                 continue
             # Skip variants with malformed alt (like just "-")
             if alt == "-":
                 continue
-        except:
+        except:  # noqa: E722, S112
             continue
 
         # Get HGVS from SGE data directly (or from clinical VCF if not in txt)
@@ -231,18 +232,28 @@ def main():
             # Get linked variants
             linked = v["info"].get("LINKED_VARIANT", "")
 
-            classifications.append({
-                "variant_id": variant_id,
-                "paper_id": doi,
-                "clinical_significance": clinical_significance,
-                "zygosity": zygosity.split(",")[0] if zygosity else "",
-                "disease": "",
-                "counts": count,
-                "linked_variant_ids": linked,
-            })
+            classifications.append(
+                {
+                    "variant_id": variant_id,
+                    "paper_id": doi,
+                    "clinical_significance": clinical_significance,
+                    "zygosity": zygosity.split(",")[0] if zygosity else "",
+                    "disease": "",
+                    "counts": count,
+                    "linked_variant_ids": linked,
+                }
+            )
 
     classifications_output = DATA_DIR / "variant_classifications.csv"
-    fieldnames = ["variant_id", "paper_id", "clinical_significance", "zygosity", "disease", "counts", "linked_variant_ids"]
+    fieldnames = [
+        "variant_id",
+        "paper_id",
+        "clinical_significance",
+        "zygosity",
+        "disease",
+        "counts",
+        "linked_variant_ids",
+    ]
 
     with open(classifications_output, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

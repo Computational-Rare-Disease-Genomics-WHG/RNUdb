@@ -29,8 +29,8 @@ def insert_sample_genes():
             "start": 120291759,
             "end": 120291903,
             "strand": "-",
-            "sequence": "tcagtctccgtagagactgtcaaaaattgccaatgccgactatatttcaagtcgtcatggcggggtattgggaaaagttttcaattagcaataatcgcgcctcggataaacctcattggctacgatactgccactgcgcaaagct",
-            "description": "U4 small nuclear RNA involved in pre-mRNA splicing as part of the spliceosome complex. Binds to U6 snRNA to form the U4/U6 di-snRNP complex.",
+            "sequence": "tcagtctccgtagagactgtcaaaaattgccaatgccgactatatttcaagtcgtcatggcggggtattgggaaaagttttcaattagcaataatcgcgcctcggataaacctcattggctacgatactgccactgcgcaaagct",  # noqa: E501
+            "description": "U4 small nuclear RNA involved in pre-mRNA splicing as part of the spliceosome complex. Binds to U6 snRNA to form the U4/U6 di-snRNP complex.",  # noqa: E501
         }
     ]
 
@@ -155,7 +155,7 @@ def insert_sample_variants():
                     "clinical_significance": None,
                 }
 
-            # Update with SGE data (ignore AoU and UKBiobank fields from SGE as requested)
+            # Update with SGE data (ignore AoU and UKBiobank fields from SGE as requested)  # noqa: E501
             all_variants[key]["function_score"] = (
                 row.get("function_score")
                 if pd.notna(row.get("function_score"))
@@ -181,8 +181,8 @@ def insert_sample_variants():
 
     # Convert to database format
     variants_data = []
-    for key, variant in all_variants.items():
-        # Calculate nucleotide position relative to gene (reverse strand: position 1 = gene_end)
+    for _, variant in all_variants.items():
+        # Calculate nucleotide position relative to gene (reverse strand: position 1 = gene_end)  # noqa: E501
         if variant["position"]:
             # For reverse strand genes: nucleotide_pos = gene_end - genomic_pos + 1
             nucleotide_position = 120291903 - variant["position"] + 1
@@ -262,7 +262,7 @@ def insert_sample_structures():
     ]
 
     print(
-        f"Loading structure with {len(structure_data.get('nucleotides', []))} nucleotides, {len(structure_data.get('base_pairs', []))} base pairs, {len(structure_data.get('annotations', []))} annotations, and {len(structure_data.get('structural_features', []))} structural features..."
+        f"Loading structure with {len(structure_data.get('nucleotides', []))} nucleotides, {len(structure_data.get('base_pairs', []))} base pairs, {len(structure_data.get('annotations', []))} annotations, and {len(structure_data.get('structural_features', []))} structural features..."  # noqa: E501
     )
     insert_structures(structures_data)
     print("RNA structure inserted successfully!")

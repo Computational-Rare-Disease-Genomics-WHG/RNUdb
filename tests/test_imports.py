@@ -323,7 +323,7 @@ class TestVariantClassificationImport:
                         "zygosity": "Heterozygous",
                         "counts": 1,
                     }
-                ]
+                ],
             },
         )
         # Should succeed with auth
@@ -342,7 +342,7 @@ class TestVariantClassificationImport:
                         "clinical_significance": "VUS",
                         "counts": 1,
                     }
-                ]
+                ],
             },
         )
         # Should return error for invalid variant
@@ -377,8 +377,7 @@ class TestVCFImport:
     def test_import_vcf_requires_gene(self, test_client):
         """POST /imports/variants/vcf with missing gene returns 404."""
         vcf_content = (
-            "##fileformat=VCFv4.2\n"
-            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+            "##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         )
         response = test_client.post(
             "/api/imports/variants/vcf?geneId=NONEXISTENT",
