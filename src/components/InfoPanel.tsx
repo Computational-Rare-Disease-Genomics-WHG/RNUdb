@@ -397,7 +397,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                               nucPos !== null &&
                                               onNavigateToVariant?.(nucPos)
                                             }
-                                            className="text-slate-700 hover:text-slate-900 hover:underline cursor-pointer"
+                                            className="text-slate-700 hover:text-slate-900 hover:underline cursor-pointer bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300 hover:border-slate-400 rounded px-1 py-0.5 mr-1"
                                             disabled={nucPos === null}
                                           >
                                             {linked.hgvs ||
