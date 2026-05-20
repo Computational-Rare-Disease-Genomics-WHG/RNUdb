@@ -11,6 +11,7 @@ import {
   Edit3,
   Stethoscope,
   BookOpen,
+  Info,
   Search,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -157,6 +158,15 @@ const Header: React.FC<HeaderProps> = ({
               </Button>
             )}
             <div className="w-px h-5 bg-slate-200 mx-1" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/about")}
+              className="text-slate-600 hover:text-teal-600 hover:bg-teal-50"
+            >
+              <Info className="h-4 w-4 mr-1.5" />
+              About
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -340,6 +350,17 @@ const Header: React.FC<HeaderProps> = ({
               </Button>
             )}
             <div className="border-t border-slate-100 my-2" />
+            <Button
+              variant="ghost"
+              onClick={() => {
+                navigate("/about");
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full justify-start text-slate-700"
+            >
+              <Info className="h-4 w-4 mr-2" />
+              About
+            </Button>
             <Button
               variant="ghost"
               onClick={() => {

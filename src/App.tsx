@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/AuthContext";
 import APIDocs from "./pages/APIDocs";
+import About from "./pages/About";
 import Admin from "./pages/Admin";
 import ClinicalInterpretation from "./pages/ClinicalInterpretation";
 import Curate from "./pages/Curate";
@@ -45,6 +46,7 @@ function App() {
               element={<ClinicalInterpretation />}
             />
             <Route path="/how-to-use" element={<HowToUse />} />
+            <Route path="/about" element={<About />} />
           </Routes>
         </Router>
       </TooltipProvider>
