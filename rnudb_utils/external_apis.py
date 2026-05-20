@@ -35,26 +35,10 @@ def query_gnomad_variants(
           rsids
           consequence
 
-          # Get genome data (prioritize over exome)
+          # Get genome data
           genome {{
             ac
             ac_hom
-            an
-            af
-          }}
-
-          # Fallback to exome if genome not available
-          exome {{
-            ac
-            ac_hom
-            an
-            af
-          }}
-
-          # Joint data for latest datasets
-          joint {{
-            ac
-            homozygote_count
             an
             af
           }}
@@ -97,24 +81,12 @@ def query_gnomad_variants(
                 "gnomad_af": None,
             }
 
-            # Prioritize joint > genome > exome data
-            if variant.get("joint"):
-                processed_variant["gnomad_ac"] = variant["joint"].get("ac")
-                processed_variant["gnomad_hom"] = variant["joint"].get(
-                    "homozygote_count"
-                )
-                processed_variant["gnomad_an"] = variant["joint"].get("an")
-                processed_variant["gnomad_af"] = variant["joint"].get("af")
-            elif variant.get("genome"):
+            # Use genome data
+            if variant.get("genome"):
                 processed_variant["gnomad_ac"] = variant["genome"].get("ac")
                 processed_variant["gnomad_hom"] = variant["genome"].get("ac_hom")
                 processed_variant["gnomad_an"] = variant["genome"].get("an")
                 processed_variant["gnomad_af"] = variant["genome"].get("af")
-            elif variant.get("exome"):
-                processed_variant["gnomad_ac"] = variant["exome"].get("ac")
-                processed_variant["gnomad_hom"] = variant["exome"].get("ac_hom")
-                processed_variant["gnomad_an"] = variant["exome"].get("an")
-                processed_variant["gnomad_af"] = variant["exome"].get("af")
 
             processed_variants.append(processed_variant)
 
