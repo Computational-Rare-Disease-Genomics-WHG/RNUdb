@@ -12,7 +12,7 @@ interface GenericTrackProps {
     };
   };
   regions: { start: number; stop: number }[];
-  displayType?: "bars" | "line";
+  displayType?: "bars" | "line" | "points";
   geneStart: number;
 }
 
@@ -139,6 +139,23 @@ const GenericTrack: React.FC<GenericTrackProps> = ({
                   </g>
                 ))}
               </>
+            ) : displayType === "points" ? (
+              /* Point/Dot Plot */
+              dataPoints.map((point) => (
+                <g key={`track-item-${point.genomicPos}`}>
+                  <circle
+                    cx={scalePosition(point.genomicPos)}
+                    cy={scaleY(point.value)}
+                    r={4}
+                    fill={point.color || "#374151"}
+                    stroke="white"
+                    strokeWidth={1}
+                  />
+                  <title>
+                    {`Nucleotide ${point.nucleotide}: ${point.label || point.value}`}
+                  </title>
+                </g>
+              ))
             ) : (
               /* Bar Graph */
               dataPoints.map((point) => {
