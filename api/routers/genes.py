@@ -220,10 +220,11 @@ async def refresh_gene_variants(
     if not gene:
         raise HTTPException(status_code=404, detail="Gene not found")
 
-    chrom = gene.chromosome
-    if not chrom.startswith("chr"):
-        chrom = chrom[3:]
-    chrom = f"chr{chrom}"
+    chrom = (
+        gene.chromosome
+        if not gene.chromosome.startswith("chr")
+        else gene.chromosome[3:]
+    )
 
     from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
 
@@ -253,8 +254,10 @@ async def refresh_gene_variants(
                 "alt": v["alt"],
                 "gnomad_ac": v.get("gnomad_ac"),
                 "gnomad_hom": v.get("gnomad_hom"),
+                "gnomad_af": v.get("gnomad_af"),
                 "aou_ac": None,
                 "aou_hom": None,
+                "aou_af": None,
             }
         )
 
@@ -264,6 +267,7 @@ async def refresh_gene_variants(
         if existing:
             existing["aou_ac"] = v.get("aou_ac")
             existing["aou_hom"] = v.get("aou_hom")
+            existing["aou_af"] = v.get("aou_af")
         else:
             variants_to_insert.append(
                 {
@@ -274,8 +278,10 @@ async def refresh_gene_variants(
                     "alt": v.get("alt", ""),
                     "gnomad_ac": None,
                     "gnomad_hom": None,
+                    "gnomad_af": None,
                     "aou_ac": v.get("aou_ac"),
                     "aou_hom": v.get("aou_hom"),
+                    "aou_af": v.get("aou_af"),
                 }
             )
 
@@ -283,15 +289,18 @@ async def refresh_gene_variants(
         db.execute(
             text("""
                 INSERT INTO variants
-                (id, geneId, position, ref, alt, gnomad_ac, gnomad_hom, aou_ac, aou_hom)
+                (id, geneId, position, ref, alt, gnomad_ac, gnomad_hom, gnomad_af,
+                 aou_ac, aou_hom, aou_af)
                 VALUES
                 (:id, :geneId, :position, :ref, :alt, :gnomad_ac, :gnomad_hom,
-                 :aou_ac, :aou_hom)
+                 :gnomad_af, :aou_ac, :aou_hom, :aou_af)
                 ON CONFLICT(id) DO UPDATE SET
                     gnomad_ac = EXCLUDED.gnomad_ac,
                     gnomad_hom = EXCLUDED.gnomad_hom,
+                    gnomad_af = EXCLUDED.gnomad_af,
                     aou_ac = EXCLUDED.aou_ac,
-                    aou_hom = EXCLUDED.aou_hom
+                    aou_hom = EXCLUDED.aou_hom,
+                    aou_af = EXCLUDED.aou_af
             """),
             v,
         )
