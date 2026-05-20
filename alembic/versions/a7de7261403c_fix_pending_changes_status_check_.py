@@ -38,8 +38,8 @@ def upgrade() -> None:
             applied_at DATETIME,
             PRIMARY KEY (id),
             CONSTRAINT check_action CHECK (action IN ('create', 'update', 'delete')),
-            CONSTRAINT check_entity_type CHECK (entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),  # noqa: E501
-            CONSTRAINT check_status CHECK (status IN ('pending', 'approved', 'rejected', 'applied'))  # noqa: E501
+            CONSTRAINT check_entity_type CHECK (entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),
+            CONSTRAINT check_status CHECK (status IN ('pending', 'approved', 'rejected', 'applied'))
         )
     """)
     op.execute("INSERT INTO pending_changes_new SELECT * FROM pending_changes")
@@ -66,8 +66,8 @@ def downgrade() -> None:
             applied_at DATETIME,
             PRIMARY KEY (id),
             CONSTRAINT check_action CHECK (action IN ('create', 'update', 'delete')),
-            CONSTRAINT check_entity_type CHECK (entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),  # noqa: E501
-            CONSTRAINT check_status CHECK (status IN ('pending', 'approved', 'rejected'))  # noqa: E501
+            CONSTRAINT check_entity_type CHECK (entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),
+            CONSTRAINT check_status CHECK (status IN ('pending', 'approved', 'rejected'))
         )
     """)
     op.execute("INSERT INTO pending_changes_old SELECT * FROM pending_changes")
