@@ -682,40 +682,10 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         <SelectItem value="aou">All of Us</SelectItem>
                       </SelectContent>
                     </Select>
-                    <div className="flex items-center gap-1.5 ml-2">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH,
-                        }}
-                      />
-                      <span className="text-xs text-slate-600">Common (≥0.01)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
-                        }}
-                      />
-                      <span className="text-xs text-slate-600">Rare (0.001-0.01)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW,
-                        }}
-                      />
-                      <span className="text-xs text-slate-600">
-                        Very Rare (&lt;0.001)
-                      </span>
-                    </div>
                   </div>
                 )}
                 {overlayMode === "depletion_group" && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">Depletion:</span>
+                  <>
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-red-500" />
                       <span className="text-xs text-slate-600">Strong</span>
@@ -728,7 +698,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                       <div className="w-2 h-2 rounded-full bg-emerald-500" />
                       <span className="text-xs text-slate-600">Normal</span>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}
@@ -1024,10 +994,10 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <div
                     className="w-4 h-4 rounded-sm"
                     style={{
-                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW,
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH,
                     }}
                   ></div>
-                  <span>Low frequency</span>
+                  <span>Common (≥0.01)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div
@@ -1036,16 +1006,16 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                       backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.MEDIUM,
                     }}
                   ></div>
-                  <span>Medium frequency</span>
+                  <span>Rare (0.001-0.01)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div
                     className="w-4 h-4 rounded-sm"
                     style={{
-                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.HIGH,
+                      backgroundColor: COLORBLIND_FRIENDLY_PALETTE.GNOMAD.LOW,
                     }}
                   ></div>
-                  <span>High frequency</span>
+                  <span>Very Rare (&lt;0.001)</span>
                 </div>
               </>
             ) : overlayMode === "depletion_group" ? (
