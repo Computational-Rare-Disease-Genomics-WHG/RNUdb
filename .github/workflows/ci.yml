@@ -163,6 +163,8 @@ jobs:
   e2e-tests:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
+    env:
+      JWT_SECRET_KEY: ci-test-jwt-secret-key
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
