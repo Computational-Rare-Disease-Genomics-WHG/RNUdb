@@ -36,7 +36,24 @@ Be respectful and constructive in all interactions. We welcome contributors of a
 
 ## Development Setup
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed setup instructions.
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full setup instructions. Quick start:
+
+```bash
+# Install Python dependencies (requires uv: https://github.com/astral-sh/uv)
+uv sync
+
+# Install frontend dependencies
+npm install
+
+# Copy and configure environment
+cp .env.example .env
+
+# Apply database migrations
+uv run alembic upgrade head
+
+# Start development servers
+npm run dev
+```
 
 ### Code Style
 
