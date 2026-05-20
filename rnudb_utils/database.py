@@ -106,9 +106,7 @@ def update_user_role(github_login: str, role: str) -> None:
     """Update user role."""
     with SessionLocal() as session:
         session.execute(
-            update(User)
-            .where(User.github_login == github_login)
-            .values(role=role)
+            update(User).where(User.github_login == github_login).values(role=role)
         )
         session.commit()
 
@@ -116,18 +114,16 @@ def update_user_role(github_login: str, role: str) -> None:
 def list_pending_users() -> list[dict]:
     """List pending users."""
     with SessionLocal() as session:
-        users = session.execute(
-            select(User).where(User.role == "pending")
-        ).scalars().all()
+        users = (
+            session.execute(select(User).where(User.role == "pending")).scalars().all()
+        )
         return [u.model_dump() for u in users]
 
 
 def list_all_users(limit: int = 100) -> list[dict]:
     """List all users."""
     with SessionLocal() as session:
-        users = session.execute(
-            select(User).limit(limit)
-        ).scalars().all()
+        users = session.execute(select(User).limit(limit)).scalars().all()
         return [u.model_dump() for u in users]
 
 
@@ -138,6 +134,7 @@ def list_all_users(limit: int = 100) -> list[dict]:
 
 def insert_variants(variants_data: list[dict], session=None) -> None:
     """Insert variants into the database (upsert with merge)."""
+
     def _do_insert(sess):
         for v in variants_data:
             variant = Variant(
@@ -223,6 +220,7 @@ def insert_literature_counts(counts_data: list[dict]) -> None:
 
 def insert_structures(structures_data: list[dict], session=None) -> None:
     """Insert RNA structures into the database (upsert with merge)."""
+
     def _do_insert(sess):
         for s in structures_data:
             structure = RNAStructure(id=s["id"], geneId=s["geneId"])
@@ -320,17 +318,25 @@ def get_linked_variants(variant_id: str) -> list[str]:
     """Get all variant IDs linked to the given variant."""
     with SessionLocal() as session:
         # Query both directions
-        result1 = session.execute(
-            select(VariantLink.variant_id_2).where(
-                VariantLink.variant_id_1 == variant_id
+        result1 = (
+            session.execute(
+                select(VariantLink.variant_id_2).where(
+                    VariantLink.variant_id_1 == variant_id
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
-        result2 = session.execute(
-            select(VariantLink.variant_id_1).where(
-                VariantLink.variant_id_2 == variant_id
+        result2 = (
+            session.execute(
+                select(VariantLink.variant_id_1).where(
+                    VariantLink.variant_id_2 == variant_id
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         return list(result1) + list(result2)
 

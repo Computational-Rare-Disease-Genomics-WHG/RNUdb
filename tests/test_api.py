@@ -1,7 +1,6 @@
 """Tests for API endpoints."""
 
 
-
 class TestGenesAPI:
     """Tests for genes API endpoints."""
 

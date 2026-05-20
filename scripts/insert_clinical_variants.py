@@ -110,7 +110,7 @@ def load_clinical_variants():
                 "LP": "Likely Pathogenic",
                 "VUS": "VUS",
                 "LB": "Likely Benign",
-                "B": "Benign"
+                "B": "Benign",
             }.get(clinvar_sig, clinvar_sig)  # Default to original if not found
 
             zygosity_str = info.get("ZYGOSITY", "")
@@ -195,7 +195,7 @@ def load_clinical_variants():
 
     # Create links for compound heterozygous variants
     links = []
-    for variant_id, variant in all_variants.items():
+    for variant_id, _variant in all_variants.items():
         # Check if this variant has linked variants in the VCF
         vcf_path_again = (
             Path(__file__).parent.parent / "data" / "rnu4-2" / "variants.vcf"

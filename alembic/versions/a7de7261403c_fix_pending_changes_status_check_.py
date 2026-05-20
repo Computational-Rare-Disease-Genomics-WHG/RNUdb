@@ -5,17 +5,16 @@ Revises: 045f796c6091
 Create Date: 2026-05-06 18:42:41.856889
 
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = 'a7de7261403c'
-down_revision: Union[str, Sequence[str], None] = '045f796c6091'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "a7de7261403c"
+down_revision: str | Sequence[str] | None = "045f796c6091"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -39,8 +38,8 @@ def upgrade() -> None:
             applied_at DATETIME,
             PRIMARY KEY (id),
             CONSTRAINT check_action CHECK (action IN ('create', 'update', 'delete')),
-            CONSTRAINT check_entity_type CHECK (entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),
-            CONSTRAINT check_status CHECK (status IN ('pending', 'approved', 'rejected', 'applied'))
+            CONSTRAINT check_entity_type CHECK (entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),  # noqa: E501
+            CONSTRAINT check_status CHECK (status IN ('pending', 'approved', 'rejected', 'applied'))  # noqa: E501
         )
     """)
     op.execute("INSERT INTO pending_changes_new SELECT * FROM pending_changes")
@@ -67,8 +66,8 @@ def downgrade() -> None:
             applied_at DATETIME,
             PRIMARY KEY (id),
             CONSTRAINT check_action CHECK (action IN ('create', 'update', 'delete')),
-            CONSTRAINT check_entity_type CHECK (entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),
-            CONSTRAINT check_status CHECK (status IN ('pending', 'approved', 'rejected'))
+            CONSTRAINT check_entity_type CHECK (entity_type IN ('gene', 'variant', 'literature', 'structure', 'bed_track')),  # noqa: E501
+            CONSTRAINT check_status CHECK (status IN ('pending', 'approved', 'rejected'))  # noqa: E501
         )
     """)
     op.execute("INSERT INTO pending_changes_old SELECT * FROM pending_changes")

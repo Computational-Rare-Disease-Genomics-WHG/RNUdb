@@ -29,6 +29,7 @@ def main():
         if choice in ["y", "yes"]:
             print("\nInserting sample data...")
             from insert_sample_data import main as insert_sample_data_main
+
             insert_sample_data_main()
             break
         elif choice in ["n", "no"]:

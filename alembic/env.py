@@ -1,3 +1,5 @@
+# Add project root to path for imports
+import sys
 from logging.config import fileConfig
 from pathlib import Path
 
@@ -5,13 +7,12 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
-# Add project root to path for imports
-import sys
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 # Import SQLModel models
 from sqlmodel import SQLModel
-from api.models import *
+
+from api.models import *  # noqa: F403
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -72,9 +73,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

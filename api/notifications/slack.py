@@ -35,8 +35,7 @@ def _send_webhook(message: str) -> bool:
 def notify_user_approved(github_login: str, approved_by: str) -> bool:
     """Notify when a user is approved."""
     message = (
-        f"🔔 User Approved\n• @{github_login} promoted to curator\n"
-        f"• By: @{approved_by}"
+        f"🔔 User Approved\n• @{github_login} promoted to curator\n• By: @{approved_by}"
     )
     return _send_webhook(message)
 

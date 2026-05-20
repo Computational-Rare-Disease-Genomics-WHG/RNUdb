@@ -91,34 +91,45 @@ def convert_clinical_variants():
 
         new_info = ";".join(new_info_parts) if new_info_parts else "."
 
-        new_line = f"{chrom}\t{pos}\t{variant_id}\t{ref}\t{alt}\t{qual}\t{filter_field}\t{new_info}"
+        new_line = (
+            f"{chrom}\t{pos}\t{variant_id}\t{ref}\t{alt}\t{qual}"
+            f"\t{filter_field}\t{new_info}"
+        )
         vcf_lines.append(new_line)
 
         if literature_counts:
             for lc in literature_counts.split(";"):
                 if ":" in lc:
                     paper_id, count = lc.split(":", 1)
-                    csv_rows.append({
-                        "variant_id": variant_id,
-                        "paper_id": paper_id,
-                        "clinical_significance": clinical_sig,
-                        "zygosity": zygosity.split(",")[0] if zygosity else "",
-                        "disease": "neurodevelopmental",
-                        "counts": count,
-                        "linked_variant_ids": linked_variants.replace(",", ";") if linked_variants else "",
-                        "clinvar_significance": clinvar_sig,
-                    })
+                    csv_rows.append(
+                        {
+                            "variant_id": variant_id,
+                            "paper_id": paper_id,
+                            "clinical_significance": clinical_sig,
+                            "zygosity": zygosity.split(",")[0] if zygosity else "",
+                            "disease": "neurodevelopmental",
+                            "counts": count,
+                            "linked_variant_ids": linked_variants.replace(",", ";")
+                            if linked_variants
+                            else "",
+                            "clinvar_significance": clinvar_sig,
+                        }
+                    )
         else:
-            csv_rows.append({
-                "variant_id": variant_id,
-                "paper_id": "",
-                "clinical_significance": clinical_sig,
-                "zygosity": zygosity.split(",")[0] if zygosity else "",
-                "disease": "neurodevelopmental",
-                "counts": "",
-                "linked_variant_ids": linked_variants.replace(",", ";") if linked_variants else "",
-                "clinvar_significance": clinvar_sig,
-            })
+            csv_rows.append(
+                {
+                    "variant_id": variant_id,
+                    "paper_id": "",
+                    "clinical_significance": clinical_sig,
+                    "zygosity": zygosity.split(",")[0] if zygosity else "",
+                    "disease": "neurodevelopmental",
+                    "counts": "",
+                    "linked_variant_ids": linked_variants.replace(",", ";")
+                    if linked_variants
+                    else "",
+                    "clinvar_significance": clinvar_sig,
+                }
+            )
 
     OUTPUT_VCF.write_text("\n".join(vcf_lines))
     print(f"Created {OUTPUT_VCF}")
@@ -127,10 +138,19 @@ def convert_clinical_variants():
     print(f"Converted {variant_count} variants to VCF")
 
     with open(OUTPUT_CSV, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "variant_id", "paper_id", "clinical_significance", "zygosity",
-            "disease", "counts", "linked_variant_ids", "clinvar_significance"
-        ])
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "variant_id",
+                "paper_id",
+                "clinical_significance",
+                "zygosity",
+                "disease",
+                "counts",
+                "linked_variant_ids",
+                "clinvar_significance",
+            ],
+        )
         writer.writeheader()
         for row in csv_rows:
             writer.writerow(row)

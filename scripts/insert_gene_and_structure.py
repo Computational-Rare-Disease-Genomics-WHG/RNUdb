@@ -16,7 +16,9 @@ def transform_structure_keys(data):
     if isinstance(data, dict):
         new_dict = {}
         for k, v in data.items():
-            new_key = k.replace('basePairs', 'base_pairs').replace('structuralFeatures', 'structural_features')
+            new_key = k.replace("basePairs", "base_pairs").replace(
+                "structuralFeatures", "structural_features"
+            )
             new_dict[new_key] = transform_structure_keys(v)
         return new_dict
     elif isinstance(data, list):
@@ -37,8 +39,8 @@ def main():
             "start": 120291759,
             "end": 120291903,
             "strand": "-",
-            "sequence": "tcagtctccgtagagactgtcaaaattgccaatgccgactatatttcaagtcgtcatggcggggtattgggaaaagttttcaattagcaataatcgcgcctcggataaacctcattggctacgatactgccactgcgcaaagct",
-            "description": "U4 small nuclear RNA involved in pre-mRNA splicing as part of the spliceosome complex. Binds to U6 snRNA to form the U4/U6 di-snRNP complex.",
+            "sequence": "tcagtctccgtagagactgtcaaaattgccaatgccgactatatttcaagtcgtcatggcggggtattgggaaaagttttcaattagcaataatcgcgcctcggataaacctcattggctacgatactgccactgcgcaaagct",  # noqa: E501
+            "description": "U4 small nuclear RNA involved in pre-mRNA splicing as part of the spliceosome complex. Binds to U6 snRNA to form the U4/U6 di-snRNP complex.",  # noqa: E501
         }
     ]
 
