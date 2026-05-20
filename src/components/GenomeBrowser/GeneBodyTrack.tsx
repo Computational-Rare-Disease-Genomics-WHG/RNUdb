@@ -32,14 +32,7 @@ const GeneBodyTrack: React.FC<GeneBodyTrackProps> = ({
 
         return (
           <svg height={height} width={width}>
-            <rect
-              x={0}
-              y={0}
-              width={width}
-              height={height}
-              fill="#fafafa"
-              stroke="#e5e7eb"
-            />
+            <rect x={0} y={0} width={width} height={height} fill="white" />
             <line
               x1={x1}
               y1={midY}
@@ -49,27 +42,13 @@ const GeneBodyTrack: React.FC<GeneBodyTrackProps> = ({
               strokeWidth={3}
               strokeLinecap="round"
             />
-            {lineWidth > 20 && (
-              <rect
-                x={x1}
-                y={midY - 6}
-                width={lineWidth}
-                height={12}
-                fill={COLORBLIND_FRIENDLY_PALETTE.GENES.SNRNA}
-                fillOpacity={0.15}
-                stroke={COLORBLIND_FRIENDLY_PALETTE.GENES.SNRNA}
-                strokeWidth={1.5}
-                rx={3}
-                ry={3}
-              />
-            )}
-            {lineWidth > 40 && (
+            {lineWidth > 30 && (
               <text
                 x={x1 + lineWidth / 2}
                 y={midY}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={11}
+                fontSize={10}
                 fill={COLORBLIND_FRIENDLY_PALETTE.GENES.SNRNA}
                 fontWeight={600}
               >

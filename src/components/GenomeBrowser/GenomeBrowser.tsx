@@ -225,32 +225,17 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
             }}
             renderCursor={renderCustomCursor}
           >
-            {/* <GenesTrack
-              title="Genes"
-              genes={genes}
-              renderGeneLabel={(gene) => (
-                <g>
-                  <text className="genes-track-label">
-                    {gene.gene_name}
-                  </text>
-                  <text className="genes-track-type" dy={10}>
-                    {gene.gene_type || 'gene'}
-                  </text>
-                </g>
-              )}
-              renderGene={(gene) => {
-                const color = gene.gene_type === 'snRNA' ? COLORBLIND_FRIENDLY_PALETTE.GENES.SNRNA :
-                             gene.gene_type === 'protein_coding' ? COLORBLIND_FRIENDLY_PALETTE.GENES.PROTEIN_CODING :
-                             COLORBLIND_FRIENDLY_PALETTE.GENES.OTHER;
-                return (
-                  <rect
-                    fill={color}
-                    stroke={color}
-                    strokeWidth={1}
-                  />
-                );
-              }}
-            /> */}
+            <GeneBodyTrack
+              geneStart={geneData.start}
+              geneEnd={geneData.end}
+              geneName={geneData.name}
+              regions={regions}
+            />
+            <DomainsTrack
+              domains={structuralFeatures}
+              regions={regions}
+              geneStart={geneData.start}
+            />
             <GenericTrack
               title="Function Score"
               height={80}
@@ -265,17 +250,6 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               data={depletionGroupTrackData}
               regions={regions}
               displayType="bars"
-              geneStart={geneData.start}
-            />
-            <GeneBodyTrack
-              geneStart={geneData.start}
-              geneEnd={geneData.end}
-              geneName={geneData.name}
-              regions={regions}
-            />
-            <DomainsTrack
-              domains={structuralFeatures}
-              regions={regions}
               geneStart={geneData.start}
             />
             <SnRNAVariantTrack

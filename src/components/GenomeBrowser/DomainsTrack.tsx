@@ -31,7 +31,7 @@ interface DomainsTrackProps {
 }
 
 const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart }) => {
-  const height = 60;
+  const height = 34;
   const currentRegion = regions[0];
 
   const getFeatureColor = (feature: StructuralFeature): string => {
@@ -64,24 +64,24 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart
     <Track title="Domains">
       {({ scalePosition, width }) => (
         <svg height={height} width={width}>
-          <rect
-            x={0}
-            y={0}
-            width={width}
-            height={height}
-            fill="white"
+          <rect x={0} y={0} width={width} height={height} fill="white" />
+          <line
+            x1={0}
+            y1={height / 2}
+            x2={width}
+            y2={height / 2}
             stroke="#e5e7eb"
+            strokeWidth={1}
           />
           {visibleDomains.map(({ feature, genomicStart, genomicEnd }) => {
             const x1 = scalePosition(genomicStart);
             const x2 = scalePosition(genomicEnd);
             const barWidth = Math.max(x2 - x1, 4);
             const color = getFeatureColor(feature);
-            const barY = 12;
-            const barHeight = 24;
+            const barY = 6;
+            const barHeight = 22;
             const labelY = barY + barHeight / 2;
-
-            const showLabel = x2 - x1 > 30;
+            const showLabel = x2 - x1 > 28;
 
             return (
               <g key={feature.id}>
@@ -91,48 +91,24 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart
                   width={barWidth}
                   height={barHeight}
                   fill={color}
-                  fillOpacity={0.15}
+                  fillOpacity={0.25}
                   stroke={color}
-                  strokeWidth={2}
-                  rx={6}
-                  ry={6}
+                  strokeWidth={1.5}
+                  rx={4}
+                  ry={4}
                 />
                 {showLabel && (
-                  <>
-                    <rect
-                      x={x1 + 4}
-                      y={barY + 2}
-                      width={Math.max(barWidth - 8, 0)}
-                      height={barHeight - 4}
-                      fill={color}
-                      fillOpacity={0.08}
-                      rx={4}
-                      ry={4}
-                    />
-                    <text
-                      x={x1 + barWidth / 2}
-                      y={labelY}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize={11}
-                      fill={color}
-                      fontWeight={600}
-                      letterSpacing="0.02em"
-                    >
-                      {feature.label_text}
-                    </text>
-                  </>
-                )}
-                {!showLabel && (
-                  <line
-                    x1={x1 + barWidth / 2}
-                    y1={barY + 2}
-                    x2={x1 + barWidth / 2}
-                    y2={barY + barHeight - 2}
-                    stroke={color}
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                  />
+                  <text
+                    x={x1 + barWidth / 2}
+                    y={labelY}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={10}
+                    fill={color}
+                    fontWeight={600}
+                  >
+                    {feature.label_text}
+                  </text>
                 )}
                 <title>
                   {`${FEATURE_TYPE_LABELS[feature.feature_type] || feature.feature_type}: ${feature.label_text}`}
