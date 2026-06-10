@@ -152,9 +152,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     return counts
       .map((count) => {
         const literature = paperData.find((p) => p.id === count.literature_id);
-        return literature ? { ...literature, count: count.counts } : null;
+        return literature
+          ? { ...literature, count: count.counts, zygosity: count.zygosity }
+          : null;
       })
-      .filter((lit): lit is Literature & { count: number } => lit !== null);
+      .filter((lit): lit is NonNullable<typeof lit> => lit !== null);
   };
 
   return (
@@ -460,14 +462,23 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                           <span className="text-slate-600 truncate">
                                             {lit.authors} ({lit.year})
                                           </span>
-                                          <a
-                                            href={`https://doi.org/${lit.doi}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-slate-400 hover:text-slate-600 shrink-0"
-                                          >
-                                            <ExternalLink className="h-3 w-3" />
-                                          </a>
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-slate-400">
+                                              {lit.zygosity === "Heterozygous"
+                                                ? `${lit.count} het`
+                                                : lit.zygosity === "Homozygous"
+                                                  ? `${lit.count} hom`
+                                                  : `${lit.count}`}
+                                            </span>
+                                            <a
+                                              href={`https://doi.org/${lit.doi}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-slate-400 hover:text-slate-600"
+                                            >
+                                              <ExternalLink className="h-3 w-3" />
+                                            </a>
+                                          </div>
                                         </div>
                                       ))}
                                     </div>

@@ -92,9 +92,22 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
     return counts
       .map((count) => {
         const paper = paperData.find((p) => p.id === count.literature_id);
-        return paper ? { ...paper, count: count.counts } : null;
+        return paper
+          ? { ...paper, count: count.counts, zygosity: count.zygosity }
+          : null;
       })
       .filter(Boolean);
+  };
+
+  const getVariantPatientStats = (variantId: string) => {
+    const counts = literatureCounts.filter((lc) => lc.variant_id === variantId);
+    let het = 0;
+    let hom = 0;
+    for (const c of counts) {
+      if (c.zygosity === "Heterozygous") het += c.counts ?? 0;
+      else if (c.zygosity === "Homozygous") hom += c.counts ?? 0;
+    }
+    return { het, hom, total: het + hom };
   };
 
   const getLinkedVariants = (variantId: string): Variant[] => {
@@ -541,7 +554,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                         onClick={() => handleSort("papers")}
                         className="hover:text-slate-600"
                       >
-                        Papers{" "}
+                        Patients{" "}
                         {sortField === "papers"
                           ? sortDirection === "asc"
                             ? "↑"
@@ -628,7 +641,14 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                           <td
                             className={`py-3 px-2 ${variantLit.length > 0 ? "text-blue-600 font-medium" : "text-slate-400"}`}
                           >
-                            {variantLit.length}
+                            {(() => {
+                              const stats = getVariantPatientStats(variant.id);
+                              if (stats.total === 0) return "—";
+                              const parts: string[] = [];
+                              if (stats.het > 0) parts.push(`${stats.het} het`);
+                              if (stats.hom > 0) parts.push(`${stats.hom} hom`);
+                              return parts.join(" / ");
+                            })()}
                           </td>
                         </tr>
                         {isExpanded && (
@@ -862,7 +882,12 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                                 title="Number of individuals with this variant assessed in published studies"
                                               >
                                                 <Users className="h-3 w-3" />
-                                                {paper.count} individual
+                                                {paper.zygosity === "Heterozygous"
+                                                  ? `${paper.count} het`
+                                                  : paper.zygosity === "Homozygous"
+                                                    ? `${paper.count} hom`
+                                                    : `${paper.count}`}{" "}
+                                                individual
                                                 {paper.count !== 1 ? "s" : ""} assessed
                                               </span>
                                             </div>
