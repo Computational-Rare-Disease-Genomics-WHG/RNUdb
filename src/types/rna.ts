@@ -59,9 +59,10 @@ export interface Literature {
 }
 
 export interface LiteratureCounts {
-  variant_id: string; // Reference to Variant.id
-  literature_id: string; // Reference to Literature.id
-  counts: number; // Number of citations/references
+  variant_id: string;
+  literature_id: string;
+  counts: number;
+  zygosity?: string;
 }
 
 // RNA Structure Interfaces
