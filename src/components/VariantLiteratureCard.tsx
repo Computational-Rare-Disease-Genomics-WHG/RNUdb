@@ -100,10 +100,16 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
   };
 
   const getVariantPatientStats = (variantId: string) => {
-    const counts = literatureCounts.filter((lc) => lc.variant_id === variantId);
+    const directCounts = literatureCounts.filter((lc) => lc.variant_id === variantId);
+    const linkedCounts = literatureCounts.filter((lc) => {
+      if (!lc.linked_variant_ids) return false;
+      const linkedIds = lc.linked_variant_ids.split(",").map((id) => id.trim());
+      return linkedIds.includes(variantId);
+    });
+    const allCounts = [...directCounts, ...linkedCounts];
     let het = 0;
     let hom = 0;
-    for (const c of counts) {
+    for (const c of allCounts) {
       if (c.zygosity === "Heterozygous") het += c.counts ?? 0;
       else if (c.zygosity === "Homozygous") hom += c.counts ?? 0;
     }

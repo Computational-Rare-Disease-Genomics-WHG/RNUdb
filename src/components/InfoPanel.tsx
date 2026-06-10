@@ -148,8 +148,14 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   };
 
   const getLiteratureForVariant = (variantId: string) => {
-    const counts = literatureCounts.filter((lc) => lc.variant_id === variantId);
-    return counts
+    const directCounts = literatureCounts.filter((lc) => lc.variant_id === variantId);
+    const linkedCounts = literatureCounts.filter((lc) => {
+      if (!lc.linked_variant_ids) return false;
+      const linkedIds = lc.linked_variant_ids.split(",").map((id) => id.trim());
+      return linkedIds.includes(variantId);
+    });
+    const allCounts = [...directCounts, ...linkedCounts];
+    return allCounts
       .map((count) => {
         const literature = paperData.find((p) => p.id === count.literature_id);
         return literature
