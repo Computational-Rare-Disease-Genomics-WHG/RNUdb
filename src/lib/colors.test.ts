@@ -18,7 +18,7 @@ describe("COLORBLIND_FRIENDLY_PALETTE", () => {
   it("has valid CLINVAR colors", () => {
     expect(COLORBLIND_FRIENDLY_PALETTE.CLINVAR.PATHOGENIC).toBe("#DC2626");
     expect(COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_PATHOGENIC).toBe("#EA580C");
-    expect(COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS).toBe("#F59E0B");
+    expect(COLORBLIND_FRIENDLY_PALETTE.CLINVAR.VUS).toBe("#2563EB");
     expect(COLORBLIND_FRIENDLY_PALETTE.CLINVAR.BENIGN).toBe("#059669");
     expect(COLORBLIND_FRIENDLY_PALETTE.CLINVAR.LIKELY_BENIGN).toBe("#047857");
   });
@@ -113,11 +113,11 @@ describe("getClinvarColor", () => {
   });
 
   it("returns VUS for uncertain significance", () => {
-    expect(getClinvarColor("VUS")).toBe("#F59E0B");
+    expect(getClinvarColor("VUS")).toBe("#2563EB");
   });
 
   it("returns VUS for unrecognized strings", () => {
-    expect(getClinvarColor("random")).toBe("#F59E0B");
+    expect(getClinvarColor("random")).toBe("#2563EB");
   });
 });
 

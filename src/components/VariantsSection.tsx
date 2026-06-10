@@ -53,7 +53,7 @@ const VariantsSection: React.FC<VariantsSectionProps> = ({
       Pathogenic: "bg-red-100 text-red-800 border-red-200",
       "Likely Pathogenic": "bg-red-100 text-red-700 border-red-200",
       "Likely Benign": "bg-emerald-100 text-emerald-700 border-emerald-200",
-      VUS: "bg-amber-100 text-amber-800 border-amber-200",
+      VUS: "bg-blue-100 text-blue-800 border-blue-200",
       B: "bg-emerald-100 text-emerald-800 border-emerald-200",
       LB: "bg-emerald-100 text-emerald-700 border-emerald-200",
       P: "bg-red-100 text-red-800 border-red-200",
