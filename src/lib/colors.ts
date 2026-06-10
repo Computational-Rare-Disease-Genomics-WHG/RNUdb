@@ -11,7 +11,7 @@ export const COLORBLIND_FRIENDLY_PALETTE = {
   CLINVAR: {
     PATHOGENIC: "#DC2626", // Dark red - most severe
     LIKELY_PATHOGENIC: "#EA580C", // Orange-red - moderately severe
-    VUS: "#F59E0B", // Amber - uncertain significance
+    VUS: "#2563EB", // Blue - uncertain significance
     BENIGN: "#059669", // Emerald green - safe
     LIKELY_BENIGN: "#047857", // Darker green
   },
@@ -54,7 +54,7 @@ export const COLORBLIND_FRIENDLY_PALETTE = {
     GNOMAD: "#2563EB", // Blue
     CLINVAR_PATHOGENIC: "#DC2626", // Red
     CLINVAR_BENIGN: "#059669", // Green
-    CLINVAR_VUS: "#F59E0B", // Amber
+    CLINVAR_VUS: "#2563EB", // Blue
   },
 
   // Function Score colors (diverging scale - colorblind safe)
