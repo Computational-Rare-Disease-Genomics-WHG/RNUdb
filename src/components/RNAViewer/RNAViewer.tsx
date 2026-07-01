@@ -826,6 +826,31 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             })}
           </g>
 
+          {selectedNucleotide && highlightedNucleotideIds.length > 0 && (
+            <g className="compound-het-lines-layer">
+              {highlightedNucleotideIds.map((highlightedId) => {
+                const highlightedNucleotide = rnaData.nucleotides.find(
+                  (n) => n.id === highlightedId,
+                );
+                if (!highlightedNucleotide) return null;
+                return (
+                  <line
+                    key={`comphet-${selectedNucleotide.id}-${highlightedId}`}
+                    x1={selectedNucleotide.x}
+                    y1={selectedNucleotide.y}
+                    x2={highlightedNucleotide.x}
+                    y2={highlightedNucleotide.y}
+                    stroke="#6366f1"
+                    strokeWidth="2.5"
+                    strokeDasharray="6,4"
+                    opacity="0.7"
+                    className="compound-het-line"
+                  />
+                );
+              })}
+            </g>
+          )}
+
           <g className="nucleotides-layer">
             {rnaData.nucleotides.map((nucleotide) => {
               const variantInfo = getVariantInfoForNucleotide(nucleotide.id);
