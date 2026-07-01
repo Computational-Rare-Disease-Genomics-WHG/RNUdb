@@ -28,6 +28,10 @@
   pointer-events: none;
 }
 
+.compound-het-lines-layer {
+  pointer-events: none;
+}
+
 .rna-controls {
   display: flex;
   gap: 8px;
@@ -83,5 +87,16 @@
   50% {
     r: 32;
     opacity: 0.5;
+  }
+}
+
+/* Compound het connection line animation */
+.compound-het-line {
+  animation: dash-flow 0.8s linear infinite;
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -10;
   }
 }
