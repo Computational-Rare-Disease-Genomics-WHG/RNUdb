@@ -69,6 +69,29 @@ class TestGenesAPI:
         assert response.status_code in (200, 404)
 
 
+class TestGeneDiseaseTypesAPI:
+    """Tests for gene-scoped disease types API endpoint."""
+
+    def test_get_gene_disease_types_scoped(
+        self, test_client, sample_variant_classification
+    ):
+        """GET /api/genes/{gene_id}/disease-types returns diseases for that gene."""
+        response = test_client.get("/api/genes/RNU4-2/disease-types")
+        assert response.status_code == 200
+        data = response.json()
+        assert "Retinitis Pigmentosa" in data
+
+        response_other = test_client.get("/api/genes/NONEXISTENT/disease-types")
+        assert response_other.status_code == 200
+        assert response_other.json() == []
+
+    def test_get_gene_disease_types_empty(self, test_client, seed_gene):
+        """GET /api/genes/{gene_id}/disease-types returns [] when no classifications."""
+        response = test_client.get("/api/genes/RNU4-2/disease-types")
+        assert response.status_code == 200
+        assert response.json() == []
+
+
 class TestGeneStructuresAPI:
     """Tests for gene structures API endpoints - regression tests for 404 issue."""
 
