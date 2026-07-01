@@ -89,6 +89,10 @@ class ApiService {
     return this.fetchFromApi<string[]>("/variants/disease-types");
   }
 
+  async getGeneDistinctDiseaseTypes(geneId: string): Promise<string[]> {
+    return this.fetchFromApi<string[]>(`/genes/${geneId}/disease-types`);
+  }
+
   async getDistinctClinicalSignificances(): Promise<string[]> {
     return this.fetchFromApi<string[]>("/variants/clinical-significances");
   }
@@ -113,5 +117,7 @@ export const logout = () =>
     credentials: "include",
   });
 export const getDistinctDiseaseTypes = () => apiService.getDistinctDiseaseTypes();
+export const getGeneDistinctDiseaseTypes = (geneId: string) =>
+  apiService.getGeneDistinctDiseaseTypes(geneId);
 export const getDistinctClinicalSignificances = () =>
   apiService.getDistinctClinicalSignificances();

@@ -216,4 +216,34 @@ describe("ApiService", () => {
       expect(result).toEqual(mockLiterature);
     });
   });
+
+  describe("getGeneDistinctDiseaseTypes", () => {
+    it("should return disease types for a gene", async () => {
+      const mockDiseases = ["Retinitis Pigmentosa", "ReNU Syndrome"];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: () => Promise.resolve(mockDiseases),
+      });
+
+      const result = await apiService.getGeneDistinctDiseaseTypes("RNU4-2");
+
+      expect(result).toEqual(mockDiseases);
+      expect(mockFetch).toHaveBeenCalledWith("/api/genes/RNU4-2/disease-types", {
+        credentials: "include",
+      });
+    });
+
+    it("should return empty array when no diseases", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: () => Promise.resolve([]),
+      });
+
+      const result = await apiService.getGeneDistinctDiseaseTypes("RNU4-2");
+
+      expect(result).toEqual([]);
+    });
+  });
 });

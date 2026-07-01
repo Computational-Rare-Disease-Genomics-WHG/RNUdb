@@ -431,6 +431,23 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
     return variants
 
 
+@router.get("/genes/{gene_id}/disease-types")
+async def get_gene_disease_types(gene_id: str, db: Session = Depends(get_db)):
+    """Get all distinct disease types for variants of a specific gene"""
+    rows = db.execute(
+        text("""
+            SELECT DISTINCT vc.disease
+            FROM variant_classifications vc
+            JOIN variants v ON vc.variant_id = v.id
+            WHERE v.geneId = :gene_id
+              AND vc.disease IS NOT NULL AND vc.disease != ''
+            ORDER BY vc.disease
+        """),
+        {"gene_id": gene_id},
+    ).fetchall()
+    return [row._mapping["disease"] for row in rows]
+
+
 @router.get("/genes/{gene_id}/literature", response_model=list[LiteraturePublic])
 async def get_gene_literature(gene_id: str, db: Session = Depends(get_db)):
     """Get all literature for a specific gene"""

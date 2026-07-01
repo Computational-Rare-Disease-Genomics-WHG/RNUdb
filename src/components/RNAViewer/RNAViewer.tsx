@@ -32,7 +32,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import "./RNAViewer.css";
 import {
-  getDistinctDiseaseTypes,
+  getGeneDistinctDiseaseTypes,
   getDistinctClinicalSignificances,
 } from "@/services/api";
 
@@ -103,7 +103,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
     const fetchFilterOptions = async () => {
       try {
         const [diseases, significances] = await Promise.all([
-          getDistinctDiseaseTypes(),
+          getGeneDistinctDiseaseTypes(geneData.id),
           getDistinctClinicalSignificances(),
         ]);
         setDiseaseTypes(diseases);
@@ -113,7 +113,9 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
       }
     };
     fetchFilterOptions();
-  }, []);
+    setSelectedDiseaseType("all");
+    setSelectedClinicalSig("all");
+  }, [geneData.id]);
 
   const getFilteredOverlayValue = useCallback(
     (nucleotideId: number): { value: number; variant?: Variant } => {
