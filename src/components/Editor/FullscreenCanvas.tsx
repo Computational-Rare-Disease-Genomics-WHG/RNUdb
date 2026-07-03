@@ -13,7 +13,7 @@ import {
   MousePointer2,
   Shapes,
 } from "lucide-react";
-import React, { forwardRef, useState, useCallback } from "react";
+import React, { forwardRef, useState, useCallback, useRef } from "react";
 import type { RNAData } from "../../types/rna";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -60,6 +60,7 @@ interface FullscreenCanvasProps {
   onFeatureLabelClick: (e: React.MouseEvent, featureId: string) => void;
   onOpenFeatureModal: () => void;
   onSetFeatureModalOpen: (isOpen: boolean) => void;
+  onNucleotidesSelected: (ids: number[]) => void;
 }
 
 const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
@@ -96,6 +97,7 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
       onFeatureNucleotideToggle,
       onFeatureLabelClick,
       onOpenFeatureModal,
+      onNucleotidesSelected,
     },
     ref,
   ) => {
@@ -125,6 +127,20 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
       x: number;
       y: number;
     } | null>(null);
+    const [selectionRect, setSelectionRect] = useState<{
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+    } | null>(null);
+    const selectionRectRef = useRef<{
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+    } | null>(null);
+    const isDraggingRect = useRef(false);
+    const rectCompletedRef = useRef(false);
 
     const handleLabelModalClose = useCallback(() => {
       setShowLabelModal(false);
@@ -592,29 +608,27 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
               <Keyboard className="h-4 w-4 mr-2" />
               Shortcuts
             </Button>
-            {currentNucleotide && (
+            {selectedNucleotides.length > 0 && (
               <>
+                {currentNucleotide && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowNucleotideInfo(!showNucleotideInfo)}
+                    className="h-9 px-3 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 text-sm font-medium"
+                  >
+                    <Target className="h-4 w-4 mr-2" />
+                    Edit #{currentNucleotide}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowNucleotideInfo(!showNucleotideInfo)}
-                  className="h-9 px-3 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 text-sm font-medium"
-                >
-                  <Target className="h-4 w-4 mr-2" />
-                  Edit #{currentNucleotide}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (currentNucleotide) {
-                      onDeleteSelected();
-                    }
-                  }}
+                  onClick={onDeleteSelected}
                   className="h-9 px-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
+                  Delete ({selectedNucleotides.length})
                 </Button>
               </>
             )}
@@ -721,6 +735,18 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                     Esc
                   </kbd>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span>Toggle selection</span>
+                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                    Shift+Click
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Rectangle select</span>
+                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                    Shift+Drag
+                  </kbd>
+                </div>
               </div>
             </div>
           </div>
@@ -825,6 +851,10 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
                     : "crosshair",
           }}
           onClick={(e) => {
+            if (rectCompletedRef.current) {
+              rectCompletedRef.current = false;
+              return;
+            }
             if (mode === "label") {
               const svg = e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
               if (svg) {
@@ -840,21 +870,81 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
               onCanvasClick(e);
             }
           }}
-          onMouseDown={onCanvasMouseDown}
+          onMouseDown={(e) => {
+            if (mode === "select" && e.shiftKey) {
+              const svg = e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+              if (svg) {
+                const pt = new DOMPoint(e.clientX, e.clientY);
+                const svgPoint = pt.matrixTransform(
+                  svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+                );
+                const rect = {
+                  x1: svgPoint.x,
+                  y1: svgPoint.y,
+                  x2: svgPoint.x,
+                  y2: svgPoint.y,
+                };
+                setSelectionRect(rect);
+                selectionRectRef.current = rect;
+                isDraggingRect.current = true;
+              }
+            } else {
+              onCanvasMouseDown(e);
+            }
+          }}
           onMouseMove={(e) => {
             onMouseMove(e);
             handleLabelMouseMove(e);
             handleFeatureLabelMouseMove(e);
+            if (isDraggingRect.current) {
+              const svg = e.currentTarget.querySelector<SVGSVGElement>("svg[viewBox]");
+              if (svg) {
+                const pt = new DOMPoint(e.clientX, e.clientY);
+                const svgPoint = pt.matrixTransform(
+                  svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+                );
+                setSelectionRect((prev) => {
+                  if (!prev) return prev;
+                  const next = { ...prev, x2: svgPoint.x, y2: svgPoint.y };
+                  selectionRectRef.current = next;
+                  return next;
+                });
+              }
+            }
           }}
           onMouseUp={() => {
             onMouseUp();
             handleLabelMouseUp();
             handleFeatureLabelMouseUp();
+            if (isDraggingRect.current && selectionRectRef.current) {
+              const r = selectionRectRef.current;
+              const minX = Math.min(r.x1, r.x2);
+              const maxX = Math.max(r.x1, r.x2);
+              const minY = Math.min(r.y1, r.y2);
+              const maxY = Math.max(r.y1, r.y2);
+              const selectedIds = rnaData.nucleotides
+                .filter((n) => {
+                  const cx = n.x + 15;
+                  const cy = n.y + 15;
+                  return cx >= minX && cx <= maxX && cy >= minY && cy <= maxY;
+                })
+                .map((n) => n.id);
+              onNucleotidesSelected(selectedIds);
+              setSelectionRect(null);
+              selectionRectRef.current = null;
+              isDraggingRect.current = false;
+              rectCompletedRef.current = true;
+            }
           }}
           onMouseLeave={() => {
             onMouseUp();
             handleLabelMouseUp();
             handleFeatureLabelMouseUp();
+            if (isDraggingRect.current) {
+              setSelectionRect(null);
+              selectionRectRef.current = null;
+              isDraggingRect.current = false;
+            }
           }}
           tabIndex={0}
         >
@@ -902,6 +992,21 @@ const FullscreenCanvas = forwardRef<HTMLDivElement, FullscreenCanvasProps>(
             <g className="nucleotides-layer" style={{ pointerEvents: "auto" }}>
               {renderNucleotides()}
             </g>
+
+            {/* Selection Rectangle */}
+            {selectionRect && (
+              <rect
+                x={Math.min(selectionRect.x1, selectionRect.x2)}
+                y={Math.min(selectionRect.y1, selectionRect.y2)}
+                width={Math.abs(selectionRect.x2 - selectionRect.x1)}
+                height={Math.abs(selectionRect.y2 - selectionRect.y1)}
+                fill="rgba(59, 130, 246, 0.1)"
+                stroke="rgba(59, 130, 246, 0.6)"
+                strokeWidth="1.5"
+                strokeDasharray="4,4"
+                className="pointer-events-none"
+              />
+            )}
 
             {/* Structural Features Layer */}
             {mode !== "add" &&

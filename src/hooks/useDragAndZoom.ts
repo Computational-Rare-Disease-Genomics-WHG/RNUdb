@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useEffect, type RefObject } from "react";
+import { useState, useCallback, useRef } from "react";
 
 interface DragAndZoomProps {
-  canvasRef: RefObject<HTMLDivElement | null>;
+  canvasRef: React.RefObject<HTMLDivElement | null>;
   mode: "select" | "add" | "pair" | "delete" | "pan" | "label" | "feature";
   zoomLevel: number;
   panOffset: { x: number; y: number };
@@ -13,6 +13,7 @@ interface DragAndZoomProps {
   ) => { x: number; y: number };
   nucleotides: Array<{ id: number; x: number; y: number }>;
   rnaData: { canvasWidth?: number; canvasHeight?: number };
+  selectedNucleotides: number[];
 }
 
 export const useDragAndZoom = ({
@@ -24,50 +25,47 @@ export const useDragAndZoom = ({
   findSnapPosition: _findSnapPosition,
   nucleotides: _nucleotides,
   rnaData: _rnaData,
+  selectedNucleotides,
 }: DragAndZoomProps) => {
   const [draggedNucleotide, setDraggedNucleotide] = useState<number | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
-  const animationFrameRef = useRef<number | null>(null);
-  const pendingUpdateRef = useRef<{ id: number; x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    const updatePosition = () => {
-      if (pendingUpdateRef.current) {
-        const { id, x, y } = pendingUpdateRef.current;
-        onUpdateNucleotidePosition(id, x, y);
-        pendingUpdateRef.current = null;
-      }
-    };
-
-    if (draggedNucleotide) {
-      const scheduleUpdate = () => {
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-        }
-        animationFrameRef.current = requestAnimationFrame(updatePosition);
-      };
-
-      if (pendingUpdateRef.current) {
-        scheduleUpdate();
-      }
-    }
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [draggedNucleotide, onUpdateNucleotidePosition]);
+  const dragInitialSvgPointRef = useRef<{ x: number; y: number } | null>(null);
+  const dragStartPositionsRef = useRef<Map<number, { x: number; y: number }>>(
+    new Map(),
+  );
 
   const handleNucleotideMouseDown = useCallback(
     (e: React.MouseEvent, nucleotideId: number) => {
       if (mode === "select") {
         e.preventDefault();
+        e.stopPropagation();
+
+        const idsToDrag =
+          selectedNucleotides.includes(nucleotideId) && selectedNucleotides.length > 1
+            ? selectedNucleotides
+            : [nucleotideId];
+
         setDraggedNucleotide(nucleotideId);
+
+        const svg = canvasRef.current?.querySelector<SVGSVGElement>("svg[viewBox]");
+        if (svg) {
+          const pt = new DOMPoint(e.clientX, e.clientY);
+          const svgPoint = pt.matrixTransform(
+            svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
+          );
+          dragInitialSvgPointRef.current = svgPoint;
+
+          const positions = new Map<number, { x: number; y: number }>();
+          for (const id of idsToDrag) {
+            const nuc = _nucleotides.find((n) => n.id === id);
+            if (nuc) positions.set(id, { x: nuc.x, y: nuc.y });
+          }
+          dragStartPositionsRef.current = positions;
+        }
       }
     },
-    [mode],
+    [mode, selectedNucleotides, canvasRef, _nucleotides],
   );
 
   const handleMouseMove = useCallback(
@@ -84,18 +82,23 @@ export const useDragAndZoom = ({
         };
       } else if (draggedNucleotide && mode === "select") {
         const svg = canvasRef.current?.querySelector<SVGSVGElement>("svg[viewBox]");
-        if (svg) {
+        if (svg && dragInitialSvgPointRef.current) {
           const pt = new DOMPoint(e.clientX, e.clientY);
-          const svgPoint = pt.matrixTransform(
+          const currentSvgPoint = pt.matrixTransform(
             svg.getScreenCTM()?.inverse() ?? new DOMMatrix(),
           );
-          onUpdateNucleotidePosition(draggedNucleotide, svgPoint.x, svgPoint.y);
+
+          const dx = currentSvgPoint.x - dragInitialSvgPointRef.current.x;
+          const dy = currentSvgPoint.y - dragInitialSvgPointRef.current.y;
+
+          dragStartPositionsRef.current.forEach((startPos, id) => {
+            onUpdateNucleotidePosition(id, startPos.x + dx, startPos.y + dy);
+          });
         }
       }
 
       return null;
     },
-
     [
       isPanning,
       draggedNucleotide,
@@ -109,6 +112,8 @@ export const useDragAndZoom = ({
   const handleMouseUp = useCallback(() => {
     setDraggedNucleotide(null);
     setIsPanning(false);
+    dragInitialSvgPointRef.current = null;
+    dragStartPositionsRef.current = new Map();
   }, []);
 
   const handleCanvasMouseDown = useCallback(

@@ -30,6 +30,14 @@ const KeyboardShortcutsPanel: React.FC = () => {
         <div>
           <kbd className="px-2 py-1 bg-gray-100 rounded">Esc</kbd> - Clear selection
         </div>
+        <div>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Shift+Click</kbd> - Toggle
+          selection
+        </div>
+        <div>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Shift+Drag</kbd> - Rectangle
+          select
+        </div>
       </CardContent>
     </Card>
   );

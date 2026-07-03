@@ -54,6 +54,7 @@ const Editor: React.FC = () => {
     addBasePair,
     removeBasePair,
     navigateNucleotides,
+    toggleNucleotideInSelection,
     addStructuralFeature,
     updateStructuralFeature,
   } = nucleotideManager;
@@ -99,6 +100,7 @@ const Editor: React.FC = () => {
     findSnapPosition,
     nucleotides: rnaData.nucleotides,
     rnaData,
+    selectedNucleotides,
   });
 
   const {
@@ -167,10 +169,16 @@ const Editor: React.FC = () => {
         return;
       }
 
-      // Select mode - set as current nucleotide and clear label selection
-      setCurrentNucleotide(nucleotideId);
-      setSelectedNucleotides([nucleotideId]);
-      setCurrentLabel(null);
+      // Select mode - support shift+click for multi-select toggling
+      if (e.shiftKey) {
+        toggleNucleotideInSelection(nucleotideId);
+        setCurrentNucleotide(nucleotideId);
+        setCurrentLabel(null);
+      } else {
+        setCurrentNucleotide(nucleotideId);
+        setSelectedNucleotides([nucleotideId]);
+        setCurrentLabel(null);
+      }
     },
     [
       mode,
@@ -181,6 +189,7 @@ const Editor: React.FC = () => {
       rnaData.base_pairs,
       setSelectedNucleotides,
       setCurrentNucleotide,
+      toggleNucleotideInSelection,
     ],
   );
 
@@ -227,6 +236,13 @@ const Editor: React.FC = () => {
     setEditingId(null);
     setCurrentLabel(null);
   }, [setCurrentNucleotide, setSelectedNucleotides]);
+
+  const handleNucleotidesSelected = useCallback(
+    (ids: number[]) => {
+      setSelectedNucleotides(ids);
+    },
+    [setSelectedNucleotides],
+  );
 
   // Feature mode handlers
   const handleFeatureNucleotideToggle = useCallback((nucleotideId: number) => {
@@ -389,6 +405,7 @@ const Editor: React.FC = () => {
         onFeatureLabelClick={handleFeatureLabelClick}
         onOpenFeatureModal={handleOpenFeatureModal}
         onSetFeatureModalOpen={setIsFeatureModalOpen}
+        onNucleotidesSelected={handleNucleotidesSelected}
       />
 
       {isFeatureModalOpen && (
