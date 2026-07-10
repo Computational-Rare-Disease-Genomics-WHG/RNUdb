@@ -173,6 +173,12 @@ export const useNucleotideManager = (initialData: RNAData) => {
     }));
   }, []);
 
+  const toggleNucleotideInSelection = useCallback((id: number) => {
+    setSelectedNucleotides((prev) =>
+      prev.includes(id) ? prev.filter((nId) => nId !== id) : [...prev, id],
+    );
+  }, []);
+
   const navigateNucleotides = useCallback(
     (direction: string) => {
       if (rnaData.nucleotides.length === 0) return;
@@ -262,6 +268,7 @@ export const useNucleotideManager = (initialData: RNAData) => {
     updateNucleotideId,
     addBasePair,
     removeBasePair,
+    toggleNucleotideInSelection,
     navigateNucleotides,
     addStructuralFeature,
     updateStructuralFeature,
