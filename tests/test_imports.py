@@ -133,6 +133,43 @@ class TestStructureImportAPI:
         assert data["success"] is True
         assert data["imported_count"] == 1
 
+    def test_validate_duplicate_structure_warns(
+        self, test_client, seed_gene, valid_structure_data
+    ):
+        """Validating a structure whose ID already exists should return a warning."""
+        test_client.post(
+            "/api/imports/structures",
+            json={"geneId": "RNU4-2", "structure": valid_structure_data},
+        )
+        response = test_client.post(
+            "/api/imports/structures/validate",
+            json={"geneId": "RNU4-2", "structure": valid_structure_data},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["warnings"]) >= 1
+        warning_messages = [w["message"] for w in data["warnings"]]
+        assert any("already exists" in msg for msg in warning_messages)
+
+    def test_import_duplicate_structure_rejected(
+        self, test_client, seed_gene, valid_structure_data
+    ):
+        """Importing a structure with an existing ID should return 409."""
+        response = test_client.post(
+            "/api/imports/structures",
+            json={"geneId": "RNU4-2", "structure": valid_structure_data},
+        )
+        assert response.status_code == 200
+
+        response = test_client.post(
+            "/api/imports/structures",
+            json={"geneId": "RNU4-2", "structure": valid_structure_data},
+        )
+        assert response.status_code == 409
+        data = response.json()
+        assert "already exists" in data["detail"]["message"]
+        assert data["detail"]["existing_id"] == "rnu4-2-test"
+
 
 class TestBEDTrackImportAPI:
     """Test BED track import endpoints."""

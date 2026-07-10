@@ -13,6 +13,7 @@ from api.models import (
     Gene,
     ImportResult,
     Literature,
+    RNAStructure,
     StructureImportRequest,
     ValidationErrorModel,
     ValidationReportResponse,
@@ -196,7 +197,22 @@ async def validate_structure_import(
         raise HTTPException(status_code=404, detail=f"Gene {request.geneId} not found")
 
     report = validate_structure(request.structure, gene)
-    return _validation_report_to_response(report)
+    response = _validation_report_to_response(report)
+    existing = db.get(RNAStructure, request.structure["id"])
+    if existing:
+        response.warnings.append(
+            ValidationErrorModel(
+                row=0,
+                field="id",
+                message=(
+                    f"Structure '{request.structure['id']}' already exists"
+                    f" for gene {existing.geneId}."
+                    " Importing will overwrite the existing structure."
+                ),
+                value=request.structure["id"],
+            )
+        )
+    return response
 
 
 @router.post("/imports/structures", response_model=ImportResult)
@@ -219,6 +235,21 @@ async def import_structure(
                     {"row": e.row, "field": e.field, "message": e.message}
                     for e in report.errors
                 ],
+            },
+        )
+
+    existing = db.get(RNAStructure, request.structure["id"])
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": (
+                    f"Structure '{request.structure['id']}' already exists"
+                    f" for gene {existing.geneId}."
+                    " Delete it first or use a different ID."
+                ),
+                "existing_id": request.structure["id"],
+                "gene_id": existing.geneId,
             },
         )
 
