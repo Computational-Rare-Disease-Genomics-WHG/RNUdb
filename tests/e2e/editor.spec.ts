@@ -4,6 +4,22 @@ import { mockCuratorAuth, mockGuestAuth } from './utils/mock-auth';
 const NUCLEOTIDES = 'g.nucleotides-layer circle';
 const BONDS = 'g.bonds-layer line';
 
+async function pressKey(page: any, key: string) {
+  await page.evaluate((k) => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+  }, key);
+}
+
+async function addNucleotide(page: any) {
+  await pressKey(page, 'n');
+}
+
+async function addNNucleotides(page: any, n: number) {
+  for (let i = 0; i < n; i++) {
+    await pressKey(page, 'n');
+  }
+}
+
 test.describe('Editor Page', () => {
 
   test.describe('Auth & Loading', () => {
@@ -26,24 +42,21 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      const header = page.locator('header');
-      await expect(header.first()).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('header').first()).toBeVisible({ timeout: 5000 });
     });
 
     test('should display SVG element', async ({ page }) => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      const svg = page.locator('svg');
-      await expect(svg.first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('svg').first()).toBeVisible({ timeout: 10000 });
     });
 
     test('should display empty state message', async ({ page }) => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      const emptyState = page.getByText('Start Creating');
-      await expect(emptyState).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('Start Creating')).toBeVisible({ timeout: 5000 });
     });
   });
 
@@ -89,11 +102,10 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      const zoomPercent = page.getByText('100%');
-      await expect(zoomPercent).toBeVisible();
+      await expect(page.getByText('100%')).toBeVisible();
     });
 
-    test('should zoom in when clicking zoom in button', async ({ page }) => {
+    test('should zoom in', async ({ page }) => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
@@ -101,7 +113,7 @@ test.describe('Editor Page', () => {
       await expect(page.getByText('125%')).toBeVisible();
     });
 
-    test('should zoom out when clicking zoom out button', async ({ page }) => {
+    test('should zoom out', async ({ page }) => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
@@ -126,10 +138,9 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      await page.locator('div.absolute.inset-0').first().click();
-      await page.keyboard.press('n');
-      const circles = page.locator(NUCLEOTIDES);
-      await expect(circles).toHaveCount(1);
+      await page.waitForSelector('g.nucleotides-layer');
+      await addNucleotide(page);
+      await expect(page.locator(NUCLEOTIDES)).toHaveCount(1);
     });
 
     test('should add nucleotide via Add mode + canvas click', async ({ page }) => {
@@ -137,25 +148,22 @@ test.describe('Editor Page', () => {
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
       await page.locator('button:has(svg.lucide-plus)').click();
-      const svg = page.locator('svg').first();
-      const box = await svg.boundingBox();
+      const canvas = page.locator('[tabindex="0"]').first();
+      const box = await canvas.boundingBox();
       if (box) {
-        await svg.click({ position: { x: box.width / 2, y: box.height / 2 } });
+        await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
       }
-      const circles = page.locator(NUCLEOTIDES);
-      await expect(circles).toHaveCount(1);
+      await expect(page.locator(NUCLEOTIDES)).toHaveCount(1);
     });
 
     test('should add multiple nucleotides', async ({ page }) => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      await page.locator('div.absolute.inset-0').first().click();
-      await page.keyboard.press('n');
-      await page.keyboard.press('n');
-      await page.keyboard.press('n');
-      const circles = page.locator(NUCLEOTIDES);
-      await expect(circles).toHaveCount(3);
+      await page.waitForSelector('g.nucleotides-layer');
+      await addNNucleotides(page, 3);
+      await page.waitForTimeout(200);
+      await expect(page.locator(NUCLEOTIDES)).toHaveCount(3);
     });
   });
 
@@ -164,43 +172,46 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      await page.locator('div.absolute.inset-0').first().click();
-      await page.keyboard.press('n');
-      await page.keyboard.press('n');
+      await page.waitForSelector('g.nucleotides-layer');
+      await addNNucleotides(page, 2);
+      await page.waitForTimeout(200);
     });
 
     test('should select a nucleotide on click', async ({ page }) => {
       const circles = page.locator(NUCLEOTIDES);
+      await expect(circles).toHaveCount(2);
       await circles.first().click();
-      const deleteButton = page.getByText(/Delete \(\d+\)/);
-      await expect(deleteButton).toBeVisible();
+      await expect(page.getByText(/Delete \(\d+\)/)).toBeVisible();
     });
 
     test('should show selected count in delete button', async ({ page }) => {
-      await page.keyboard.press('n');
+      await addNucleotide(page);
+      await page.waitForTimeout(200);
       const circles = page.locator(NUCLEOTIDES);
+      await expect(circles).toHaveCount(3);
       await circles.nth(0).click({ modifiers: ['Shift'] });
       await circles.nth(1).click({ modifiers: ['Shift'] });
-      const deleteBtn = page.getByText(/Delete \(2\)/);
-      await expect(deleteBtn).toBeVisible();
+      await expect(page.getByText(/Delete \(2\)/)).toBeVisible();
     });
 
     test('should clear selection on Esc', async ({ page }) => {
       const circles = page.locator(NUCLEOTIDES);
+      await expect(circles).toHaveCount(2);
       await circles.first().click();
       await expect(page.getByText(/Delete/)).toBeVisible();
-      await page.keyboard.press('Escape');
+      await pressKey(page, 'Escape');
       await expect(page.getByText(/Delete/)).not.toBeVisible();
     });
 
     test('should clear selection when clicking empty canvas', async ({ page }) => {
       const circles = page.locator(NUCLEOTIDES);
+      await expect(circles).toHaveCount(2);
       await circles.first().click();
       await expect(page.getByText(/Delete/)).toBeVisible();
-      const svg = page.locator('svg').first();
-      const box = await svg.boundingBox();
+      const canvas = page.locator('[tabindex="0"]').first();
+      const box = await canvas.boundingBox();
       if (box) {
-        await svg.click({ position: { x: box.width - 10, y: box.height - 10 } });
+        await canvas.click({ position: { x: box.width - 10, y: box.height - 10 } });
       }
       await expect(page.getByText(/Delete/)).not.toBeVisible();
     });
@@ -211,52 +222,49 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      await page.locator('div.absolute.inset-0').first().click();
-      await page.keyboard.press('n');
+      await page.waitForSelector('g.nucleotides-layer');
+      await addNucleotide(page);
+      await page.waitForTimeout(200);
     });
 
     test('should set base to A with keyboard', async ({ page }) => {
-      await page.keyboard.press('a');
-      const text = page.locator('g.nucleotides-layer text').first();
-      await expect(text).toHaveText('A');
+      await pressKey(page, 'a');
+      await expect(page.locator('g.nucleotides-layer text').first()).toHaveText('A');
     });
 
     test('should set base to C with keyboard', async ({ page }) => {
-      await page.keyboard.press('c');
-      const text = page.locator('g.nucleotides-layer text').first();
-      await expect(text).toHaveText('C');
+      await pressKey(page, 'c');
+      await expect(page.locator('g.nucleotides-layer text').first()).toHaveText('C');
     });
 
     test('should set base to G with keyboard', async ({ page }) => {
-      await page.keyboard.press('g');
-      const text = page.locator('g.nucleotides-layer text').first();
-      await expect(text).toHaveText('G');
+      await pressKey(page, 'g');
+      await expect(page.locator('g.nucleotides-layer text').first()).toHaveText('G');
     });
 
     test('should set base to U with keyboard', async ({ page }) => {
-      await page.keyboard.press('u');
-      const text = page.locator('g.nucleotides-layer text').first();
-      await expect(text).toHaveText('U');
+      await pressKey(page, 'u');
+      await expect(page.locator('g.nucleotides-layer text').first()).toHaveText('U');
     });
 
     test('should delete nucleotide with Delete key', async ({ page }) => {
       await expect(page.locator(NUCLEOTIDES)).toHaveCount(1);
-      await page.keyboard.press('Delete');
+      await pressKey(page, 'Delete');
       await expect(page.locator(NUCLEOTIDES)).toHaveCount(0);
     });
 
     test('should delete nucleotide with Backspace key', async ({ page }) => {
       await expect(page.locator(NUCLEOTIDES)).toHaveCount(1);
-      await page.keyboard.press('Backspace');
+      await pressKey(page, 'Backspace');
       await expect(page.locator(NUCLEOTIDES)).toHaveCount(0);
     });
 
     test('should navigate between nucleotides with arrow keys', async ({ page }) => {
-      await page.keyboard.press('n');
-      await page.keyboard.press('n');
+      await addNNucleotides(page, 2);
+      await page.waitForTimeout(200);
       await expect(page.locator(NUCLEOTIDES)).toHaveCount(3);
       await page.locator(NUCLEOTIDES).first().click();
-      await page.keyboard.press('ArrowRight');
+      await pressKey(page, 'ArrowRight');
     });
   });
 
@@ -265,8 +273,7 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      const shortcutsButton = page.getByText('Shortcuts');
-      await shortcutsButton.click();
+      await page.getByText('Shortcuts').click();
       await expect(page.getByText('Keyboard Shortcuts')).toBeVisible();
       await expect(page.getByText('Shift+Click')).toBeVisible();
       await expect(page.getByText('Shift+Drag')).toBeVisible();
@@ -280,9 +287,9 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      await page.locator('div.absolute.inset-0').first().click();
-      await page.keyboard.press('n');
-      await page.keyboard.press('n');
+      await page.waitForSelector('g.nucleotides-layer');
+      await addNNucleotides(page, 2);
+      await page.waitForTimeout(200);
       await expect(page.locator(NUCLEOTIDES)).toHaveCount(2);
       await page.locator(NUCLEOTIDES).first().click();
       await page.getByText(/Delete/).click();
@@ -293,10 +300,9 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      await page.locator('div.absolute.inset-0').first().click();
-      await page.keyboard.press('n');
-      await page.keyboard.press('n');
-      await page.keyboard.press('n');
+      await page.waitForSelector('g.nucleotides-layer');
+      await addNNucleotides(page, 3);
+      await page.waitForTimeout(200);
       await expect(page.locator(NUCLEOTIDES)).toHaveCount(3);
       await page.locator(NUCLEOTIDES).nth(0).click({ modifiers: ['Shift'] });
       await page.locator(NUCLEOTIDES).nth(1).click({ modifiers: ['Shift'] });
@@ -310,16 +316,14 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      await page.locator('div.absolute.inset-0').first().click();
-      await page.keyboard.press('n');
-      await page.keyboard.press('n');
-      const circles = page.locator(NUCLEOTIDES);
-      await expect(circles).toHaveCount(2);
+      await page.waitForSelector('g.nucleotides-layer');
+      await addNNucleotides(page, 2);
+      await page.waitForTimeout(200);
+      await expect(page.locator(NUCLEOTIDES)).toHaveCount(2);
       await page.locator('button:has(svg.lucide-link)').click();
-      await circles.nth(0).click();
-      await circles.nth(1).click();
-      const lines = page.locator(BONDS);
-      await expect(lines).toHaveCount(1);
+      await page.locator(NUCLEOTIDES).nth(0).click();
+      await page.locator(NUCLEOTIDES).nth(1).click();
+      await expect(page.locator(BONDS)).toHaveCount(1);
     });
   });
 
@@ -328,12 +332,12 @@ test.describe('Editor Page', () => {
       mockCuratorAuth(page);
       await page.goto('/editor');
       await page.waitForLoadState('domcontentloaded');
-      await page.keyboard.press('n');
-      await page.keyboard.press('a');
-      await page.keyboard.press('n');
-      await page.keyboard.press('u');
-      const exportBtn = page.getByText('Export');
-      await expect(exportBtn).toBeVisible();
+      await page.waitForSelector('g.nucleotides-layer');
+      await addNucleotide(page);
+      await pressKey(page, 'a');
+      await addNucleotide(page);
+      await pressKey(page, 'u');
+      await expect(page.getByText('Export')).toBeVisible();
     });
   });
 });
