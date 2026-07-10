@@ -8,6 +8,13 @@ import FunctionScoreTrack from "./FunctionScoreTrack";
 import SequenceTrack from "./SequenceTrack";
 import SnRNAVariantTrack from "./SnRNAVariantTrack";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import "./GenomeBrowser.css";
 
 interface GenomeBrowserProps {
@@ -39,6 +46,8 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   const viewerRef = useRef<HTMLDivElement>(null);
   const [, setIsZoomed] = useState(false);
   const [viewerWidth, setViewerWidth] = useState(800);
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [zygosityFilter, setZygosityFilter] = useState<string>("all");
   const defaultRegion = { start: geneData.start, stop: geneData.end };
   const [regions, setRegions] = useState([defaultRegion]);
 
@@ -194,6 +203,49 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
         </div>
       </div>
 
+      {/* Filter Bar */}
+      <div className="flex items-center gap-3 px-1 py-2 flex-wrap">
+        <span className="text-xs font-medium text-slate-500">Population Filters</span>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-slate-400">Source:</span>
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="h-6 w-20 text-xs">
+              <SelectValue>
+                {sourceFilter === "all"
+                  ? "All"
+                  : sourceFilter === "gnomad"
+                    ? "gnomAD"
+                    : "AoU"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="gnomad">gnomAD</SelectItem>
+              <SelectItem value="aou">All of Us</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-slate-400">Zygosity:</span>
+          <Select value={zygosityFilter} onValueChange={setZygosityFilter}>
+            <SelectTrigger className="h-6 w-28 text-xs">
+              <SelectValue>
+                {zygosityFilter === "all"
+                  ? "All"
+                  : zygosityFilter === "het"
+                    ? "Heterozygous"
+                    : "Homozygous"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="het">Heterozygous</SelectItem>
+              <SelectItem value="hom">Homozygous</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div ref={viewerRef} className="genome-browser-viewer">
         <RegionViewer
           regions={regions}
@@ -236,6 +288,8 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               variants={variants}
               gnomadVariants={gnomadVariants}
               aouVariants={aouVariants}
+              sourceFilter={sourceFilter}
+              zygosityFilter={zygosityFilter}
             />
           </Cursor>
         </RegionViewer>
