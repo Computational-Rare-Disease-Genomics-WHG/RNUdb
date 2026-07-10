@@ -94,6 +94,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   const [selectedClinicalSig, setSelectedClinicalSig] = useState<string>("all");
   const [selectedPopulationSource, setSelectedPopulationSource] =
     useState<string>("all");
+  const [selectedPopulationZygosity, setSelectedPopulationZygosity] =
+    useState<string>("all");
 
   // Clinical Variants filters
   const [clinvarGroupBy] = useState<string>("all");
@@ -231,13 +233,46 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
 
           if (nucleotidePos !== nucleotideId) return false;
 
-          if (selectedPopulationSource === "gnomad") {
-            return (variant.gnomad_af ?? 0) > 0;
-          } else if (selectedPopulationSource === "aou") {
-            return (variant.aou_af ?? 0) > 0;
-          } else {
-            return (variant.gnomad_af ?? 0) > 0 || (variant.aou_af ?? 0) > 0;
+          const passesSource =
+            selectedPopulationSource === "gnomad"
+              ? (variant.gnomad_af ?? 0) > 0
+              : selectedPopulationSource === "aou"
+                ? (variant.aou_af ?? 0) > 0
+                : (variant.gnomad_af ?? 0) > 0 || (variant.aou_af ?? 0) > 0;
+
+          if (!passesSource) return false;
+
+          if (selectedPopulationZygosity !== "all") {
+            if (selectedPopulationSource === "gnomad") {
+              return selectedPopulationZygosity === "het"
+                ? (variant.gnomad_ac ?? 0) > 2 * (variant.gnomad_hom ?? 0)
+                : (variant.gnomad_hom ?? 0) > 0;
+            } else if (selectedPopulationSource === "aou") {
+              return selectedPopulationZygosity === "het"
+                ? (variant.aou_ac ?? 0) > 2 * (variant.aou_hom ?? 0)
+                : (variant.aou_hom ?? 0) > 0;
+            } else {
+              if (selectedPopulationZygosity === "het") {
+                const gnomadHet =
+                  (variant.gnomad_af ?? 0) > 0
+                    ? (variant.gnomad_ac ?? 0) > 2 * (variant.gnomad_hom ?? 0)
+                    : true;
+                const aouHet =
+                  (variant.aou_af ?? 0) > 0
+                    ? (variant.aou_ac ?? 0) > 2 * (variant.aou_hom ?? 0)
+                    : true;
+                return gnomadHet && aouHet;
+              } else {
+                const gnomadHom =
+                  (variant.gnomad_af ?? 0) > 0 ? (variant.gnomad_hom ?? 0) > 0 : true;
+                const aouHom =
+                  (variant.aou_af ?? 0) > 0 ? (variant.aou_hom ?? 0) > 0 : true;
+                return gnomadHom && aouHom;
+              }
+            }
           }
+
+          return true;
         });
 
         if (filteredVariants.length === 0) return { value: 0 };
@@ -682,6 +717,27 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                         <SelectItem value="all">All</SelectItem>
                         <SelectItem value="gnomad">gnomAD</SelectItem>
                         <SelectItem value="aou">All of Us</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-xs text-slate-400">Zygosity</span>
+                    <Select
+                      value={selectedPopulationZygosity}
+                      onValueChange={setSelectedPopulationZygosity}
+                    >
+                      <SelectTrigger className="h-5 w-24 text-xs bg-transparent border-0 p-0 shadow-none">
+                        <SelectValue>
+                          {selectedPopulationZygosity === "all"
+                            ? "All"
+                            : selectedPopulationZygosity === "het"
+                              ? "Heterozygous"
+                              : "Homozygous"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="het">Heterozygous</SelectItem>
+                        <SelectItem value="hom">Homozygous</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
