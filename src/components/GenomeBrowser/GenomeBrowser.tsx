@@ -156,6 +156,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
             variant="outline"
             size="sm"
             className="h-8 px-3"
+            type="button"
           >
             <ZoomIn className="h-3 w-3" />
           </Button>
@@ -164,6 +165,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
             variant="outline"
             size="sm"
             className="h-8 px-3"
+            type="button"
           >
             <ZoomOut className="h-3 w-3" />
           </Button>
@@ -172,6 +174,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
             variant="outline"
             size="sm"
             className="h-8 px-3"
+            type="button"
           >
             <RotateCcw className="h-3 w-3" />
           </Button>
@@ -187,6 +190,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
             variant="outline"
             size="sm"
             className="h-8 px-3"
+            type="button"
           >
             <Download className="h-3 w-3 mr-1" />
             <span className="text-xs">SVG</span>
@@ -196,6 +200,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
             variant="outline"
             size="sm"
             className="h-8 px-3"
+            type="button"
           >
             <FileImage className="h-3 w-3 mr-1" />
             <span className="text-xs">PNG</span>

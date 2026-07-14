@@ -63,7 +63,11 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart
   return (
     <Track title="Domains">
       {({ scalePosition, width }) => (
-        <svg height={height} width={width}>
+        <svg
+          height={height}
+          width={width}
+          style={{ display: "block", overflow: "visible" }}
+        >
           <rect x={0} y={0} width={width} height={height} fill="white" />
           <line
             x1={0}
