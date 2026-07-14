@@ -15,14 +15,13 @@ test.describe('Clinical Interpretation Page', () => {
     await expect(header).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display all four tabs', async ({ page }) => {
+  test('should display all three tabs', async ({ page }) => {
     await page.goto('/clinical-interpretation');
     await page.waitForLoadState('domcontentloaded');
 
     await expect(page.locator('button:has-text("Overview")')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('button:has-text("Recommendations")')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('button:has-text("Examples")')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('button:has-text("Reference")')).toBeVisible({ timeout: 5000 });
   });
 
   test('should display snRNA information in Overview tab', async ({ page }) => {
@@ -63,11 +62,11 @@ test.describe('Clinical Interpretation Page', () => {
     await expect(selectExample.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('should switch to Reference tab', async ({ page }) => {
+  test('should display ACMG Evidence Codes on Overview tab', async ({ page }) => {
     await page.goto('/clinical-interpretation');
     await page.waitForLoadState('domcontentloaded');
 
-    await page.locator('button:has-text("Reference")').click();
+    await page.locator('button:has-text("Overview")').click();
     await page.waitForTimeout(500);
 
     const acmgCodes = page.locator('text=ACMG Evidence Codes');
@@ -80,5 +79,13 @@ test.describe('Clinical Interpretation Page', () => {
 
     const regionsTable = page.locator('text=Critical Pathogenic Regions');
     await expect(regionsTable).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should display Spliceosomal snRNA Genes table', async ({ page }) => {
+    await page.goto('/clinical-interpretation');
+    await page.waitForLoadState('domcontentloaded');
+
+    const snRNAGeneTable = page.locator('text=Spliceosomal snRNA Genes');
+    await expect(snRNAGeneTable).toBeVisible({ timeout: 5000 });
   });
 });
