@@ -16,6 +16,7 @@ interface TeamMember {
   name: string;
   role: string;
   initials: string;
+  photo: string;
 }
 
 const funders = [
@@ -42,10 +43,20 @@ const institutions = [
 ];
 
 const teamMembers: TeamMember[] = [
-  { name: "Elston D'Souza", role: "Developer / Maintainer", initials: "ED" },
-  { name: "Alexander Blakes", role: "Maintainer", initials: "AB" },
-  { name: "Stephan Sanders", role: "Supervisor", initials: "SS" },
-  { name: "Nicky Whiffin", role: "Supervisor", initials: "NW" },
+  {
+    name: "Elston D'Souza",
+    role: "Developer / Maintainer",
+    initials: "ED",
+    photo: "/elston.webp",
+  },
+  { name: "Alexander Blakes", role: "Maintainer", initials: "AB", photo: "/alex.jpeg" },
+  {
+    name: "Stephan Sanders",
+    role: "Supervisor",
+    initials: "SS",
+    photo: "/stephan.jpeg",
+  },
+  { name: "Nicky Whiffin", role: "Supervisor", initials: "NW", photo: "/nicky.jpeg" },
 ];
 
 const About: React.FC = () => {
@@ -140,10 +151,12 @@ const About: React.FC = () => {
                 key={member.name}
                 className="bg-slate-50 rounded-xl p-6 flex flex-col items-center text-center"
               >
-                <div className="w-14 h-14 rounded-full bg-teal-600 flex items-center justify-center mb-4 shadow-sm">
-                  <span className="text-white font-bold text-lg">
-                    {member.initials}
-                  </span>
+                <div className="w-14 h-14 rounded-full bg-teal-600 flex items-center justify-center mb-4 shadow-sm overflow-hidden">
+                  <img
+                    src={member.photo}
+                    alt={member.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <h3 className="font-semibold text-slate-800 text-sm">{member.name}</h3>
                 <p className="text-xs text-slate-500 mt-1.5">{member.role}</p>

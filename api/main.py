@@ -61,7 +61,10 @@ if dist_path.exists():
     # SPA fallback - serve index.html for all unmatched routes
     @app.get("/{full_path:path}")
     async def spa_fallback(full_path: str) -> FileResponse:
-        """Serve index.html for SPA routing."""
+        """Serve static files from dist or fall back to index.html for SPA routing."""
+        file_path = dist_path / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(str(file_path))
         return FileResponse(str(dist_path / "index.html"))
 
 
