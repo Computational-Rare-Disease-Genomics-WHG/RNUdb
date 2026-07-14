@@ -51,7 +51,11 @@ const SequenceTrack: React.FC<SequenceTrackProps> = ({
   return (
     <Track title="Reference Sequence">
       {({ scalePosition, width }) => (
-        <svg height={height} width={width}>
+        <svg
+          height={height}
+          width={width}
+          style={{ display: "block", overflow: "visible" }}
+        >
           <rect
             width={width}
             height={height}
