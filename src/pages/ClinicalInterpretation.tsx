@@ -1,18 +1,10 @@
-import {
-  Stethoscope,
-  AlertTriangle,
-  ChevronRight,
-  BookOpen,
-  FileText,
-  Dna,
-  Lightbulb,
-} from "lucide-react";
+import { Stethoscope, ChevronRight, BookOpen, FileText, Lightbulb } from "lucide-react";
 import React, { useState } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-type TabValue = "overview" | "recommendations" | "examples" | "reference";
+type TabValue = "overview" | "recommendations" | "examples";
 
 const RECOMMENDATIONS = [
   {
@@ -20,15 +12,15 @@ const RECOMMENDATIONS = [
     title: "Validate Variant Calls",
     description:
       "Due to read mapping complexities with paralogous genes, carefully assess read data and QC metrics. Perform orthogonal validation if any ambiguity.",
-    acmg: "P",
+    acmg: "",
     severity: "critical",
   },
   {
     id: 2,
     title: "Use Updated Transcripts",
     description:
-      "Use the most recent transcript definitions for annotation. Historical mis-annotation is common (e.g., RNU4-2 was 141nt, now 145nt). Match coordinates across resources.",
-    acmg: "PM",
+      "Use the most recent transcript definitions for annotation. Historical mis-annotation is common (e.g., RNU4-2 was 141nt, now 145nt; RNU4ATAC coordinates shifted by 1 nt). Match coordinates across resources.",
+    acmg: "",
     severity: "high",
   },
   {
@@ -73,7 +65,7 @@ const RECOMMENDATIONS = [
   },
   {
     id: 8,
-    title: "Use Paralog Evidence (PM5)",
+    title: "Use Paralog Evidence",
     description:
       "When two genes/analogs both cause disease with same mechanism, a pathogenic variant in one can evidence an equivalent variant in the other.",
     acmg: "PM5",
@@ -201,6 +193,82 @@ const CRITICAL_REGIONS = [
   },
 ];
 
+const SNRNA_GENE_TABLE = [
+  {
+    snRNA: "U1",
+    spliceosome: "Major",
+    size: "164",
+    genes: "34",
+    pseudogenes: "112",
+    diseases: "—",
+  },
+  {
+    snRNA: "U2",
+    spliceosome: "Major",
+    size: "191",
+    genes: "21",
+    pseudogenes: "69",
+    diseases: "RNU2-2: DEE (AD); RNU2-2: DEE/NDD (AR)",
+  },
+  {
+    snRNA: "U4",
+    spliceosome: "Major",
+    size: "145",
+    genes: "9",
+    pseudogenes: "88",
+    diseases: "RNU4-2: ReNU syndrome (AD); RNU4-2: NDD (AR); RNU4-2: RP (AD)",
+  },
+  {
+    snRNA: "U6",
+    spliceosome: "Major",
+    size: "107",
+    genes: "38",
+    pseudogenes: "1,272",
+    diseases: "RNU6-1/-2/-8/-9: RP (AD)",
+  },
+  {
+    snRNA: "U5",
+    spliceosome: "Both",
+    size: "102–121",
+    genes: "5",
+    pseudogenes: "26",
+    diseases: "RNU5A-1: NDD (AD)+; RNU5B-1: NDD (AD)",
+  },
+  {
+    snRNA: "U11",
+    spliceosome: "Minor",
+    size: "135",
+    genes: "1",
+    pseudogenes: "5",
+    diseases: "—",
+  },
+  {
+    snRNA: "U12",
+    spliceosome: "Minor",
+    size: "150",
+    genes: "1",
+    pseudogenes: "1",
+    diseases: "RNU12: early onset cerebellar ataxia (AR)+; RNU12: CDAGS (AR)",
+  },
+  {
+    snRNA: "U4atac",
+    spliceosome: "Minor",
+    size: "131",
+    genes: "1",
+    pseudogenes: "17",
+    diseases: "RNU4ATAC: MOPD1 / Roifman / Lowry-Wood (AR)",
+  },
+  {
+    snRNA: "U6atac",
+    spliceosome: "Minor",
+    size: "126",
+    genes: "1",
+    pseudogenes: "40",
+    diseases:
+      "RNU6ATAC: multi-system disorders (AR)+; RNU6ATAC: syndromic autoimmune diabetes (AR)",
+  },
+];
+
 const ACMG_CODES = [
   {
     code: "PS2",
@@ -264,22 +332,6 @@ const ACMG_CODES = [
   },
 ];
 
-const DISEASE_ASSOCIATIONS = [
-  {
-    category: "Dominant NDD",
-    genes: "RNU4-2 (ReNU syndrome), RNU2-2, RNU5B-1",
-  },
-  { category: "Recessive NDD", genes: "RNU4-2, RNU2-2, RNU12, RNU4ATAC" },
-  {
-    category: "Retinitis Pigmentosa",
-    genes: "RNU4-2, RNU6-1, RNU6-2, RNU6-8, RNU6-9",
-  },
-  {
-    category: "Other Syndromes",
-    genes: "RNU4ATAC (MOPD1, Roifman, Lowry-Wood), RNU6ATAC (Multi-system)",
-  },
-];
-
 const ClinicalInterpretation: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabValue>("overview");
   const [selectedExample, setSelectedExample] = useState(0);
@@ -299,11 +351,6 @@ const ClinicalInterpretation: React.FC = () => {
       value: "examples",
       label: "Examples",
       icon: <FileText className="h-4 w-4 inline mr-2" />,
-    },
-    {
-      value: "reference",
-      label: "Reference",
-      icon: <Dna className="h-4 w-4 inline mr-2" />,
     },
   ];
 
@@ -373,7 +420,7 @@ const ClinicalInterpretation: React.FC = () => {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-teal-500 mt-1">•</span>
-                        U5 - functions in both
+                        U5 - functions in both spliceosomes
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-teal-500 mt-1">•</span>
@@ -397,7 +444,7 @@ const ClinicalInterpretation: React.FC = () => {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-teal-500 mt-1">•</span>
-                        U5 - shared component
+                        U5 - functions in both spliceosomes
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-teal-500 mt-1">•</span>
@@ -407,6 +454,68 @@ const ClinicalInterpretation: React.FC = () => {
                   </CardContent>
                 </Card>
               </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800 mb-5">
+                Spliceosomal snRNA Genes
+              </h2>
+              <Card className="bg-white border border-slate-200 shadow-sm">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b-2 border-slate-200 bg-slate-100">
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            snRNA
+                          </th>
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            Spliceosome
+                          </th>
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            Size (nts)
+                          </th>
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            Genes
+                          </th>
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            Pseudogenes
+                          </th>
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            Disease Associations
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {SNRNA_GENE_TABLE.map((row, idx) => (
+                          <tr
+                            key={idx}
+                            className="border-b border-slate-100 hover:bg-slate-50"
+                          >
+                            <td className="py-3 px-4 font-semibold text-slate-800">
+                              {row.snRNA}
+                            </td>
+                            <td className="py-3 px-4 text-slate-600">
+                              {row.spliceosome}
+                            </td>
+                            <td className="py-3 px-4 text-slate-500">{row.size}</td>
+                            <td className="py-3 px-4 text-slate-500">{row.genes}</td>
+                            <td className="py-3 px-4 text-slate-500">
+                              {row.pseudogenes}
+                            </td>
+                            <td className="py-3 px-4 text-slate-500">{row.diseases}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+              <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+                Based on GENCODE v49 (GRCh38). +Suggestive association needing
+                additional replication. The definition of genes vs pseudogenes is
+                unresolved for many snRNA genes.
+              </p>
             </div>
 
             <div>
@@ -423,7 +532,7 @@ const ClinicalInterpretation: React.FC = () => {
                   },
                   {
                     title: "Gene Annotation Problems",
-                    desc: "Historical mis-annotations common. RNU4-2 was 141nt, now 145nt.",
+                    desc: "Historical mis-annotations common. RNU4-2 was 141nt, now 145nt. RNU4ATAC was 127nt, now 130nt, with coordinates shifted by 1 nt.",
                   },
                   {
                     title: "Elevated Mutation Rate",
@@ -511,6 +620,46 @@ const ClinicalInterpretation: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800 mb-5">
+                ACMG Evidence Codes
+              </h2>
+              <Card className="bg-white border border-slate-200 shadow-sm">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-100">
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            Code
+                          </th>
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            Strength
+                          </th>
+                          <th className="text-left py-3 px-4 font-semibold text-slate-700">
+                            Description
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ACMG_CODES.map((code) => (
+                          <tr key={code.code} className="border-b border-slate-100">
+                            <td className="py-3 px-4 font-mono text-teal-600 font-medium">
+                              {code.code}
+                            </td>
+                            <td className="py-3 px-4 text-slate-600">{code.name}</td>
+                            <td className="py-3 px-4 text-slate-500">
+                              {code.description}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
 
@@ -544,34 +693,17 @@ const ClinicalInterpretation: React.FC = () => {
                         <p className="text-slate-500 text-base leading-relaxed mb-3">
                           {rec.description}
                         </p>
-                        <span className="inline-block text-sm font-mono text-teal-600 bg-teal-50 px-3 py-1 rounded-md">
-                          {rec.acmg}
-                        </span>
+                        {rec.acmg && (
+                          <span className="inline-block text-sm font-mono text-teal-600 bg-teal-50 px-3 py-1 rounded-md">
+                            {rec.acmg}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-
-            <Card className="bg-white border-l-4 border-l-amber-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <AlertTriangle className="h-6 w-6 text-amber-500 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-slate-800 text-lg mb-2">
-                      Important Note on De Novo Variants
-                    </h4>
-                    <p className="text-slate-600 text-base">
-                      Do NOT classify rare de novo variants as Likely Pathogenic without
-                      additional evidence. snRNA genes have an elevated mutation rate.
-                      Apply de novo criteria at &ldquo;phenotype consistent&rdquo;
-                      level.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         )}
 
@@ -711,71 +843,6 @@ const ClinicalInterpretation: React.FC = () => {
                 </Card>
               )}
             </div>
-          </div>
-        )}
-
-        {activeTab === "reference" && (
-          <div className="grid lg:grid-cols-2 gap-8">
-            <Card className="bg-white border border-slate-200 shadow-sm">
-              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-xl font-semibold text-slate-800">
-                  ACMG Evidence Codes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left py-3 px-4 font-semibold text-slate-700">
-                          Code
-                        </th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-700">
-                          Strength
-                        </th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-700">
-                          Description
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ACMG_CODES.map((code) => (
-                        <tr key={code.code} className="border-b border-slate-100">
-                          <td className="py-3 px-4 font-mono text-teal-600 font-medium">
-                            {code.code}
-                          </td>
-                          <td className="py-3 px-4 text-slate-600">{code.name}</td>
-                          <td className="py-3 px-4 text-slate-500">
-                            {code.description}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border border-slate-200 shadow-sm">
-              <CardHeader className="pb-4 border-b border-slate-100">
-                <CardTitle className="text-xl font-semibold text-slate-800">
-                  Disease Associations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {DISEASE_ASSOCIATIONS.map((assoc, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 border border-slate-100 rounded-lg bg-slate-50"
-                  >
-                    <div className="font-semibold text-slate-800 text-base mb-1">
-                      {assoc.category}
-                    </div>
-                    <div className="text-slate-500">{assoc.genes}</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
           </div>
         )}
       </div>
