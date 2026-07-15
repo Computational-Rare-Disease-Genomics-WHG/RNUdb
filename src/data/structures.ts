@@ -1,5 +1,5 @@
 // Structure data utilities
-import { getGeneStructure, getGenePDB } from "../services/api";
+import { getGeneStructure } from "../services/api";
 import type { RNAStructure } from "../types";
 
 export const getRNAStructure = async (geneId: string): Promise<RNAStructure | null> => {
@@ -7,18 +7,6 @@ export const getRNAStructure = async (geneId: string): Promise<RNAStructure | nu
     return await getGeneStructure(geneId);
   } catch (error) {
     console.error(`Error fetching structure for ${geneId}:`, error);
-    return null;
-  }
-};
-
-export const getPDBStructure = async (
-  geneId: string,
-): Promise<{ geneId: string; pdbData: string } | null> => {
-  try {
-    const result = await getGenePDB(geneId);
-    return result;
-  } catch (error) {
-    console.error(`Error fetching PDB for ${geneId}:`, error);
     return null;
   }
 };

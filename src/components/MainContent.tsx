@@ -7,7 +7,6 @@ import type {
   SnRNAGene,
   RNAStructure,
   Nucleotide,
-  PDBStructure,
   LiteratureCounts,
 } from "../types";
 import GenomeBrowser from "./GenomeBrowser";
@@ -25,7 +24,6 @@ import {
 interface MainContentProps {
   currentData: SnRNAGene;
   rnaStructureData: RNAStructure | null;
-  pdbStructureData: PDBStructure | null;
   paperData: Literature[];
   literatureCounts: LiteratureCounts[];
   variantData: Variant[];
@@ -39,7 +37,6 @@ interface MainContentProps {
 const MainContent: React.FC<MainContentProps> = ({
   currentData,
   rnaStructureData,
-  pdbStructureData,
   paperData,
   literatureCounts,
   variantData,
@@ -176,7 +173,6 @@ const MainContent: React.FC<MainContentProps> = ({
               <CardContent>
                 <RNAViewer
                   rnaData={getRNAData()}
-                  pdbData={pdbStructureData}
                   overlayData={getCurrentOverlayData()}
                   overlayMode={overlayMode}
                   onCycleOverlay={cycleOverlayMode}

@@ -7,7 +7,6 @@ import { useAuth } from "../context/AuthContext";
 import { getGeneData } from "../data/genes";
 import { getLiterature } from "../data/literature";
 import { getRNAStructure } from "../data/structures";
-import { getPDBStructure } from "../data/structures";
 import { getVariants } from "../data/variants";
 import { COLORBLIND_FRIENDLY_PALETTE } from "../lib/colors";
 import { getLiteratureCounts } from "../services/api";
@@ -18,7 +17,6 @@ import type {
   Literature,
   LiteratureCounts,
   RNAStructure,
-  PDBStructure,
 } from "../types";
 import { Button } from "@/components/ui/button";
 
@@ -46,7 +44,6 @@ const Gene: React.FC = () => {
   const [paperData, setPaperData] = useState<Literature[]>([]);
   const [literatureCounts, setLiteratureCounts] = useState<LiteratureCounts[]>([]);
   const [rnaStructureData, setRnaStructureData] = useState<RNAStructure | null>(null);
-  const [pdbData, setPdbData] = useState<PDBStructure | null>(null);
 
   // Load data when selectedSnRNA changes
   useEffect(() => {
@@ -57,21 +54,14 @@ const Gene: React.FC = () => {
       setError(null);
 
       try {
-        const [
-          gene,
-          variants,
-          literature,
-          literatureCountsData,
-          rnaStructure,
-          pdbStructure,
-        ] = await Promise.all([
-          getGeneData(selectedSnRNA),
-          getVariants(selectedSnRNA),
-          getLiterature(selectedSnRNA),
-          getLiteratureCounts(),
-          getRNAStructure(selectedSnRNA),
-          getPDBStructure(selectedSnRNA),
-        ]);
+        const [gene, variants, literature, literatureCountsData, rnaStructure] =
+          await Promise.all([
+            getGeneData(selectedSnRNA),
+            getVariants(selectedSnRNA),
+            getLiterature(selectedSnRNA),
+            getLiteratureCounts(),
+            getRNAStructure(selectedSnRNA),
+          ]);
 
         if (!gene) {
           throw new Error(`Gene ${selectedSnRNA} not found`);
@@ -82,7 +72,6 @@ const Gene: React.FC = () => {
         setPaperData(literature);
         setLiteratureCounts(literatureCountsData);
         setRnaStructureData(rnaStructure);
-        setPdbData(pdbStructure);
       } catch (err) {
         console.error("Error loading gene data:", err);
         setError(err instanceof Error ? err.message : "Failed to load gene data");
@@ -313,7 +302,6 @@ const Gene: React.FC = () => {
           <MainContent
             currentData={currentData}
             rnaStructureData={rnaStructureData}
-            pdbStructureData={pdbData}
             paperData={paperData}
             literatureCounts={literatureCounts}
             variantData={variantData}
