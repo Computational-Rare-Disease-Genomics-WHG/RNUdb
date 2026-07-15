@@ -32,6 +32,8 @@ interface GenomeBrowserProps {
     strand: string;
     sequence: string;
   };
+  selectedVariantPosition?: number | null;
+  onVariantNavigate?: (genomicPosition: number) => void;
 }
 
 const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
@@ -41,6 +43,8 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   aouVariants,
   structuralFeatures,
   geneData,
+  selectedVariantPosition,
+  onVariantNavigate,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -50,6 +54,20 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   const [zygosityFilter, setZygosityFilter] = useState<string>("all");
   const defaultRegion = { start: geneData.start, stop: geneData.end };
   const [regions, setRegions] = useState([defaultRegion]);
+
+  useEffect(() => {
+    if (selectedVariantPosition != null) {
+      const currentRegion = regions[0];
+      const halfRange = Math.round((currentRegion.stop - currentRegion.start) / 2);
+      setRegions([
+        {
+          start: Math.round(selectedVariantPosition) - halfRange,
+          stop: Math.round(selectedVariantPosition) + halfRange,
+        },
+      ]);
+      setIsZoomed(true);
+    }
+  }, [selectedVariantPosition]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -274,13 +292,15 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
                 const halfRange = Math.round(
                   (currentRegion.stop - currentRegion.start) / 2,
                 );
+                const rounded = Math.round(cursorPosition);
                 setRegions([
                   {
-                    start: Math.round(cursorPosition) - halfRange,
-                    stop: Math.round(cursorPosition) + halfRange,
+                    start: rounded - halfRange,
+                    stop: rounded + halfRange,
                   },
                 ]);
                 setIsZoomed(true);
+                onVariantNavigate?.(rounded);
               }
             }}
             onDrag={(start, end) => {
@@ -307,6 +327,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               aouVariants={aouVariants}
               sourceFilter={sourceFilter}
               zygosityFilter={zygosityFilter}
+              selectedVariantPosition={selectedVariantPosition}
             />
           </Cursor>
         </RegionViewer>
