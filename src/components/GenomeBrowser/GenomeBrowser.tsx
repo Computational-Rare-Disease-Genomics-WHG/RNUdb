@@ -311,6 +311,8 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               domains={structuralFeatures}
               regions={regions}
               geneStart={geneData.start}
+              geneStrand={geneData.strand}
+              geneEnd={geneData.end}
             />
             <FunctionScoreTrack
               variants={variants}

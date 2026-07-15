@@ -50,7 +50,10 @@ const FunctionScoreTrack: React.FC<FunctionScoreTrackProps> = ({
     )
     .map((v) => ({
       nucleotidePos: getNucleotidePos(v)!,
-      genomicPos: geneStart + getNucleotidePos(v)! - 1,
+      genomicPos:
+        geneStrand === "-" && geneEnd != null
+          ? geneEnd - getNucleotidePos(v)! + 1
+          : geneStart + getNucleotidePos(v)! - 1,
       value: v.function_score!,
       variantId: v.id,
       hgvs: v.hgvs,
