@@ -48,7 +48,6 @@ interface RNAViewerProps {
   gnomadVariants?: Variant[];
   selectedNucleotide?: Nucleotide | null;
   highlightedNucleotideIds?: number[];
-  focusNucleotideId?: number | null;
   geneData: {
     id: string;
     name: string;
@@ -77,7 +76,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   gnomadVariants = [],
   selectedNucleotide = null,
   highlightedNucleotideIds = [],
-  focusNucleotideId,
   geneData,
 }) => {
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
@@ -120,30 +118,6 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
     setSelectedDiseaseType("all");
     setSelectedClinicalSig("all");
   }, [geneData.id]);
-
-  useEffect(() => {
-    if (focusNucleotideId == null || !containerRef.current || !svgRef.current) return;
-
-    const nucleotide = rnaData.nucleotides.find((n) => n.id === focusNucleotideId);
-    if (!nucleotide) return;
-
-    const viewBox = svgRef.current.viewBox.baseVal;
-    const viewBoxCenterX = viewBox.x + viewBox.width / 2;
-    const viewBoxCenterY = viewBox.y + viewBox.height / 2;
-
-    const containerWidth = containerRef.current.clientWidth;
-    const containerHeight = containerRef.current.clientHeight;
-
-    const scaleX = containerWidth / viewBox.width;
-    const scaleY = containerHeight / viewBox.height;
-
-    const targetZoom = 2.5;
-    setZoomLevel(targetZoom);
-    setPanOffset({
-      x: -(nucleotide.x - viewBoxCenterX) * scaleX * targetZoom,
-      y: -(nucleotide.y - viewBoxCenterY) * scaleY * targetZoom,
-    });
-  }, [focusNucleotideId]);
 
   const getFilteredOverlayValue = useCallback(
     (nucleotideId: number): { value: number; variant?: Variant } => {

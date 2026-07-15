@@ -306,7 +306,6 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               const roundedEnd = Math.round(end);
               setRegions([{ start: roundedStart, stop: roundedEnd }]);
               setIsZoomed(true);
-              onVariantNavigate?.(Math.round((roundedStart + roundedEnd) / 2));
             }}
             renderCursor={renderCustomCursor}
           >
