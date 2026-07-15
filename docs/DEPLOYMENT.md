@@ -17,10 +17,10 @@ RNUdb can be deployed in several ways:
 
 ```bash
 # Pull and run the latest image
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Access at http://localhost:8000
 ```
@@ -235,13 +235,13 @@ docker cp rnudb:/app/data/database.db ./backup-$(date +%Y%m%d).db
 
 ```bash
 # Stop the container
-docker-compose down
+docker compose down
 
 # Restore database
 docker cp backup.db rnudb:/app/data/database.db
 
 # Restart
-docker-compose up -d
+docker compose up -d
 ```
 
 ---
@@ -293,7 +293,7 @@ Never commit `.env` to version control. Use:
 
 ```bash
 # Docker
-docker-compose logs -f
+docker compose logs -f
 
 # Systemd
 journalctl -u rnudb -f
@@ -314,12 +314,12 @@ docker stats rnudb
 1. Check environment variables:
 
    ```bash
-   docker-compose config
+   docker compose config
    ```
 
 2. Check logs:
    ```bash
-   docker-compose logs
+   docker compose logs
    ```
 
 ### Database Locked
