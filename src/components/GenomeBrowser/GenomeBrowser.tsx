@@ -57,12 +57,10 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
 
   useEffect(() => {
     if (selectedVariantPosition != null) {
-      const currentRegion = regions[0];
-      const halfRange = Math.round((currentRegion.stop - currentRegion.start) / 2);
       setRegions([
         {
-          start: Math.round(selectedVariantPosition) - halfRange,
-          stop: Math.round(selectedVariantPosition) + halfRange,
+          start: Math.round(selectedVariantPosition) - 75,
+          stop: Math.round(selectedVariantPosition) + 75,
         },
       ]);
       setIsZoomed(true);
