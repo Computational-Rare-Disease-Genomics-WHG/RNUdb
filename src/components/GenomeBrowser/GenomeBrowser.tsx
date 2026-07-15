@@ -77,8 +77,8 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
 
   const handleZoomIn = () => {
     const currentRegion = regions[0];
-    const center = (currentRegion.start + currentRegion.stop) / 2;
-    const newHalfRange = (currentRegion.stop - currentRegion.start) / 4;
+    const center = Math.round((currentRegion.start + currentRegion.stop) / 2);
+    const newHalfRange = Math.round((currentRegion.stop - currentRegion.start) / 4);
     setRegions([{ start: center - newHalfRange, stop: center + newHalfRange }]);
     setIsZoomed(true);
   };
@@ -88,20 +88,23 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
     const currentRange = currentRegion.stop - currentRegion.start;
     const defaultRange = defaultRegion.stop - defaultRegion.start;
 
-    // If already at or beyond the default region, don't zoom out further
     if (currentRange >= defaultRange) {
       setRegions([defaultRegion]);
       return;
     }
 
-    const center = (currentRegion.start + currentRegion.stop) / 2;
-    const newRange = currentRange * 2;
+    const center = Math.round((currentRegion.start + currentRegion.stop) / 2);
+    const newRange = Math.round(currentRange * 2);
 
-    // If the new range would exceed the default region, set to default region
     if (newRange >= defaultRange) {
       setRegions([defaultRegion]);
     } else {
-      setRegions([{ start: center - newRange / 2, stop: center + newRange / 2 }]);
+      setRegions([
+        {
+          start: Math.round(center - newRange / 2),
+          stop: Math.round(center + newRange / 2),
+        },
+      ]);
     }
   };
 
@@ -267,12 +270,21 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
           <Cursor
             onClick={(cursorPosition) => {
               if (cursorPosition !== null) {
-                setRegions([{ start: cursorPosition - 75, stop: cursorPosition + 75 }]);
+                const currentRegion = regions[0];
+                const halfRange = Math.round(
+                  (currentRegion.stop - currentRegion.start) / 2,
+                );
+                setRegions([
+                  {
+                    start: Math.round(cursorPosition) - halfRange,
+                    stop: Math.round(cursorPosition) + halfRange,
+                  },
+                ]);
                 setIsZoomed(true);
               }
             }}
             onDrag={(start, end) => {
-              setRegions([{ start, stop: end }]);
+              setRegions([{ start: Math.round(start), stop: Math.round(end) }]);
               setIsZoomed(true);
             }}
             renderCursor={renderCustomCursor}

@@ -24,7 +24,7 @@ const getSequenceData = (
   const regionEnd = Math.min(regions.stop, geneStart + geneSequence.length - 1);
 
   for (let pos = regionStart; pos <= regionEnd; pos++) {
-    const relativePos = pos - geneStart;
+    const relativePos = Math.floor(pos - geneStart);
     if (relativePos >= 0 && relativePos < geneSequence.length) {
       sequence.push({
         position: pos,
