@@ -60,8 +60,11 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({
       if (ids.length === 0) return null;
       const startNuc = Math.min(...ids);
       const endNuc = Math.max(...ids);
-      const genomicStart = getGenomicPos(startNuc);
-      const genomicEnd = getGenomicPos(endNuc);
+      let genomicStart = getGenomicPos(startNuc);
+      let genomicEnd = getGenomicPos(endNuc);
+      if (genomicStart > genomicEnd) {
+        [genomicStart, genomicEnd] = [genomicEnd, genomicStart];
+      }
       return { feature, genomicStart, genomicEnd };
     })
     .filter(
