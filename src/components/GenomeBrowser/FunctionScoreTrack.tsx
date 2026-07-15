@@ -87,6 +87,7 @@ const FunctionScoreTrack: React.FC<FunctionScoreTrackProps> = ({
     <Track title="Function Score">
       {({ scalePosition, width }) => (
         <svg
+          key={`${currentRegion.start}-${currentRegion.stop}`}
           height={height}
           width={width}
           style={{ display: "block", overflow: "visible" }}
