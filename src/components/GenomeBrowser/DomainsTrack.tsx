@@ -64,6 +64,7 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart
     <Track title="Domains">
       {({ scalePosition, width }) => (
         <svg
+          key={`${currentRegion.start}-${currentRegion.stop}`}
           height={height}
           width={width}
           style={{ display: "block", overflow: "visible" }}
