@@ -52,6 +52,7 @@ const MainContent: React.FC<MainContentProps> = ({
     [],
   );
   const [selectedVariantPos, setSelectedVariantPos] = useState<number | null>(null);
+  const [genomeBrowserFocusId, setGenomeBrowserFocusId] = useState<number | null>(null);
 
   const computeGenomicPos = (nucleotideId: number): number => {
     if (currentData.strand === "-") {
@@ -126,6 +127,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
   const handleGenomeBrowserNavigate = (genomicPos: number) => {
     const nucleotideId = computeNucleotideId(genomicPos);
+    setGenomeBrowserFocusId(nucleotideId);
     const nucleotide = rnaStructureData?.nucleotides.find((n) => n.id === nucleotideId);
     if (nucleotide) {
       handleNucleotideClick(nucleotide);
@@ -207,6 +209,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   onNucleotideClick={handleNucleotideClick}
                   selectedNucleotide={selectedNucleotide}
                   highlightedNucleotideIds={highlightedNucleotideIds}
+                  focusNucleotideId={genomeBrowserFocusId}
                   geneData={{
                     id: currentData.id,
                     name: currentData.name,

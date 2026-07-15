@@ -302,8 +302,11 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               }
             }}
             onDrag={(start, end) => {
-              setRegions([{ start: Math.round(start), stop: Math.round(end) }]);
+              const roundedStart = Math.round(start);
+              const roundedEnd = Math.round(end);
+              setRegions([{ start: roundedStart, stop: roundedEnd }]);
               setIsZoomed(true);
+              onVariantNavigate?.(Math.round((roundedStart + roundedEnd) / 2));
             }}
             renderCursor={renderCustomCursor}
           >
