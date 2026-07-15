@@ -32,6 +32,8 @@ interface GenomeBrowserProps {
     strand: string;
     sequence: string;
   };
+  selectedVariantPosition?: number | null;
+  onVariantNavigate?: (genomicPosition: number) => void;
 }
 
 const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
@@ -41,6 +43,8 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   aouVariants,
   structuralFeatures,
   geneData,
+  selectedVariantPosition,
+  onVariantNavigate,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -50,6 +54,18 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
   const [zygosityFilter, setZygosityFilter] = useState<string>("all");
   const defaultRegion = { start: geneData.start, stop: geneData.end };
   const [regions, setRegions] = useState([defaultRegion]);
+
+  useEffect(() => {
+    if (selectedVariantPosition != null) {
+      setRegions([
+        {
+          start: Math.round(selectedVariantPosition) - 2,
+          stop: Math.round(selectedVariantPosition) + 2,
+        },
+      ]);
+      setIsZoomed(true);
+    }
+  }, [selectedVariantPosition]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -274,17 +290,21 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
                 const halfRange = Math.round(
                   (currentRegion.stop - currentRegion.start) / 2,
                 );
+                const rounded = Math.round(cursorPosition);
                 setRegions([
                   {
-                    start: Math.round(cursorPosition) - halfRange,
-                    stop: Math.round(cursorPosition) + halfRange,
+                    start: rounded - halfRange,
+                    stop: rounded + halfRange,
                   },
                 ]);
                 setIsZoomed(true);
+                onVariantNavigate?.(rounded);
               }
             }}
             onDrag={(start, end) => {
-              setRegions([{ start: Math.round(start), stop: Math.round(end) }]);
+              const roundedStart = Math.round(start);
+              const roundedEnd = Math.round(end);
+              setRegions([{ start: roundedStart, stop: roundedEnd }]);
               setIsZoomed(true);
             }}
             renderCursor={renderCustomCursor}
@@ -293,6 +313,8 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               domains={structuralFeatures}
               regions={regions}
               geneStart={geneData.start}
+              geneStrand={geneData.strand}
+              geneEnd={geneData.end}
             />
             <FunctionScoreTrack
               variants={variants}
@@ -307,6 +329,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
               aouVariants={aouVariants}
               sourceFilter={sourceFilter}
               zygosityFilter={zygosityFilter}
+              selectedVariantPosition={selectedVariantPosition}
             />
           </Cursor>
         </RegionViewer>

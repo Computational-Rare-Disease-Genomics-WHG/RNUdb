@@ -9,6 +9,7 @@ interface SnRNAVariantTrackProps {
   aouVariants: any[];
   sourceFilter?: string;
   zygosityFilter?: string;
+  selectedVariantPosition?: number | null;
 }
 
 const passesZygosity = (
@@ -30,7 +31,10 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
   aouVariants,
   sourceFilter = "all",
   zygosityFilter = "all",
+  selectedVariantPosition,
 }) => {
+  const isSelectedPos = (pos: number) =>
+    selectedVariantPosition != null && pos === selectedVariantPosition;
   // Transform clinical variants to the format expected by gnomAD VariantTrack
   const clinvarVariants = variants
     .filter(
@@ -48,6 +52,7 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
       consequence: variant.consequence || "unknown",
       clinical_significance: variant.clinical_significance,
       isHighlighted:
+        isSelectedPos(variant.position) ||
         variant.clinical_significance === "Pathogenic" ||
         variant.clinical_significance === "Likely Pathogenic" ||
         variant.clinical_significance === "PATH" ||
@@ -67,7 +72,7 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
       alt: variant.alt,
       allele_freq: (variant.gnomad_ac || 0) / 1000000,
       consequence: variant.consequence || "unknown",
-      isHighlighted: false,
+      isHighlighted: isSelectedPos(variant.position),
     }));
 
   // Filter and transform All of Us variants
@@ -83,7 +88,7 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
       alt: variant.alt,
       allele_freq: (variant.aou_ac || 0) / 1000000,
       consequence: variant.consequence || "unknown",
-      isHighlighted: false,
+      isHighlighted: isSelectedPos(variant.position),
     }));
 
   const showGnomad = sourceFilter === "all" || sourceFilter === "gnomad";

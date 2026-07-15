@@ -51,11 +51,27 @@ const MainContent: React.FC<MainContentProps> = ({
   const [highlightedNucleotideIds, setHighlightedNucleotideIds] = useState<number[]>(
     [],
   );
+  const [selectedVariantPos, setSelectedVariantPos] = useState<number | null>(null);
+
+  const computeGenomicPos = (nucleotideId: number): number => {
+    if (currentData.strand === "-") {
+      return currentData.end - nucleotideId + 1;
+    }
+    return currentData.start + nucleotideId - 1;
+  };
+
+  const computeNucleotideId = (genomicPos: number): number => {
+    if (currentData.strand === "-") {
+      return currentData.end - genomicPos + 1;
+    }
+    return genomicPos - currentData.start + 1;
+  };
 
   const handleNucleotideClick = (nucleotide: Nucleotide) => {
     if (selectedNucleotide?.id === nucleotide.id) {
       setSelectedNucleotide(null);
       setHighlightedNucleotideIds([]);
+      setSelectedVariantPos(null);
     } else {
       setSelectedNucleotide(nucleotide);
       const variantsAtPosition = variantData.filter((variant) => {
@@ -104,6 +120,15 @@ const MainContent: React.FC<MainContentProps> = ({
         }
       }
       setHighlightedNucleotideIds(linkedIds);
+      setSelectedVariantPos(computeGenomicPos(nucleotide.id));
+    }
+  };
+
+  const handleGenomeBrowserNavigate = (genomicPos: number) => {
+    const nucleotideId = computeNucleotideId(genomicPos);
+    const nucleotide = rnaStructureData?.nucleotides.find((n) => n.id === nucleotideId);
+    if (nucleotide) {
+      handleNucleotideClick(nucleotide);
     }
   };
 
@@ -224,6 +249,8 @@ const MainContent: React.FC<MainContentProps> = ({
                   strand: currentData.strand,
                   sequence: currentData.sequence,
                 }}
+                selectedVariantPosition={selectedVariantPos}
+                onVariantNavigate={handleGenomeBrowserNavigate}
               />
             </CardContent>
           </Card>

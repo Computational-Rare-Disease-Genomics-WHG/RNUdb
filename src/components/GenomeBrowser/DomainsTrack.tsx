@@ -28,9 +28,17 @@ interface DomainsTrackProps {
   domains: StructuralFeature[];
   regions: { start: number; stop: number }[];
   geneStart: number;
+  geneStrand: string;
+  geneEnd: number;
 }
 
-const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart }) => {
+const DomainsTrack: React.FC<DomainsTrackProps> = ({
+  domains,
+  regions,
+  geneStart,
+  geneStrand,
+  geneEnd,
+}) => {
   const height = 34;
   const currentRegion = regions[0];
 
@@ -40,6 +48,9 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart
   };
 
   const getGenomicPos = (nucleotideId: number): number => {
+    if (geneStrand === "-") {
+      return geneEnd - nucleotideId + 1;
+    }
     return geneStart + nucleotideId - 1;
   };
 
@@ -49,8 +60,11 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({ domains, regions, geneStart
       if (ids.length === 0) return null;
       const startNuc = Math.min(...ids);
       const endNuc = Math.max(...ids);
-      const genomicStart = getGenomicPos(startNuc);
-      const genomicEnd = getGenomicPos(endNuc);
+      let genomicStart = getGenomicPos(startNuc);
+      let genomicEnd = getGenomicPos(endNuc);
+      if (genomicStart > genomicEnd) {
+        [genomicStart, genomicEnd] = [genomicEnd, genomicStart];
+      }
       return { feature, genomicStart, genomicEnd };
     })
     .filter(
