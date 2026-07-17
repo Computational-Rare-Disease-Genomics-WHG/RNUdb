@@ -16,7 +16,7 @@ import {
   COLORBLIND_FRIENDLY_PALETTE,
   generateGnomadColorWithAlpha,
 } from "../../lib/colors";
-import { findNucleotideById } from "../../lib/rnaUtils";
+import { findNucleotideById, getAffectedNucleotideIds } from "../../lib/rnaUtils";
 import type { RNAData, Nucleotide, OverlayData, Variant } from "../../types";
 import BasePairBond from "./BasePairBond";
 import NucleotideComponent from "./NucleotideComponent";
@@ -143,7 +143,12 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             }
           }
 
-          if (nucleotidePos !== nucleotideId) return false;
+          if (
+            !getAffectedNucleotideIds(variant.hgvs, nucleotidePos).includes(
+              nucleotideId,
+            )
+          )
+            return false;
 
           if (!variant.clinical_significance) return false;
 
@@ -231,7 +236,12 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             }
           }
 
-          if (nucleotidePos !== nucleotideId) return false;
+          if (
+            !getAffectedNucleotideIds(variant.hgvs, nucleotidePos).includes(
+              nucleotideId,
+            )
+          )
+            return false;
 
           const passesSource =
             selectedPopulationSource === "gnomad"
@@ -340,7 +350,10 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           variant.nucleotidePosition !== undefined &&
           variant.nucleotidePosition !== null
         ) {
-          return variant.nucleotidePosition === nucleotideId;
+          return getAffectedNucleotideIds(
+            variant.hgvs,
+            variant.nucleotidePosition,
+          ).includes(nucleotideId);
         } else if (variant.position) {
           let nucleotidePos: number;
           if (geneData.strand === "-") {
@@ -348,7 +361,9 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           } else {
             nucleotidePos = variant.position - geneData.start + 1;
           }
-          return nucleotidePos === nucleotideId;
+          return getAffectedNucleotideIds(variant.hgvs, nucleotidePos).includes(
+            nucleotideId,
+          );
         }
         return false;
       });
