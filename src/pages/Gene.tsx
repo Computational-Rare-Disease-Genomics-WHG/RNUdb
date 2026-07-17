@@ -94,8 +94,7 @@ const Gene: React.FC = () => {
       return Object.fromEntries(
         variants
           .filter(
-            (v) =>
-              v.depletion_group !== undefined && v.nucleotidePosition !== undefined,
+            (v) => v.depletion_group != null && v.nucleotidePosition !== undefined,
           )
           .map((v) => [
             v.nucleotidePosition!,
