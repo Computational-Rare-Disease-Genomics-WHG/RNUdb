@@ -357,11 +357,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                               (variant.ukbb_ac !== undefined && variant.ukbb_ac > 0) ||
                               (variant.function_score !== undefined &&
                                 variant.function_score !== null) ||
-                              variant.depletion_group != null ||
-                              (variant.pvalues !== undefined &&
-                                variant.pvalues !== null) ||
-                              (variant.qvalues !== undefined &&
-                                variant.qvalues !== null);
+                              variant.depletion_group != null;
 
                             return (
                               <div
@@ -434,26 +430,10 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                         </span>
                                       )}
                                     {variant.depletion_group != null && (
-                                      <span>Depletion: {variant.depletion_group}</span>
+                                      <span>
+                                        Depletion Group: {variant.depletion_group}
+                                      </span>
                                     )}
-                                    {variant.pvalues !== undefined &&
-                                      variant.pvalues !== null && (
-                                        <span>
-                                          P:{" "}
-                                          {variant.pvalues < 0.001
-                                            ? "<0.001"
-                                            : variant.pvalues.toFixed(3)}
-                                        </span>
-                                      )}
-                                    {variant.qvalues !== undefined &&
-                                      variant.qvalues !== null && (
-                                        <span>
-                                          Q:{" "}
-                                          {variant.qvalues < 0.001
-                                            ? "<0.001"
-                                            : variant.qvalues.toFixed(3)}
-                                        </span>
-                                      )}
                                   </div>
                                 )}
 
@@ -553,7 +533,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                         </span>
                                       )}
                                     {variant.depletion_group && (
-                                      <span>Depletion: {variant.depletion_group}</span>
+                                      <span>
+                                        Depletion Group: {variant.depletion_group}
+                                      </span>
                                     )}
                                   </div>
                                 </div>
