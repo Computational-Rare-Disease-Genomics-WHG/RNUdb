@@ -64,6 +64,8 @@ const FunctionScoreTrack: React.FC<FunctionScoreTrackProps> = ({
       (p) => p.genomicPos >= currentRegion.start && p.genomicPos <= currentRegion.stop,
     );
 
+  if (points.length === 0) return null;
+
   const positions = [...new Set(points.map((p) => p.nucleotidePos))].sort(
     (a, b) => a - b,
   );
