@@ -259,5 +259,5 @@ For step-by-step visual guides and tutorials, visit the RNUdb website:
 ## Support
 
 - **Issues**: Create a GitHub issue for bugs or feature requests
-- **Email**: info@rarediseasegenomics.org
+- **Email**: nwhiffin@well.ox.ac.uk
 - **Admin Contact**: Reach out to the admin team for role upgrades or permissions

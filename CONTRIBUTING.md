@@ -125,7 +125,7 @@ When making schema changes:
 ## Questions?
 
 - Open a GitHub Discussion
-- Email: info@rarediseasegenomics.org
+- Email: nwhiffin@well.ox.ac.uk
 
 ## License
 
