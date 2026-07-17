@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router";
+import { getAffectedNucleotideIds } from "../lib/rnaUtils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,7 +56,10 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         variant.nucleotidePosition !== undefined &&
         variant.nucleotidePosition !== null
       ) {
-        return variant.nucleotidePosition === nucleotideId;
+        return getAffectedNucleotideIds(
+          variant.hgvs,
+          variant.nucleotidePosition,
+        ).includes(nucleotideId);
       } else if (variant.position) {
         let nucleotidePos: number;
         if (currentData.strand === "-") {
@@ -63,7 +67,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         } else {
           nucleotidePos = variant.position - currentData.start + 1;
         }
-        return nucleotidePos === nucleotideId;
+        return getAffectedNucleotideIds(variant.hgvs, nucleotidePos).includes(
+          nucleotideId,
+        );
       }
       return false;
     });
