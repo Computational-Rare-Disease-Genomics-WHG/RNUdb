@@ -78,5 +78,5 @@ The app runs at **http://localhost:5173** (frontend) and **http://localhost:8000
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/Computational-Rare-Disease-Genomics-WHG/RNUdb/issues)
-- **Email**: info@rarediseasegenomics.org
+- **Email**: nwhiffin@well.ox.ac.uk
 - **Website**: https://rnudb.rarediseasegenomics.org
