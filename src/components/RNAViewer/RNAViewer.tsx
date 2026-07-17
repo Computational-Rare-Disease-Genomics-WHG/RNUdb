@@ -44,6 +44,7 @@ interface RNAViewerProps {
   onNucleotideHover?: (nucleotide: Nucleotide | null) => void;
   overlayMode?: "none" | "clinvar" | "gnomad" | "depletion_group";
   onCycleOverlay?: () => void;
+  hasSgeData?: boolean;
   variantData?: Variant[];
   gnomadVariants?: Variant[];
   selectedNucleotide?: Nucleotide | null;
@@ -72,6 +73,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   onNucleotideHover,
   overlayMode = "clinvar",
   onCycleOverlay,
+  hasSgeData = true,
   variantData = [],
   gnomadVariants = [],
   selectedNucleotide = null,
@@ -593,30 +595,32 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                     <p>Show population frequency data from gnomAD and All of Us</p>
                   </TooltipContent>
                 </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        const targetIndex = [
-                          "none",
-                          "clinvar",
-                          "gnomad",
-                          "depletion_group",
-                        ].indexOf("depletion_group");
-                        const current = cyclesFromMode(overlayMode);
-                        for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
-                          onCycleOverlay();
-                      }}
-                      className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "depletion_group" ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
-                    >
-                      <Activity className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Depletion</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Show depletion group categories: Strong, Moderate, Normal</p>
-                  </TooltipContent>
-                </Tooltip>
+                {hasSgeData && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          const targetIndex = [
+                            "none",
+                            "clinvar",
+                            "gnomad",
+                            "depletion_group",
+                          ].indexOf("depletion_group");
+                          const current = cyclesFromMode(overlayMode);
+                          for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
+                            onCycleOverlay?.();
+                        }}
+                        className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "depletion_group" ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
+                      >
+                        <Activity className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Depletion</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Show depletion group categories: Strong, Moderate, Normal</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
 
               {/* Structural Features Toggle */}
