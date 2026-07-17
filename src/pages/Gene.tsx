@@ -206,7 +206,7 @@ const Gene: React.FC = () => {
         case "clinvar":
           return "gnomad";
         case "gnomad":
-          return "depletion_group";
+          return hasSgeData ? "depletion_group" : "none";
         case "depletion_group":
           return "none";
         default:
@@ -244,6 +244,13 @@ const Gene: React.FC = () => {
 
   const gnomadVariants = getGnomadVariants();
   const aouVariants = getAllOfUsVariants();
+  const hasSgeData = variantData.some((v) => v.depletion_group != null);
+
+  useEffect(() => {
+    if (!hasSgeData && overlayMode === "depletion_group") {
+      setOverlayMode("clinvar");
+    }
+  }, [hasSgeData, overlayMode]);
 
   const handleGeneSelect = (geneName: string) => {
     navigate(`/gene/${geneName}`);
@@ -308,6 +315,7 @@ const Gene: React.FC = () => {
             overlayMode={overlayMode}
             getCurrentOverlayData={getCurrentOverlayData}
             cycleOverlayMode={cycleOverlayMode}
+            hasSgeData={hasSgeData}
             aouVariants={aouVariants}
           />
         </div>

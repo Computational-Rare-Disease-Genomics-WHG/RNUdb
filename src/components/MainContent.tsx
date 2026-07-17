@@ -32,6 +32,7 @@ interface MainContentProps {
   overlayMode: "none" | "clinvar" | "gnomad" | "depletion_group";
   getCurrentOverlayData: () => OverlayData;
   cycleOverlayMode: () => void;
+  hasSgeData: boolean;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -45,6 +46,7 @@ const MainContent: React.FC<MainContentProps> = ({
   overlayMode,
   getCurrentOverlayData,
   cycleOverlayMode,
+  hasSgeData,
 }) => {
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
   const [selectedNucleotide, setSelectedNucleotide] = useState<Nucleotide | null>(null);
@@ -203,6 +205,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   onCycleOverlay={cycleOverlayMode}
                   variantData={variantData}
                   gnomadVariants={gnomadVariants}
+                  hasSgeData={hasSgeData}
                   onNucleotideHover={setHoveredNucleotide}
                   onNucleotideClick={handleNucleotideClick}
                   selectedNucleotide={selectedNucleotide}
