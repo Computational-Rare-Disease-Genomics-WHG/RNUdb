@@ -23,7 +23,7 @@ export function getAffectedNucleotideIds(
 ): number[] {
   if (!hgvs) return [nucleotidePosition];
 
-  // Multi-position deletion: n.X_Ydel
+  // Multi-position deletion: n.X_Ydel (also handles n.X_Ydelins)
   const multiDel = hgvs.match(/^n\.(\d+)_(\d+)del/);
   if (multiDel) {
     const start = Number(multiDel[1]);
@@ -41,9 +41,19 @@ export function getAffectedNucleotideIds(
   const ins = hgvs.match(/^n\.(\d+)_(\d+)ins/);
   if (ins) return [Number(ins[1]), Number(ins[2])];
 
-  // Duplication: n.Xdup
-  const dup = hgvs.match(/^n\.(\d+)dup/);
-  if (dup) return [Number(dup[1])];
+  // Multi-position duplication: n.X_Ydup
+  const multiDup = hgvs.match(/^n\.(\d+)_(\d+)dup/);
+  if (multiDup) {
+    const start = Number(multiDup[1]);
+    const end = Number(multiDup[2]);
+    const ids: number[] = [];
+    for (let i = start; i <= end; i++) ids.push(i);
+    return ids;
+  }
+
+  // Single-position duplication: n.Xdup
+  const singleDup = hgvs.match(/^n\.(\d+)dup/);
+  if (singleDup) return [Number(singleDup[1])];
 
   // SNV or other — single position
   return [nucleotidePosition];
