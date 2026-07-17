@@ -11,6 +11,7 @@ import Gene from "./pages/Gene";
 import Home from "./pages/Home";
 import HowToUse from "./pages/HowToUse";
 import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 function ProtectedEditor() {
@@ -47,6 +48,7 @@ function App() {
             />
             <Route path="/how-to-use" element={<HowToUse />} />
             <Route path="/about" element={<About />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
       </TooltipProvider>
