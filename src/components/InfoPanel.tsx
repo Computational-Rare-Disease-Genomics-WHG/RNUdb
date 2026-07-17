@@ -45,7 +45,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   literatureCounts,
   hoveredNucleotide,
   variantData,
-  onNavigateToVariant,
 }) => {
   const navigate = useNavigate();
   const geneLength = currentData.end - currentData.start + 1;
@@ -94,23 +93,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     };
   };
 
-  const getNucleotidePosition = (variant: Variant): number | null => {
-    if (
-      variant.nucleotidePosition !== undefined &&
-      variant.nucleotidePosition !== null
-    ) {
-      return variant.nucleotidePosition;
-    }
-    if (variant.position) {
-      if (currentData.strand === "-") {
-        return currentData.end - variant.position + 1;
-      } else {
-        return variant.position - currentData.start + 1;
-      }
-    }
-    return null;
-  };
-
   const normalizeVariantId = (id: string) => id.replace(/^chr/, "");
 
   const getSignificanceIcon = (significance?: string) => {
@@ -153,7 +135,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     }
   };
 
-  const getLiteratureForVariant = (variantId: string) => {
+  const getPaperGroupsForVariant = (variantId: string) => {
     const directCounts = literatureCounts.filter((lc) => lc.variant_id === variantId);
     const linkedCounts = literatureCounts.filter((lc) => {
       if (!lc.linked_variant_ids) return false;
@@ -161,14 +143,55 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       return linkedIds.includes(variantId);
     });
     const allCounts = [...directCounts, ...linkedCounts];
-    return allCounts
-      .map((count) => {
-        const literature = paperData.find((p) => p.id === count.literature_id);
-        return literature
-          ? { ...literature, count: count.counts, zygosity: count.zygosity }
-          : null;
-      })
-      .filter((lit): lit is NonNullable<typeof lit> => lit !== null);
+
+    const paperMap = new Map<
+      string,
+      {
+        literature: Literature;
+        rows: {
+          count: number;
+          zygosity?: string;
+          linkedHgvs: string[];
+        }[];
+      }
+    >();
+
+    for (const count of allCounts) {
+      const literature = paperData.find((p) => p.id === count.literature_id);
+      if (!literature) continue;
+
+      const linkedIds = count.linked_variant_ids
+        ? count.linked_variant_ids.split(",").map((id) => id.trim())
+        : [];
+      const linkedHgvs = linkedIds
+        .map((id) => {
+          const linkedVar = variantData.find(
+            (v) => v.id === id || `chr${v.id}` === id || v.id === `chr${id}`,
+          );
+          return linkedVar ? linkedVar.hgvs || `${linkedVar.ref}>${linkedVar.alt}` : id;
+        })
+        .filter((h): h is string => h !== undefined);
+
+      if (paperMap.has(literature.id)) {
+        paperMap.get(literature.id)!.rows.push({
+          count: count.counts,
+          zygosity: count.zygosity,
+          linkedHgvs,
+        });
+      } else {
+        paperMap.set(literature.id, {
+          literature,
+          rows: [{ count: count.counts, zygosity: count.zygosity, linkedHgvs }],
+        });
+      }
+    }
+
+    return Array.from(paperMap.values()).sort((a, b) => {
+      if (a.literature.year !== b.literature.year) {
+        return parseInt(b.literature.year) - parseInt(a.literature.year);
+      }
+      return a.literature.authors.localeCompare(b.literature.authors);
+    });
   };
 
   return (
@@ -326,174 +349,157 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                         {variantInfo.clinicalVariants
                           .slice(0, 3)
                           .map((variant: Variant, index: number) => {
-                            const variantLiterature = getLiteratureForVariant(
-                              variant.id,
-                            );
-                            const linkedVariants = variant.linkedVariantIds
-                              ? variantData.filter((v) =>
-                                  variant.linkedVariantIds!.includes(v.id),
-                                )
-                              : [];
+                            const paperGroups = getPaperGroupsForVariant(variant.id);
+                            const hasMeta =
+                              (variant.gnomad_ac !== undefined &&
+                                variant.gnomad_ac > 0) ||
+                              (variant.aou_ac !== undefined && variant.aou_ac > 0) ||
+                              (variant.ukbb_ac !== undefined && variant.ukbb_ac > 0) ||
+                              (variant.function_score !== undefined &&
+                                variant.function_score !== null) ||
+                              variant.depletion_group != null ||
+                              (variant.pvalues !== undefined &&
+                                variant.pvalues !== null) ||
+                              (variant.qvalues !== undefined &&
+                                variant.qvalues !== null);
 
                             return (
                               <div
                                 key={index}
                                 className="p-3 bg-slate-50 rounded-lg border border-slate-200"
                               >
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <div className="flex items-center gap-1.5">
                                       {getSignificanceIcon(
                                         variant.clinical_significance,
                                       )}
                                       <span
-                                        className={`text-xs font-medium ${getSignificanceColor(
+                                        className={`text-xs font-semibold px-1.5 py-0.5 rounded ${getSignificanceColor(
                                           variant.clinical_significance,
                                         )}`}
                                       >
                                         {variant.clinical_significance}
                                       </span>
-                                      {variant.zygosity && (
-                                        <span
-                                          className={`text-xs font-medium ${
-                                            variant.zygosity === "hom"
-                                              ? "text-purple-600"
-                                              : "text-blue-600"
-                                          }`}
-                                        >
-                                          {variant.zygosity === "hom" ? "Hom" : "Het"}
-                                        </span>
-                                      )}
                                     </div>
-                                    <div className="text-sm font-semibold text-slate-900 mb-0.5">
+                                    <span className="text-sm font-semibold text-slate-900">
                                       {variant.hgvs || `${variant.ref}>${variant.alt}`}
-                                    </div>
-                                    <button
-                                      onClick={() => handleVariantClick(variant)}
-                                      className="text-xs text-slate-400 hover:text-slate-600 hover:underline"
-                                    >
-                                      {normalizeVariantId(variant.id)}
-                                    </button>
+                                    </span>
+                                    {variant.zygosity && (
+                                      <span
+                                        className={`text-[11px] font-medium ${
+                                          variant.zygosity === "hom"
+                                            ? "text-purple-600 bg-purple-50 border border-purple-200"
+                                            : "text-blue-600 bg-blue-50 border border-blue-200"
+                                        } px-1.5 py-0.5 rounded`}
+                                      >
+                                        {variant.zygosity === "hom" ? "Hom" : "Het"}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
 
-                                {linkedVariants.length > 0 && (
-                                  <div className="mb-2 p-2 bg-slate-100 rounded text-xs">
-                                    <span className="text-slate-500 font-medium">
-                                      Compound Het:{" "}
-                                    </span>
-                                    {linkedVariants.map((linked, linkedIndex) => {
-                                      const nucPos = getNucleotidePosition(linked);
-                                      return (
-                                        <button
-                                          key={linkedIndex}
-                                          onClick={() =>
-                                            nucPos !== null &&
-                                            onNavigateToVariant?.(nucPos)
-                                          }
-                                          className="text-slate-700 hover:text-slate-900 hover:underline cursor-pointer bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300 hover:border-slate-400 rounded px-1 py-0.5 mr-1"
-                                          disabled={nucPos === null}
-                                        >
-                                          {linked.hgvs || `${linked.ref}>${linked.alt}`}
-                                          {linkedIndex < linkedVariants.length - 1 &&
-                                            ", "}
-                                        </button>
-                                      );
-                                    })}
+                                <button
+                                  onClick={() => handleVariantClick(variant)}
+                                  className="text-xs text-slate-400 hover:text-slate-600 hover:underline mb-2 block"
+                                >
+                                  {normalizeVariantId(variant.id)}
+                                </button>
+
+                                {hasMeta && (
+                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mb-2">
+                                    {variant.gnomad_ac !== undefined &&
+                                      variant.gnomad_ac > 0 && (
+                                        <span>
+                                          gnomAD AC:{" "}
+                                          {variant.gnomad_ac.toLocaleString()}
+                                        </span>
+                                      )}
+                                    {variant.aou_ac !== undefined &&
+                                      variant.aou_ac > 0 && (
+                                        <span>
+                                          AoU AC: {variant.aou_ac.toLocaleString()}
+                                        </span>
+                                      )}
+                                    {variant.ukbb_ac !== undefined &&
+                                      variant.ukbb_ac > 0 && (
+                                        <span>
+                                          UKBB AC: {variant.ukbb_ac.toLocaleString()}
+                                        </span>
+                                      )}
+                                    {variant.function_score !== undefined &&
+                                      variant.function_score !== null && (
+                                        <span>
+                                          Func. {variant.function_score.toFixed(3)}
+                                        </span>
+                                      )}
+                                    {variant.depletion_group != null && (
+                                      <span>Depletion: {variant.depletion_group}</span>
+                                    )}
+                                    {variant.pvalues !== undefined &&
+                                      variant.pvalues !== null && (
+                                        <span>
+                                          P:{" "}
+                                          {variant.pvalues < 0.001
+                                            ? "<0.001"
+                                            : variant.pvalues.toFixed(3)}
+                                        </span>
+                                      )}
+                                    {variant.qvalues !== undefined &&
+                                      variant.qvalues !== null && (
+                                        <span>
+                                          Q:{" "}
+                                          {variant.qvalues < 0.001
+                                            ? "<0.001"
+                                            : variant.qvalues.toFixed(3)}
+                                        </span>
+                                      )}
                                   </div>
                                 )}
 
-                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600 pt-2 border-t border-slate-200">
-                                  {variant.gnomad_ac !== undefined &&
-                                    variant.gnomad_ac > 0 && (
-                                      <span>
-                                        <span className="font-medium">gnomAD AC:</span>{" "}
-                                        {variant.gnomad_ac.toLocaleString()}
-                                      </span>
-                                    )}
-                                  {variant.aou_ac !== undefined &&
-                                    variant.aou_ac > 0 && (
-                                      <span>
-                                        <span className="font-medium">AoU AC:</span>{" "}
-                                        {variant.aou_ac.toLocaleString()}
-                                      </span>
-                                    )}
-                                  {variant.ukbb_ac !== undefined &&
-                                    variant.ukbb_ac > 0 && (
-                                      <span>
-                                        <span className="font-medium">UKBB AC:</span>{" "}
-                                        {variant.ukbb_ac.toLocaleString()}
-                                      </span>
-                                    )}
-                                  {variant.function_score !== undefined &&
-                                    variant.function_score !== null && (
-                                      <span>
-                                        <span className="font-medium">
-                                          Func. Score:
-                                        </span>{" "}
-                                        {variant.function_score.toFixed(3)}
-                                      </span>
-                                    )}
-                                  {variant.depletion_group && (
-                                    <span>
-                                      <span className="font-medium">Depletion:</span>{" "}
-                                      {variant.depletion_group}
-                                    </span>
-                                  )}
-                                  {variant.pvalues !== undefined &&
-                                    variant.pvalues !== null && (
-                                      <span>
-                                        <span className="font-medium">P-Value:</span>{" "}
-                                        {variant.pvalues < 0.001
-                                          ? "<0.001"
-                                          : variant.pvalues.toFixed(3)}
-                                      </span>
-                                    )}
-                                  {variant.qvalues !== undefined &&
-                                    variant.qvalues !== null && (
-                                      <span>
-                                        <span className="font-medium">Q-Value:</span>{" "}
-                                        {variant.qvalues < 0.001
-                                          ? "<0.001"
-                                          : variant.qvalues.toFixed(3)}
-                                      </span>
-                                    )}
-                                </div>
-
-                                {variantLiterature.length > 0 && (
-                                  <div className="mt-2 pt-2 border-t border-slate-200">
-                                    <div className="text-xs text-slate-500 font-medium mb-1">
-                                      Literature ({variantLiterature.length})
-                                    </div>
-                                    <div className="space-y-1">
-                                      {variantLiterature.map((lit, litIndex) => (
-                                        <div
-                                          key={litIndex}
-                                          className="flex items-center justify-between gap-2 text-xs"
-                                        >
-                                          <span className="text-slate-600 truncate">
-                                            {lit.authors} ({lit.year})
+                                {paperGroups.length > 0 && (
+                                  <div className="border-t border-slate-200 pt-2 mt-1">
+                                    {paperGroups.map((paperGroup) => (
+                                      <div
+                                        key={paperGroup.literature.id}
+                                        className="mb-2 last:mb-0"
+                                      >
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="font-semibold text-slate-700">
+                                            {paperGroup.literature.authors} (
+                                            {paperGroup.literature.year})
                                           </span>
-                                          <div className="flex items-center gap-2 shrink-0">
-                                            <span className="text-slate-400">
-                                              {lit.zygosity === "Heterozygous"
-                                                ? `${lit.count} het`
-                                                : lit.zygosity === "Homozygous"
-                                                  ? `${lit.count} hom`
-                                                  : `${lit.count}`}
-                                            </span>
-                                            <a
-                                              href={`https://doi.org/${lit.doi}`}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-slate-400 hover:text-slate-600"
-                                            >
-                                              <ExternalLink className="h-3 w-3" />
-                                            </a>
-                                          </div>
+                                          <a
+                                            href={`https://doi.org/${paperGroup.literature.doi}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-slate-400 hover:text-slate-600 ml-2 shrink-0"
+                                          >
+                                            <ExternalLink className="h-3 w-3" />
+                                          </a>
                                         </div>
-                                      ))}
-                                    </div>
+                                        {paperGroup.rows.map((row, rowIndex) => (
+                                          <div
+                                            key={rowIndex}
+                                            className="flex items-center gap-1.5 text-xs text-slate-500 pl-3 py-0.5"
+                                          >
+                                            <span className="font-medium text-slate-600">
+                                              {row.count}
+                                              {row.zygosity === "Heterozygous"
+                                                ? " het"
+                                                : row.zygosity === "Homozygous"
+                                                  ? " hom"
+                                                  : ""}
+                                            </span>
+                                            {row.linkedHgvs.length > 0 && (
+                                              <span className="text-slate-400">
+                                                + {row.linkedHgvs.join(", ")}
+                                              </span>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </div>
