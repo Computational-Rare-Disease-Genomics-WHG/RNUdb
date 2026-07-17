@@ -60,6 +60,22 @@ Before commit, verify:
 
 ---
 
+## Branch & PR Workflow
+
+- **Every change must have a PR**. Create a feature branch off `main` for each task.
+- **Every PR must reference an issue**. If no issue exists, create it at the start of the session before writing code.
+- **Always pull latest `main` before creating a feature branch**:
+  ```bash
+  git checkout main && git pull origin main
+  ```
+- **Always rebase onto `main` before opening a PR**:
+  ```bash
+  git fetch origin && git rebase origin/main
+  ```
+  Resolve any conflicts during the rebase, then force-push with `--force-with-lease`. This prevents stale branches and merge conflicts after other PRs land.
+
+---
+
 ## Non-obvious Conventions
 
 - **Roles**: guest, pending, curator, admin (don't invent new ones)
