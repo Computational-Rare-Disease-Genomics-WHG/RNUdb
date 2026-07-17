@@ -32,6 +32,11 @@ interface DomainsTrackProps {
   geneEnd: number;
 }
 
+const BAR_HEIGHT = 22;
+const LANE_GAP = 4;
+const LANE_HEIGHT = BAR_HEIGHT + LANE_GAP;
+const TRACK_PADDING = 6;
+
 const DomainsTrack: React.FC<DomainsTrackProps> = ({
   domains,
   regions,
@@ -39,7 +44,6 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({
   geneStrand,
   geneEnd,
 }) => {
-  const height = 34;
   const currentRegion = regions[0];
 
   const getFeatureColor = (feature: StructuralFeature): string => {
@@ -54,7 +58,7 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({
     return geneStart + nucleotideId - 1;
   };
 
-  const visibleDomains = domains
+  const domainEntries = domains
     .map((feature) => {
       const ids = feature.nucleotide_ids;
       if (ids.length === 0) return null;
@@ -74,32 +78,41 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({
         d.genomicEnd >= currentRegion.start,
     );
 
+  const sorted = [...domainEntries].sort((a, b) => a.genomicStart - b.genomicStart);
+  const laneEnds: number[] = [];
+  const laneAssignments = new Map<string, number>();
+  for (const entry of sorted) {
+    let lane = laneEnds.findIndex((end) => end < entry.genomicStart);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(entry.genomicEnd);
+    } else {
+      laneEnds[lane] = entry.genomicEnd;
+    }
+    laneAssignments.set(entry.feature.id, lane);
+  }
+
+  const numLanes = laneEnds.length || 1;
+  const svgHeight = TRACK_PADDING + numLanes * LANE_HEIGHT + TRACK_PADDING;
+
   return (
     <Track title="Domains">
       {({ scalePosition, width }) => (
         <svg
           key={`${currentRegion.start}-${currentRegion.stop}`}
-          height={height}
+          height={svgHeight}
           width={width}
           style={{ display: "block", overflow: "visible" }}
         >
-          <rect x={0} y={0} width={width} height={height} fill="white" />
-          <line
-            x1={0}
-            y1={height / 2}
-            x2={width}
-            y2={height / 2}
-            stroke="#e5e7eb"
-            strokeWidth={1}
-          />
-          {visibleDomains.map(({ feature, genomicStart, genomicEnd }) => {
+          <rect x={0} y={0} width={width} height={svgHeight} fill="white" />
+          {domainEntries.map(({ feature, genomicStart, genomicEnd }) => {
             const x1 = scalePosition(genomicStart);
             const x2 = scalePosition(genomicEnd);
             const barWidth = Math.max(x2 - x1, 4);
             const color = getFeatureColor(feature);
-            const barY = 6;
-            const barHeight = 22;
-            const labelY = barY + barHeight / 2;
+            const lane = laneAssignments.get(feature.id) ?? 0;
+            const barY = TRACK_PADDING + lane * LANE_HEIGHT;
+            const labelY = barY + BAR_HEIGHT / 2;
             const showLabel = x2 - x1 > 28;
 
             return (
@@ -108,7 +121,7 @@ const DomainsTrack: React.FC<DomainsTrackProps> = ({
                   x={x1}
                   y={barY}
                   width={barWidth}
-                  height={barHeight}
+                  height={BAR_HEIGHT}
                   fill={color}
                   fillOpacity={0.25}
                   stroke={color}
