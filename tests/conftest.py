@@ -27,22 +27,43 @@ TEST_DB_URL = "sqlite:///:memory:"
 @pytest.fixture(scope="session")
 def test_engine():
     """Create a test database engine with all tables."""
-    engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
-    SQLModel.metadata.create_all(engine)
+    import sys
 
-    # Verify critical tables were created (some SQLModel/SQLite versions
-    # may silently skip tables with CheckConstraint or complex fields)
+    engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
+
+    # Print all tables in metadata for debugging
+    available = sorted(SQLModel.metadata.tables.keys())
+    print(
+        f"[setup] Tables in metadata ({len(available)}): {available}", file=sys.stderr
+    )
+
+    try:
+        SQLModel.metadata.create_all(engine)
+    except Exception as e:
+        print(f"[setup] create_all failed: {e}", file=sys.stderr)
+
+    # Verify critical tables were created
     from sqlalchemy import inspect
 
     inspector = inspect(engine)
     created = set(inspector.get_table_names())
+    print(
+        f"[setup] Tables created ({len(created)}): {sorted(created)}", file=sys.stderr
+    )
     expected = {"users", "audit_log", "variants", "genes", "literature"}
     missing = expected - created
     if missing:
+        print(f"[setup] MISSING tables: {missing}", file=sys.stderr)
         # Explicitly create any missing tables one at a time
         for name in sorted(missing):
             if name in SQLModel.metadata.tables:
-                SQLModel.metadata.tables[name].create(engine)
+                print(f"[setup] Creating missing table: {name}", file=sys.stderr)
+                try:
+                    SQLModel.metadata.tables[name].create(engine)
+                except Exception as e:
+                    print(f"[setup] Failed to create {name}: {e}", file=sys.stderr)
+    else:
+        print("[setup] All expected tables present", file=sys.stderr)
 
     yield engine
     engine.dispose()
