@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from api.notifications import notify_user_approved
 from api.routers.auth import require_admin
 from rnudb_utils.database import (
+    get_db,
     list_all_users,
     list_pending_users,
     update_user_role,
@@ -14,9 +16,10 @@ router = APIRouter()
 @router.get("", response_model=list)
 async def get_all_users(
     user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     """List all users (admin only)."""
-    rows = list_all_users(limit=1000)
+    rows = list_all_users(limit=1000, session=db)
     return [
         {
             "github_login": r["github_login"],
@@ -34,9 +37,10 @@ async def get_all_users(
 @router.get("/pending", response_model=list)
 async def get_pending_users(
     user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     """List pending users (admin only)."""
-    rows = list_pending_users()
+    rows = list_pending_users(session=db)
     return [
         {
             "github_login": r["github_login"],

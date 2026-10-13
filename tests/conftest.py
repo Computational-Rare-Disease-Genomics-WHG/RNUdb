@@ -20,53 +20,43 @@ import api.models  # noqa: F401 - registers SQLModel table models
 from api.main import app
 from rnudb_utils.database import get_db
 
-# Test database setup
-TEST_DB_URL = "sqlite:///:memory:"
+# Test database setup (uses temp file — see test_engine fixture)
 
 
 @pytest.fixture(scope="session")
 def test_engine():
-    """Create a test database engine with all tables."""
-    import sys
+    """Create a test database engine with all tables.
 
-    engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
+    Uses a temp file instead of :memory: so that any code using the
+    file-based SessionLocal (e.g. list_all_users, list_pending_users,
+    audit_log without session) writes to the same database.
+    """
+    import tempfile
 
-    # Print all tables in metadata for debugging
-    available = sorted(SQLModel.metadata.tables.keys())
-    print(
-        f"[setup] Tables in metadata ({len(available)}): {available}", file=sys.stderr
+    import rnudb_utils.database
+
+    # Create a temp file for the test database
+    tmpfile = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    tmpfile.close()
+    db_url = f"sqlite:///{tmpfile.name}"
+
+    engine = create_engine(db_url, connect_args={"check_same_thread": False})
+    SQLModel.metadata.create_all(engine)
+
+    # Point the production SessionLocal at the test temp file
+    from sqlalchemy.orm import sessionmaker
+
+    original_session_local = rnudb_utils.database.SessionLocal
+    rnudb_utils.database.SessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine
     )
-
-    try:
-        SQLModel.metadata.create_all(engine)
-    except Exception as e:
-        print(f"[setup] create_all failed: {e}", file=sys.stderr)
-
-    # Verify critical tables were created
-    from sqlalchemy import inspect
-
-    inspector = inspect(engine)
-    created = set(inspector.get_table_names())
-    print(
-        f"[setup] Tables created ({len(created)}): {sorted(created)}", file=sys.stderr
-    )
-    expected = {"users", "audit_log", "variants", "genes", "literature"}
-    missing = expected - created
-    if missing:
-        print(f"[setup] MISSING tables: {missing}", file=sys.stderr)
-        # Explicitly create any missing tables one at a time
-        for name in sorted(missing):
-            if name in SQLModel.metadata.tables:
-                print(f"[setup] Creating missing table: {name}", file=sys.stderr)
-                try:
-                    SQLModel.metadata.tables[name].create(engine)
-                except Exception as e:
-                    print(f"[setup] Failed to create {name}: {e}", file=sys.stderr)
-    else:
-        print("[setup] All expected tables present", file=sys.stderr)
 
     yield engine
+
+    # Restore original and clean up
+    rnudb_utils.database.SessionLocal = original_session_local
     engine.dispose()
+    os.unlink(tmpfile.name)
 
 
 @pytest.fixture

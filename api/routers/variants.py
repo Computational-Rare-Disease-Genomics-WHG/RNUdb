@@ -280,6 +280,7 @@ async def create_variant_classification(
         None,
         classification.model_dump(),
         user["github_login"],
+        db,
     )
 
     return VariantClassificationPublic.model_validate(new_classification)
@@ -369,6 +370,7 @@ async def delete_variant_classification(
         old_values,
         None,
         user["github_login"],
+        db,
     )
 
     return {"message": f"Variant classification {variant_id}/{literature_id} deleted"}
