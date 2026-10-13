@@ -231,7 +231,7 @@ const Header: React.FC<HeaderProps> = ({
                 <div className="hidden sm:flex items-center gap-2">
                   <Avatar size="sm">
                     {user.avatar_url && (
-                      <AvatarImage src={user.avatar_url} alt={user.name} />
+                      <AvatarImage src={user.avatar_url} alt={user.name ?? undefined} />
                     )}
                     <AvatarFallback>
                       <User className="h-4 w-4 text-muted-foreground" />

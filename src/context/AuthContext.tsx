@@ -8,9 +8,9 @@ import React, {
 
 interface User {
   github_login: string;
-  name: string;
-  email: string;
-  avatar_url?: string;
+  name: string | null;
+  email: string | null;
+  avatar_url?: string | null;
   role: "guest" | "pending" | "curator" | "admin";
 }
 

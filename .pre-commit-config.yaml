@@ -28,6 +28,7 @@ repos:
         language: node
         files: ^src/.*\.(ts|tsx|js|jsx|css|json)$
         pass_filenames: true
+        additional_dependencies: ["prettier"]
 
   - repo: local
     hooks:
@@ -37,6 +38,7 @@ repos:
         language: node
         files: ^src/.*\.(ts|tsx)$
         pass_filenames: true
+        additional_dependencies: ["eslint"]
 
   - repo: local
     hooks:
@@ -46,3 +48,4 @@ repos:
         language: node
         files: ^src/.*\.(ts|tsx)$
         pass_filenames: false
+        additional_dependencies: ["vitest"]
