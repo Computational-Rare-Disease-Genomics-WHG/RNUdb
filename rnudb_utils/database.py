@@ -111,8 +111,13 @@ def update_user_role(github_login: str, role: str) -> None:
         session.commit()
 
 
-def list_pending_users() -> list[dict]:
+def list_pending_users(session: Session | None = None) -> list[dict]:
     """List pending users."""
+    if session is not None:
+        users = (
+            session.execute(select(User).where(User.role == "pending")).scalars().all()
+        )
+        return [u.model_dump() for u in users]
     with SessionLocal() as session:
         users = (
             session.execute(select(User).where(User.role == "pending")).scalars().all()
@@ -120,8 +125,11 @@ def list_pending_users() -> list[dict]:
         return [u.model_dump() for u in users]
 
 
-def list_all_users(limit: int = 100) -> list[dict]:
+def list_all_users(limit: int = 100, session: Session | None = None) -> list[dict]:
     """List all users."""
+    if session is not None:
+        users = session.execute(select(User).limit(limit)).scalars().all()
+        return [u.model_dump() for u in users]
     with SessionLocal() as session:
         users = session.execute(select(User).limit(limit)).scalars().all()
         return [u.model_dump() for u in users]
@@ -146,10 +154,6 @@ def insert_variants(variants_data: list[dict], session=None) -> None:
                 alt=v.get("alt"),
                 hgvs=v.get("hgvs"),
                 consequence=v.get("consequence"),
-                clinvar_significance=v.get("clinvar_significance"),
-                clinical_significance=v.get("clinical_significance"),
-                disease_type=v.get("disease_type"),
-                pmid=v.get("pmid"),
                 function_score=v.get("function_score"),
                 pvalues=v.get("pvalues"),
                 qvalues=v.get("qvalues"),
@@ -158,11 +162,6 @@ def insert_variants(variants_data: list[dict], session=None) -> None:
                 gnomad_hom=v.get("gnomad_hom"),
                 aou_ac=v.get("aou_ac"),
                 aou_hom=v.get("aou_hom"),
-                ukbb_ac=v.get("ukbb_ac"),
-                ukbb_hom=v.get("ukbb_hom"),
-                cadd_score=v.get("cadd_score"),
-                zygosity=v.get("zygosity"),
-                cohort=v.get("cohort"),
             )
             sess.merge(variant)
         sess.commit()

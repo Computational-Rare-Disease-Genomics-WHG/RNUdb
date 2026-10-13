@@ -20,17 +20,43 @@ import api.models  # noqa: F401 - registers SQLModel table models
 from api.main import app
 from rnudb_utils.database import get_db
 
-# Test database setup
-TEST_DB_URL = "sqlite:///:memory:"
+# Test database setup (uses temp file — see test_engine fixture)
 
 
 @pytest.fixture(scope="session")
 def test_engine():
-    """Create a test database engine."""
-    engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
+    """Create a test database engine with all tables.
+
+    Uses a temp file instead of :memory: so that any code using the
+    file-based SessionLocal (e.g. list_all_users, list_pending_users,
+    audit_log without session) writes to the same database.
+    """
+    import tempfile
+
+    import rnudb_utils.database
+
+    # Create a temp file for the test database
+    tmpfile = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    tmpfile.close()
+    db_url = f"sqlite:///{tmpfile.name}"
+
+    engine = create_engine(db_url, connect_args={"check_same_thread": False})
     SQLModel.metadata.create_all(engine)
+
+    # Point the production SessionLocal at the test temp file
+    from sqlalchemy.orm import sessionmaker
+
+    original_session_local = rnudb_utils.database.SessionLocal
+    rnudb_utils.database.SessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine
+    )
+
     yield engine
+
+    # Restore original and clean up
+    rnudb_utils.database.SessionLocal = original_session_local
     engine.dispose()
+    os.unlink(tmpfile.name)
 
 
 @pytest.fixture

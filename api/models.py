@@ -229,7 +229,6 @@ class LiteratureUpdate(SQLModel):
     doi: str | None = None
     pmid: str | None = None
     url: str | None = None
-    disease: str | None = None
 
 
 class LiteraturePublic(LiteratureBase):

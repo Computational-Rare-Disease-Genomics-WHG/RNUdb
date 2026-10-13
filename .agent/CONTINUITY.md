@@ -7,24 +7,18 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 
 ## [PLANS]
 
-- `[2026-10-13T12:25Z] [USER]` Upgrade `AGENTS.md` per issue #270: add Global Guidance (recency/sourcing, autonomy & safety, editing files, reading docs, baseline workflow, CONTINUITY.md, definition of done). Backfill `.agent/CONTINUITY.md` from commit history. Also add `.agents/skills/curation/` (new skill: TSV variant data → VCF + CSV import files) and list it in `AGENTS.md` Skills.
+- `[2026-10-13T12:25Z] [USER]` Upgrade `AGENTS.md` per issue #270: add Global Guidance + curation skill.
 
 ## [DECISIONS]
 
-- `[2026-10-13T12:25Z] [USER]` PR for #270 may include all Global Guidance sections as drafted; backfill CONTINUITY.md using repo commits; curation skill added as-is.
-- `[2026-10-13T12:17Z] [CODE]` Latest `main` = `8ebbbae` (2026-10-13, "fix: handle null user name on admin page (#269)").
+- `[2026-10-13T12:17Z] [CODE]` Latest `main` = `8ebbbae` (2026-10-13).
+- `[2026-10-13T17:20Z] [USER]` Keep `variants.py` version of `/literature-counts`; fix `users.py` auth too.
 
 ## [PROGRESS]
 
-- `[2026-10-13T12:40Z] [TOOL]` `AGENTS.md` edited: `curation/` added to Skills list + full Global Guidance section appended (replacing the draft in the issue; verified via diff — 100 insertions).
-- `[2026-10-13T12:40Z] [TOOL]` `.agent/CONTINUITY.md` created (backfilled from commits and issue #270).
-- `[2026-10-13T12:40Z] [CODE]` `.agents/skills/curation/SKILL.md` present on disk (untracked), ready to include as-is.
-- `[2026-10-13T12:40Z] [ASSUMPTION]` Doc-only changes; no source/backend/frontend code touched, so `uv run pytest` / `npm run build` expected unaffected.
-
-## [DISCOVERIES]
-
-- `[2026-10-13T12:25Z] [CODE]` `.agents/skills/curation/SKILL.md` exists on disk but is untracked in git; `AGENTS.md` Skills list omitted `curation/`. (Confirmed via `git status` / `git ls-tree main`.)
+- `[2026-10-13T12:40Z] [TOOL]` `AGENTS.md` edited per #270 (doc-only).
+- `[2026-10-13T17:20Z] [TOOL]` PR for issues #137, #147, #155, #156, #157: backend cleanup. Branch `fix/backend-cleanup-137-147-155-156-157`. All 126 tests pass, pre-commit and npm build pass.
 
 ## [OUTCOMES]
 
-- `[2026-10-13T12:40Z] [ASSUMPTION]` Pending: commit all changes on branch `docs/upgrade-agents-md-270`, push, and open PR referencing #270.
+- `[2026-10-13T17:20Z] [TOOL]` PR ready: fixes 5 backend issues (dead fields, auth patterns, duplicate endpoints, bare exception handlers). Ready for commit, push, and PR.

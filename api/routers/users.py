@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from api.notifications import notify_user_approved
 from api.routers.auth import require_admin
 from rnudb_utils.database import (
+    get_db,
     list_all_users,
     list_pending_users,
     update_user_role,
@@ -12,10 +14,12 @@ router = APIRouter()
 
 
 @router.get("", response_model=list)
-async def get_all_users(request: Request):
+async def get_all_users(
+    user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     """List all users (admin only)."""
-    require_admin(request)
-    rows = list_all_users(limit=1000)
+    rows = list_all_users(limit=1000, session=db)
     return [
         {
             "github_login": r["github_login"],
@@ -31,10 +35,12 @@ async def get_all_users(request: Request):
 
 
 @router.get("/pending", response_model=list)
-async def get_pending_users(request: Request):
+async def get_pending_users(
+    user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     """List pending users (admin only)."""
-    require_admin(request)
-    rows = list_pending_users()
+    rows = list_pending_users(session=db)
     return [
         {
             "github_login": r["github_login"],
@@ -61,8 +67,10 @@ async def approve_user(
 
 
 @router.post("/users/{github_login}/reject")
-async def reject_user(github_login: str, request: Request):
+async def reject_user(
+    github_login: str,
+    user: dict = Depends(require_admin),
+):
     """Reject or remove a user (admin only)."""
-    require_admin(request)
     update_user_role(github_login, "guest")
     return {"message": f"User {github_login} role set to guest"}

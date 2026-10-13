@@ -456,8 +456,10 @@ def _fetch_pubmed_metadata(doi: str) -> PubMedLookupResult:
         return PubMedLookupResult(
             doi=doi, success=False, error=f"Network error: {str(e)}"
         )
-    except Exception as e:
-        return PubMedLookupResult(doi=doi, success=False, error=f"Error: {str(e)}")
+    except (ValueError, KeyError, TypeError, IndexError) as e:
+        return PubMedLookupResult(
+            doi=doi, success=False, error=f"Failed to parse response: {str(e)}"
+        )
 
 
 @router.post("/imports/variants/vcf")

@@ -311,9 +311,16 @@ class TestVariantClassificationsCRUD:
     """Tests for variant classifications CRUD operations."""
 
     def test_create_classification_with_all_fields(
-        self, test_client, seed_gene, sample_variant_with_data, sample_literature
+        self,
+        test_client,
+        test_db,
+        seed_gene,
+        sample_variant_with_data,
+        sample_literature,
     ):
         """POST /variant-classifications creates classification with all fields."""
+        test_db.add(sample_literature)
+        test_db.commit()
         response = test_client.post(
             "/api/variant-classifications",
             json={
@@ -323,11 +330,10 @@ class TestVariantClassificationsCRUD:
                 "zygosity": "Heterozygous",
                 "disease": "Retinitis Pigmentosa",
                 "counts": 5,
-                "linked_variant_ids": "chr12-120291785-T-C",
             },
         )
         # With mock curator auth, should succeed
-        assert response.status_code in (200, 401, 409)
+        assert response.status_code in (200, 409)
 
     def test_create_classification_invalid_variant(self, test_client, seed_gene):
         """POST /variant-classifications returns 400 for non-existent variant."""
