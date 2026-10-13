@@ -4,7 +4,7 @@ declare module "dom-to-image-more" {
     bgcolor?: string;
     width?: number;
     height?: number;
-    style?: any;
+    style?: Record<string, string>;
     quality?: number;
     imagePlaceholder?: string;
     cacheBust?: boolean;
@@ -27,8 +27,8 @@ declare module "@gnomad/track-genes" {
     start: number;
     stop: number;
     strand: string;
-    transcript?: any;
-    exons?: any[];
+    transcript?: string;
+    exons?: { start: number; stop: number }[];
     gene_name?: string;
     gene_type?: string;
   }

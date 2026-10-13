@@ -6,7 +6,7 @@ export interface PendingChange {
   entity_id: string | null;
   gene_id: string;
   action: string;
-  payload: any;
+  payload: Record<string, unknown>;
   requested_by: string;
   requested_at: string;
   status: "pending" | "approved" | "rejected" | "applied";
@@ -25,7 +25,7 @@ export function useApprovals() {
       entityType: string,
       geneId: string,
       action: string,
-      payload: any,
+      payload: Record<string, unknown>,
       entityId?: string,
     ): Promise<PendingChange | null> => {
       setLoading(true);
@@ -48,8 +48,8 @@ export function useApprovals() {
           throw new Error(err.detail || "Failed to submit change");
         }
         return await res.json();
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : String(err));
         return null;
       } finally {
         setLoading(false);
@@ -77,8 +77,8 @@ export function useApprovals() {
         });
         if (!res.ok) throw new Error("Failed to load changes");
         return await res.json();
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : String(err));
         return [];
       } finally {
         setLoading(false);
@@ -107,8 +107,8 @@ export function useApprovals() {
           throw new Error(err.detail || "Failed to review change");
         }
         return await res.json();
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : String(err));
         return null;
       } finally {
         setLoading(false);
@@ -131,8 +131,8 @@ export function useApprovals() {
           throw new Error(err.detail || "Failed to apply change");
         }
         return await res.json();
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : String(err));
         return null;
       } finally {
         setLoading(false);
