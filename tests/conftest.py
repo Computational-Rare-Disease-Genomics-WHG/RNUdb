@@ -26,9 +26,24 @@ TEST_DB_URL = "sqlite:///:memory:"
 
 @pytest.fixture(scope="session")
 def test_engine():
-    """Create a test database engine."""
+    """Create a test database engine with all tables."""
     engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
     SQLModel.metadata.create_all(engine)
+
+    # Verify critical tables were created (some SQLModel/SQLite versions
+    # may silently skip tables with CheckConstraint or complex fields)
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    created = set(inspector.get_table_names())
+    expected = {"users", "audit_log", "variants", "genes", "literature"}
+    missing = expected - created
+    if missing:
+        # Explicitly create any missing tables one at a time
+        for name in sorted(missing):
+            if name in SQLModel.metadata.tables:
+                SQLModel.metadata.tables[name].create(engine)
+
     yield engine
     engine.dispose()
 
