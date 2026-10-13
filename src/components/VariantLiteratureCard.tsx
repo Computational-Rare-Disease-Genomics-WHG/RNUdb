@@ -87,7 +87,12 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
     [variantData],
   );
 
-  const getVariantLiterature = (variantId: string) => {
+  const getVariantLiterature = (
+    variantId: string,
+  ): (Literature & {
+    count: number;
+    zygosity: string | undefined;
+  })[] => {
     const counts = literatureCounts.filter((lc) => lc.variant_id === variantId);
     return counts
       .map((count) => {
@@ -96,7 +101,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
           ? { ...paper, count: count.counts, zygosity: count.zygosity }
           : null;
       })
-      .filter(Boolean);
+      .filter((item): item is NonNullable<typeof item> => item !== null);
   };
 
   const getVariantPatientStats = (variantId: string) => {
@@ -189,7 +194,8 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
       })
       .sort((a, b) => {
         if (sortField) {
-          let aVal: any, bVal: any;
+          let aVal: string | number = "";
+          let bVal: string | number = "";
           if (sortField === "id") {
             aVal = a.id || "";
             bVal = b.id || "";
@@ -209,7 +215,10 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
               ? aVal.localeCompare(bVal)
               : bVal.localeCompare(aVal);
           }
-          return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+          if (typeof aVal === "number" && typeof bVal === "number") {
+            return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+          }
+          return 0;
         }
 
         if (zygosityFilter === "biallelic") {
@@ -856,64 +865,73 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                       Linked Literature ({variantLit.length})
                                     </div>
                                     <div className="space-y-2">
-                                      {variantLit.map((paper: any, idx: number) => (
-                                        <div
-                                          key={idx}
-                                          className="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200"
-                                        >
-                                          <div className="flex-1 min-w-0">
-                                            <h4 className="text-sm font-medium text-slate-900 leading-snug mb-1 line-clamp-2">
-                                              {paper.title}
-                                            </h4>
-                                            <p className="text-xs text-slate-600 mb-2">
-                                              <span className="text-slate-700 font-medium">
-                                                {paper.authors}
-                                              </span>
-                                              <span className="mx-1">·</span>
-                                              <span className="italic">
-                                                {paper.journal}
-                                              </span>
-                                              <span className="mx-1">·</span>
-                                              <span>{paper.year}</span>
-                                            </p>
-                                            <div className="flex items-center gap-3">
-                                              <Badge
-                                                variant="outline"
-                                                className="text-xs bg-white border-slate-300 text-slate-600 font-mono"
-                                              >
-                                                DOI: {paper.doi}
-                                              </Badge>
-                                              <span
-                                                className="text-xs text-slate-500 flex items-center gap-1"
-                                                title="Number of individuals with this variant assessed in published studies"
-                                              >
-                                                <Users className="h-3 w-3" />
-                                                {paper.zygosity === "Heterozygous"
-                                                  ? `${paper.count} het`
-                                                  : paper.zygosity === "Homozygous"
-                                                    ? `${paper.count} hom`
-                                                    : `${paper.count}`}{" "}
-                                                individual
-                                                {paper.count !== 1 ? "s" : ""} assessed
-                                              </span>
-                                            </div>
-                                          </div>
-                                          <a
-                                            href={`https://doi.org/${paper.doi}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="shrink-0"
+                                      {variantLit.map(
+                                        (
+                                          paper: Literature & {
+                                            count: number;
+                                            zygosity: string | undefined;
+                                          },
+                                          idx: number,
+                                        ) => (
+                                          <div
+                                            key={idx}
+                                            className="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200"
                                           >
-                                            <Button
-                                              size="sm"
-                                              variant="outline"
-                                              className="h-8 w-8 p-0 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-600"
+                                            <div className="flex-1 min-w-0">
+                                              <h4 className="text-sm font-medium text-slate-900 leading-snug mb-1 line-clamp-2">
+                                                {paper.title}
+                                              </h4>
+                                              <p className="text-xs text-slate-600 mb-2">
+                                                <span className="text-slate-700 font-medium">
+                                                  {paper.authors}
+                                                </span>
+                                                <span className="mx-1">·</span>
+                                                <span className="italic">
+                                                  {paper.journal}
+                                                </span>
+                                                <span className="mx-1">·</span>
+                                                <span>{paper.year}</span>
+                                              </p>
+                                              <div className="flex items-center gap-3">
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-xs bg-white border-slate-300 text-slate-600 font-mono"
+                                                >
+                                                  DOI: {paper.doi}
+                                                </Badge>
+                                                <span
+                                                  className="text-xs text-slate-500 flex items-center gap-1"
+                                                  title="Number of individuals with this variant assessed in published studies"
+                                                >
+                                                  <Users className="h-3 w-3" />
+                                                  {paper.zygosity === "Heterozygous"
+                                                    ? `${paper.count} het`
+                                                    : paper.zygosity === "Homozygous"
+                                                      ? `${paper.count} hom`
+                                                      : `${paper.count}`}{" "}
+                                                  individual
+                                                  {paper.count !== 1 ? "s" : ""}{" "}
+                                                  assessed
+                                                </span>
+                                              </div>
+                                            </div>
+                                            <a
+                                              href={`https://doi.org/${paper.doi}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="shrink-0"
                                             >
-                                              <ExternalLink className="h-4 w-4" />
-                                            </Button>
-                                          </a>
-                                        </div>
-                                      ))}
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-8 w-8 p-0 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-600"
+                                              >
+                                                <ExternalLink className="h-4 w-4" />
+                                              </Button>
+                                            </a>
+                                          </div>
+                                        ),
+                                      )}
                                     </div>
                                   </div>
                                 ) : (

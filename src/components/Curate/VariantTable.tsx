@@ -47,12 +47,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { Variant } from "@/types";
 
 interface VariantTableProps {
-  data: any[];
+  data: Variant[];
   selectedVariants: Set<string>;
   onToggleVariant: (id: string) => void;
-  onEdit: (variant: any) => void;
+  onEdit: (variant: Variant) => void;
   getClinicalSigColor: (sig: string) => string;
 }
 
@@ -68,7 +69,7 @@ const VariantTable = ({
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<Variant>[] = [
     {
       id: "select",
       header: ({ table }) => (
