@@ -69,7 +69,7 @@ const Login: React.FC = () => {
             {user.avatar_url && (
               <img
                 src={user.avatar_url}
-                alt={user.name}
+                alt={user.name ?? undefined}
                 className="w-16 h-16 rounded-full mx-auto mb-6"
               />
             )}

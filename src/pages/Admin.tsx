@@ -34,15 +34,18 @@ import { useApprovals, type PendingChange } from "@/hooks/useApprovals";
 
 interface UserRecord {
   github_login: string;
-  name: string;
-  email: string;
-  avatar_url?: string;
+  name: string | null;
+  email: string | null;
+  avatar_url?: string | null;
   role: string;
   created_at: string;
   updated_at: string;
 }
 
 const ITEMS_PER_PAGE = 10;
+
+const getInitial = (user: UserRecord) =>
+  (user.name?.[0] ?? user.github_login[0] ?? "?").toUpperCase();
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -381,12 +384,17 @@ const Admin: React.FC = () => {
                         <div className="flex items-center gap-4">
                           <Avatar>
                             {user.avatar_url && (
-                              <AvatarImage src={user.avatar_url} alt={user.name} />
+                              <AvatarImage
+                                src={user.avatar_url}
+                                alt={user.name ?? user.github_login}
+                              />
                             )}
-                            <AvatarFallback>{user.name[0]}</AvatarFallback>
+                            <AvatarFallback>{getInitial(user)}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-semibold">{user.name}</p>
+                            <p className="font-semibold">
+                              {user.name ?? user.github_login}
+                            </p>
                             <p className="text-sm text-slate-500">
                               @{user.github_login}
                             </p>
@@ -436,14 +444,19 @@ const Admin: React.FC = () => {
                             <div className="flex items-center gap-3">
                               <Avatar size="sm">
                                 {user.avatar_url && (
-                                  <AvatarImage src={user.avatar_url} alt={user.name} />
+                                  <AvatarImage
+                                    src={user.avatar_url}
+                                    alt={user.name ?? user.github_login}
+                                  />
                                 )}
                                 <AvatarFallback className="bg-teal-100 text-teal-700">
-                                  {user.name[0]}
+                                  {getInitial(user)}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-medium">{user.name}</p>
+                                <p className="font-medium">
+                                  {user.name ?? user.github_login}
+                                </p>
                                 <p className="text-sm text-slate-500">
                                   @{user.github_login}
                                 </p>

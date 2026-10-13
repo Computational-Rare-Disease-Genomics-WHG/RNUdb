@@ -208,8 +208,8 @@ async def auth_callback(request: Request, response: Response):
     # Fetch user profile
     profile = _github_user_info(access_token)
     login = profile.get("login", "").lower()
-    name = profile.get("name", "")
-    avatar_url = profile.get("avatar_url", "")
+    name = profile.get("name") or ""
+    avatar_url = profile.get("avatar_url") or ""
 
     # Fetch primary email
     emails = _github_user_emails(access_token)
