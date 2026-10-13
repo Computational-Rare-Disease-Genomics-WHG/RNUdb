@@ -2,7 +2,7 @@
 
 import re as regex_lib
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,8 +11,6 @@ from api.models import (
     LiteratureCreate,
     LiteraturePublic,
     LiteratureUpdate,
-    VariantClassification,
-    VariantClassificationPublic,
 )
 from api.routers.auth import require_admin
 from rnudb_utils.database import audit_log, get_db
@@ -29,7 +27,7 @@ async def get_all_literature(db: Session = Depends(get_db)):
     return [LiteraturePublic.model_validate(lit) for lit in literature]
 
 
-@router.get("/literature/{literature_id}", response_model=LiteraturePublic)
+@router.get("/literature/{literature_id:path}", response_model=LiteraturePublic)
 async def get_literature(literature_id: str, db: Session = Depends(get_db)):
     """Get a specific literature entry"""
     lit = db.get(Literature, literature_id)
@@ -40,10 +38,11 @@ async def get_literature(literature_id: str, db: Session = Depends(get_db)):
 
 @router.post("/literature", response_model=LiteraturePublic)
 async def create_literature(
-    lit: LiteratureCreate, request: Request, db: Session = Depends(get_db)
+    lit: LiteratureCreate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Create new literature (curator only)"""
-    user = require_admin(request)
 
     if db.get(Literature, lit.id):
         raise HTTPException(
@@ -62,15 +61,14 @@ async def create_literature(
     return LiteraturePublic.model_validate(new_lit)
 
 
-@router.put("/literature/{literature_id}", response_model=LiteraturePublic)
+@router.put("/literature/{literature_id:path}", response_model=LiteraturePublic)
 async def update_literature(
     literature_id: str,
     lit: LiteratureUpdate,
-    request: Request,
     db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Update literature (curator only)"""
-    user = require_admin(request)
 
     existing = db.get(Literature, literature_id)
     if not existing:
@@ -97,12 +95,13 @@ async def update_literature(
     return LiteraturePublic.model_validate(updated)
 
 
-@router.delete("/literature/{literature_id}")
+@router.delete("/literature/{literature_id:path}")
 async def delete_literature(
-    literature_id: str, request: Request, db: Session = Depends(get_db)
+    literature_id: str,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Delete literature (curator only)"""
-    user = require_admin(request)
 
     existing = db.get(Literature, literature_id)
     if not existing:
@@ -118,83 +117,15 @@ async def delete_literature(
     )
 
     return {"message": f"Literature {literature_id} deleted"}
-
-
-@router.put("/literature")
-async def update_literature_by_id(
-    request: Request,
-    literature_id: str,
-    lit: LiteratureUpdate,
-    db: Session = Depends(get_db),
-):
-    """Update literature by ID (supports DOIs with slashes)"""
-    user = require_admin(request)
-
-    existing = db.get(Literature, literature_id)
-    if not existing:
-        raise HTTPException(status_code=404, detail="Literature not found")
-
-    old_values = existing.model_dump()
-
-    for field, value in lit.model_dump(exclude_unset=True).items():
-        if field in _ALLOWED_LITERATURE_COLUMNS:
-            setattr(existing, field, value)
-
-    db.commit()
-
-    audit_log(
-        "literature",
-        literature_id,
-        "UPDATE",
-        old_values,
-        lit.model_dump(exclude_unset=True),
-        user["github_login"],
-    )
-
-    updated = db.get(Literature, literature_id)
-    return LiteraturePublic.model_validate(updated)
-
-
-@router.delete("/literature")
-async def delete_literature_by_id(
-    request: Request,
-    literature_id: str,
-    db: Session = Depends(get_db),
-):
-    """Delete literature by ID (supports DOIs with slashes)"""
-    user = require_admin(request)
-
-    existing = db.get(Literature, literature_id)
-    if not existing:
-        raise HTTPException(status_code=404, detail="Literature not found")
-
-    old_values = existing.model_dump()
-
-    db.delete(existing)
-    db.commit()
-
-    audit_log(
-        "literature", literature_id, "DELETE", old_values, None, user["github_login"]
-    )
-
-    return {"message": f"Literature {literature_id} deleted"}
-
-
-@router.get("/literature-counts", response_model=list[VariantClassificationPublic])
-async def get_literature_counts(db: Session = Depends(get_db)):
-    """Get all variant classifications (legacy endpoint)"""
-    counts = db.execute(select(VariantClassification)).scalars().all()
-    return [VariantClassificationPublic.model_validate(c) for c in counts]
 
 
 @router.post("/literature/bulk")
 async def bulk_import_literature(
-    request: Request,
     literature: list[dict],
     db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Bulk import literature entries (admin only)"""
-    user = require_admin(request)
 
     imported_count = 0
     skipped_count = 0
@@ -258,7 +189,7 @@ async def bulk_import_literature(
             db.add(new_lit)
             imported_count += 1
 
-        except Exception as e:
+        except (ValueError, TypeError, KeyError) as e:
             errors.append({"row": idx + 2, "field": "unknown", "message": str(e)})
             skipped_count += 1
 

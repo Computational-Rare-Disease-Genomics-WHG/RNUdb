@@ -1,6 +1,7 @@
 """Approval workflow router for curator changes requiring admin review."""
 
 import json
+import logging
 from datetime import UTC, datetime
 from typing import Any, Literal
 
@@ -13,6 +14,8 @@ from api.models import PendingChange, PendingChangeOut
 from api.notifications import notify_change_approved, notify_change_rejected
 from api.routers.auth import require_admin, require_curator
 from rnudb_utils.database import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/approvals")
 
@@ -490,6 +493,7 @@ async def apply_approved_change(
         db.refresh(change)
         return _row_to_dict(change)
 
-    except Exception as e:
+    except Exception:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e)) from None
+        logger.exception("Failed to apply approved change %s", change_id)
+        raise HTTPException(status_code=500, detail="Internal server error") from None

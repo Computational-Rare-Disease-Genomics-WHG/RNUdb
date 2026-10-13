@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -65,12 +65,11 @@ async def get_gene(gene_id: str, db: Session = Depends(get_db)):
 @router.post("/genes", response_model=GenePublic)
 async def create_gene(
     gene: GeneCreate,
-    request: Request,
     db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
     fetch_population_data: bool = True,
 ):
     """Create a new gene (curator only)"""
-    user = require_admin(request)
 
     if db.get(Gene, gene.id):
         raise HTTPException(status_code=409, detail=f"Gene {gene.id} already exists")
@@ -177,10 +176,12 @@ async def create_gene(
 
 @router.put("/genes/{gene_id}", response_model=GenePublic)
 async def update_gene(
-    gene_id: str, gene: GeneUpdate, request: Request, db: Session = Depends(get_db)
+    gene_id: str,
+    gene: GeneUpdate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Update an existing gene (curator only)"""
-    user = require_admin(request)
 
     existing = db.get(Gene, gene_id)
     if not existing:
@@ -210,11 +211,10 @@ async def update_gene(
 @router.post("/genes/{gene_id}/refresh-variants", response_model=GenePublic)
 async def refresh_gene_variants(
     gene_id: str,
-    request: Request,
     db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Refresh population data (gnomAD and All of Us) for a gene (curator only)"""
-    user = require_admin(request)
 
     gene = db.get(Gene, gene_id)
     if not gene:
@@ -321,9 +321,10 @@ async def refresh_gene_variants(
 
 
 @router.delete("/genes/{gene_id}")
-async def delete_gene(gene_id: str, request: Request, db: Session = Depends(get_db)):
+async def delete_gene(
+    gene_id: str, db: Session = Depends(get_db), user: dict = Depends(require_admin)
+):
     """Delete a gene and all associated data (curator only)"""
-    user = require_admin(request)
 
     existing = db.get(Gene, gene_id)
     if not existing:
@@ -593,10 +594,12 @@ async def get_gene_structures(gene_id: str, db: Session = Depends(get_db)):
 
 @router.delete("/genes/{gene_id}/structures/{structure_id}")
 async def delete_gene_structure(
-    gene_id: str, structure_id: str, request: Request, db: Session = Depends(get_db)
+    gene_id: str,
+    structure_id: str,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Delete a specific RNA structure (curator only)"""
-    user = require_admin(request)
 
     existing = db.execute(
         select(RNAStructure).where(

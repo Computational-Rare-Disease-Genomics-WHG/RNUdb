@@ -82,11 +82,10 @@ async def get_variant(variant_id: str, db: Session = Depends(get_db)):
 @router.post("/variants", response_model=VariantPublic)
 async def create_variant(
     variant: VariantCreate,
-    request: Request,
+    user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Create a new variant (curator only)"""
-    user = require_admin(request)
 
     if db.get(Variant, variant.id):
         raise HTTPException(
@@ -114,11 +113,10 @@ async def create_variant(
 async def update_variant(
     variant_id: str,
     variant: VariantUpdate,
-    request: Request,
     db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Update a variant (curator only)"""
-    user = require_admin(request)
 
     existing = db.get(Variant, variant_id)
     if not existing:
@@ -147,10 +145,11 @@ async def update_variant(
 
 @router.delete("/variants/{variant_id}")
 async def delete_variant(
-    variant_id: str, request: Request, db: Session = Depends(get_db)
+    variant_id: str,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Delete a variant (curator only)"""
-    user = require_admin(request)
 
     existing = db.get(Variant, variant_id)
     if not existing:
@@ -221,11 +220,10 @@ async def get_literature_counts(db: Session = Depends(get_db)):
 @router.post("/variant-classifications", response_model=VariantClassificationPublic)
 async def create_variant_classification(
     classification: VariantClassificationCreate,
-    request: Request,
+    user: dict = Depends(require_curator),
     db: Session = Depends(get_db),
 ):
     """Create a new variant classification (curator only)"""
-    user = require_curator(request)
 
     variant = db.get(Variant, classification.variant_id)
     if not variant:
@@ -289,7 +287,7 @@ async def create_variant_classification(
 
 @router.put("/variant-classifications")
 async def update_variant_classification(
-    request: Request,
+    user: dict = Depends(require_curator),
     db: Session = Depends(get_db),
     variant_id: str | None = None,
     literature_id: str | None = None,
@@ -301,7 +299,6 @@ async def update_variant_classification(
     linked_variant_ids: str | None = None,
 ):
     """Update a variant classification (curator only)"""
-    user = require_curator(request)
 
     if not variant_id or not literature_id:
         raise HTTPException(
@@ -344,13 +341,12 @@ async def update_variant_classification(
 
 @router.delete("/variant-classifications")
 async def delete_variant_classification(
-    request: Request,
+    user: dict = Depends(require_curator),
     db: Session = Depends(get_db),
     variant_id: str | None = None,
     literature_id: str | None = None,
 ):
     """Delete a variant classification (curator only)"""
-    user = require_curator(request)
 
     if not variant_id or not literature_id:
         raise HTTPException(
@@ -400,10 +396,10 @@ async def get_gene_variant_classifications(gene_id: str, db: Session = Depends(g
 @router.post("/variant-classifications/bulk")
 async def bulk_import_variant_classifications(
     request: Request,
+    user: dict = Depends(require_curator),
     db: Session = Depends(get_db),
 ):
     """Bulk import variant classifications (curator only)"""
-    require_curator(request)
     body = await request.json()
 
     if isinstance(body, list):
@@ -516,7 +512,7 @@ async def bulk_import_variant_classifications(
             db.add(new_classification)
             imported_count += 1
 
-        except Exception as e:
+        except (ValueError, TypeError, KeyError, AttributeError) as e:
             errors.append(
                 {
                     "row": idx + 1,

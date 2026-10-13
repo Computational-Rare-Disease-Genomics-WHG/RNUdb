@@ -146,10 +146,6 @@ def insert_variants(variants_data: list[dict], session=None) -> None:
                 alt=v.get("alt"),
                 hgvs=v.get("hgvs"),
                 consequence=v.get("consequence"),
-                clinvar_significance=v.get("clinvar_significance"),
-                clinical_significance=v.get("clinical_significance"),
-                disease_type=v.get("disease_type"),
-                pmid=v.get("pmid"),
                 function_score=v.get("function_score"),
                 pvalues=v.get("pvalues"),
                 qvalues=v.get("qvalues"),
@@ -158,11 +154,6 @@ def insert_variants(variants_data: list[dict], session=None) -> None:
                 gnomad_hom=v.get("gnomad_hom"),
                 aou_ac=v.get("aou_ac"),
                 aou_hom=v.get("aou_hom"),
-                ukbb_ac=v.get("ukbb_ac"),
-                ukbb_hom=v.get("ukbb_hom"),
-                cadd_score=v.get("cadd_score"),
-                zygosity=v.get("zygosity"),
-                cohort=v.get("cohort"),
             )
             sess.merge(variant)
         sess.commit()

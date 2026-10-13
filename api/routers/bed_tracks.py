@@ -1,6 +1,6 @@
 """BED track API endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -41,10 +41,11 @@ async def get_all_bed_tracks(db: Session = Depends(get_db)):
 
 @router.delete("/bed-tracks/{track_id}")
 async def delete_bed_track(
-    track_id: int, request: Request, db: Session = Depends(get_db)
+    track_id: int,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_admin),
 ):
     """Delete a BED track by ID (admin only)."""
-    user = require_admin(request)
 
     existing = db.get(BedTrack, track_id)
     if not existing:
