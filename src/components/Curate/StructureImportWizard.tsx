@@ -265,8 +265,8 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
               </div>
 
               {parsedStructure.annotations?.length > 0 && (
-                <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                  <p className="text-sm text-amber-800">
+                <div className="p-4 bg-teal-50 rounded-xl border border-teal-200">
+                  <p className="text-sm text-teal-800">
                     <span className="font-semibold">
                       {parsedStructure.annotations.length}
                     </span>{" "}
@@ -276,8 +276,8 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
               )}
 
               {parsedStructure.structuralFeatures?.length > 0 && (
-                <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                  <p className="text-sm text-amber-800">
+                <div className="p-4 bg-teal-50 rounded-xl border border-teal-200">
+                  <p className="text-sm text-teal-800">
                     <span className="font-semibold">
                       {parsedStructure.structuralFeatures.length}
                     </span>{" "}
@@ -287,9 +287,6 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
               )}
 
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setStep(1)}>
-                  Back
-                </Button>
                 <Button
                   onClick={handleValidate}
                   disabled={loading}
