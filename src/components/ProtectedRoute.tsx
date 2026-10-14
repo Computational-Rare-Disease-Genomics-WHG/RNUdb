@@ -1,32 +1,22 @@
+import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import Admin from "../pages/Admin";
-import Curate from "../pages/Curate";
-import Editor from "../pages/Editor";
+import { LoadingSpinner } from "./LoadingSpinner";
 
-export function ProtectedEditor() {
+export function ProtectedEditor({ children }: { children: React.ReactNode }) {
   const { isCurator, isLoading } = useAuth();
-  if (isLoading)
-    return (
-      <div className="min-h-screen flex items-center justify-center">Loading...</div>
-    );
-  return isCurator ? <Editor /> : <Navigate to="/login" />;
+  if (isLoading) return <LoadingSpinner />;
+  return isCurator ? <>{children}</> : <Navigate to="/login" />;
 }
 
-export function ProtectedCurate() {
+export function ProtectedCurate({ children }: { children: React.ReactNode }) {
   const { isCurator, isLoading } = useAuth();
-  if (isLoading)
-    return (
-      <div className="min-h-screen flex items-center justify-center">Loading...</div>
-    );
-  return isCurator ? <Curate /> : <Navigate to="/login" />;
+  if (isLoading) return <LoadingSpinner />;
+  return isCurator ? <>{children}</> : <Navigate to="/login" />;
 }
 
-export function ProtectedAdmin() {
+export function ProtectedAdmin({ children }: { children: React.ReactNode }) {
   const { isCurator, isLoading } = useAuth();
-  if (isLoading)
-    return (
-      <div className="min-h-screen flex items-center justify-center">Loading...</div>
-    );
-  return isCurator ? <Admin /> : <Navigate to="/login" />;
+  if (isLoading) return <LoadingSpinner />;
+  return isCurator ? <>{children}</> : <Navigate to="/login" />;
 }
