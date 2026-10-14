@@ -14,7 +14,7 @@ from api.models import (
     VariantPublic,
     VariantUpdate,
 )
-from api.routers.auth import require_admin, require_curator
+from api.routers.auth import require_curator
 from rnudb_utils.database import audit_log, get_db
 
 router = APIRouter()
@@ -82,7 +82,7 @@ async def get_variant(variant_id: str, db: Session = Depends(get_db)):
 @router.post("/variants", response_model=VariantPublic)
 async def create_variant(
     variant: VariantCreate,
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
     db: Session = Depends(get_db),
 ):
     """Create a new variant (curator only)"""
@@ -104,6 +104,7 @@ async def create_variant(
         None,
         variant.model_dump(),
         user["github_login"],
+        db,
     )
 
     return VariantPublic.model_validate(new_variant)
@@ -114,7 +115,7 @@ async def update_variant(
     variant_id: str,
     variant: VariantUpdate,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
     """Update a variant (curator only)"""
 
@@ -137,6 +138,7 @@ async def update_variant(
         old_values,
         variant.model_dump(exclude_unset=True),
         user["github_login"],
+        db,
     )
 
     updated = db.get(Variant, variant_id)
@@ -147,7 +149,7 @@ async def update_variant(
 async def delete_variant(
     variant_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
     """Delete a variant (curator only)"""
 
@@ -160,7 +162,9 @@ async def delete_variant(
     db.delete(existing)
     db.commit()
 
-    audit_log("variants", variant_id, "DELETE", old_values, None, user["github_login"])
+    audit_log(
+        "variants", variant_id, "DELETE", old_values, None, user["github_login"], db
+    )
 
     return {"message": f"Variant {variant_id} deleted"}
 
@@ -334,6 +338,7 @@ async def update_variant_classification(
         old_values,
         update_data,
         user["github_login"],
+        db,
     )
 
     updated = db.get(VariantClassification, (variant_id, literature_id))
