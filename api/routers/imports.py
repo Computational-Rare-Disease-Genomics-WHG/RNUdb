@@ -21,6 +21,7 @@ from api.models import (
     VariantBatchImportRequest,
     VariantClassification,
 )
+from api.routers.auth import require_curator
 from api.services.validation import (
     validate_bed_intervals,
     validate_structure,
@@ -92,9 +93,11 @@ async def validate_variant_import(
 
 @router.post("/imports/variants/batch", response_model=ImportResult)
 async def import_variant_batch(
-    request: VariantBatchImportRequest, db: Session = Depends(get_db)
+    request: VariantBatchImportRequest,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_curator),
 ):
-    """Import a batch of validated variants."""
+    """Import a batch of validated variants (curator only)."""
     gene = _get_gene(request.geneId, db)
     if not gene:
         raise HTTPException(status_code=404, detail=f"Gene {request.geneId} not found")
@@ -174,7 +177,7 @@ async def import_variant_batch(
         "CREATE",
         None,
         {"count": len(variants_data), "geneId": request.geneId},
-        "system",
+        user["github_login"],
         db,
     )
 
@@ -217,9 +220,11 @@ async def validate_structure_import(
 
 @router.post("/imports/structures", response_model=ImportResult)
 async def import_structure(
-    request: StructureImportRequest, db: Session = Depends(get_db)
+    request: StructureImportRequest,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_curator),
 ):
-    """Import an RNA structure for a gene."""
+    """Import an RNA structure for a gene (curator only)."""
     gene = _get_gene(request.geneId, db)
     if not gene:
         raise HTTPException(status_code=404, detail=f"Gene {request.geneId} not found")
@@ -275,7 +280,7 @@ async def import_structure(
             "geneId": request.geneId,
             "nucleotides": len(request.structure.get("nucleotides", [])),
         },
-        "system",
+        user["github_login"],
         db,
     )
 
@@ -303,9 +308,11 @@ async def validate_bed_import(
 
 @router.post("/imports/bed-tracks", response_model=ImportResult)
 async def import_bed_track(
-    request: BEDTrackImportRequest, db: Session = Depends(get_db)
+    request: BEDTrackImportRequest,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_curator),
 ):
-    """Import a BED track for a gene."""
+    """Import a BED track for a gene (curator only)."""
     gene = _get_gene(request.geneId, db)
     if not gene:
         raise HTTPException(status_code=404, detail=f"Gene {request.geneId} not found")
@@ -346,7 +353,7 @@ async def import_bed_track(
                 if interval.get("score") is not None
                 else None,
                 "color": request.color,
-                "created_by": "system",
+                "created_by": user["github_login"],
             },
         )
         inserted += 1
@@ -359,7 +366,7 @@ async def import_bed_track(
         "CREATE",
         None,
         {"geneId": request.geneId, "intervals": inserted},
-        "system",
+        user["github_login"],
         db,
     )
 
@@ -468,8 +475,9 @@ async def import_variants_vcf(
     file: UploadFile = File(...),
     field_mappings: str | None = Form(None),
     db: Session = Depends(get_db),
+    user: dict = Depends(require_curator),
 ):
-    """Import variants from a VCF file with optional field mappings."""
+    """Import variants from a VCF file with optional field mappings (curator only)."""
     gene = _get_gene(geneId, db)
     if not gene:
         raise HTTPException(status_code=404, detail=f"Gene {geneId} not found")
@@ -583,7 +591,7 @@ async def import_variants_vcf(
         "CREATE",
         None,
         {"count": imported_count, "geneId": geneId, "file": file.filename},
-        "system",
+        user["github_login"],
         db,
     )
 
@@ -600,9 +608,11 @@ async def import_variants_vcf(
     "/imports/variants/classifications", response_model=list[PubMedLookupResult]
 )
 async def import_variant_classifications(
-    request: ClassificationImportRequest, db: Session = Depends(get_db)
+    request: ClassificationImportRequest,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_curator),
 ):
-    """Import variant classifications from CSV data with optional PubMed lookup."""
+    """Import variant classifications from CSV (curator only)."""
     results: list[PubMedLookupResult] = []
     dois_to_lookup: dict[str, ClassificationCSVRow] = {}
 
@@ -682,7 +692,7 @@ async def import_variant_classifications(
         "CREATE",
         None,
         {"count": len(request.classifications), "geneId": request.geneId},
-        "system",
+        user["github_login"],
         db,
     )
 
@@ -691,9 +701,11 @@ async def import_variant_classifications(
 
 @router.post("/imports/literature/lookup")
 async def lookup_literature_metadata(
-    dois: list[str], db: Session = Depends(get_db)
+    dois: list[str],
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_curator),
 ) -> list[PubMedLookupResult]:
-    """Lookup metadata from PubMed for a list of DOIs."""
+    """Lookup metadata from PubMed for a list of DOIs (curator only)."""
     results = []
 
     for doi in dois:
@@ -749,8 +761,9 @@ async def lookup_literature_metadata(
 async def fetch_literature_metadata(
     request: Request,
     db: Session = Depends(get_db),
+    user: dict = Depends(require_curator),
 ) -> PubMedLookupResult:
-    """Fetch metadata from PubMed using DOI or PMID."""
+    """Fetch metadata from PubMed using DOI or PMID (curator only)."""
     body = await request.json()
     identifier = body.get("identifier", "").strip()
 

@@ -1,5 +1,44 @@
 """Tests for import API endpoints."""
 
+import pytest
+from fastapi import HTTPException
+
+from api.main import app
+from api.routers.auth import require_admin, require_curator
+
+
+def _deny_admin() -> dict:
+    """Always raise 403 — used to prove endpoints depend on require_curator."""
+    raise HTTPException(status_code=403, detail="Admin privileges required")
+
+
+@pytest.fixture
+def enforce_real_curator_auth(test_client):
+    """Use the real require_curator dependency instead of the mock.
+
+    Requests without a session cookie then hit real auth and return 401.
+    The autouse mock_auth fixture re-applies its override on the next test.
+    """
+    app.dependency_overrides.pop(require_curator, None)
+    yield test_client
+
+
+def _request_with_admin_denied(client, method, path, **kwargs):
+    """Perform a request while require_admin raises 403.
+
+    If the endpoint (incorrectly) depended on require_admin, this returns
+    403. A non-403 response proves it uses require_curator instead.
+    """
+    app.dependency_overrides[require_admin] = _deny_admin
+    try:
+        response = getattr(client, method)(path, **kwargs)
+        assert response.status_code != 403, (
+            f"{method.upper()} {path} returned 403 — endpoint still uses require_admin"
+        )
+        return response
+    finally:
+        app.dependency_overrides.pop(require_admin, None)
+
 
 class TestVariantImportAPI:
     """Test variant batch import endpoints."""
@@ -269,34 +308,33 @@ class TestBEDTrackAPI:
 
 
 class TestImportEndpointAuth:
-    """Tests for import endpoint authentication requirements.
+    """Import write endpoints must require curator authentication."""
 
-    These tests verify that import endpoints require proper authentication.
-    Currently imports are public - these tests document expected behavior
-    after implementing auth.
-    """
-
-    def test_variant_batch_without_auth_fails(self, test_client, seed_gene):
-        """POST /imports/variants/batch should require auth."""
-        response = test_client.post(
+    def test_variant_batch_without_auth_fails(
+        self, enforce_real_curator_auth, seed_gene
+    ):
+        """POST /imports/variants/batch without credentials returns 401."""
+        response = enforce_real_curator_auth.post(
             "/api/imports/variants/batch",
             json={"geneId": "RNU4-2", "variants": [], "skip_invalid": True},
         )
-        # With mock auth, this should succeed (mock provides curator role)
-        # After implementing auth, this should require explicit auth
-        assert response.status_code in (200, 401)
+        assert response.status_code == 401
 
-    def test_structure_import_without_auth_fails(self, test_client, seed_gene):
-        """POST /imports/structures should require auth."""
-        response = test_client.post(
+    def test_structure_import_without_auth_fails(
+        self, enforce_real_curator_auth, seed_gene
+    ):
+        """POST /imports/structures without credentials returns 401."""
+        response = enforce_real_curator_auth.post(
             "/api/imports/structures",
             json={"geneId": "RNU4-2", "structure": valid_structure_data()},
         )
-        assert response.status_code in (200, 401)
+        assert response.status_code == 401
 
-    def test_bed_track_import_without_auth_fails(self, test_client, seed_gene):
-        """POST /imports/bed-tracks should require auth."""
-        response = test_client.post(
+    def test_bed_track_import_without_auth_fails(
+        self, enforce_real_curator_auth, seed_gene
+    ):
+        """POST /imports/bed-tracks without credentials returns 401."""
+        response = enforce_real_curator_auth.post(
             "/api/imports/bed-tracks",
             json={
                 "geneId": "RNU4-2",
@@ -306,15 +344,173 @@ class TestImportEndpointAuth:
                 ],
             },
         )
-        assert response.status_code in (200, 401)
+        assert response.status_code == 401
 
-    def test_validate_variants_public(self, test_client, seed_gene):
+    def test_vcf_import_without_auth_fails(self, enforce_real_curator_auth, seed_gene):
+        """POST /imports/variants/vcf without credentials returns 401."""
+        vcf_content = (
+            "##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        )
+        response = enforce_real_curator_auth.post(
+            "/api/imports/variants/vcf?geneId=RNU4-2",
+            files={"file": ("test.vcf", vcf_content, "text/vnd.vcf")},
+        )
+        assert response.status_code == 401
+
+    def test_classifications_import_without_auth_fails(
+        self, enforce_real_curator_auth, seed_gene
+    ):
+        """POST /imports/variants/classifications without credentials returns 401."""
+        response = enforce_real_curator_auth.post(
+            "/api/imports/variants/classifications",
+            json={"geneId": "RNU4-2", "classifications": []},
+        )
+        assert response.status_code == 401
+
+    def test_literature_lookup_without_auth_fails(self, enforce_real_curator_auth):
+        """POST /imports/literature/lookup without credentials returns 401."""
+        response = enforce_real_curator_auth.post(
+            "/api/imports/literature/lookup", json=["10.1000/test"]
+        )
+        assert response.status_code == 401
+
+    def test_literature_fetch_without_auth_fails(
+        self, enforce_real_curator_auth, seed_gene
+    ):
+        """POST /imports/literature/fetch without credentials returns 401."""
+        response = enforce_real_curator_auth.post(
+            "/api/imports/literature/fetch", json={"identifier": "10.1000/test"}
+        )
+        assert response.status_code == 401
+
+    def test_validate_variants_public(self, enforce_real_curator_auth, seed_gene):
         """POST /imports/variants/validate should remain public."""
-        response = test_client.post(
+        response = enforce_real_curator_auth.post(
             "/api/imports/variants/validate",
             json={"geneId": "RNU4-2", "variants": []},
         )
-        # Validate endpoint should be public - no auth required
+        # Public endpoint — no auth required despite curator auth being enforced
+        assert response.status_code == 200
+
+
+class TestCuratorRoleAccess:
+    """Endpoints documented as 'curator only' must use require_curator.
+
+    require_admin is made to raise 403 for the duration of each request.
+    A non-403 response proves the endpoint no longer depends on require_admin.
+    """
+
+    def test_create_variant_uses_require_curator(self, test_client, seed_gene):
+        response = _request_with_admin_denied(
+            test_client,
+            "post",
+            "/api/variants",
+            json={
+                "id": "test-role-create",
+                "geneId": "RNU4-2",
+                "position": 120291764,
+                "ref": "C",
+                "alt": "T",
+            },
+        )
+        assert response.status_code == 200
+
+    def test_update_variant_uses_require_curator(self, test_client, seed_gene):
+        response = _request_with_admin_denied(
+            test_client,
+            "put",
+            "/api/variants/chr12-120291764-C-T",
+            json={"consequence": "missense"},
+        )
+        # Mock curator auth passes; variant may or may not exist
+        assert response.status_code in (200, 404)
+
+    def test_delete_variant_uses_require_curator(self, test_client, seed_gene):
+        response = _request_with_admin_denied(
+            test_client, "delete", "/api/variants/chr12-120291764-C-T"
+        )
+        assert response.status_code in (200, 404)
+
+    def test_create_literature_uses_require_curator(self, test_client):
+        response = _request_with_admin_denied(
+            test_client,
+            "post",
+            "/api/literature",
+            json={
+                "id": "10.1000/role.test",
+                "title": "Role Test Paper",
+                "authors": "Smith J",
+                "journal": "Nature",
+                "year": 2024,
+                "doi": "10.1000/role.test",
+            },
+        )
+        assert response.status_code == 200
+
+    def test_update_literature_uses_require_curator(self, test_client):
+        response = _request_with_admin_denied(
+            test_client,
+            "put",
+            "/api/literature/10.1000/role.test",
+            json={"title": "Updated Title"},
+        )
+        assert response.status_code in (200, 404)
+
+    def test_delete_literature_uses_require_curator(self, test_client):
+        response = _request_with_admin_denied(
+            test_client, "delete", "/api/literature/10.1000/role.test"
+        )
+        assert response.status_code in (200, 404)
+
+    def test_create_gene_uses_require_curator(self, test_client):
+        response = _request_with_admin_denied(
+            test_client,
+            "post",
+            "/api/genes?fetch_population_data=false",
+            json={
+                "id": "ROLE-TEST",
+                "name": "ROLE-TEST",
+                "fullName": "Role test gene",
+                "chromosome": "chr12",
+                "start": 100,
+                "end": 200,
+                "strand": "+",
+                "sequence": "ACGU",
+                "description": "Role test gene",
+            },
+        )
+        assert response.status_code == 200
+
+    def test_update_gene_uses_require_curator(self, test_client, seed_gene):
+        response = _request_with_admin_denied(
+            test_client,
+            "put",
+            "/api/genes/RNU4-2",
+            json={"description": "Updated description"},
+        )
+        assert response.status_code == 200
+
+    def test_delete_gene_uses_require_curator(self, test_client, seed_gene):
+        response = _request_with_admin_denied(
+            test_client, "delete", "/api/genes/RNU4-2"
+        )
+        assert response.status_code == 200
+
+    def test_bulk_import_literature_uses_require_curator(self, test_client):
+        response = _request_with_admin_denied(
+            test_client,
+            "post",
+            "/api/literature/bulk",
+            json=[
+                {
+                    "doi": "10.1000/role.bulk",
+                    "title": "Bulk Paper",
+                    "authors": "Doe A",
+                    "journal": "Science",
+                    "year": "2024",
+                }
+            ],
+        )
         assert response.status_code == 200
 
 
@@ -343,8 +539,8 @@ class TestVariantClassificationImport:
             "/api/imports/variants/classifications",
             json={"geneId": "RNU4-2", "classifications": []},
         )
-        # With mock auth, should succeed; without auth would return 401
-        assert response.status_code in (200, 401)
+        # With mock curator auth, should succeed
+        assert response.status_code == 200
 
     def test_import_classifications_with_valid_data(
         self, test_client, seed_gene, sample_variant_with_data, sample_literature
@@ -366,7 +562,7 @@ class TestVariantClassificationImport:
             },
         )
         # Should succeed with auth
-        assert response.status_code in (200, 401)
+        assert response.status_code == 200
 
     def test_import_classifications_invalid_variant(self, test_client, seed_gene):
         """Import with non-existent variant returns error."""
@@ -384,30 +580,30 @@ class TestVariantClassificationImport:
                 ],
             },
         )
-        # Should return error for invalid variant
-        assert response.status_code in (200, 400, 404)
+        # Should return per-row error but still succeed
+        assert response.status_code == 200
 
 
 class TestLiteratureImport:
     """Tests for literature import endpoints."""
 
-    def test_lookup_literature_public(self, test_client):
-        """POST /imports/literature/lookup should work without auth."""
+    def test_lookup_literature_with_auth(self, test_client):
+        """POST /imports/literature/lookup succeeds with curator auth."""
         response = test_client.post(
-            "/api/imports/literature/lookup?dois=10.1101/2025.08.13.25333306",
+            "/api/imports/literature/lookup",
             json=[],
         )
-        # Lookup should be public - check with correct query format
-        assert response.status_code in (200, 404, 422)
+        # With mock curator auth, should succeed
+        assert response.status_code == 200
 
-    def test_fetch_literature_requires_auth(self, test_client, seed_gene):
-        """POST /imports/literature/fetch should require auth."""
+    def test_fetch_literature_with_auth(self, test_client, seed_gene):
+        """POST /imports/literature/fetch succeeds with curator auth."""
         response = test_client.post(
             "/api/imports/literature/fetch",
-            json={"doi": "10.1101/2025.08.13.25333306"},
+            json={"identifier": ""},
         )
-        # With mock auth should succeed; without would be 401
-        assert response.status_code in (200, 401)
+        # With mock curator auth, should succeed (empty identifier returns early)
+        assert response.status_code == 200
 
 
 class TestVCFImport:
@@ -436,8 +632,10 @@ class TestVCFImport:
             "/api/imports/variants/vcf?geneId=RNU4-2",
             files={"file": ("test.vcf", vcf_content, "text/vnd.vcf")},
         )
-        # Should succeed with auth
-        assert response.status_code in (200, 401)
+        # Should succeed with mock curator auth
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
 
     def test_import_vcf_invalid_format(self, test_client, seed_gene):
         """POST /imports/variants/vcf with invalid VCF returns error."""
@@ -447,4 +645,4 @@ class TestVCFImport:
             files={"file": ("test.vcf", invalid_vcf, "text/plain")},
         )
         # Should return error for invalid format
-        assert response.status_code in (400, 422)
+        assert response.status_code == 400

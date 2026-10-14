@@ -29,7 +29,7 @@ from api.models import (
     VariantClassification,
     VariantPublic,
 )
-from api.routers.auth import require_admin
+from api.routers.auth import require_curator
 from rnudb_utils.database import audit_log, get_db
 
 router = APIRouter()
@@ -66,7 +66,7 @@ async def get_gene(gene_id: str, db: Session = Depends(get_db)):
 async def create_gene(
     gene: GeneCreate,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
     fetch_population_data: bool = True,
 ):
     """Create a new gene (curator only)"""
@@ -79,7 +79,15 @@ async def create_gene(
     db.commit()
     db.refresh(new_gene)
 
-    audit_log("genes", gene.id, "CREATE", None, gene.model_dump(), user["github_login"])
+    audit_log(
+        "genes",
+        gene.id,
+        "CREATE",
+        None,
+        gene.model_dump(),
+        user["github_login"],
+        db,
+    )
 
     if fetch_population_data:
         from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
@@ -167,7 +175,7 @@ async def create_gene(
             "CREATE",
             None,
             {"geneId": gene.id, "gnomad_count": gnomad_count, "aou_count": aou_count},
-            "system",
+            user["github_login"],
             db,
         )
 
@@ -179,7 +187,7 @@ async def update_gene(
     gene_id: str,
     gene: GeneUpdate,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
     """Update an existing gene (curator only)"""
 
@@ -202,6 +210,7 @@ async def update_gene(
         old_values,
         gene.model_dump(exclude_unset=True),
         user["github_login"],
+        db,
     )
 
     updated = db.get(Gene, gene_id)
@@ -212,7 +221,7 @@ async def update_gene(
 async def refresh_gene_variants(
     gene_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
     """Refresh population data (gnomAD and All of Us) for a gene (curator only)"""
 
@@ -322,7 +331,7 @@ async def refresh_gene_variants(
 
 @router.delete("/genes/{gene_id}")
 async def delete_gene(
-    gene_id: str, db: Session = Depends(get_db), user: dict = Depends(require_admin)
+    gene_id: str, db: Session = Depends(get_db), user: dict = Depends(require_curator)
 ):
     """Delete a gene and all associated data (curator only)"""
 
@@ -349,7 +358,15 @@ async def delete_gene(
     db.delete(existing)
     db.commit()
 
-    audit_log("genes", gene_id, "DELETE", old_values, None, user["github_login"])
+    audit_log(
+        "genes",
+        gene_id,
+        "DELETE",
+        old_values,
+        None,
+        user["github_login"],
+        db,
+    )
 
     return {"message": f"Gene {gene_id} deleted"}
 
@@ -597,7 +614,7 @@ async def delete_gene_structure(
     gene_id: str,
     structure_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
     """Delete a specific RNA structure (curator only)"""
 
@@ -633,7 +650,13 @@ async def delete_gene_structure(
     db.commit()
 
     audit_log(
-        "rna_structures", structure_id, "DELETE", old_values, None, user["github_login"]
+        "rna_structures",
+        structure_id,
+        "DELETE",
+        old_values,
+        None,
+        user["github_login"],
+        db,
     )
 
     return {"message": f"Structure {structure_id} deleted"}

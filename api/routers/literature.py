@@ -12,7 +12,7 @@ from api.models import (
     LiteraturePublic,
     LiteratureUpdate,
 )
-from api.routers.auth import require_admin
+from api.routers.auth import require_curator
 from rnudb_utils.database import audit_log, get_db
 
 router = APIRouter()
@@ -40,7 +40,7 @@ async def get_literature(literature_id: str, db: Session = Depends(get_db)):
 async def create_literature(
     lit: LiteratureCreate,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
     """Create new literature (curator only)"""
 
@@ -55,7 +55,7 @@ async def create_literature(
     db.refresh(new_lit)
 
     audit_log(
-        "literature", lit.id, "CREATE", None, lit.model_dump(), user["github_login"]
+        "literature", lit.id, "CREATE", None, lit.model_dump(), user["github_login"], db
     )
 
     return LiteraturePublic.model_validate(new_lit)
@@ -66,7 +66,7 @@ async def update_literature(
     literature_id: str,
     lit: LiteratureUpdate,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
     """Update literature (curator only)"""
 
@@ -89,6 +89,7 @@ async def update_literature(
         old_values,
         lit.model_dump(exclude_unset=True),
         user["github_login"],
+        db,
     )
 
     updated = db.get(Literature, literature_id)
@@ -99,7 +100,7 @@ async def update_literature(
 async def delete_literature(
     literature_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
     """Delete literature (curator only)"""
 
@@ -113,7 +114,13 @@ async def delete_literature(
     db.commit()
 
     audit_log(
-        "literature", literature_id, "DELETE", old_values, None, user["github_login"]
+        "literature",
+        literature_id,
+        "DELETE",
+        old_values,
+        None,
+        user["github_login"],
+        db,
     )
 
     return {"message": f"Literature {literature_id} deleted"}
@@ -123,9 +130,9 @@ async def delete_literature(
 async def bulk_import_literature(
     literature: list[dict],
     db: Session = Depends(get_db),
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_curator),
 ):
-    """Bulk import literature entries (admin only)"""
+    """Bulk import literature entries (curator only)"""
 
     imported_count = 0
     skipped_count = 0
@@ -202,6 +209,7 @@ async def bulk_import_literature(
         None,
         {"imported": imported_count, "skipped": skipped_count},
         user["github_login"],
+        db,
     )
 
     return {
