@@ -10,10 +10,15 @@ import type {
 const API_BASE_URL = "/api";
 
 class ApiService {
-  private async fetchFromApi<T>(endpoint: string): Promise<T> {
+  private async fetchFromApi<T>(
+    endpoint: string,
+    options?: { method?: string; signal?: AbortSignal },
+  ): Promise<T> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         credentials: "include",
+        method: options?.method,
+        signal: options?.signal,
       });
       if (!response.ok) {
         throw new Error(
@@ -85,6 +90,26 @@ class ApiService {
     return this.fetchFromApi<any>("/auth/me");
   }
 
+  async logout(): Promise<void> {
+    await this.fetchFromApi<void>("/auth/logout", { method: "POST" });
+  }
+
+  async getPendingUsers(): Promise<any[]> {
+    return this.fetchFromApi<any[]>("/users/pending");
+  }
+
+  async getPendingApprovals(): Promise<any[]> {
+    return this.fetchFromApi<any[]>("/approvals?status=pending");
+  }
+
+  async getBedTracks(geneId: string): Promise<any> {
+    return this.fetchFromApi<any>(`/genes/${geneId}/bed-tracks`);
+  }
+
+  async getVariantClassifications(geneId: string): Promise<any> {
+    return this.fetchFromApi<any>(`/genes/${geneId}/variant-classifications`);
+  }
+
   async getDistinctDiseaseTypes(): Promise<string[]> {
     return this.fetchFromApi<string[]>("/variants/disease-types");
   }
@@ -111,11 +136,12 @@ export const getGeneStructure = (geneId: string) => apiService.getGeneStructure(
 export const getGenePDB = (geneId: string) => apiService.getGenePDB(geneId);
 export const getLiteratureCounts = () => apiService.getLiteratureCounts();
 export const getMe = () => apiService.getMe();
-export const logout = () =>
-  fetch(`${API_BASE_URL}/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
+export const logout = () => apiService.logout();
+export const getPendingUsers = () => apiService.getPendingUsers();
+export const getPendingApprovals = () => apiService.getPendingApprovals();
+export const getBedTracks = (geneId: string) => apiService.getBedTracks(geneId);
+export const getVariantClassifications = (geneId: string) =>
+  apiService.getVariantClassifications(geneId);
 export const getDistinctDiseaseTypes = () => apiService.getDistinctDiseaseTypes();
 export const getGeneDistinctDiseaseTypes = (geneId: string) =>
   apiService.getGeneDistinctDiseaseTypes(geneId);
