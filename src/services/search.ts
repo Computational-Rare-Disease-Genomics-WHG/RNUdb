@@ -20,12 +20,12 @@ class SearchService {
   private variants: Map<string, Variant[]> = new Map();
   private initialized = false;
 
-  async initialize(): Promise<void> {
+  async initialize(signal?: AbortSignal): Promise<void> {
     if (this.initialized) return;
 
     try {
       // Load all genes
-      this.genes = await getAllGenes();
+      this.genes = await getAllGenes(signal);
 
       // Load variants for each gene
       for (const gene of this.genes) {
@@ -52,8 +52,9 @@ class SearchService {
       includeVariants: true,
       maxResults: 20,
     },
+    signal?: AbortSignal,
   ): Promise<SearchResult[]> {
-    await this.initialize();
+    await this.initialize(signal);
 
     const results: SearchResult[] = [];
     const queryLower = query.toLowerCase().trim();
@@ -88,24 +89,32 @@ class SearchService {
     return results.slice(0, options.maxResults);
   }
 
-  async searchGenes(query: string): Promise<SnRNAGene[]> {
-    const results = await this.search(query, {
-      includeGenes: true,
-      includeVariants: false,
-      maxResults: 10,
-    });
+  async searchGenes(query: string, signal?: AbortSignal): Promise<SnRNAGene[]> {
+    const results = await this.search(
+      query,
+      {
+        includeGenes: true,
+        includeVariants: false,
+        maxResults: 10,
+      },
+      signal,
+    );
 
     return results
       .filter((result) => result.type === "gene")
       .map((result) => result.item as SnRNAGene);
   }
 
-  async searchVariants(query: string): Promise<Variant[]> {
-    const results = await this.search(query, {
-      includeGenes: false,
-      includeVariants: true,
-      maxResults: 10,
-    });
+  async searchVariants(query: string, signal?: AbortSignal): Promise<Variant[]> {
+    const results = await this.search(
+      query,
+      {
+        includeGenes: false,
+        includeVariants: true,
+        maxResults: 10,
+      },
+      signal,
+    );
 
     return results
       .filter((result) => result.type === "variant")

@@ -24,6 +24,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
 
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,31 +39,42 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const performSearch = useCallback(async () => {
-    if (!query.trim()) return;
+  const performSearch = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!query.trim()) return;
 
-    setIsLoading(true);
+      setIsLoading(true);
 
-    try {
-      const searchResults = await searchService.search(query, {
-        includeGenes: true,
-        includeVariants: true,
-        maxResults: 6,
-      });
-      setResults(searchResults);
-      setShowResults(true);
-    } catch (err) {
-      console.error("Search error:", err);
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [query]);
+      try {
+        const searchResults = await searchService.search(
+          query,
+          {
+            includeGenes: true,
+            includeVariants: true,
+            maxResults: 6,
+          },
+          signal,
+        );
+        setResults(searchResults);
+        setShowResults(true);
+      } catch (err) {
+        console.error("Search error:", err);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [query],
+  );
 
   useEffect(() => {
     const searchTimeout = setTimeout(() => {
       if (query.trim().length >= 2) {
-        performSearch();
+        // Cancel any in-flight search before starting a new one
+        abortControllerRef.current?.abort();
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        performSearch(controller.signal);
       } else {
         setResults([]);
         setShowResults(false);
