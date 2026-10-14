@@ -39,16 +39,16 @@ class ApiService {
     }
   }
 
-  async getAllGenes(): Promise<SnRNAGene[]> {
-    return this.fetchFromApi<SnRNAGene[]>("/genes");
+  async getAllGenes(signal?: AbortSignal): Promise<SnRNAGene[]> {
+    return this.fetchFromApi<SnRNAGene[]>("/genes", { signal });
   }
 
   async getGene(geneId: string): Promise<SnRNAGene> {
     return this.fetchFromApi<SnRNAGene>(`/genes/${geneId}`);
   }
 
-  async getGeneVariants(geneId: string): Promise<Variant[]> {
-    return this.fetchFromApi<Variant[]>(`/genes/${geneId}/variants`);
+  async getGeneVariants(geneId: string, signal?: AbortSignal): Promise<Variant[]> {
+    return this.fetchFromApi<Variant[]>(`/genes/${geneId}/variants`, { signal });
   }
 
   async getVariant(variantId: string): Promise<Variant> {
@@ -125,9 +125,10 @@ class ApiService {
 
 export const apiService = new ApiService();
 
-export const getAllGenes = () => apiService.getAllGenes();
+export const getAllGenes = (signal?: AbortSignal) => apiService.getAllGenes(signal);
 export const getGene = (geneId: string) => apiService.getGene(geneId);
-export const getGeneVariants = (geneId: string) => apiService.getGeneVariants(geneId);
+export const getGeneVariants = (geneId: string, signal?: AbortSignal) =>
+  apiService.getGeneVariants(geneId, signal);
 export const getVariant = (variantId: string) => apiService.getVariant(variantId);
 export const getAllLiterature = () => apiService.getAllLiterature();
 export const getGeneLiterature = (geneId: string) =>
