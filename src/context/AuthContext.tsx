@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { getMe, logout as apiLogout } from "../services/api";
 
 interface User {
   github_login: string;
@@ -34,16 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/me", {
-        credentials: "include",
-        headers: { Accept: "application/json" },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-      } else {
-        setUser(null);
-      }
+      const data = await getMe();
+      setUser(data);
     } catch {
       setUser(null);
     } finally {
@@ -79,10 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * 3. Clear OAuth state before initiating login
    */
   const logout = async () => {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+    await apiLogout();
     setUser(null);
     window.location.href = "/";
   };

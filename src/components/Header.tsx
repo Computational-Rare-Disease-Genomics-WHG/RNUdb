@@ -18,6 +18,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getAllSnRNAIds, getGeneData } from "../data/genes";
+import { getPendingUsers, getPendingApprovals } from "../services/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,12 +58,7 @@ const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
     if (isAdmin) {
-      Promise.all([
-        fetch("/api/users/pending", { credentials: "include" }).then((r) => r.json()),
-        fetch("/api/approvals?status=pending", { credentials: "include" }).then((r) =>
-          r.json(),
-        ),
-      ])
+      Promise.all([getPendingUsers(), getPendingApprovals()])
         .then(([users, changes]) => {
           const count = (users?.length || 0) + (changes?.length || 0);
           setPendingCount(count);

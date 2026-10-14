@@ -37,6 +37,14 @@ import VariantTable from "../components/Curate/VariantTable";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { useAuth } from "../context/AuthContext";
+import {
+  getAllGenes,
+  getGeneVariants,
+  getGeneLiterature,
+  getGeneStructure,
+  getBedTracks,
+  getVariantClassifications,
+} from "../services/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -168,11 +176,8 @@ const Curate: React.FC = () => {
 
   const loadGenes = async () => {
     try {
-      const res = await fetch("/api/genes", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setGenes(data);
-      }
+      const data = await getAllGenes();
+      setGenes(data);
     } catch {
       console.error("Error loading genes");
     }
@@ -181,31 +186,18 @@ const Curate: React.FC = () => {
   const loadGeneData = async (geneId: string) => {
     setLoading(true);
     try {
-      const [variantsRes, litRes, structRes, bedRes, vaRes] = await Promise.all([
-        fetch(`/api/genes/${geneId}/variants`, { credentials: "include" }),
-        fetch(`/api/genes/${geneId}/literature`, { credentials: "include" }),
-        fetch(`/api/genes/${geneId}/structures`, {
-          credentials: "include",
-        }).catch(() => null),
-        fetch(`/api/genes/${geneId}/bed-tracks`, {
-          credentials: "include",
-        }).catch(() => null),
-        fetch(`/api/genes/${geneId}/variant-classifications`, {
-          credentials: "include",
-        }).catch(() => null),
+      const [variants, lit, struct, bedRes, vaRes] = await Promise.all([
+        getGeneVariants(geneId).catch(() => []),
+        getGeneLiterature(geneId).catch(() => []),
+        getGeneStructure(geneId).catch(() => null),
+        getBedTracks(geneId).catch(() => null),
+        getVariantClassifications(geneId).catch(() => null),
       ]);
-      if (variantsRes.ok) setVariants(await variantsRes.json());
-      if (litRes.ok) setLiterature(await litRes.json());
-      if (structRes?.ok) {
-        const s = await structRes.json();
-        setStructures(Array.isArray(s) ? s : [s]);
-      } else {
-        setStructures([]);
-      }
-      if (bedRes?.ok) setBedTracks(await bedRes.json());
-      else setBedTracks([]);
-      if (vaRes?.ok) setVariantAssociations(await vaRes.json());
-      else setVariantAssociations([]);
+      setVariants(variants);
+      setLiterature(lit);
+      setStructures(struct ? (Array.isArray(struct) ? struct : [struct]) : []);
+      setBedTracks(Array.isArray(bedRes) ? bedRes : []);
+      setVariantAssociations(Array.isArray(vaRes) ? vaRes : []);
     } catch {
       console.error("Error loading gene data");
     } finally {
