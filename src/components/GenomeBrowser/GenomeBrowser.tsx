@@ -154,6 +154,9 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
     domtoimage
       .toPng(containerRef.current, {
         bgcolor: "#ffffff",
+        style: {
+          fontFamily: "Barlow, system-ui, sans-serif",
+        },
       })
       .then((dataUrl: string) => {
         const link: HTMLAnchorElement = document.createElement("a");
