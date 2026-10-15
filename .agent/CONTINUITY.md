@@ -25,6 +25,7 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
   - PR #275: fix #148 (auth guards on /curate and /admin routes)
   - PR #276: fix #150 (any types batch 1 — 13 instances fixed in 4 files)
 - `[2026-10-14T12:45Z] [TOOL]` Branch `fix/auth-roles-132-134` : fixed #132 (all /imports write endpoints + /imports/literature/lookup now `require_curator`) and #134 (12 endpoints switched `require_admin`→`require_curator`: variants ×3, literature ×4 incl. /literature/bulk, genes ×5). Also added `db` session to audit_log calls that lacked it (was causing "database is locked" in tests) and replaced `"system"` audit attribution with `user["github_login"]`. Strict 401 tests + role-pinning tests. 140 passed, 2 skipped, pre-commit + npm build pass.
+- `[2026-10-15T14:45Z] [TOOL]` Branch `fix/external-links-288` → PR #322 (Fixes #288): UCSC/gnomAD buttons broken for RNU4atac. Verified live: UCSC `dgDashRef` CGI → 404 (dead), `hgTracks` → 200; gnomAD `/variant/chr-start-end` malformed (needs pos-ref-alt). New `src/lib/externalLinks.ts` (`buildGnomadGeneUrl` → gnomAD gene page, `buildUcscRegionUrl` → hgTracks region) + tests; InfoPanel uses helpers, hides buttons when coords missing. 147 vitest pass, build/lint/pre-commit/pytest pass.
 
 ## [OUTCOMES]
 
