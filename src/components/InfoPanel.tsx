@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router";
+import { buildGnomadGeneUrl, buildUcscRegionUrl } from "../lib/externalLinks";
 import { getAffectedNucleotideIds } from "../lib/rnaUtils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -236,34 +237,38 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
           </div>
 
           <div className="flex gap-2 pt-2">
-            <a
-              href={`https://gnomad.broadinstitute.org/variant/${currentData.chromosome}-${currentData.start}-${currentData.end}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1"
-            >
-              <Button
-                size="sm"
-                className="w-full h-8 border border-white/30 bg-transparent text-white hover:bg-white/20 backdrop-blur-sm"
+            {buildGnomadGeneUrl(currentData.name) && (
+              <a
+                href={buildGnomadGeneUrl(currentData.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1"
               >
-                <Globe className="h-3.5 w-3.5 mr-1.5" />
-                gnomAD
-              </Button>
-            </a>
-            <a
-              href={`https://genome.ucsc.edu/cgi-bin/dgDashRef?db=hg38&position=${currentData.chromosome}:${currentData.start}-${currentData.end}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1"
-            >
-              <Button
-                size="sm"
-                className="w-full h-8 border border-white/30 bg-transparent text-white hover:bg-white/20 backdrop-blur-sm"
+                <Button
+                  size="sm"
+                  className="w-full h-8 border border-white/30 bg-transparent text-white hover:bg-white/20 backdrop-blur-sm"
+                >
+                  <Globe className="h-3.5 w-3.5 mr-1.5" />
+                  gnomAD
+                </Button>
+              </a>
+            )}
+            {buildUcscRegionUrl(currentData) && (
+              <a
+                href={buildUcscRegionUrl(currentData)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1"
               >
-                <Search className="h-3.5 w-3.5 mr-1.5" />
-                UCSC
-              </Button>
-            </a>
+                <Button
+                  size="sm"
+                  className="w-full h-8 border border-white/30 bg-transparent text-white hover:bg-white/20 backdrop-blur-sm"
+                >
+                  <Search className="h-3.5 w-3.5 mr-1.5" />
+                  UCSC
+                </Button>
+              </a>
+            )}
             <a
               href={`https://www.omim.org/search?search=${currentData.name}`}
               target="_blank"
