@@ -12,6 +12,7 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { buildGnomadGeneUrl, buildUcscRegionUrl } from "../lib/externalLinks";
 import { getAffectedNucleotideIds } from "../lib/rnaUtils";
+import { getSgeEvidence, type SgeEvidenceCode } from "../lib/sgeEvidence";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,63 @@ interface InfoPanelProps {
   hoveredNucleotide: Nucleotide | null;
   onNavigateToVariant?: (nucleotideId: number) => void;
 }
+
+const SGE_EVIDENCE_STYLES: Record<
+  Exclude<SgeEvidenceCode, null>,
+  { badge: string; label: string; tooltip: string }
+> = {
+  PS3: {
+    badge: "bg-red-600 text-white border-red-700",
+    label: "PS3",
+    tooltip: "Strong pathogenic evidence (SGE, +4 pts)",
+  },
+  PS3_mod: {
+    badge: "bg-red-100 text-red-700 border-red-200",
+    label: "PS3_mod",
+    tooltip: "Moderate pathogenic evidence (SGE, +2 pts)",
+  },
+  PS3_supp: {
+    badge: "bg-amber-100 text-amber-700 border-amber-200",
+    label: "PS3_supp",
+    tooltip: "Supporting pathogenic evidence (SGE, +1 pt)",
+  },
+  indeterminate: {
+    badge: "bg-slate-100 text-slate-600 border-slate-200",
+    label: "Indeterminate",
+    tooltip: "No directional evidence from SGE (0 pts)",
+  },
+  BS3_supp: {
+    badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    label: "BS3_supp",
+    tooltip: "Supporting benign evidence (SGE, +1 pt)",
+  },
+  BS3_mod: {
+    badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    label: "BS3_mod",
+    tooltip: "Moderate benign evidence (SGE, +2 pts)",
+  },
+  BS3: {
+    badge: "bg-emerald-600 text-white border-emerald-700",
+    label: "BS3",
+    tooltip: "Strong benign evidence (SGE, +4 pts)",
+  },
+};
+
+const SgeEvidenceBadge: React.FC<{ functionScore?: number | null }> = ({
+  functionScore,
+}) => {
+  const code = getSgeEvidence(functionScore);
+  if (!code) return null;
+  const style = SGE_EVIDENCE_STYLES[code];
+  return (
+    <Badge
+      className={`${style.badge} shrink-0`}
+      title={`SGE functional evidence: ${style.tooltip} (De Jonghe et al. 2026)`}
+    >
+      {style.label}
+    </Badge>
+  );
+};
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
   currentData,
@@ -434,6 +492,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                           Func. {variant.function_score.toFixed(3)}
                                         </span>
                                       )}
+                                    <SgeEvidenceBadge
+                                      functionScore={variant.function_score}
+                                    />
                                     {variant.depletion_group != null && (
                                       <span>
                                         Depletion Group: {variant.depletion_group}
@@ -537,6 +598,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                           Func. {variant.function_score.toFixed(2)}
                                         </span>
                                       )}
+                                    <SgeEvidenceBadge
+                                      functionScore={variant.function_score}
+                                    />
                                     {variant.depletion_group && (
                                       <span>
                                         Depletion Group: {variant.depletion_group}
