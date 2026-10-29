@@ -39,9 +39,9 @@ class GeneBase(SQLModel):
     @classmethod
     def validate_chromosome(cls, v: str) -> str:
         valid_chromosomes = [f"chr{i}" for i in range(1, 23)] + [
-            "chrX",
-            "chrY",
-            "chrMT",
+            "chrx",  # chrX
+            "chry",  # chrY
+            "chrmt",  # chrMT
         ]
         v_lower = v.lower()
         if v_lower not in valid_chromosomes:
