@@ -127,6 +127,9 @@ export interface PDBStructure {
 }
 
 // Overlay and Track System - Backward compatible
+// SGE function-score ACMG evidence codes (see src/lib/sgeEvidence.ts)
+export type { SgeEvidenceCode } from "../lib/sgeEvidence";
+
 export interface OverlayData {
   [nucleotidePosition: number]: OverlayPoint | number; // Support both old and new formats
 }
