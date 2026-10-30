@@ -8,6 +8,7 @@ import type {
   RNAStructure,
   Nucleotide,
   LiteratureCounts,
+  VariantEquivalence,
 } from "../types";
 import GenomeBrowser from "./GenomeBrowser";
 import InfoPanel from "./InfoPanel";
@@ -27,12 +28,14 @@ interface MainContentProps {
   paperData: Literature[];
   literatureCounts: LiteratureCounts[];
   variantData: Variant[];
+  equivalences?: VariantEquivalence[];
   gnomadVariants: Variant[];
   aouVariants: Variant[];
-  overlayMode: "none" | "clinvar" | "gnomad" | "depletion_group";
+  overlayMode: "none" | "clinvar" | "gnomad" | "depletion_group" | "equivalents";
   getCurrentOverlayData: () => OverlayData;
   cycleOverlayMode: () => void;
   hasSgeData: boolean;
+  hasEquivalents?: boolean;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -41,12 +44,14 @@ const MainContent: React.FC<MainContentProps> = ({
   paperData,
   literatureCounts,
   variantData,
+  equivalences = [],
   gnomadVariants,
   aouVariants,
   overlayMode,
   getCurrentOverlayData,
   cycleOverlayMode,
   hasSgeData,
+  hasEquivalents = false,
 }) => {
   const [hoveredNucleotide, setHoveredNucleotide] = useState<Nucleotide | null>(null);
   const [selectedNucleotide, setSelectedNucleotide] = useState<Nucleotide | null>(null);
@@ -171,6 +176,7 @@ const MainContent: React.FC<MainContentProps> = ({
               paperData={paperData}
               literatureCounts={literatureCounts}
               variantData={variantData}
+              equivalences={equivalences}
               hoveredNucleotide={getDisplayNucleotide()}
               overlayMode={overlayMode}
               onCycleOverlay={cycleOverlayMode}
@@ -206,6 +212,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   variantData={variantData}
                   gnomadVariants={gnomadVariants}
                   hasSgeData={hasSgeData}
+                  hasEquivalents={hasEquivalents}
                   onNucleotideHover={setHoveredNucleotide}
                   onNucleotideClick={handleNucleotideClick}
                   selectedNucleotide={selectedNucleotide}
@@ -264,6 +271,7 @@ const MainContent: React.FC<MainContentProps> = ({
             variantData={variantData}
             paperData={paperData}
             literatureCounts={literatureCounts}
+            equivalences={equivalences}
             currentGene={currentData.name}
           />
         </div>

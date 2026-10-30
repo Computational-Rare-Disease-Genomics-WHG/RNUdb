@@ -195,7 +195,31 @@ Constraint: `variant_id_1 < variant_id_2` (prevents duplicates)
 
 ---
 
-### 12. users
+### 12. variant_equivalences
+
+Stores cross-gene equivalent-variant relationships (Specific Recommendation 8 /
+PM5 informative variants). Links, e.g., a RNU4-2 variant to its exact equivalent
+in RNU4ATAC when both genes are disease-linked with the same mechanism.
+
+| Column                | Type    | Constraints                                    | Description                                          |
+| --------------------- | ------- | ---------------------------------------------- | ---------------------------------------------------- |
+| variant_id            | TEXT    | PRIMARY KEY (composite) / FK → variants.id     | Ordered pair: variant_id < equivalent_variant_id     |
+| equivalent_variant_id | TEXT    | PRIMARY KEY (composite) / FK → variants.id     | Variant in the paralog/analog gene                   |
+| relationship_type     | TEXT    | NOT NULL, CHECK (paralog, analog)              | Relationship kind                                    |
+| mechanism_match       | TEXT    | NOT NULL, CHECK (same, different, unknown)     | Underlying disease-mechanism match (PM5 gate)        |
+| functional_region     | TEXT    | NULLABLE                                       | e.g. "Sm binding site", "5' stem-loop"               |
+| evidence_direction    | TEXT    | NOT NULL, CHECK (pathogenic, benign, both)     | What the relationship supports                       |
+| status                | TEXT    | NULLABLE                                       | e.g. needs_review, reviewed                          |
+| notes                 | TEXT    | NULLABLE                                       | Source / anti-circularity basis                      |
+| literature_id         | TEXT    | NULLABLE / FK → literature.id                  | Source of the equivalence                            |
+
+Constraints: `variant_id < equivalent_variant_id`, plus CHECK constraints on
+`relationship_type`, `mechanism_match`, and `evidence_direction`. Writes are
+performed via the approval workflow (`pending_changes`), never directly.
+
+---
+
+### 13. users
 
 Stores user information and roles.
 
@@ -274,7 +298,7 @@ Stores curator changes awaiting admin approval.
 
 **Constraints:**
 
-- `entity_type`: gene, variant, literature, structure, bed_track
+- `entity_type`: gene, variant, literature, structure, bed_track, equivalence
 - `action`: create, update, delete
 - `status`: pending, approved, rejected, applied
 
@@ -294,6 +318,7 @@ genes
   └── bed_tracks (one-to-many)
 
 variant_links (self-referential via variants)
+variant_equivalences (cross-gene variant ↔ variant, via variants + literature)
 literature_counts (variant ↔ literature many-to-many)
 
 users → pending_changes (one-to-many)
@@ -325,6 +350,9 @@ For interactive API documentation, visit: `/api-docs` (when running locally) or 
 | `/api/literature`                      | GET     | List literature             |
 | `/api/literature/{literatureId}`       | GET     | Get literature details      |
 | `/api/literature-counts`               | GET     | Get literature counts       |
+| `/api/equivalences`                    | GET     | List all equivalences       |
+| `/api/genes/{geneId}/equivalences`     | GET     | Equivalences for a gene     |
+| `/api/equivalences/{variantId}`        | GET     | Equivalences for a variant  |
 | `/api/bed-tracks`                      | GET     | List all BED tracks         |
 
 ### Authenticated Endpoints

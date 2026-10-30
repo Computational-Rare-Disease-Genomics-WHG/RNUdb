@@ -9,7 +9,8 @@ import { getLiterature } from "../data/literature";
 import { getRNAStructure } from "../data/structures";
 import { getVariants } from "../data/variants";
 import { COLORBLIND_FRIENDLY_PALETTE } from "../lib/colors";
-import { getLiteratureCounts } from "../services/api";
+import { getEquivalentPairsForGene } from "../lib/equivalentEvidence";
+import { getGeneEquivalences, getLiteratureCounts } from "../services/api";
 import type {
   OverlayData,
   SnRNAGene,
@@ -17,6 +18,7 @@ import type {
   Literature,
   LiteratureCounts,
   RNAStructure,
+  VariantEquivalence,
 } from "../types";
 import { Button } from "@/components/ui/button";
 
@@ -29,11 +31,12 @@ const Gene: React.FC = () => {
   const [searchResults, setSearchResults] = useState<null | SnRNAGene[]>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [overlayMode, setOverlayMode] = useState<
-    "none" | "clinvar" | "gnomad" | "depletion_group"
+    "none" | "clinvar" | "gnomad" | "depletion_group" | "equivalents"
   >("clinvar");
   const [depletionGroupTrackData, setDepletionGroupTrackData] = useState({});
   const [clinvarOverlayData, setClinvarOverlayData] = useState({});
   const [gnomadOverlayData, setGnomadOverlayData] = useState({});
+  const [equivalentsOverlayData, setEquivalentsOverlayData] = useState({});
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +47,7 @@ const Gene: React.FC = () => {
   const [paperData, setPaperData] = useState<Literature[]>([]);
   const [literatureCounts, setLiteratureCounts] = useState<LiteratureCounts[]>([]);
   const [rnaStructureData, setRnaStructureData] = useState<RNAStructure | null>(null);
+  const [equivalences, setEquivalences] = useState<VariantEquivalence[]>([]);
 
   // Load data when selectedSnRNA changes
   useEffect(() => {
@@ -54,14 +58,21 @@ const Gene: React.FC = () => {
       setError(null);
 
       try {
-        const [gene, variants, literature, literatureCountsData, rnaStructure] =
-          await Promise.all([
-            getGeneData(selectedSnRNA),
-            getVariants(selectedSnRNA),
-            getLiterature(selectedSnRNA),
-            getLiteratureCounts(),
-            getRNAStructure(selectedSnRNA),
-          ]);
+        const [
+          gene,
+          variants,
+          literature,
+          literatureCountsData,
+          rnaStructure,
+          equivalentData,
+        ] = await Promise.all([
+          getGeneData(selectedSnRNA),
+          getVariants(selectedSnRNA),
+          getLiterature(selectedSnRNA),
+          getLiteratureCounts(),
+          getRNAStructure(selectedSnRNA),
+          getGeneEquivalences(selectedSnRNA).catch(() => []),
+        ]);
 
         if (!gene) {
           throw new Error(`Gene ${selectedSnRNA} not found`);
@@ -72,6 +83,7 @@ const Gene: React.FC = () => {
         setPaperData(literature);
         setLiteratureCounts(literatureCountsData);
         setRnaStructureData(rnaStructure);
+        setEquivalences(equivalentData);
       } catch (err) {
         console.error("Error loading gene data:", err);
         setError(err instanceof Error ? err.message : "Failed to load gene data");
@@ -198,6 +210,39 @@ const Gene: React.FC = () => {
     setGnomadOverlayData(gnomadData);
   }, [variantData, currentData]);
 
+  // Build overlay data highlighting nucleotides with equivalent variants in
+  // paralog/analog genes (Rec 8 / PM5 evidence).
+  useEffect(() => {
+    if (!currentData) {
+      setEquivalentsOverlayData({});
+      return;
+    }
+    const pairs =
+      equivalences.length > 0
+        ? getEquivalentPairsForGene(equivalences, currentData.name)
+        : [];
+    const data: OverlayData = {};
+    for (const pair of pairs) {
+      const v = pair.localVariant;
+      let nucleotidePos: number | null = null;
+      if (v.nucleotidePosition !== undefined && v.nucleotidePosition !== null) {
+        nucleotidePos = v.nucleotidePosition;
+      } else if (v.position) {
+        nucleotidePos =
+          currentData.strand === "-"
+            ? currentData.end - v.position + 1
+            : v.position - currentData.start + 1;
+      }
+      if (nucleotidePos === null) continue;
+      data[nucleotidePos] = {
+        value: 1,
+        variantId: v.id,
+        color: COLORBLIND_FRIENDLY_PALETTE.EQUIVALENTS,
+      };
+    }
+    setEquivalentsOverlayData(data);
+  }, [equivalences, currentData]);
+
   const cycleOverlayMode = () => {
     setOverlayMode((prev) => {
       switch (prev) {
@@ -206,6 +251,8 @@ const Gene: React.FC = () => {
         case "clinvar":
           return "gnomad";
         case "gnomad":
+          return "equivalents";
+        case "equivalents":
           return hasSgeData ? "depletion_group" : "none";
         case "depletion_group":
           return "none";
@@ -223,6 +270,8 @@ const Gene: React.FC = () => {
         return gnomadOverlayData;
       case "depletion_group":
         return depletionGroupTrackData;
+      case "equivalents":
+        return equivalentsOverlayData;
       default:
         return {};
     }
@@ -245,12 +294,19 @@ const Gene: React.FC = () => {
   const gnomadVariants = getGnomadVariants();
   const aouVariants = getAllOfUsVariants();
   const hasSgeData = variantData.some((v) => v.depletion_group != null);
+  const hasEquivalents = equivalences.length > 0;
 
   useEffect(() => {
     if (!hasSgeData && overlayMode === "depletion_group") {
       setOverlayMode("clinvar");
     }
   }, [hasSgeData, overlayMode]);
+
+  useEffect(() => {
+    if (!hasEquivalents && overlayMode === "equivalents") {
+      setOverlayMode("clinvar");
+    }
+  }, [hasEquivalents, overlayMode]);
 
   const handleGeneSelect = (geneName: string) => {
     navigate(`/gene/${geneName}`);
@@ -311,11 +367,13 @@ const Gene: React.FC = () => {
             paperData={paperData}
             literatureCounts={literatureCounts}
             variantData={variantData}
+            equivalences={equivalences}
             gnomadVariants={gnomadVariants}
             overlayMode={overlayMode}
             getCurrentOverlayData={getCurrentOverlayData}
             cycleOverlayMode={cycleOverlayMode}
             hasSgeData={hasSgeData}
+            hasEquivalents={hasEquivalents}
             aouVariants={aouVariants}
           />
         </div>

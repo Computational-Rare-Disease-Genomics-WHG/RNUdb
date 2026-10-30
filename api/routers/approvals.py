@@ -25,7 +25,9 @@ router = APIRouter(prefix="/approvals")
 
 
 class CreateChangeRequest(SQLModel):
-    entity_type: Literal["variant", "gene", "literature", "structure", "bed_track"]
+    entity_type: Literal[
+        "variant", "gene", "literature", "structure", "bed_track", "equivalence"
+    ]
     entity_id: str | None = None
     gene_id: str
     action: Literal["create", "update", "delete"]
@@ -71,6 +73,15 @@ _ALLOWED_COLUMNS = {
         "description",
     },
     "literature": {"title", "authors", "journal", "year", "doi"},
+    "equivalence": {
+        "relationship_type",
+        "mechanism_match",
+        "functional_region",
+        "evidence_direction",
+        "status",
+        "notes",
+        "literature_id",
+    },
 }
 
 _ENTITY_TABLE_MAP = {
@@ -79,7 +90,13 @@ _ENTITY_TABLE_MAP = {
     "literature": "literature",
     "structure": "rna_structures",
     "bed_track": "bed_tracks",
+    "equivalence": "variant_equivalences",
 }
+
+
+def _normalize_equivalence_pair(v1: str, v2: str) -> tuple[str, str]:
+    """Return the ordered pair (variant_id < equivalent_variant_id)."""
+    return (v1, v2) if v1 < v2 else (v2, v1)
 
 
 def _row_to_dict(row) -> dict:
@@ -128,7 +145,7 @@ async def list_pending_changes(
     status: str | None = Query(None, pattern="^(pending|approved|rejected)$"),
     gene_id: str | None = Query(None),
     entity_type: str | None = Query(
-        None, pattern="^(gene|variant|literature|structure|bed_track)$"
+        None, pattern="^(gene|variant|literature|structure|bed_track|equivalence)$"
     ),
     user: dict = Depends(require_curator),
     db: Session = Depends(get_db),
@@ -241,6 +258,78 @@ async def apply_approved_change(
         else json.loads(change.payload)
     )
     entity_id = change.entity_id
+
+    # Validate equivalence payloads before touching the DB so bad requests
+    # surface as 400 (the try/except below would otherwise turn them into 500s).
+    if entity_type == "equivalence" and action != "delete":
+        if not payload.get("variant_id") or not payload.get("equivalent_variant_id"):
+            raise HTTPException(
+                status_code=400,
+                detail="Equivalence requires variant_id and equivalent_variant_id",
+            )
+        v1 = str(payload["variant_id"])
+        v2 = str(payload["equivalent_variant_id"])
+        if v1 == v2:
+            raise HTTPException(
+                status_code=400, detail="A variant cannot be equivalent to itself"
+            )
+        genes = {}
+        for vid in (v1, v2):
+            row = db.execute(
+                text("SELECT geneId FROM variants WHERE id = :vid"), {"vid": vid}
+            ).fetchone()
+            if not row:
+                raise HTTPException(
+                    status_code=400, detail=f"Variant {vid} does not exist"
+                )
+            genes[vid] = row._mapping["geneId"]
+        if genes[v1] == genes[v2]:
+            raise HTTPException(
+                status_code=400,
+                detail="Equivalent variants must belong to different genes",
+            )
+        if action == "create":
+            ov1, ov2 = _normalize_equivalence_pair(v1, v2)
+            dup = db.execute(
+                text(
+                    """
+                    SELECT 1 FROM variant_equivalences
+                    WHERE variant_id = :v1 AND equivalent_variant_id = :v2
+                    """
+                ),
+                {"v1": ov1, "v2": ov2},
+            ).fetchone()
+            if dup:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Equivalence {ov1}|{ov2} already exists",
+                )
+
+    if entity_type == "equivalence" and action in ("update", "delete"):
+        if payload.get("variant_id") and payload.get("equivalent_variant_id"):
+            ev1, ev2 = _normalize_equivalence_pair(
+                str(payload["variant_id"]), str(payload["equivalent_variant_id"])
+            )
+        elif entity_id and "|" in entity_id:
+            ev1, ev2 = _normalize_equivalence_pair(*entity_id.split("|", 1))
+        else:
+            raise HTTPException(
+                status_code=400, detail="Equivalence pair not specified"
+            )
+        existing = db.execute(
+            text(
+                """
+                SELECT 1 FROM variant_equivalences
+                WHERE variant_id = :v1 AND equivalent_variant_id = :v2
+                """
+            ),
+            {"v1": ev1, "v2": ev2},
+        ).fetchone()
+        if not existing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Equivalence {ev1}|{ev2} does not exist",
+            )
 
     try:
         if entity_type == "variant":
@@ -482,6 +571,90 @@ async def apply_approved_change(
                 db.execute(
                     text("DELETE FROM bed_tracks WHERE id = :entity_id"),
                     {"entity_id": entity_id},
+                )
+
+        elif entity_type == "equivalence":
+            if action == "create":
+                v1 = str(payload["variant_id"])
+                v2 = str(payload["equivalent_variant_id"])
+                v1, v2 = _normalize_equivalence_pair(v1, v2)
+                dup = db.execute(
+                    text(
+                        """
+                        SELECT 1 FROM variant_equivalences
+                        WHERE variant_id = :v1 AND equivalent_variant_id = :v2
+                        """
+                    ),
+                    {"v1": v1, "v2": v2},
+                ).fetchone()
+                if dup:
+                    raise ValueError(f"Equivalence {v1}|{v2} already exists")
+                allowed = _ALLOWED_COLUMNS.get("equivalence", set())
+                cols = ["variant_id", "equivalent_variant_id"]
+                params: dict[str, Any] = {
+                    "variant_id": v1,
+                    "equivalent_variant_id": v2,
+                }
+                for key, value in payload.items():
+                    if key in allowed and value is not None:
+                        cols.append(key)
+                        params[key] = value
+                placeholders = [f":{c}" for c in cols]
+                db.execute(
+                    text(
+                        f"""
+                        INSERT INTO variant_equivalences ({", ".join(cols)})
+                        VALUES ({", ".join(placeholders)})
+                        """
+                    ),  # noqa: S608
+                    params,
+                )
+            elif action == "update":
+                allowed = _ALLOWED_COLUMNS.get("equivalence", set())
+                if payload.get("variant_id") and payload.get("equivalent_variant_id"):
+                    v1, v2 = _normalize_equivalence_pair(
+                        str(payload["variant_id"]),
+                        str(payload["equivalent_variant_id"]),
+                    )
+                elif entity_id and "|" in entity_id:
+                    v1, v2 = _normalize_equivalence_pair(*entity_id.split("|", 1))
+                else:
+                    raise ValueError("Equivalence pair not specified for update")
+                set_clauses = []
+                params: dict[str, Any] = {"v1": v1, "v2": v2}
+                for key, value in payload.items():
+                    if key in allowed and value is not None:
+                        set_clauses.append(f"{key} = :{key}")
+                        params[key] = value
+                if set_clauses:
+                    db.execute(
+                        text(
+                            f"""
+                            UPDATE variant_equivalences
+                            SET {", ".join(set_clauses)}
+                            WHERE variant_id = :v1 AND equivalent_variant_id = :v2
+                            """
+                        ),  # noqa: S608
+                        params,
+                    )
+            elif action == "delete":
+                if payload.get("variant_id") and payload.get("equivalent_variant_id"):
+                    v1, v2 = _normalize_equivalence_pair(
+                        str(payload["variant_id"]),
+                        str(payload["equivalent_variant_id"]),
+                    )
+                elif entity_id and "|" in entity_id:
+                    v1, v2 = _normalize_equivalence_pair(*entity_id.split("|", 1))
+                else:
+                    raise ValueError("Equivalence pair not specified for delete")
+                db.execute(
+                    text(
+                        """
+                        DELETE FROM variant_equivalences
+                        WHERE variant_id = :v1 AND equivalent_variant_id = :v2
+                        """
+                    ),
+                    {"v1": v1, "v2": v2},
                 )
 
         db.commit()
