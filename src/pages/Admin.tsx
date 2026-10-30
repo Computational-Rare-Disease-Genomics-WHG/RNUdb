@@ -138,6 +138,31 @@ const Admin: React.FC = () => {
     await loadData();
   };
 
+  const handleApplyAllApproved = async () => {
+    try {
+      const res = await fetch("/api/approvals/apply-batch", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all_approved: true }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Failed to apply approved changes");
+      }
+      const data = await res.json();
+      alert(
+        `Applied ${data.applied} approved change(s)${
+          data.failed > 0 ? `, ${data.failed} failed` : ""
+        }`,
+      );
+      await loadData();
+    } catch (error) {
+      console.error("Error applying approved changes:", error);
+      alert(error instanceof Error ? error.message : "Failed to apply changes");
+    }
+  };
+
   const handleTestSlack = async () => {
     setTestSlackLoading(true);
     setTestSlackResult(null);
@@ -279,9 +304,22 @@ const Admin: React.FC = () => {
           <TabsContent value="approvals">
             <Card className="bg-white border border-slate-200 shadow-sm">
               <CardHeader className="border-b border-slate-100 pb-4">
-                <CardTitle className="flex items-center gap-2 text-slate-900">
-                  <Clock className="h-5 w-5 text-teal-600" />
-                  Curator Change Requests
+                <CardTitle className="flex items-center justify-between gap-2 text-slate-900">
+                  <span className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-teal-600" />
+                    Curator Change Requests
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleApplyAllApproved}
+                    disabled={approvalLoading}
+                    className="border-teal-200 text-teal-700 hover:bg-teal-50"
+                    title="Apply every change that has been approved (but not yet applied)"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Apply all approved
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4">

@@ -16,6 +16,7 @@ import {
   DnaIcon,
   ChevronRight,
   Pencil,
+  Link as LinkIcon,
 } from "lucide-react";
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +25,8 @@ import "@/components/GenomeBrowser/GenomeBrowser.css";
 import BEDTrackImportWizard from "../components/Curate/BEDTrackImportWizard";
 import BEDTrackViewer from "../components/Curate/BEDTrackViewer";
 import CuratorVariantTrack from "../components/Curate/CuratorVariantTrack";
+import EquivalenceForm from "../components/Curate/EquivalenceForm";
+import EquivalenceImportWizard from "../components/Curate/EquivalenceImportWizard";
 import GeneForm from "../components/Curate/GeneForm";
 
 import LiteratureForm from "../components/Curate/LiteratureForm";
@@ -44,6 +47,7 @@ import {
   getGeneStructure,
   getBedTracks,
   getVariantClassifications,
+  getGeneEquivalences,
 } from "../services/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,6 +79,7 @@ const Curate: React.FC = () => {
   const [structures, setStructures] = useState<any[]>([]);
   const [bedTracks, setBedTracks] = useState<any[]>([]);
   const [variantAssociations, setVariantAssociations] = useState<any[]>([]);
+  const [equivalences, setEquivalences] = useState<any[]>([]);
 
   // Transform flat BED API rows into nested tracks for BEDTrackViewer
   const nestedBedTracks = React.useMemo(() => {
@@ -115,6 +120,11 @@ const Curate: React.FC = () => {
   const [showVariantAssociationForm, setShowVariantAssociationForm] = useState(false);
   const [showVariantAssociationImport, setShowVariantAssociationImport] =
     useState(false);
+  const [showEquivalenceForm, setShowEquivalenceForm] = useState(false);
+  const [showEquivalenceImport, setShowEquivalenceImport] = useState(false);
+  const [equivalenceChangeStatus, setEquivalenceChangeStatus] = useState<
+    Record<string, { status: string; id: number }>
+  >({});
   const [editingGene, setEditingGene] = useState<any>(null);
   const [editingVariant, setEditingVariant] = useState<any>(null);
   const [editingLiterature, setEditingLiterature] = useState<any>(null);
@@ -123,7 +133,7 @@ const Curate: React.FC = () => {
   const regionViewerRef = useRef<HTMLDivElement>(null);
   const tabPanelRef = useRef<HTMLDivElement>(null);
   const [regionViewerWidth, setRegionViewerWidth] = useState(1100);
-  const { submitChange } = useApprovals();
+  const { submitChange, listChanges } = useApprovals();
 
   useLayoutEffect(() => {
     if (!regionViewerRef.current) return;
@@ -153,6 +163,7 @@ const Curate: React.FC = () => {
   useEffect(() => {
     if (selectedGene) {
       loadGeneData(selectedGene.id);
+      loadEquivalenceChangeStatus(selectedGene.id);
     }
   }, [selectedGene]);
 
@@ -186,18 +197,20 @@ const Curate: React.FC = () => {
   const loadGeneData = async (geneId: string) => {
     setLoading(true);
     try {
-      const [variants, lit, struct, bedRes, vaRes] = await Promise.all([
+      const [variants, lit, struct, bedRes, vaRes, eqRes] = await Promise.all([
         getGeneVariants(geneId).catch(() => []),
         getGeneLiterature(geneId).catch(() => []),
         getGeneStructure(geneId).catch(() => null),
         getBedTracks(geneId).catch(() => null),
         getVariantClassifications(geneId).catch(() => null),
+        getGeneEquivalences(geneId).catch(() => []),
       ]);
       setVariants(variants);
       setLiterature(lit);
       setStructures(struct ? (Array.isArray(struct) ? struct : [struct]) : []);
       setBedTracks(Array.isArray(bedRes) ? bedRes : []);
       setVariantAssociations(Array.isArray(vaRes) ? vaRes : []);
+      setEquivalences(Array.isArray(eqRes) ? eqRes : []);
     } catch {
       console.error("Error loading gene data");
     } finally {
@@ -225,6 +238,8 @@ const Curate: React.FC = () => {
     setLiterature([]);
     setStructures([]);
     setBedTracks([]);
+    setVariantAssociations([]);
+    setEquivalences([]);
   };
 
   const handleDeleteVariants = async () => {
@@ -486,6 +501,106 @@ const Curate: React.FC = () => {
     } catch {
       alert("Network error");
     }
+  };
+
+  const pairKey = (v1: string, v2: string) => (v1 < v2 ? `${v1}|${v2}` : `${v2}|${v1}`);
+
+  const loadEquivalenceChangeStatus = async (geneId: string) => {
+    try {
+      const changes = await listChanges({
+        gene_id: geneId,
+        entity_type: "equivalence",
+      });
+      const map: Record<string, { status: string; id: number }> = {};
+      for (const c of changes) {
+        const payload = (c.payload || {}) as Record<string, unknown>;
+        const v1 = payload.variant_id ? String(payload.variant_id) : "";
+        const v2 = payload.equivalent_variant_id
+          ? String(payload.equivalent_variant_id)
+          : "";
+        if (v1 && v2) {
+          map[pairKey(v1, v2)] = { status: c.status, id: c.id };
+        } else if (c.entity_id && c.entity_id.includes("|")) {
+          const [a, b] = c.entity_id.split("|");
+          map[pairKey(a, b)] = { status: c.status, id: c.id };
+        }
+      }
+      setEquivalenceChangeStatus(map);
+    } catch {
+      setEquivalenceChangeStatus({});
+    }
+  };
+
+  const handleCreateEquivalence = async (data: Record<string, unknown>) => {
+    if (!selectedGene) return;
+    const result = await submitChange("equivalence", selectedGene.id, "create", {
+      variant_id: data.variant_id,
+      equivalent_variant_id: data.equivalent_variant_id,
+      relationship_type: data.relationship_type || "analog",
+      status: data.status || "needs_review",
+      notes: data.notes || null,
+      literature_id: data.literature_id || null,
+    });
+    if (result) {
+      setShowEquivalenceForm(false);
+      alert("Equivalence submitted for approval");
+      if (selectedGene) await loadEquivalenceChangeStatus(selectedGene.id);
+    } else {
+      alert("Failed to submit equivalence for approval");
+    }
+  };
+
+  const handleDeleteEquivalence = async (eq: any) => {
+    const pair =
+      eq.variant_id < eq.equivalent_variant_id
+        ? `${eq.variant_id}|${eq.equivalent_variant_id}`
+        : `${eq.equivalent_variant_id}|${eq.variant_id}`;
+    if (!confirm("Delete this equivalence? This cannot be undone.")) return;
+    const result = await submitChange(
+      "equivalence",
+      selectedGene?.id || "",
+      "delete",
+      {
+        variant_id: eq.variant_id,
+        equivalent_variant_id: eq.equivalent_variant_id,
+      },
+      pair,
+    );
+    if (result) {
+      setEquivalences(
+        equivalences.filter(
+          (e) =>
+            !(
+              e.variant_id === eq.variant_id &&
+              e.equivalent_variant_id === eq.equivalent_variant_id
+            ),
+        ),
+      );
+      alert("Equivalence delete submitted for approval");
+      if (selectedGene?.id) await loadEquivalenceChangeStatus(selectedGene.id);
+    } else {
+      alert("Failed to submit equivalence delete");
+    }
+  };
+
+  const handleImportEquivalences = async (rows: Record<string, unknown>[]) => {
+    if (!selectedGene) return;
+    let ok = 0;
+    for (const row of rows) {
+      const result = await submitChange("equivalence", selectedGene.id, "create", {
+        variant_id: row.variant_id,
+        equivalent_variant_id: row.equivalent_variant_id,
+        relationship_type: row.relationship_type || "analog",
+        status: row.status || "needs_review",
+        notes: row.notes || null,
+        literature_id: row.literature_id || null,
+      });
+      if (result) ok += 1;
+    }
+    if (ok > 0) alert(`${ok} equivalence(s) submitted for approval`);
+    setShowEquivalenceImport(false);
+    await loadGeneData(selectedGene.id);
+    await loadEquivalenceChangeStatus(selectedGene.id);
   };
 
   const getClinicalSigColor = (sig: string) => {
@@ -786,6 +901,19 @@ const Curate: React.FC = () => {
                       className="ml-2 bg-slate-100 text-slate-600"
                     >
                       {variantAssociations.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="equivalences"
+                    className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
+                  >
+                    <LinkIcon className="h-4 w-4 mr-2" />
+                    Equivalences
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-slate-100 text-slate-600"
+                    >
+                      {equivalences.length}
                     </Badge>
                   </TabsTrigger>
                 </TabsList>
@@ -1351,6 +1479,165 @@ const Curate: React.FC = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
+
+                {/* Equivalences Tab */}
+                <TabsContent value="equivalences" className="mt-0">
+                  <Card className="bg-white border border-slate-200 shadow-sm">
+                    <div className="p-6 border-b border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            Equivalent Variants
+                          </h3>
+                          <p className="text-sm text-slate-500 mt-0.5">
+                            {equivalences.length} equivalence(s) — cross-gene
+                            informative variants (PM5 / Rec 8)
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowEquivalenceForm(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowEquivalenceImport(true)}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import CSV
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <CardContent className="p-6">
+                      {loading ? (
+                        <Skeleton className="h-24 w-full" />
+                      ) : equivalences.length === 0 ? (
+                        <div className="text-center py-14">
+                          <div className="p-4 bg-slate-50 rounded-2xl w-fit mx-auto mb-4">
+                            <LinkIcon className="h-8 w-8 text-slate-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            No equivalent variants yet
+                          </h3>
+                          <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                            Link a variant from this gene to an exact-equivalent variant
+                            in a disease-linked paralog/analog gene. Equivalence records
+                            go through the approval workflow.
+                          </p>
+                          <Button
+                            onClick={() => setShowEquivalenceForm(true)}
+                            className="bg-teal-600 hover:bg-teal-700 text-white"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Equivalence
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {equivalences.map((eq) => {
+                            const local = eq.variant
+                              ? eq.variant.geneId === selectedGene?.id
+                                ? eq.variant
+                                : eq.equivalent_variant
+                              : null;
+                            const other = eq.variant
+                              ? eq.variant.geneId === selectedGene?.id
+                                ? eq.equivalent_variant
+                                : eq.variant
+                              : null;
+                            const changeInfo =
+                              equivalenceChangeStatus[
+                                pairKey(eq.variant_id, eq.equivalent_variant_id)
+                              ];
+                            const inFlight =
+                              !!changeInfo && changeInfo.status !== "applied";
+                            return (
+                              <div
+                                key={`${eq.variant_id}-${eq.equivalent_variant_id}`}
+                                className="p-4 bg-white border-2 border-slate-100 rounded-xl hover:border-violet-200 hover:shadow-sm transition-all group relative"
+                              >
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-3 flex-wrap mb-1">
+                                      <span className="font-semibold text-slate-900 font-mono text-sm">
+                                        {local?.hgvs || eq.variant_id}
+                                      </span>
+                                      <LinkIcon className="h-3.5 w-3.5 text-violet-500" />
+                                      <span className="font-semibold text-slate-900 font-mono text-sm">
+                                        {other?.geneId}{" "}
+                                        {other?.hgvs ||
+                                          `${other?.ref}>${other?.alt}` ||
+                                          eq.equivalent_variant_id}
+                                      </span>
+                                      {other?.clinical_significance && (
+                                        <span
+                                          className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getClinicalSigColor(
+                                            other.clinical_significance,
+                                          )}`}
+                                        >
+                                          {other.clinical_significance}
+                                        </span>
+                                      )}
+                                      {changeInfo && (
+                                        <span
+                                          className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                                            changeInfo.status === "applied"
+                                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                              : changeInfo.status === "approved"
+                                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                : "bg-amber-50 text-amber-700 border-amber-200"
+                                          }`}
+                                          title={`${changeInfo.status} (change #${changeInfo.id})`}
+                                        >
+                                          {changeInfo.status}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                                      <span>type: {eq.relationship_type}</span>
+                                      {eq.status && <span>status: {eq.status}</span>}
+                                      {eq.literature_id && (
+                                        <span
+                                          className="font-mono text-xs"
+                                          title="Source paper of the equivalence"
+                                        >
+                                          lit: {eq.literature_id}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {eq.notes && (
+                                      <p className="text-xs text-slate-400 mt-1">
+                                        {eq.notes}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <button
+                                    onClick={() => handleDeleteEquivalence(eq)}
+                                    disabled={inFlight}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:pointer-events-none"
+                                    title={
+                                      inFlight
+                                        ? `Change #${changeInfo.id} is ${changeInfo.status} — delete already in flight`
+                                        : "Delete equivalence"
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
               </Tabs>
             </div>
           </>
@@ -1532,6 +1819,32 @@ const Curate: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Equivalence Create Modal */}
+      <Dialog open={showEquivalenceForm} onOpenChange={setShowEquivalenceForm}>
+        <DialogContent className="sm:max-w-[700px]">
+          <div className="bg-gradient-to-r from-violet-600 via-violet-700 to-violet-800 px-8 py-6 rounded-t-xl">
+            <DialogTitle className="text-xl font-bold text-white">
+              Add Equivalent Variant
+            </DialogTitle>
+          </div>
+          <div className="px-8 pb-8 pt-4">
+            <EquivalenceForm
+              localGeneId={selectedGene?.id || ""}
+              localVariants={variants}
+              onSubmit={handleCreateEquivalence}
+              onCancel={() => setShowEquivalenceForm(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Equivalence Import Wizard */}
+      <EquivalenceImportWizard
+        open={showEquivalenceImport}
+        onClose={() => setShowEquivalenceImport(false)}
+        onImport={handleImportEquivalences}
+      />
 
       <Footer />
     </div>

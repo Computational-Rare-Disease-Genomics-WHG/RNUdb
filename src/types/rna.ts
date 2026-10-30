@@ -49,6 +49,24 @@ export interface Variant {
   linkedVariantIds?: string[]; // IDs of linked biallelic variants
 }
 
+// ---------------------------------------------------------------------------
+// Variant Equivalences (Recommendation 8 / PM5, cross-gene informative variants)
+// ---------------------------------------------------------------------------
+
+export type EquivalenceRelationshipType = "paralog" | "analog";
+
+export interface VariantEquivalence {
+  variant_id: string; // Ordered pair: variant_id < equivalent_variant_id
+  equivalent_variant_id: string;
+  relationship_type: EquivalenceRelationshipType;
+  status?: string | null;
+  notes?: string | null;
+  literature_id?: string | null;
+  // Flattened variant details (filled by the API)
+  variant?: Variant | null;
+  equivalent_variant?: Variant | null;
+}
+
 export interface Literature {
   id: string; // Literature ID (primary key)
   title: string; // Paper title

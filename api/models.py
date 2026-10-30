@@ -378,6 +378,70 @@ class VariantLink(SQLModel, table=True):
 
 
 # ---------------------------------------------------------------------------
+# VariantEquivalence model (table only)
+# ---------------------------------------------------------------------------
+
+
+class VariantEquivalenceBase(SQLModel):
+    """Shared VariantEquivalence fields.
+
+    Encodes Specific Recommendation 8 of the snRNA variant-classification
+    guidance: exact-equivalent variants across disease-linked paralogs/analogs
+    can provide PM5 / informative-variant evidence. Rows are stored as an
+    ordered pair (variant_id < equivalent_variant_id) so each relationship
+    exists once; both genes can inform each other.
+    """
+
+    variant_id: str
+    equivalent_variant_id: str
+    relationship_type: str
+    status: str | None = None
+    notes: str | None = None
+    literature_id: str | None = None
+
+
+class VariantEquivalence(VariantEquivalenceBase, table=True):
+    """Cross-gene equivalent variant relationship table."""
+
+    __tablename__ = "variant_equivalences"
+    __table_args__ = (
+        PrimaryKeyConstraint("variant_id", "equivalent_variant_id"),
+        CheckConstraint(
+            "variant_id < equivalent_variant_id", name="check_ordered_pair"
+        ),
+        CheckConstraint(
+            "relationship_type IN ('paralog', 'analog')",
+            name="check_relationship_type",
+        ),
+    )
+
+    variant_id: str = Field(primary_key=True, foreign_key="variants.id")
+    equivalent_variant_id: str = Field(primary_key=True, foreign_key="variants.id")
+    relationship_type: str = Field(default="analog")
+    literature_id: str | None = Field(default=None, foreign_key="literature.id")
+
+
+class VariantEquivalenceCreate(VariantEquivalenceBase):
+    """VariantEquivalence creation input."""
+
+
+class VariantEquivalenceUpdate(SQLModel):
+    """VariantEquivalence update input (all optional)."""
+
+    relationship_type: str | None = None
+    status: str | None = None
+    notes: str | None = None
+    literature_id: str | None = None
+
+
+class VariantEquivalencePublic(VariantEquivalenceBase):
+    """VariantEquivalence public output with flattened variant details."""
+
+    variant: dict | None = None
+    equivalent_variant: dict | None = None
+
+
+# ---------------------------------------------------------------------------
 # User models
 # ---------------------------------------------------------------------------
 
@@ -546,7 +610,7 @@ class PendingChange(PendingChangeBase, table=True):
     __table_args__ = (
         CheckConstraint(
             "entity_type IN ('gene', 'variant', 'literature', 'structure', "
-            "'bed_track')",
+            "'bed_track', 'equivalence')",
             name="check_entity_type",
         ),
         CheckConstraint(
@@ -738,6 +802,12 @@ __all__ = [
     "StructuralFeature",
     # VariantLink
     "VariantLink",
+    # VariantEquivalence
+    "VariantEquivalence",
+    "VariantEquivalenceBase",
+    "VariantEquivalenceCreate",
+    "VariantEquivalenceUpdate",
+    "VariantEquivalencePublic",
     # User models
     "User",
     "UserCreate",

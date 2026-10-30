@@ -1,0 +1,16 @@
+variant_id,equivalent_variant_id,relationship_type,status,notes,literature_id
+chr12-120291768-G-A,chr2-121531001-T-G,analog,needs_review,Derived: RNU4-2 n.136 <-> RNU4atac n.122 (RNU4-2 n.136C>T / RNU4atac n.122T>G),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291770-A-C,chr2-121530999-T-TA,analog,needs_review,Derived: RNU4-2 n.134 <-> RNU4atac n.120 (RNU4-2 n.134T>G / RNU4atac n.120_121insA),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291772-A-C,chr2-121530996-A-G,analog,needs_review,Derived: RNU4-2 n.132 <-> RNU4atac n.117 (RNU4-2 n.132T>G / RNU4atac n.117A>G),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291787-G-A,chr2-121530980-G-A,analog,needs_review,Derived: RNU4-2 n.117 <-> RNU4atac n.101 (RNU4-2 n.117C>T / RNU4atac n.101G>A),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291843-T-A,chr2-121530930-G-GG,analog,needs_review,Derived: RNU4-2 n.61 <-> RNU4atac n.52 (RNU4-2 n.61A>T / RNU4atac n.52dup),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291850-T-A,chr2-121530926-T-G,analog,needs_review,Derived: RNU4-2 n.54 <-> RNU4atac n.47 (RNU4-2 n.54A>T / RNU4atac n.47T>G),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291859-C-G,chr2-121530919-C-T,analog,needs_review,Derived: RNU4-2 n.45 <-> RNU4atac n.40 (RNU4-2 n.45G>C / RNU4atac n.40C>T),10.1101/2025.08.13.25333306
+chr12-120291861-C-A,chr2-121530917-A-T,analog,needs_review,Derived: RNU4-2 n.43 <-> RNU4atac n.38 (RNU4-2 n.43G>T / RNU4atac n.38A>T),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291872-C-T,chr2-121530916-G-A,analog,needs_review,Curated anchor: guidance worked example — RNU4ATAC n.37G>A equivalent to RNU4-2 n.32G>A (recessive NDD),10.1101/2025.08.13.25333306
+chr12-120291873-A-C,chr2-121530906-A-C,analog,needs_review,Derived: RNU4-2 n.31 <-> RNU4atac n.27 (RNU4-2 n.31T>G / RNU4atac n.27A>C),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291880-A-C,chr2-121530897-G-A,analog,needs_review,Derived: RNU4-2 n.24 <-> RNU4atac n.18 (RNU4-2 n.24T>G / RNU4atac n.18G>A),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291881-C-A,chr2-121530896-G-C,analog,needs_review,Derived: RNU4-2 n.23 <-> RNU4atac n.17 (RNU4-2 n.23G>T / RNU4atac n.17G>C),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291882-G-A,chr2-121530895-G-C,analog,needs_review,Derived: RNU4-2 n.22 <-> RNU4atac n.16 (RNU4-2 n.22C>T / RNU4atac n.16G>C),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291897-C-G,chr2-121530885-T-C,analog,needs_review,Derived: RNU4-2 n.7 <-> RNU4atac n.6 (RNU4-2 n.7G>C / RNU4atac n.6T>C),10.1101/2025.08.13.25333306
+chr12-120291898-A-C,chr2-121530884-A-G,analog,needs_review,Derived: RNU4-2 n.6 <-> RNU4atac n.5 (RNU4-2 n.6T>G / RNU4atac n.5A>G),https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
