@@ -851,7 +851,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                 {linkedVariants.length > 0 && (
                                   <div>
                                     <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                      Linked Variants ({linkedVariants.length})
+                                      Compound-Het Partners ({linkedVariants.length})
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                       <button

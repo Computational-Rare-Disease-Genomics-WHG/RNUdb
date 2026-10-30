@@ -288,52 +288,58 @@ def main() -> None:
             "literature_id": literature_id,
         }
 
-    # Direction 1: RNU4-2 recessive P/LP variants are evidence for the
-    # equivalent RNU4atac variant.
-    for pos_a, variants_at in variants_by_gene.get(gene_a, {}).items():
+    # One equivalence row per ALIGNED POSITION pair, linking an RNU4-2 variant
+    # (evidence side, shown via the RNU4-2 page) to the equivalent RNU4atac
+    # variant. A pair is emitted when EITHER gene has a recessive P/LP variant
+    # at that position. Because each gene can have multiple variant rows at the
+    # same position (one per alternate allele), we collapse each side to one
+    # representative row so the UI shows a single equivalent per position —
+    # no allele fan-out.
+
+    def representative(rows_at_pos):
+        """Prefer a recessive P/LP row; else the first (sorted) row."""
+        if not rows_at_pos:
+            return None
+        for r in sorted(rows_at_pos, key=lambda x: x["id"]):
+            if is_recessive_pathogenic(r["id"], classifications, r["geneId"]):
+                return r
+        return min(rows_at_pos, key=lambda x: x["id"])
+
+    for pos_a, variants_a in variants_by_gene.get(gene_a, {}).items():
         if pos_a is None or pos_a in DOMINANT_RNU42_REGION:
             continue
         pos_b = pos_map.get(pos_a)
         if pos_b is None:
             continue
-        for v in variants_at:
-            if not is_recessive_pathogenic(v["id"], classifications, gene_a):
-                continue
-            for other in variants_by_gene.get(gene_b, {}).get(pos_b, []):
-                emit(
-                    v["id"],
-                    other["id"],
-                    region_for(pos_a),
-                    (
-                        f"Derived: {gene_a} {v['hgvs'] or v['id']} (P/LP rep, "
-                        f"{gene_a} n.{pos_a} -> {gene_b} n.{pos_b})"
-                    ),
-                    best_literature_for(v["id"], classifications),
-                )
+        variants_b = variants_by_gene.get(gene_b, {}).get(pos_b, [])
+        if not variants_a or not variants_b:
+            continue
+        has_evidence = any(
+            is_recessive_pathogenic(v["id"], classifications, gene_a)
+            for v in variants_a
+        ) or any(
+            is_recessive_pathogenic(v["id"], classifications, gene_b)
+            for v in variants_b
+        )
+        if not has_evidence:
+            continue
 
-    # Direction 2: RNU4atac P/LP variants are evidence for the equivalent
-    # RNU4-2 variant at the reverse-mapped position.
-    reverse_map = {pb: pa for pa, pb in pos_map.items()}
-    for pos_b, variants_at in variants_by_gene.get(gene_b, {}).items():
-        if pos_b is None:
-            continue
-        pos_a = reverse_map.get(pos_b)
-        if pos_a is None or pos_a in DOMINANT_RNU42_REGION:
-            continue
-        for v in variants_at:
-            if not is_recessive_pathogenic(v["id"], classifications, gene_b):
-                continue
-            for other in variants_by_gene.get(gene_a, {}).get(pos_a, []):
-                emit(
-                    v["id"],
-                    other["id"],
-                    region_for(pos_a),
-                    (
-                        f"Derived: {gene_b} {v['hgvs'] or v['id']} (P/LP rep, "
-                        f"{gene_b} n.{pos_b} -> {gene_a} n.{pos_a})"
-                    ),
-                    best_literature_for(v["id"], classifications),
-                )
+        rep_a = representative(variants_a)  # RNU4-2 side
+        rep_b = representative(variants_b)  # RNU4atac side
+        lit = best_literature_for(rep_a["id"], classifications) or best_literature_for(
+            rep_b["id"], classifications
+        )
+        emit(
+            rep_a["id"],
+            rep_b["id"],
+            region_for(pos_a),
+            (
+                f"Derived: {gene_a} n.{pos_a} <-> {gene_b} n.{pos_b} "
+                f"({gene_a} {rep_a['hgvs'] or rep_a['id']} / "
+                f"{gene_b} {rep_b['hgvs'] or rep_b['id']})"
+            ),
+            lit,
+        )
 
     # The paper's worked-example pair — always included explicitly. The stored
     # RNU4-2 sequence (144 nt) predates the updated 145 nt transcript that the

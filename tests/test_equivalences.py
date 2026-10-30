@@ -469,6 +469,63 @@ class TestEquivalenceBatchApply:
         assert c.json() == {"applied": 0, "failed": 0, "results": []}
 
 
+class TestLinkedVariantUnion:
+    """Compound-het partners should be the union across all classifications."""
+
+    def test_linked_variant_ids_union_across_papers(
+        self, test_client, test_db, equivalence_test_data
+    ):
+        from api.models import Literature, VariantClassification
+
+        test_db.add(
+            Literature(
+                id="10.1002/ajmg.a.38581",
+                title="Paper A",
+                authors="A",
+                journal="J",
+                year=2024,
+                doi="10.1002/ajmg.a.38581",
+            )
+        )
+        test_db.add(
+            Literature(
+                id="https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf",
+                title="Paper B",
+                authors="B",
+                journal="J",
+                year=2026,
+                doi="10.1016/j.gim.2026.102632",
+            )
+        )
+        test_db.add_all(
+            [
+                VariantClassification(
+                    variant_id="V-DEL-001",
+                    literature_id="10.1002/ajmg.a.38581",
+                    clinical_significance="Likely Pathogenic",
+                    zygosity="Compound Heterozygous",
+                    linked_variant_ids="chr2-121530930-G-A",
+                ),
+                VariantClassification(
+                    variant_id="V-DEL-001",
+                    literature_id="https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf",
+                    clinical_significance="Likely Pathogenic",
+                    zygosity="Compound Heterozygous",
+                    linked_variant_ids="chr2-121530934-G-A",
+                ),
+            ]
+        )
+        test_db.commit()
+
+        res = test_client.get("/api/genes/RNU4-2/variants")
+        assert res.status_code == 200
+        v = next(x for x in res.json() if x["id"] == "V-DEL-001")
+        assert set(v["linkedVariantIds"]) == {
+            "chr2-121530930-G-A",
+            "chr2-121530934-G-A",
+        }
+
+
 class TestEquivalenceCascadeDelete:
     def test_delete_gene_removes_equivalences(
         self, test_client, test_db, equivalence_test_data
