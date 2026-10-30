@@ -37,6 +37,8 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 
 - `[2026-10-30T14:10Z] [TOOL]` PR #332 follow-up #2: **equivalence derivation now RNU4-2 → RNU4atac, ONE pair per aligned position** (was: fan-out per alt-allele — RNU4atac n.5A>G showed 3× "RNU4-2 n.6" equivalents). `derive_equivalences.py` collapses each side to a representative row; CSV regenerated 43 → 15 rows, all `needs_review` + `literature_id`, anchor n.32↔n.37 kept. **"Linked Variants" fixed**: `GET /genes/{id}/variants` now unions `linked_variant_ids` across ALL of a variant's classifications (was: first paper only); frontend section renamed "Compound-Het Partners" (paper list stays "Linked Variants"). Tests: 171 pytest / 179 vitest.
 
+- `[2026-10-30T14:45Z] [TOOL]` PR #332 follow-up #3 (user direction): **removed `functional_region`, `evidence_direction`, `mechanism_match`** from `variant_equivalences` (none needed: equivalences are only curated between usable, disease-linked analogs). Migration `f1e659c3d839` rebuilds the table (SQLite CHECK blocks DROP COLUMN) and **clears all rows** (re-import the cleaned CSV). Eval: `getEquivalentEvidence` is now classification-only (P/LP→PM5, B/LB→informative); Curate form/wizard/rows simplified; CSV header now `variant_id,equivalent_variant_id,relationship_type,status,notes,literature_id` (15 rows, all w/ `literature_id`); live DB migrated (43 rows→0, columns dropped). 175 vitest / 171 pytest.
+
 ## [OUTCOMES]
 
 - `[2026-10-13T17:20Z] [TOOL]` PR ready: fixes 5 backend issues (dead fields, auth patterns, duplicate endpoints, bare exception handlers). Ready for commit, push, and PR.

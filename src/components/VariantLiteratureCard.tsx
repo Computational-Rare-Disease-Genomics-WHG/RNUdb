@@ -930,22 +930,6 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                             <span className="text-slate-500">
                                               {pair.equivalence.relationship_type}
                                             </span>
-                                            {pair.equivalence.functional_region && (
-                                              <span className="text-slate-500">
-                                                {pair.equivalence.functional_region}
-                                              </span>
-                                            )}
-                                            <span
-                                              className={
-                                                pair.equivalence.mechanism_match ===
-                                                "same"
-                                                  ? "text-emerald-600"
-                                                  : "text-amber-600"
-                                              }
-                                            >
-                                              mechanism:{" "}
-                                              {pair.equivalence.mechanism_match}
-                                            </span>
                                           </div>
                                         ))}
                                       </div>

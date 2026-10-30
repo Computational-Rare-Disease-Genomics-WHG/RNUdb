@@ -54,16 +54,11 @@ export interface Variant {
 // ---------------------------------------------------------------------------
 
 export type EquivalenceRelationshipType = "paralog" | "analog";
-export type EquivalenceMechanismMatch = "same" | "different" | "unknown";
-export type EquivalenceEvidenceDirection = "pathogenic" | "benign" | "both";
 
 export interface VariantEquivalence {
   variant_id: string; // Ordered pair: variant_id < equivalent_variant_id
   equivalent_variant_id: string;
   relationship_type: EquivalenceRelationshipType;
-  mechanism_match: EquivalenceMechanismMatch;
-  functional_region?: string | null;
-  evidence_direction: EquivalenceEvidenceDirection;
   status?: string | null;
   notes?: string | null;
   literature_id?: string | null;

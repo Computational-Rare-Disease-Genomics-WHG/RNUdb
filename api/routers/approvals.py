@@ -75,9 +75,6 @@ _ALLOWED_COLUMNS = {
     "literature": {"title", "authors", "journal", "year", "doi"},
     "equivalence": {
         "relationship_type",
-        "mechanism_match",
-        "functional_region",
-        "evidence_direction",
         "status",
         "notes",
         "literature_id",

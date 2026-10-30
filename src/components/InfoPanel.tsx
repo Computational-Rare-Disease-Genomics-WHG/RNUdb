@@ -727,8 +727,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                           </div>
                           {equivalencesAtNucleotide.map((pair, index) => {
                             const evidence = getEquivalentEvidence({
-                              mechanism_match: pair.equivalence.mechanism_match,
-                              evidence_direction: pair.equivalence.evidence_direction,
                               equivalentClinicalSignificance:
                                 pair.otherVariant.clinical_significance,
                             });
@@ -763,20 +761,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                 </div>
                                 <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
                                   <span>{pair.equivalence.relationship_type}</span>
-                                  {pair.equivalence.functional_region && (
-                                    <span>{pair.equivalence.functional_region}</span>
-                                  )}
-                                  {pair.equivalence.mechanism_match === "same" ? (
-                                    <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
-                                      <CheckCircle className="h-3 w-3" />
-                                      Same mechanism (usable as PM5)
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
-                                      <AlertTriangle className="h-3 w-3" />
-                                      {pair.equivalence.mechanism_match} mechanism — NOT
-                                      usable as PM5 evidence
-                                    </span>
+                                  {pair.equivalence.status && (
+                                    <span>status: {pair.equivalence.status}</span>
                                   )}
                                 </div>
                                 {!evidence.usable && evidence.reason && (

@@ -206,16 +206,13 @@ in RNU4ATAC when both genes are disease-linked with the same mechanism.
 | variant_id            | TEXT    | PRIMARY KEY (composite) / FK → variants.id     | Ordered pair: variant_id < equivalent_variant_id     |
 | equivalent_variant_id | TEXT    | PRIMARY KEY (composite) / FK → variants.id     | Variant in the paralog/analog gene                   |
 | relationship_type     | TEXT    | NOT NULL, CHECK (paralog, analog)              | Relationship kind                                    |
-| mechanism_match       | TEXT    | NOT NULL, CHECK (same, different, unknown)     | Underlying disease-mechanism match (PM5 gate)        |
-| functional_region     | TEXT    | NULLABLE                                       | e.g. "Sm binding site", "5' stem-loop"               |
-| evidence_direction    | TEXT    | NOT NULL, CHECK (pathogenic, benign, both)     | What the relationship supports                       |
 | status                | TEXT    | NULLABLE                                       | e.g. needs_review, reviewed                          |
 | notes                 | TEXT    | NULLABLE                                       | Source / anti-circularity basis                      |
 | literature_id         | TEXT    | NULLABLE / FK → literature.id                  | Source of the equivalence                            |
 
-Constraints: `variant_id < equivalent_variant_id`, plus CHECK constraints on
-`relationship_type`, `mechanism_match`, and `evidence_direction`. Writes are
-performed via the approval workflow (`pending_changes`), never directly.
+Constraints: `variant_id < equivalent_variant_id`, plus a CHECK constraint on
+`relationship_type`. Writes are performed via the approval workflow
+(`pending_changes`), never directly.
 
 ---
 

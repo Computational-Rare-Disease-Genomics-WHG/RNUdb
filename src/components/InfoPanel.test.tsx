@@ -57,8 +57,6 @@ function makeEquivalence(
     variant_id: "chr12-120291872-C-T",
     equivalent_variant_id: "chr2-121530916-G-A",
     relationship_type: "analog",
-    mechanism_match: "same",
-    evidence_direction: "pathogenic",
     status: "needs_review",
     variant: RNU42_VARIANT,
     equivalent_variant: RN_U4ATAC_VARIANT,
@@ -110,16 +108,14 @@ describe("InfoPanel equivalent-variants block", () => {
     expect(screen.getByText("PM5")).toBeInTheDocument();
   });
 
-  it("shows a 'usable as PM5' chip for same-mechanism pairs", () => {
+  it("shows the pair status (needs_review) on the equivalent row", () => {
     renderInfoPanel([makeEquivalence()]);
-    expect(screen.getByText(/Same mechanism \(usable as PM5\)/)).toBeInTheDocument();
+    expect(screen.getByText(/status: needs_review/)).toBeInTheDocument();
   });
 
-  it("warns when the mechanism differs (not usable as evidence)", () => {
-    renderInfoPanel([makeEquivalence({ mechanism_match: "different" })]);
-    expect(
-      screen.getByText(/different mechanism — NOT usable as PM5 evidence/),
-    ).toBeInTheDocument();
+  it("does not show a PM5 badge when the equivalent is not P/LP", () => {
+    renderInfoPanel([makeEquivalence()]);
+    expect(screen.queryByText("PM5")).not.toBeInTheDocument();
   });
 
   it("renders a help tooltip explaining Recommendation 8", async () => {

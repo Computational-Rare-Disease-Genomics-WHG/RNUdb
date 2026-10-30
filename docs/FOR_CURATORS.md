@@ -115,12 +115,7 @@ the snRNA guidance; PM5 / "informative variants" in SVC v4).
    - Local variant: select a variant of the current gene
    - Equivalent variant: search variants in other genes (paralogs/analogs)
    - Relationship type: `analog` (e.g. U4 ↔ U4atac) or `paralog` (e.g. RNU6 copies)
-   - Mechanism match: `same`, `different`, or `unknown`
-     - Only `same`-mechanism pairs are usable as PM5 evidence. A dominant
-       gain-of-function variant (e.g. ReNU T-loop) must NOT be linked to a
-       recessive loss-of-function interpretation.
-   - Evidence direction: `pathogenic` (PM5), `benign` (informative), or `both`
-   - Functional region (e.g. "Sm binding site"), status, and notes
+   - Status and notes (source of the equivalence, anti-circularity basis)
 3. Or **Import CSV/JSON** for bulk pairs (see Import Wizards below). Every row
    becomes a pending change reviewed by an admin.
 4. After approval, pairs appear on the gene page: the InfoPanel shows a PM5

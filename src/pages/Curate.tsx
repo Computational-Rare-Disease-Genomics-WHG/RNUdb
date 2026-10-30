@@ -537,9 +537,6 @@ const Curate: React.FC = () => {
       variant_id: data.variant_id,
       equivalent_variant_id: data.equivalent_variant_id,
       relationship_type: data.relationship_type || "analog",
-      mechanism_match: data.mechanism_match || "same",
-      evidence_direction: data.evidence_direction || "pathogenic",
-      functional_region: data.functional_region || null,
       status: data.status || "needs_review",
       notes: data.notes || null,
       literature_id: data.literature_id || null,
@@ -594,9 +591,6 @@ const Curate: React.FC = () => {
         variant_id: row.variant_id,
         equivalent_variant_id: row.equivalent_variant_id,
         relationship_type: row.relationship_type || "analog",
-        mechanism_match: row.mechanism_match || "same",
-        evidence_direction: row.evidence_direction || "pathogenic",
-        functional_region: row.functional_region || null,
         status: row.status || "needs_review",
         notes: row.notes || null,
         literature_id: row.literature_id || null,
@@ -1606,21 +1600,16 @@ const Curate: React.FC = () => {
                                       )}
                                     </div>
                                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                                      <span
-                                        className={
-                                          eq.mechanism_match === "same"
-                                            ? "text-emerald-600 font-medium"
-                                            : "text-amber-600 font-medium"
-                                        }
-                                      >
-                                        mechanism: {eq.mechanism_match}
-                                      </span>
                                       <span>type: {eq.relationship_type}</span>
-                                      <span>direction: {eq.evidence_direction}</span>
-                                      {eq.functional_region && (
-                                        <span>region: {eq.functional_region}</span>
-                                      )}
                                       {eq.status && <span>status: {eq.status}</span>}
+                                      {eq.literature_id && (
+                                        <span
+                                          className="font-mono text-xs"
+                                          title="Source paper of the equivalence"
+                                        >
+                                          lit: {eq.literature_id}
+                                        </span>
+                                      )}
                                     </div>
                                     {eq.notes && (
                                       <p className="text-xs text-slate-400 mt-1">

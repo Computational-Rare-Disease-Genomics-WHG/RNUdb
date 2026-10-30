@@ -13,21 +13,15 @@
 // (2015) framework this is captured using PM5; in the upcoming SVC v4
 // guidelines these count as "informative variants".
 //
-// Design decision (issue #331): the mapping is GENERIC — a pair of variants
-// plus their mechanism/direction metadata maps to an evidence code. The
-// anti-circularity and exact-equivalence checks are curation concerns and are
-// surfaced here only as gating (a pair whose mechanism differs is never
-// usable as evidence, matching the guidance's caveat that a dominant
-// gain-of-function variant must not inform a recessive loss-of-function
-// interpretation).
+// Design decision (issue #331): the mapping is GENERIC — an equivalence row
+// maps to an evidence code from the classification of the equivalent variant.
+// RNUdb only curates equivalences between disease-linked paralogs/analogs that
+// are usable as evidence, so there is no per-row mechanism flag: a (likely)
+// pathogenic equivalent gives PM5; a (likely) benign equivalent gives an
+// informative (SVC v4) code. Anti-circularity remains a curation concern.
 // ---------------------------------------------------------------------------
 
-import type {
-  EquivalenceEvidenceDirection,
-  EquivalenceMechanismMatch,
-  Variant,
-  VariantEquivalence,
-} from "@/types";
+import type { Variant, VariantEquivalence } from "@/types";
 
 export type EquivalentEvidenceCode = "PM5" | "informative" | null;
 
@@ -52,53 +46,25 @@ export interface NormalizedEquivalentPair {
 /**
  * Map an equivalent-variant pair to applicable ACMG evidence.
  *
- * Returns null (and `usable: false`) when the pair cannot be used:
- * - mechanism differs between the two genes (dominant GoF vs recessive LoF),
- * - the evidence variant is not classified (likely) pathogenic/benign in the
- *   direction(s) recorded on the relationship.
+ * Returns null (and `usable: false`) when the equivalent variant is not
+ * classified (likely) pathogenic or benign.
  *
  * @example
- * getEquivalentEvidence({ mechanism_match: "same",
- *   evidence_direction: "pathogenic",
- *   equivalentClinicalSignificance: "Likely Pathogenic" })
+ * getEquivalentEvidence({ equivalentClinicalSignificance: "Likely Pathogenic" })
  *   // { code: "PM5", usable: true }
  */
 export function getEquivalentEvidence(params: {
-  mechanism_match?: EquivalenceMechanismMatch | string | null;
-  evidence_direction?: EquivalenceEvidenceDirection | string | null;
   equivalentClinicalSignificance?: string | null;
 }): EquivalentEvidence {
-  const { mechanism_match, evidence_direction, equivalentClinicalSignificance } =
-    params;
-
-  if (!mechanism_match || !evidence_direction) {
-    return {
-      code: null,
-      usable: false,
-      reason: "Missing equivalence metadata",
-    };
-  }
-
-  if (mechanism_match !== "same") {
-    return {
-      code: null,
-      usable: false,
-      reason: "Underlying disease mechanism differs — do not use as evidence",
-    };
-  }
-
-  const sig = (equivalentClinicalSignificance || "").toLowerCase();
+  const sig = (params.equivalentClinicalSignificance || "").toLowerCase();
   const isPathogenic = sig.includes("pathogenic") || sig === "p" || sig === "lp";
   const isBenign = sig.includes("benign") || sig === "b" || sig === "lb";
 
-  if (
-    (evidence_direction === "pathogenic" || evidence_direction === "both") &&
-    isPathogenic
-  ) {
+  if (isPathogenic) {
     return { code: "PM5", usable: true };
   }
 
-  if ((evidence_direction === "benign" || evidence_direction === "both") && isBenign) {
+  if (isBenign) {
     return { code: "informative", usable: true };
   }
 

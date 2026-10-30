@@ -63,9 +63,6 @@ def _public(equivalence: VariantEquivalence, db: Session) -> VariantEquivalenceP
         variant_id=equivalence.variant_id,
         equivalent_variant_id=equivalence.equivalent_variant_id,
         relationship_type=equivalence.relationship_type,
-        mechanism_match=equivalence.mechanism_match,
-        functional_region=equivalence.functional_region,
-        evidence_direction=equivalence.evidence_direction,
         status=equivalence.status,
         notes=equivalence.notes,
         literature_id=equivalence.literature_id,
@@ -91,9 +88,8 @@ async def get_gene_equivalences(gene_id: str, db: Session = Depends(get_db)):
         text(
             """
             SELECT DISTINCT ve.variant_id, ve.equivalent_variant_id,
-                            ve.relationship_type, ve.mechanism_match,
-                            ve.functional_region, ve.evidence_direction,
-                            ve.status, ve.notes, ve.literature_id
+                            ve.relationship_type, ve.status, ve.notes,
+                            ve.literature_id
             FROM variant_equivalences ve
             JOIN variants va ON va.id = ve.variant_id
             JOIN variants vb ON vb.id = ve.equivalent_variant_id

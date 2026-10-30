@@ -11,12 +11,10 @@ Approach
 1. Read gene sequences + variants + classifications from `data/database.db`.
 2. Globally align RNU4-2 vs RNU4atac (Needleman-Wunsch, no external deps) and
    build a position map between the two transcripts.
-3. For each variant with a recessive P/LP classification in either gene, emit a
-   pair with any variant of the other gene occupying the aligned position:
+3. For each position pair where either gene has a recessive P/LP variant, emit
+   ONE row linking the two positions (representative variant per side):
      - relationship_type = analog (U4 vs U4atac)
-     - mechanism_match    = same (recessive NDD/RNU4ATAC-opathy mechanism)
-     - evidence_direction = pathogenic
-     - status             = needs_review
+     - status            = needs_review
 4. Deduplicate unordered pairs; sort deterministically.
 
 Notes
@@ -44,16 +42,7 @@ OUT_PATH = (
     / "equivalences.csv"
 )
 
-# RNU4-2 critical regions (Table 2 of the guidance) used to annotate rows.
-RNU4_2_REGIONS = [
-    ("Stem II", range(3, 17)),
-    ("k-turn", list(range(27, 36)) + list(range(41, 47))),
-    ("Sm binding site", range(118, 127)),
-]
-
 RELATIONSHIP_TYPE = "analog"
-MECHANISM_MATCH = "same"
-EVIDENCE_DIRECTION = "pathogenic"
 STATUS = "needs_review"
 
 
@@ -239,13 +228,6 @@ def is_recessive_pathogenic(
     return False
 
 
-def region_for(position: int) -> str | None:
-    for name, positions in RNU4_2_REGIONS:
-        if position in positions:
-            return name
-    return None
-
-
 def main() -> None:
     db = sqlite3.connect(DB_PATH)
     sequences, variants_by_gene, classifications = load_data(db)
@@ -268,7 +250,6 @@ def main() -> None:
     def emit(
         variant_id: str,
         other_id: str,
-        region: str | None,
         note: str,
         literature_id: str,
     ) -> None:
@@ -280,9 +261,6 @@ def main() -> None:
             "variant_id": v1,
             "equivalent_variant_id": v2,
             "relationship_type": RELATIONSHIP_TYPE,
-            "mechanism_match": MECHANISM_MATCH,
-            "functional_region": region or "",
-            "evidence_direction": EVIDENCE_DIRECTION,
             "status": STATUS,
             "notes": note,
             "literature_id": literature_id,
@@ -332,7 +310,6 @@ def main() -> None:
         emit(
             rep_a["id"],
             rep_b["id"],
-            region_for(pos_a),
             (
                 f"Derived: {gene_a} n.{pos_a} <-> {gene_b} n.{pos_b} "
                 f"({gene_a} {rep_a['hgvs'] or rep_a['id']} / "
@@ -354,7 +331,6 @@ def main() -> None:
     emit(
         ANCHOR_PAIR[0],
         ANCHOR_PAIR[1],
-        "5' stem-loop",
         (
             "Curated anchor: guidance worked example — "
             "RNU4ATAC n.37G>A equivalent to RNU4-2 n.32G>A (recessive NDD)"
@@ -368,9 +344,6 @@ def main() -> None:
         "variant_id",
         "equivalent_variant_id",
         "relationship_type",
-        "mechanism_match",
-        "functional_region",
-        "evidence_direction",
         "status",
         "notes",
         "literature_id",

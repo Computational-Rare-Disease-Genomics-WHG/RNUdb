@@ -395,9 +395,6 @@ class VariantEquivalenceBase(SQLModel):
     variant_id: str
     equivalent_variant_id: str
     relationship_type: str
-    mechanism_match: str
-    functional_region: str | None = None
-    evidence_direction: str
     status: str | None = None
     notes: str | None = None
     literature_id: str | None = None
@@ -416,21 +413,11 @@ class VariantEquivalence(VariantEquivalenceBase, table=True):
             "relationship_type IN ('paralog', 'analog')",
             name="check_relationship_type",
         ),
-        CheckConstraint(
-            "mechanism_match IN ('same', 'different', 'unknown')",
-            name="check_mechanism_match",
-        ),
-        CheckConstraint(
-            "evidence_direction IN ('pathogenic', 'benign', 'both')",
-            name="check_evidence_direction",
-        ),
     )
 
     variant_id: str = Field(primary_key=True, foreign_key="variants.id")
     equivalent_variant_id: str = Field(primary_key=True, foreign_key="variants.id")
     relationship_type: str = Field(default="analog")
-    mechanism_match: str = Field(default="same")
-    evidence_direction: str = Field(default="pathogenic")
     literature_id: str | None = Field(default=None, foreign_key="literature.id")
 
 
@@ -442,9 +429,6 @@ class VariantEquivalenceUpdate(SQLModel):
     """VariantEquivalence update input (all optional)."""
 
     relationship_type: str | None = None
-    mechanism_match: str | None = None
-    functional_region: str | None = None
-    evidence_direction: str | None = None
     status: str | None = None
     notes: str | None = None
     literature_id: str | None = None

@@ -27,16 +27,6 @@ const EQUIVALENCE_OPTIONS = {
     { value: "analog", label: "Analog (e.g. U4 ↔ U4atac)" },
     { value: "paralog", label: "Paralog (e.g. RNU6 copies)" },
   ],
-  mechanism_match: [
-    { value: "same", label: "Same (usable as evidence)" },
-    { value: "different", label: "Different (do NOT use)" },
-    { value: "unknown", label: "Unknown" },
-  ],
-  evidence_direction: [
-    { value: "pathogenic", label: "Pathogenic (PM5)" },
-    { value: "benign", label: "Benign (informative)" },
-    { value: "both", label: "Both directions" },
-  ],
   status: [
     { value: "needs_review", label: "Needs review" },
     { value: "reviewed", label: "Reviewed / confirmed" },
@@ -57,9 +47,6 @@ const EquivalenceForm = ({
     variant_id: initialData?.variant_id || "",
     equivalent_variant_id: initialData?.equivalent_variant_id || "",
     relationship_type: initialData?.relationship_type || "analog",
-    mechanism_match: initialData?.mechanism_match || "same",
-    functional_region: initialData?.functional_region || "",
-    evidence_direction: initialData?.evidence_direction || "pathogenic",
     status: initialData?.status || "needs_review",
     notes: initialData?.notes || "",
   });
@@ -231,49 +218,6 @@ const EquivalenceForm = ({
           </Select>
         </div>
         <div>
-          <Label className="text-sm font-medium text-slate-700">Mechanism Match</Label>
-          <Select
-            value={formData.mechanism_match}
-            onValueChange={(v) => setFormData({ ...formData, mechanism_match: v })}
-          >
-            <SelectTrigger className="mt-1.5">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {EQUIVALENCE_OPTIONS.mechanism_match.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {formData.mechanism_match !== "same" && (
-            <p className="text-xs text-amber-600 mt-1">
-              Pairs with a different/unknown mechanism are excluded from PM5 evidence.
-            </p>
-          )}
-        </div>
-        <div>
-          <Label className="text-sm font-medium text-slate-700">
-            Evidence Direction
-          </Label>
-          <Select
-            value={formData.evidence_direction}
-            onValueChange={(v) => setFormData({ ...formData, evidence_direction: v })}
-          >
-            <SelectTrigger className="mt-1.5">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {EQUIVALENCE_OPTIONS.evidence_direction.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
           <Label className="text-sm font-medium text-slate-700">Status</Label>
           <Select
             value={formData.status}
@@ -291,18 +235,6 @@ const EquivalenceForm = ({
             </SelectContent>
           </Select>
         </div>
-      </div>
-
-      <div>
-        <Label className="text-sm font-medium text-slate-700">Functional Region</Label>
-        <Input
-          className="mt-1.5"
-          placeholder={String.raw`e.g. "Sm binding site", "5' stem-loop", "Stem III"`}
-          value={formData.functional_region}
-          onChange={(e) =>
-            setFormData({ ...formData, functional_region: e.target.value })
-          }
-        />
       </div>
 
       <div>

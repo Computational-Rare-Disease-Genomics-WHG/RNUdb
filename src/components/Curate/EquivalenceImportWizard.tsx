@@ -25,27 +25,19 @@ interface EquivalenceImportWizardProps {
   onImport: (rows: Record<string, unknown>[]) => Promise<void>;
 }
 
-const REQUIRED_COLUMNS = [
-  "variant_id",
-  "equivalent_variant_id",
-  "relationship_type",
-  "mechanism_match",
-  "evidence_direction",
-];
+const REQUIRED_COLUMNS = ["variant_id", "equivalent_variant_id", "relationship_type"];
 
-const OPTIONAL_COLUMNS = ["functional_region", "status", "notes", "literature_id"];
+const OPTIONAL_COLUMNS = ["status", "notes", "literature_id"];
 
 const ALL_COLUMNS = [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS];
 
 const DEFAULT_VALUES: Record<string, string> = {
   relationship_type: "analog",
-  mechanism_match: "same",
-  evidence_direction: "pathogenic",
   status: "needs_review",
 };
 
 const EQUIVALENCE_HEADER =
-  "variant_id,equivalent_variant_id,relationship_type,mechanism_match,functional_region,evidence_direction,status,notes,literature_id\nchr12-120291872-C-T,chr2-121530916-G-A,analog,same,Sm binding site,pathogenic,needs_review,\n";
+  "variant_id,equivalent_variant_id,relationship_type,status,notes,literature_id\nchr12-120291872-C-T,chr2-121530916-G-A,analog,needs_review,Curated anchor,\n";
 
 function parseCsv(content: string): { headers: string[]; rows: string[][] } {
   const lines = content
@@ -216,8 +208,7 @@ const EquivalenceImportWizard = ({
           <div>
             <div className="text-xs text-slate-500 mb-1">
               …or paste CSV (header required: variant_id, equivalent_variant_id,
-              relationship_type, mechanism_match, functional_region, evidence_direction,
-              status, notes, literature_id)
+              relationship_type, status, notes, literature_id)
             </div>
             <textarea
               value={content}
@@ -249,8 +240,6 @@ const EquivalenceImportWizard = ({
                       <th className="px-3 py-2">variant_id</th>
                       <th className="px-3 py-2">equivalent_variant_id</th>
                       <th className="px-3 py-2">relation</th>
-                      <th className="px-3 py-2">mechanism</th>
-                      <th className="px-3 py-2">direction</th>
                       <th className="px-3 py-2">status</th>
                       <th className="px-3 py-2">notes</th>
                     </tr>
@@ -270,10 +259,6 @@ const EquivalenceImportWizard = ({
                         </td>
                         <td className="px-3 py-1.5">
                           {r.data.relationship_type || "—"}
-                        </td>
-                        <td className="px-3 py-1.5">{r.data.mechanism_match || "—"}</td>
-                        <td className="px-3 py-1.5">
-                          {r.data.evidence_direction || "—"}
                         </td>
                         <td className="px-3 py-1.5">
                           {r.data.status || "needs_review"}

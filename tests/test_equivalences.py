@@ -77,10 +77,7 @@ class TestEquivalencesReadAPI:
                 variant_id="V-DEL-001",
                 equivalent_variant_id="chr2-121530916-G-A",
                 relationship_type="analog",
-                mechanism_match="same",
-                evidence_direction="pathogenic",
                 status="needs_review",
-                functional_region="5' stem-loop",
             )
         )
         test_db.commit()
@@ -90,7 +87,6 @@ class TestEquivalencesReadAPI:
         data = res.json()
         assert len(data) == 1
         row = data[0]
-        assert row["mechanism_match"] == "same"
         assert row["equivalent_variant"]["id"] == "chr2-121530916-G-A"
         assert row["equivalent_variant"]["geneId"] == "RNU4atac"
 
@@ -108,8 +104,6 @@ class TestEquivalencesReadAPI:
                 variant_id="V-DEL-001",
                 equivalent_variant_id="chr2-121530916-G-A",
                 relationship_type="analog",
-                mechanism_match="same",
-                evidence_direction="pathogenic",
             )
         )
         test_db.commit()
@@ -139,8 +133,6 @@ class TestEquivalencesReadAPI:
                 variant_id="V-DEL-001",
                 equivalent_variant_id="chr2-121530916-G-A",
                 relationship_type="analog",
-                mechanism_match="same",
-                evidence_direction="pathogenic",
             )
         )
         test_db.commit()
@@ -179,9 +171,6 @@ class TestEquivalenceApprovalFlow:
                 "variant_id": "V-DEL-001",
                 "equivalent_variant_id": "chr2-121530916-G-A",
                 "relationship_type": "analog",
-                "mechanism_match": "same",
-                "functional_region": "5' stem-loop",
-                "evidence_direction": "pathogenic",
                 "status": "needs_review",
                 "notes": "Paper worked example pair",
             },
@@ -198,7 +187,6 @@ class TestEquivalenceApprovalFlow:
         assert list_res.status_code == 200
         rows = list_res.json()
         assert len(rows) == 1
-        assert rows[0]["functional_region"] == "5' stem-loop"
         assert rows[0]["relationship_type"] == "analog"
 
     def test_create_orders_pair(self, test_client, equivalence_test_data):
@@ -211,8 +199,6 @@ class TestEquivalenceApprovalFlow:
                 "variant_id": "chr2-121530916-G-A",
                 "equivalent_variant_id": "V-DEL-001",
                 "relationship_type": "analog",
-                "mechanism_match": "same",
-                "evidence_direction": "pathogenic",
             },
         }
         create_res = self._create_pending(test_client, payload)
@@ -233,8 +219,6 @@ class TestEquivalenceApprovalFlow:
                 "variant_id": "V-DEL-001",
                 "equivalent_variant_id": "V-UPD-001",
                 "relationship_type": "analog",
-                "mechanism_match": "same",
-                "evidence_direction": "pathogenic",
             },
         }
         create_res = self._create_pending(test_client, payload)
@@ -251,8 +235,6 @@ class TestEquivalenceApprovalFlow:
                 "variant_id": "chr99-1-A-T",
                 "equivalent_variant_id": "V-DEL-001",
                 "relationship_type": "analog",
-                "mechanism_match": "same",
-                "evidence_direction": "pathogenic",
             },
         }
         create_res = self._create_pending(test_client, payload)
@@ -269,8 +251,6 @@ class TestEquivalenceApprovalFlow:
                 "variant_id": "V-DEL-001",
                 "equivalent_variant_id": "V-DEL-001",
                 "relationship_type": "analog",
-                "mechanism_match": "same",
-                "evidence_direction": "pathogenic",
             },
         }
         create_res = self._create_pending(test_client, payload)
@@ -289,8 +269,6 @@ class TestEquivalenceApprovalFlow:
                 "variant_id": "V-DEL-001",
                 "equivalent_variant_id": "chr2-121530916-G-A",
                 "relationship_type": "analog",
-                "mechanism_match": "same",
-                "evidence_direction": "pathogenic",
             },
         }
         c1 = self._create_pending(test_client, base)
@@ -302,7 +280,6 @@ class TestEquivalenceApprovalFlow:
         assert "already exists" in apply2.json()["detail"]
 
     def test_update_equivalence(self, test_client, equivalence_test_data):
-        """Update mechanism_match etc. via the approval flow."""
         payload = {
             "entity_type": "equivalence",
             "gene_id": "RNU4-2",
@@ -311,8 +288,6 @@ class TestEquivalenceApprovalFlow:
                 "variant_id": "V-DEL-001",
                 "equivalent_variant_id": "chr2-121530916-G-A",
                 "relationship_type": "analog",
-                "mechanism_match": "same",
-                "evidence_direction": "pathogenic",
             },
         }
         c1 = self._create_pending(test_client, payload)
@@ -326,8 +301,8 @@ class TestEquivalenceApprovalFlow:
             "payload": {
                 "variant_id": "V-DEL-001",
                 "equivalent_variant_id": "chr2-121530916-G-A",
-                "mechanism_match": "different",
-                "notes": "Dominant GoF vs recessive LoF",
+                "status": "reviewed",
+                "notes": "Reviewed by curator",
             },
         }
         c2 = self._create_pending(test_client, update_payload)
@@ -335,8 +310,8 @@ class TestEquivalenceApprovalFlow:
         assert apply2.status_code == 200
 
         rows = test_client.get("/api/equivalences").json()
-        assert rows[0]["mechanism_match"] == "different"
-        assert rows[0]["notes"] == "Dominant GoF vs recessive LoF"
+        assert rows[0]["status"] == "reviewed"
+        assert rows[0]["notes"] == "Reviewed by curator"
 
     def test_delete_equivalence(self, test_client, equivalence_test_data):
         """Delete a pair via the approval flow."""
@@ -348,8 +323,6 @@ class TestEquivalenceApprovalFlow:
                 "variant_id": "V-DEL-001",
                 "equivalent_variant_id": "chr2-121530916-G-A",
                 "relationship_type": "analog",
-                "mechanism_match": "same",
-                "evidence_direction": "pathogenic",
             },
         }
         c1 = self._create_pending(test_client, payload)
@@ -383,8 +356,6 @@ class TestEquivalenceApprovalFlow:
                     "variant_id": "V-DEL-001",
                     "equivalent_variant_id": "V-UPD-001",
                     "relationship_type": "analog",
-                    "mechanism_match": "same",
-                    "evidence_direction": "pathogenic",
                 },
             },
         )
@@ -407,8 +378,6 @@ class TestEquivalenceBatchApply:
                     "variant_id": pair[0],
                     "equivalent_variant_id": pair[1],
                     "relationship_type": "analog",
-                    "mechanism_match": "same",
-                    "evidence_direction": "pathogenic",
                 },
             },
         )
@@ -538,8 +507,6 @@ class TestEquivalenceCascadeDelete:
                 variant_id="V-DEL-001",
                 equivalent_variant_id="chr2-121530916-G-A",
                 relationship_type="analog",
-                mechanism_match="same",
-                evidence_direction="pathogenic",
             )
         )
         test_db.commit()
