@@ -27,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type {
   SnRNAGene,
   Literature,
@@ -132,6 +133,42 @@ const EquivalentEvidenceBadge: React.FC<{
     </Badge>
   );
 };
+
+/** Help tooltip explaining the PM5 / Recommendation 8 equivalent-variant concept. */
+const Pm5Help: React.FC = () => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <button
+        type="button"
+        aria-label="About PM5 equivalent variants"
+        className="inline-flex items-center text-slate-400 hover:text-violet-600 transition-colors"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+    </TooltipTrigger>
+    <TooltipContent className="max-w-xs text-xs leading-relaxed">
+      <p className="font-semibold mb-1">Recommendation 8 (PM5 — equivalent variants)</p>
+      <p>
+        Where two paralogous genes or minor/major spliceosomal analogs are both linked
+        to disease with the{" "}
+        <span className="font-medium">same underlying mechanism</span>, a (likely)
+        pathogenic or (likely) benign variant in one gene can be used as evidence toward
+        an <span className="font-medium">exact-equivalent</span> variant in the other
+        gene.
+      </p>
+      <ul className="list-disc pl-4 mt-1 space-y-0.5">
+        <li>
+          Do <span className="font-medium">not</span> use when the mechanism differs
+          (e.g. dominant gain-of-function vs recessive loss-of-function).
+        </li>
+        <li>
+          The reference variant must be classified (likely) pathogenic/benign without
+          evidence from this variant (avoid circularity).
+        </li>
+      </ul>
+    </TooltipContent>
+  </Tooltip>
+);
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
   currentData,
@@ -681,9 +718,12 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                       if (equivalencesAtNucleotide.length === 0) return null;
                       return (
                         <div className="space-y-2">
-                          <div className="text-xs font-medium text-slate-500">
-                            Equivalent variants in paralog/analog genes (
-                            {equivalencesAtNucleotide.length})
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <span>
+                              PM5 — Equivalent Variants (Rec 8) (
+                              {equivalencesAtNucleotide.length})
+                            </span>
+                            <Pm5Help />
                           </div>
                           {equivalencesAtNucleotide.map((pair, index) => {
                             const evidence = getEquivalentEvidence({
@@ -726,15 +766,18 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                   {pair.equivalence.functional_region && (
                                     <span>{pair.equivalence.functional_region}</span>
                                   )}
-                                  <span
-                                    className={
-                                      pair.equivalence.mechanism_match === "same"
-                                        ? "text-emerald-600"
-                                        : "text-amber-600"
-                                    }
-                                  >
-                                    mechanism: {pair.equivalence.mechanism_match}
-                                  </span>
+                                  {pair.equivalence.mechanism_match === "same" ? (
+                                    <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+                                      <CheckCircle className="h-3 w-3" />
+                                      Same mechanism (usable as PM5)
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
+                                      <AlertTriangle className="h-3 w-3" />
+                                      {pair.equivalence.mechanism_match} mechanism — NOT
+                                      usable as PM5 evidence
+                                    </span>
+                                  )}
                                 </div>
                                 {!evidence.usable && evidence.reason && (
                                   <div className="text-xs text-amber-700 mt-1">

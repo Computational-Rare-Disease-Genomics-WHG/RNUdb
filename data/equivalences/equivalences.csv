@@ -1,44 +1,44 @@
 variant_id,equivalent_variant_id,relationship_type,mechanism_match,functional_region,evidence_direction,status,notes,literature_id
-chr12-120291768-G-A,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",
-chr12-120291768-G-C,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",
-chr12-120291768-G-GA,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",
-chr12-120291768-G-GC,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",
-chr12-120291768-G-GG,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",
-chr12-120291768-G-T,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",
-chr12-120291770-A-C,chr2-121530999-T-TA,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.120_121insA (P/LP rep, RNU4atac n.120 -> RNU4-2 n.134)",
-chr12-120291770-A-G,chr2-121530999-T-TA,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.120_121insA (P/LP rep, RNU4atac n.120 -> RNU4-2 n.134)",
-chr12-120291770-A-T,chr2-121530999-T-TA,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.120_121insA (P/LP rep, RNU4atac n.120 -> RNU4-2 n.134)",
-chr12-120291772-A-C,chr2-121530996-A-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.117A>G (P/LP rep, RNU4atac n.117 -> RNU4-2 n.132)",
-chr12-120291772-A-G,chr2-121530996-A-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.117A>G (P/LP rep, RNU4atac n.117 -> RNU4-2 n.132)",
-chr12-120291772-A-T,chr2-121530996-A-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.117A>G (P/LP rep, RNU4atac n.117 -> RNU4-2 n.132)",
-chr12-120291787-G-A,chr2-121530980-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.101G>A (P/LP rep, RNU4atac n.101 -> RNU4-2 n.117)",
-chr12-120291787-G-C,chr2-121530980-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.101G>A (P/LP rep, RNU4atac n.101 -> RNU4-2 n.117)",
-chr12-120291787-G-T,chr2-121530980-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.101G>A (P/LP rep, RNU4atac n.101 -> RNU4-2 n.117)",
-chr12-120291843-T-A,chr2-121530930-G-GG,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.52dup (P/LP rep, RNU4atac n.52 -> RNU4-2 n.61)",
-chr12-120291843-T-C,chr2-121530930-G-GG,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.52dup (P/LP rep, RNU4atac n.52 -> RNU4-2 n.61)",
-chr12-120291843-T-G,chr2-121530930-G-GG,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.52dup (P/LP rep, RNU4atac n.52 -> RNU4-2 n.61)",
-chr12-120291850-T-A,chr2-121530926-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.47T>G (P/LP rep, RNU4atac n.47 -> RNU4-2 n.54)",
-chr12-120291850-T-C,chr2-121530926-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.47T>G (P/LP rep, RNU4atac n.47 -> RNU4-2 n.54)",
-chr12-120291850-T-G,chr2-121530926-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.47T>G (P/LP rep, RNU4atac n.47 -> RNU4-2 n.54)",
-chr12-120291859-C-G,chr2-121530919-C-T,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4-2 n.45G>C (P/LP rep, RNU4-2 n.45 -> RNU4atac n.40)",
-chr12-120291861-C-A,chr2-121530917-A-T,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.38A>T (P/LP rep, RNU4atac n.38 -> RNU4-2 n.43)",
-chr12-120291861-C-G,chr2-121530917-A-T,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.38A>T (P/LP rep, RNU4atac n.38 -> RNU4-2 n.43)",
-chr12-120291861-C-T,chr2-121530917-A-T,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.38A>T (P/LP rep, RNU4atac n.38 -> RNU4-2 n.43)",
-chr12-120291872-C-T,chr2-121530916-G-A,analog,same,5' stem-loop,pathogenic,needs_review,Curated anchor: guidance worked example — RNU4ATAC n.37G>A equivalent to RNU4-2 n.32G>A (recessive NDD),
-chr12-120291873-A-C,chr2-121530906-A-C,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.27A>C (P/LP rep, RNU4atac n.27 -> RNU4-2 n.31)",
-chr12-120291873-A-G,chr2-121530906-A-C,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.27A>C (P/LP rep, RNU4atac n.27 -> RNU4-2 n.31)",
-chr12-120291873-A-T,chr2-121530906-A-C,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.27A>C (P/LP rep, RNU4atac n.27 -> RNU4-2 n.31)",
-chr12-120291880-A-C,chr2-121530897-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.18G>A (P/LP rep, RNU4atac n.18 -> RNU4-2 n.24)",
-chr12-120291880-A-G,chr2-121530897-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.18G>A (P/LP rep, RNU4atac n.18 -> RNU4-2 n.24)",
-chr12-120291880-A-T,chr2-121530897-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.18G>A (P/LP rep, RNU4atac n.18 -> RNU4-2 n.24)",
-chr12-120291881-C-A,chr2-121530896-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.17G>C (P/LP rep, RNU4atac n.17 -> RNU4-2 n.23)",
-chr12-120291881-C-G,chr2-121530896-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.17G>C (P/LP rep, RNU4atac n.17 -> RNU4-2 n.23)",
-chr12-120291881-C-T,chr2-121530896-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.17G>C (P/LP rep, RNU4atac n.17 -> RNU4-2 n.23)",
-chr12-120291882-G-A,chr2-121530895-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.16G>C (P/LP rep, RNU4atac n.16 -> RNU4-2 n.22)",
-chr12-120291882-G-C,chr2-121530895-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.16G>C (P/LP rep, RNU4atac n.16 -> RNU4-2 n.22)",
-chr12-120291882-G-T,chr2-121530895-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.16G>C (P/LP rep, RNU4atac n.16 -> RNU4-2 n.22)",
-chr12-120291897-C-G,chr2-121530885-T-C,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4-2 n.7G>C (P/LP rep, RNU4-2 n.7 -> RNU4atac n.6)",
-chr12-120291897-C-T,chr2-121530885-T-C,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4-2 n.7G>A (P/LP rep, RNU4-2 n.7 -> RNU4atac n.6)",
-chr12-120291898-A-C,chr2-121530884-A-G,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4atac n.5A>G (P/LP rep, RNU4atac n.5 -> RNU4-2 n.6)",
-chr12-120291898-A-G,chr2-121530884-A-G,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4atac n.5A>G (P/LP rep, RNU4atac n.5 -> RNU4-2 n.6)",
-chr12-120291898-A-T,chr2-121530884-A-G,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4atac n.5A>G (P/LP rep, RNU4atac n.5 -> RNU4-2 n.6)",
+chr12-120291768-G-A,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291768-G-C,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291768-G-GA,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291768-G-GC,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291768-G-GG,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291768-G-T,chr2-121531001-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.122T>G (P/LP rep, RNU4atac n.122 -> RNU4-2 n.136)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291770-A-C,chr2-121530999-T-TA,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.120_121insA (P/LP rep, RNU4atac n.120 -> RNU4-2 n.134)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291770-A-G,chr2-121530999-T-TA,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.120_121insA (P/LP rep, RNU4atac n.120 -> RNU4-2 n.134)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291770-A-T,chr2-121530999-T-TA,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.120_121insA (P/LP rep, RNU4atac n.120 -> RNU4-2 n.134)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291772-A-C,chr2-121530996-A-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.117A>G (P/LP rep, RNU4atac n.117 -> RNU4-2 n.132)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291772-A-G,chr2-121530996-A-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.117A>G (P/LP rep, RNU4atac n.117 -> RNU4-2 n.132)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291772-A-T,chr2-121530996-A-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.117A>G (P/LP rep, RNU4atac n.117 -> RNU4-2 n.132)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291787-G-A,chr2-121530980-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.101G>A (P/LP rep, RNU4atac n.101 -> RNU4-2 n.117)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291787-G-C,chr2-121530980-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.101G>A (P/LP rep, RNU4atac n.101 -> RNU4-2 n.117)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291787-G-T,chr2-121530980-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.101G>A (P/LP rep, RNU4atac n.101 -> RNU4-2 n.117)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291843-T-A,chr2-121530930-G-GG,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.52dup (P/LP rep, RNU4atac n.52 -> RNU4-2 n.61)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291843-T-C,chr2-121530930-G-GG,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.52dup (P/LP rep, RNU4atac n.52 -> RNU4-2 n.61)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291843-T-G,chr2-121530930-G-GG,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.52dup (P/LP rep, RNU4atac n.52 -> RNU4-2 n.61)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291850-T-A,chr2-121530926-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.47T>G (P/LP rep, RNU4atac n.47 -> RNU4-2 n.54)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291850-T-C,chr2-121530926-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.47T>G (P/LP rep, RNU4atac n.47 -> RNU4-2 n.54)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291850-T-G,chr2-121530926-T-G,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.47T>G (P/LP rep, RNU4atac n.47 -> RNU4-2 n.54)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291859-C-G,chr2-121530919-C-T,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4-2 n.45G>C (P/LP rep, RNU4-2 n.45 -> RNU4atac n.40)",10.1101/2025.08.13.25333306
+chr12-120291861-C-A,chr2-121530917-A-T,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.38A>T (P/LP rep, RNU4atac n.38 -> RNU4-2 n.43)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291861-C-G,chr2-121530917-A-T,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.38A>T (P/LP rep, RNU4atac n.38 -> RNU4-2 n.43)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291861-C-T,chr2-121530917-A-T,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.38A>T (P/LP rep, RNU4atac n.38 -> RNU4-2 n.43)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291872-C-T,chr2-121530916-G-A,analog,same,5' stem-loop,pathogenic,needs_review,Curated anchor: guidance worked example — RNU4ATAC n.37G>A equivalent to RNU4-2 n.32G>A (recessive NDD),10.1101/2025.08.13.25333306
+chr12-120291873-A-C,chr2-121530906-A-C,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.27A>C (P/LP rep, RNU4atac n.27 -> RNU4-2 n.31)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291873-A-G,chr2-121530906-A-C,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.27A>C (P/LP rep, RNU4atac n.27 -> RNU4-2 n.31)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291873-A-T,chr2-121530906-A-C,analog,same,k-turn,pathogenic,needs_review,"Derived: RNU4atac n.27A>C (P/LP rep, RNU4atac n.27 -> RNU4-2 n.31)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291880-A-C,chr2-121530897-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.18G>A (P/LP rep, RNU4atac n.18 -> RNU4-2 n.24)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291880-A-G,chr2-121530897-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.18G>A (P/LP rep, RNU4atac n.18 -> RNU4-2 n.24)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291880-A-T,chr2-121530897-G-A,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.18G>A (P/LP rep, RNU4atac n.18 -> RNU4-2 n.24)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291881-C-A,chr2-121530896-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.17G>C (P/LP rep, RNU4atac n.17 -> RNU4-2 n.23)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291881-C-G,chr2-121530896-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.17G>C (P/LP rep, RNU4atac n.17 -> RNU4-2 n.23)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291881-C-T,chr2-121530896-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.17G>C (P/LP rep, RNU4atac n.17 -> RNU4-2 n.23)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291882-G-A,chr2-121530895-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.16G>C (P/LP rep, RNU4atac n.16 -> RNU4-2 n.22)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291882-G-C,chr2-121530895-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.16G>C (P/LP rep, RNU4atac n.16 -> RNU4-2 n.22)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291882-G-T,chr2-121530895-G-C,analog,same,,pathogenic,needs_review,"Derived: RNU4atac n.16G>C (P/LP rep, RNU4atac n.16 -> RNU4-2 n.22)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291897-C-G,chr2-121530885-T-C,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4-2 n.7G>C (P/LP rep, RNU4-2 n.7 -> RNU4atac n.6)",10.1101/2025.08.13.25333306
+chr12-120291897-C-T,chr2-121530885-T-C,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4-2 n.7G>A (P/LP rep, RNU4-2 n.7 -> RNU4atac n.6)",10.1101/2025.08.13.25333306
+chr12-120291898-A-C,chr2-121530884-A-G,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4atac n.5A>G (P/LP rep, RNU4atac n.5 -> RNU4-2 n.6)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291898-A-G,chr2-121530884-A-G,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4atac n.5A>G (P/LP rep, RNU4atac n.5 -> RNU4-2 n.6)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf
+chr12-120291898-A-T,chr2-121530884-A-G,analog,same,Stem II,pathogenic,needs_review,"Derived: RNU4atac n.5A>G (P/LP rep, RNU4atac n.5 -> RNU4-2 n.6)",https://www.gimjournal.org/article/S1098-3600(26)00950-0/pdf

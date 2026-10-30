@@ -51,9 +51,9 @@ def _flatten_variant(db: Session, variant_id: str) -> dict | None:
         {"vid": variant_id},
     ).fetchone()
     d["clinical_significance"] = (
-        class_row["clinical_significance"] if class_row else None
+        class_row._mapping["clinical_significance"] if class_row else None
     )
-    d["disease_type"] = class_row["disease"] if class_row else None
+    d["disease_type"] = class_row._mapping["disease"] if class_row else None
     return d
 
 

@@ -363,6 +363,8 @@ For interactive API documentation, visit: `/api-docs` (when running locally) or 
 | `/api/curate`                         | GET, POST | Curator, Admin | Curate data                 |
 | `/api/approvals`                      | GET       | Admin          | List pending approvals      |
 | `/api/approvals/{id}`                 | POST      | Admin          | Approve/reject              |
+| `/api/approvals/{id}/apply`           | POST      | Admin          | Apply a single approved change |
+| `/api/approvals/apply-batch`          | POST      | Admin          | Apply many approved changes at once |
 | `/api/users`                          | GET, POST | Admin          | Manage users                |
 | `/api/import/*`                       | POST      | Curator, Admin | Batch imports               |
 | `/api/variant-classifications/import` | POST      | Curator, Admin | Bulk import classifications |

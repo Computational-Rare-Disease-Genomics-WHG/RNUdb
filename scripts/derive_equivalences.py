@@ -168,20 +168,42 @@ def load_data(db: sqlite3.Connection):
     classifications: dict[str, list[dict]] = {}
     rows = db.execute(
         """
-        SELECT vc.variant_id, vc.clinical_significance, vc.disease, vc.inheritance
+        SELECT vc.variant_id, vc.clinical_significance, vc.disease,
+               vc.inheritance, vc.literature_id
         FROM variant_classifications vc
         """
     ).fetchall()
-    for vid, sig, disease, inheritance in rows:
+    for vid, sig, disease, inheritance, literature_id in rows:
         classifications.setdefault(vid, []).append(
             {
                 "clinical_significance": sig,
                 "disease": disease,
                 "inheritance": inheritance,
+                "literature_id": literature_id,
             }
         )
 
     return sequences, variants, classifications
+
+
+def best_literature_for(variant_id: str, classifications: dict[str, list[dict]]) -> str:
+    """Return the source paper (literature_id) of the strongest P/LP
+    classification for a variant, or "" when none exists.
+
+    Used to populate `literature_id` on derived equivalence rows so the
+    evidence variant's source is traceable (anti-circularity audit trail).
+    """
+    best: dict | None = None
+    for c in classifications.get(variant_id, []):
+        sig = (c["clinical_significance"] or "").lower()
+        if sig not in ("pathogenic", "likely pathogenic", "p", "lp"):
+            continue
+        if best is None or (
+            sig.startswith("pathogenic")
+            and not (best["clinical_significance"] or "").startswith("pathogenic")
+        ):
+            best = c
+    return (best or {}).get("literature_id") or ""
 
 
 def is_recessive_pathogenic(
@@ -243,7 +265,13 @@ def main() -> None:
 
     rows: dict[tuple[str, str], dict] = {}
 
-    def emit(variant_id: str, other_id: str, region: str | None, note: str) -> None:
+    def emit(
+        variant_id: str,
+        other_id: str,
+        region: str | None,
+        note: str,
+        literature_id: str,
+    ) -> None:
         v1, v2 = sorted((variant_id, other_id))
         key = (v1, v2)
         if key in rows:
@@ -257,7 +285,7 @@ def main() -> None:
             "evidence_direction": EVIDENCE_DIRECTION,
             "status": STATUS,
             "notes": note,
-            "literature_id": "",
+            "literature_id": literature_id,
         }
 
     # Direction 1: RNU4-2 recessive P/LP variants are evidence for the
@@ -280,6 +308,7 @@ def main() -> None:
                         f"Derived: {gene_a} {v['hgvs'] or v['id']} (P/LP rep, "
                         f"{gene_a} n.{pos_a} -> {gene_b} n.{pos_b})"
                     ),
+                    best_literature_for(v["id"], classifications),
                 )
 
     # Direction 2: RNU4atac P/LP variants are evidence for the equivalent
@@ -303,6 +332,7 @@ def main() -> None:
                         f"Derived: {gene_b} {v['hgvs'] or v['id']} (P/LP rep, "
                         f"{gene_b} n.{pos_b} -> {gene_a} n.{pos_a})"
                     ),
+                    best_literature_for(v["id"], classifications),
                 )
 
     # The paper's worked-example pair — always included explicitly. The stored
@@ -323,6 +353,7 @@ def main() -> None:
             "Curated anchor: guidance worked example — "
             "RNU4ATAC n.37G>A equivalent to RNU4-2 n.32G>A (recessive NDD)"
         ),
+        best_literature_for(ANCHOR_PAIR[1], classifications),
     )
 
     out_path = OUT_PATH

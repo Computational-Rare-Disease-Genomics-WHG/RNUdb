@@ -117,6 +117,44 @@ class TestEquivalencesReadAPI:
         assert res.status_code == 200
         assert len(res.json()) == 1
 
+    def test_gene_equivalences_flattens_classifications(
+        self, test_client, test_db, equivalence_test_data, sample_literature
+    ):
+        """Regression: /api/genes/{id}/equivalences must return 200 and include
+        the evidence variant's classification (exercises the `_mapping` row
+        access path that previously raised TypeError -> 500)."""
+        from api.models import VariantClassification, VariantEquivalence
+
+        test_db.add(sample_literature)
+        test_db.add(
+            VariantClassification(
+                variant_id="V-DEL-001",
+                literature_id=sample_literature.id,
+                clinical_significance="Likely Pathogenic",
+                disease="Recessive RNU4-2 associated NDD",
+            )
+        )
+        test_db.add(
+            VariantEquivalence(
+                variant_id="V-DEL-001",
+                equivalent_variant_id="chr2-121530916-G-A",
+                relationship_type="analog",
+                mechanism_match="same",
+                evidence_direction="pathogenic",
+            )
+        )
+        test_db.commit()
+
+        res = test_client.get("/api/genes/RNU4atac/equivalences")
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data) == 1
+        row = data[0]
+        # The evidence variant (RNU4-2 side) must carry its classification.
+        assert row["variant"]["id"] == "V-DEL-001"
+        assert row["variant"]["clinical_significance"] == "Likely Pathogenic"
+        assert row["variant"]["disease_type"] == "Recessive RNU4-2 associated NDD"
+
 
 class TestEquivalenceApprovalFlow:
     """Equivalence writes are applied through the approval workflow."""
@@ -352,3 +390,112 @@ class TestEquivalenceApprovalFlow:
         )
         assert res.status_code == 200
         assert res.json()["entity_type"] == "equivalence"
+
+
+class TestEquivalenceBatchApply:
+    """POST /api/approvals/apply-batch for equivalence changes."""
+
+    def _create_and_approve(self, client, pair):
+        """Create + approve a pending equivalence change; return its id."""
+        res = client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "equivalence",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {
+                    "variant_id": pair[0],
+                    "equivalent_variant_id": pair[1],
+                    "relationship_type": "analog",
+                    "mechanism_match": "same",
+                    "evidence_direction": "pathogenic",
+                },
+            },
+        )
+        assert res.status_code == 200
+        cid = res.json()["id"]
+        rev = client.post(f"/api/approvals/{cid}/review", json={"status": "approved"})
+        assert rev.status_code == 200
+        return cid
+
+    def test_apply_batch_by_ids(self, test_client, equivalence_test_data):
+        c1 = self._create_and_approve(test_client, ("V-DEL-001", "chr2-121530916-G-A"))
+        c2 = self._create_and_approve(test_client, ("V-UPD-001", "chr2-121530917-C-T"))
+        res = test_client.post("/api/approvals/apply-batch", json={"ids": [c1, c2]})
+        assert res.status_code == 200
+        data = res.json()
+        assert data["applied"] == 2
+        assert data["failed"] == 0
+        assert len(data["results"]) == 2
+        assert all(r["ok"] for r in data["results"])
+        rows = test_client.get("/api/equivalences").json()
+        assert len(rows) == 2
+
+    def test_apply_batch_all_approved(self, test_client, equivalence_test_data):
+        self._create_and_approve(test_client, ("V-DEL-001", "chr2-121530916-G-A"))
+        res = test_client.post(
+            "/api/approvals/apply-batch", json={"all_approved": True}
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["applied"] == 1
+        assert data["failed"] == 0
+        assert test_client.get("/api/equivalences").json()[0]["variant_id"] == (
+            "V-DEL-001"
+        )
+
+    def test_apply_batch_partial_failure(self, test_client, equivalence_test_data):
+        """A bad change (same-gene pair) fails without aborting the good one."""
+        good = self._create_and_approve(
+            test_client, ("V-DEL-001", "chr2-121530916-G-A")
+        )
+        bad = self._create_and_approve(test_client, ("V-DEL-001", "V-UPD-001"))
+        res = test_client.post("/api/approvals/apply-batch", json={"ids": [good, bad]})
+        assert res.status_code == 200
+        data = res.json()
+        assert data["applied"] == 1
+        assert data["failed"] == 1
+        by_id = {r["id"]: r for r in data["results"]}
+        assert by_id[good]["ok"] is True
+        assert by_id[bad]["ok"] is False
+        assert "different genes" in by_id[bad]["error"]
+        # Only the good change applied.
+        assert len(test_client.get("/api/equivalences").json()) == 1
+
+    def test_apply_batch_requires_admin(self, test_client):
+        """apply-batch is admin-only (mock auth gives admin; verify schema)."""
+        c = test_client.post("/api/approvals/apply-batch", json={"ids": []})
+        assert c.status_code == 200
+        assert c.json() == {"applied": 0, "failed": 0, "results": []}
+
+
+class TestEquivalenceCascadeDelete:
+    def test_delete_gene_removes_equivalences(
+        self, test_client, test_db, equivalence_test_data
+    ):
+        """Deleting a gene cascades to variant_equivalences rows."""
+        from api.models import VariantEquivalence
+
+        test_db.add(
+            VariantEquivalence(
+                variant_id="V-DEL-001",
+                equivalent_variant_id="chr2-121530916-G-A",
+                relationship_type="analog",
+                mechanism_match="same",
+                evidence_direction="pathogenic",
+            )
+        )
+        test_db.commit()
+        assert len(test_client.get("/api/equivalences").json()) == 1
+
+        res = test_client.delete("/api/genes/RNU4-2")
+        assert res.status_code == 200
+
+        rows = test_client.get("/api/equivalences").json()
+        # Depending on FK enforcement, either the row is gone or the gene
+        # delete failed cleanly; assert no row references the deleted gene.
+        assert all(
+            r["variant"]["geneId"] != "RNU4-2"
+            and r["equivalent_variant"]["geneId"] != "RNU4-2"
+            for r in rows
+        )

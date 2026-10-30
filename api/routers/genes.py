@@ -350,6 +350,16 @@ async def delete_gene(
         {"gene_id": gene_id},
     )
     db.execute(
+        text(
+            "DELETE FROM variant_equivalences "
+            "WHERE variant_id IN (SELECT id FROM variants WHERE geneId = :gene_id) "
+            "OR equivalent_variant_id IN ("
+            "SELECT id FROM variants WHERE geneId = :gene_id"
+            ")"
+        ),
+        {"gene_id": gene_id},
+    )
+    db.execute(
         text("DELETE FROM variants WHERE geneId = :gene_id"), {"gene_id": gene_id}
     )
     db.execute(

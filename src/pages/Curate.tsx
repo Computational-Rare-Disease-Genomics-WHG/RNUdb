@@ -122,6 +122,9 @@ const Curate: React.FC = () => {
     useState(false);
   const [showEquivalenceForm, setShowEquivalenceForm] = useState(false);
   const [showEquivalenceImport, setShowEquivalenceImport] = useState(false);
+  const [equivalenceChangeStatus, setEquivalenceChangeStatus] = useState<
+    Record<string, { status: string; id: number }>
+  >({});
   const [editingGene, setEditingGene] = useState<any>(null);
   const [editingVariant, setEditingVariant] = useState<any>(null);
   const [editingLiterature, setEditingLiterature] = useState<any>(null);
@@ -130,7 +133,7 @@ const Curate: React.FC = () => {
   const regionViewerRef = useRef<HTMLDivElement>(null);
   const tabPanelRef = useRef<HTMLDivElement>(null);
   const [regionViewerWidth, setRegionViewerWidth] = useState(1100);
-  const { submitChange } = useApprovals();
+  const { submitChange, listChanges } = useApprovals();
 
   useLayoutEffect(() => {
     if (!regionViewerRef.current) return;
@@ -160,6 +163,7 @@ const Curate: React.FC = () => {
   useEffect(() => {
     if (selectedGene) {
       loadGeneData(selectedGene.id);
+      loadEquivalenceChangeStatus(selectedGene.id);
     }
   }, [selectedGene]);
 
@@ -499,6 +503,34 @@ const Curate: React.FC = () => {
     }
   };
 
+  const pairKey = (v1: string, v2: string) => (v1 < v2 ? `${v1}|${v2}` : `${v2}|${v1}`);
+
+  const loadEquivalenceChangeStatus = async (geneId: string) => {
+    try {
+      const changes = await listChanges({
+        gene_id: geneId,
+        entity_type: "equivalence",
+      });
+      const map: Record<string, { status: string; id: number }> = {};
+      for (const c of changes) {
+        const payload = (c.payload || {}) as Record<string, unknown>;
+        const v1 = payload.variant_id ? String(payload.variant_id) : "";
+        const v2 = payload.equivalent_variant_id
+          ? String(payload.equivalent_variant_id)
+          : "";
+        if (v1 && v2) {
+          map[pairKey(v1, v2)] = { status: c.status, id: c.id };
+        } else if (c.entity_id && c.entity_id.includes("|")) {
+          const [a, b] = c.entity_id.split("|");
+          map[pairKey(a, b)] = { status: c.status, id: c.id };
+        }
+      }
+      setEquivalenceChangeStatus(map);
+    } catch {
+      setEquivalenceChangeStatus({});
+    }
+  };
+
   const handleCreateEquivalence = async (data: Record<string, unknown>) => {
     if (!selectedGene) return;
     const result = await submitChange("equivalence", selectedGene.id, "create", {
@@ -515,6 +547,7 @@ const Curate: React.FC = () => {
     if (result) {
       setShowEquivalenceForm(false);
       alert("Equivalence submitted for approval");
+      if (selectedGene) await loadEquivalenceChangeStatus(selectedGene.id);
     } else {
       alert("Failed to submit equivalence for approval");
     }
@@ -547,6 +580,7 @@ const Curate: React.FC = () => {
         ),
       );
       alert("Equivalence delete submitted for approval");
+      if (selectedGene?.id) await loadEquivalenceChangeStatus(selectedGene.id);
     } else {
       alert("Failed to submit equivalence delete");
     }
@@ -572,6 +606,7 @@ const Curate: React.FC = () => {
     if (ok > 0) alert(`${ok} equivalence(s) submitted for approval`);
     setShowEquivalenceImport(false);
     await loadGeneData(selectedGene.id);
+    await loadEquivalenceChangeStatus(selectedGene.id);
   };
 
   const getClinicalSigColor = (sig: string) => {
@@ -1522,6 +1557,12 @@ const Curate: React.FC = () => {
                                 ? eq.equivalent_variant
                                 : eq.variant
                               : null;
+                            const changeInfo =
+                              equivalenceChangeStatus[
+                                pairKey(eq.variant_id, eq.equivalent_variant_id)
+                              ];
+                            const inFlight =
+                              !!changeInfo && changeInfo.status !== "applied";
                             return (
                               <div
                                 key={`${eq.variant_id}-${eq.equivalent_variant_id}`}
@@ -1547,6 +1588,20 @@ const Curate: React.FC = () => {
                                           )}`}
                                         >
                                           {other.clinical_significance}
+                                        </span>
+                                      )}
+                                      {changeInfo && (
+                                        <span
+                                          className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                                            changeInfo.status === "applied"
+                                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                              : changeInfo.status === "approved"
+                                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                : "bg-amber-50 text-amber-700 border-amber-200"
+                                          }`}
+                                          title={`${changeInfo.status} (change #${changeInfo.id})`}
+                                        >
+                                          {changeInfo.status}
                                         </span>
                                       )}
                                     </div>
@@ -1575,8 +1630,13 @@ const Curate: React.FC = () => {
                                   </div>
                                   <button
                                     onClick={() => handleDeleteEquivalence(eq)}
-                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                                    title="Delete equivalence"
+                                    disabled={inFlight}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:pointer-events-none"
+                                    title={
+                                      inFlight
+                                        ? `Change #${changeInfo.id} is ${changeInfo.status} — delete already in flight`
+                                        : "Delete equivalence"
+                                    }
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </button>
