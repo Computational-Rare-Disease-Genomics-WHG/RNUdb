@@ -40,6 +40,19 @@ def notify_user_approved(github_login: str, approved_by: str) -> bool:
     return _send_webhook(message)
 
 
+def notify_change_submitted(
+    entity_type: str,
+    action: str,
+    requested_by: str,
+) -> bool:
+    """Notify admins when a curator submits a change for approval."""
+    message = (
+        f"📝 Change Submitted\n• {entity_type} - {action}\n"
+        f"• By: @{requested_by}\n• Awaiting admin review"
+    )
+    return _send_webhook(message)
+
+
 def notify_change_approved(
     entity_type: str,
     action: str,

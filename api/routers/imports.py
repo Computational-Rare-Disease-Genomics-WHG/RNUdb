@@ -469,7 +469,11 @@ async def lookup_literature_metadata(
     db: Session = Depends(get_db),
     user: dict = Depends(require_curator),
 ) -> list[PubMedLookupResult]:
-    """Lookup metadata from PubMed for a list of DOIs (curator only)."""
+    """Lookup metadata from CrossRef for a list of DOIs (read-only, curator only).
+
+    Never writes to the database and never creates placeholder rows; persistence
+    is handled through the approval workflow instead (#321).
+    """
     results = []
 
     for doi in dois:
@@ -489,34 +493,7 @@ async def lookup_literature_metadata(
             )
             continue
 
-        lookup_result = _fetch_pubmed_metadata(doi)
-
-        if lookup_result.success:
-            literature = Literature(
-                id=doi,
-                title=lookup_result.title or "Unknown",
-                authors=lookup_result.authors or "Unknown",
-                journal=lookup_result.journal or "Unknown",
-                year=lookup_result.year or "Unknown",
-                doi=doi,
-                pmid=lookup_result.pmid,
-                url=lookup_result.url,
-            )
-            db.add(literature)
-            db.commit()
-        else:
-            literature = Literature(
-                id=doi,
-                title=f"DOI: {doi}",
-                authors="Unknown",
-                journal="Unknown",
-                year="Unknown",
-                doi=doi,
-            )
-            db.add(literature)
-            db.commit()
-
-        results.append(lookup_result)
+        results.append(_fetch_pubmed_metadata(doi))
 
     return results
 
@@ -527,7 +504,11 @@ async def fetch_literature_metadata(
     db: Session = Depends(get_db),
     user: dict = Depends(require_curator),
 ) -> PubMedLookupResult:
-    """Fetch metadata from PubMed using DOI or PMID (curator only)."""
+    """Fetch metadata from CrossRef using DOI or PMID (read-only, curator only).
+
+    Never writes to the database and never creates placeholder rows; persistence
+    is handled through the approval workflow instead (#321).
+    """
     body = await request.json()
     identifier = body.get("identifier", "").strip()
 
@@ -554,20 +535,4 @@ async def fetch_literature_metadata(
             url=existing.url,
         )
 
-    result = _fetch_pubmed_metadata(identifier)
-
-    if result.success:
-        lit = Literature(
-            id=identifier,
-            title=result.title or "Unknown",
-            authors=result.authors or "Unknown",
-            journal=result.journal or "Unknown",
-            year=result.year or "Unknown",
-            doi=identifier,
-            pmid=result.pmid,
-            url=result.url,
-        )
-        db.add(lit)
-        db.commit()
-
-    return result
+    return _fetch_pubmed_metadata(identifier)

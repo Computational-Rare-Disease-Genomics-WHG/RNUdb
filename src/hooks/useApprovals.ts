@@ -9,11 +9,12 @@ export interface PendingChange {
   payload: Record<string, unknown>;
   requested_by: string;
   requested_at: string;
-  status: "pending" | "approved" | "rejected" | "applied";
+  status: "pending" | "approved" | "rejected" | "applied" | "failed";
   reviewed_by: string | null;
   reviewed_at: string | null;
   review_notes: string | null;
   applied_at: string | null;
+  failure_reason: string | null;
 }
 
 /** Format FastAPI error shapes (string, {message}, or validation array) into a readable message. */

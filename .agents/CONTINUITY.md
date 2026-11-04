@@ -45,6 +45,14 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
   - #308: `applied` added to list status regex.
   - Tests: rewritten `tests/test_approvals.py` (43 new/updated: cascade, import-apply writes, whitelist, deterministic gene create, filter by applied). 154 backend pass / 2 skip, vitest 159, build, lint, pre-commit all pass. Migration chain verified on scratch SQLite DB.
 
+- `[2026-11-04T17:20Z] [TOOL]` **Batch 2 of epic #346** on branch `fix/approval-failure-audit-309-310-319-320-321` (stacked on Batch 1):
+  - #309: apply failures mark change `failed` w/ `failure_reason` (direct SQL marker, ORM object unsafe post-rollback); apply accepts retry from `failed`; status filterable; migration `08cf1ba3f420` (adds column + status).
+  - #310: every apply mutation now queues an `audit_log` entry (via `_audit_entry`, no mid-txn commit) attributed to the applying admin. Note: audit_log JSON columns read back as strings when queried via raw `text()`.
+  - #320: `notify_change_submitted` Slack notifier wired into `create_pending_change`.
+  - #321: `/imports/literature/lookup` + `/imports/literature/fetch` are read-only (no INSERT, no "Unknown" placeholder rows).
+  - #319: user approve/reject now 404-if-missing, 409-if-already-in-target-state (and refuse to demote/reject admins), audit role changes. Also fixed latent route bug: router mounted at `/api/users` AND route paths `/users/{login}/approve` → real URL was `/api/users/users/...` while frontend calls `/api/users/{login}/approve` → paths corrected.
+  - Tests: 170 backend pass / 2 skip, vitest 159, build/lint/pre-commit pass, full migration chain verified on scratch DB.
+
 ## [OUTCOMES]
 
 - `[2026-11-04T14:50Z] [TOOL]` Continuity file moved to `.agents/CONTINUITY.md`. Issue #344 → branch `chore/continuity-md-to-agents-344` → PR #345 (commit `16fecaa`). pytest 140 passed/2 skipped, npm build + pre-commit pass. Awaiting merge.

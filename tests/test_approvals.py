@@ -1,5 +1,7 @@
 """Tests for approval workflow (pending_changes table)."""
 
+import json
+
 import pytest
 from sqlalchemy import text
 
@@ -540,6 +542,209 @@ class TestApprovalsAPI:
         assert res.status_code == 200
         assert res.json()["entity_type"] == "bed_track"
         assert res.json()["action"] == "delete"
+
+
+class TestApplyFailureAndAudit:
+    """Failed applies are recorded and retryable (#309); applies are audited (#310)."""
+
+    def test_apply_failure_returns_500(self, test_client, seed_test_data):
+        """A conflicting mutation fails loudly instead of silently passing."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {
+                    "id": "V-DEL-001",  # already seeded
+                    "geneId": "RNU4-2",
+                    "position": 120291764,
+                    "ref": "C",
+                    "alt": "T",
+                },
+            },
+        )
+        change_id = create_res.json()["id"]
+        test_client.post(
+            f"/api/approvals/{change_id}/review", json={"status": "approved"}
+        )
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 500
+
+    def test_mark_apply_failed_records_reason(self, test_client, test_db):
+        """The failure marker stores a human-readable reason."""
+        from api.routers.approvals import _mark_apply_failed
+
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {"id": "V9", "function_score": 0.1},
+            },
+        )
+        change_id = create_res.json()["id"]
+
+        _mark_apply_failed(test_db, change_id, "UNIQUE constraint failed: variants.id")
+
+        row = test_db.execute(
+            text("SELECT status, failure_reason FROM pending_changes WHERE id=:c"),
+            {"c": change_id},
+        ).fetchone()
+        assert row._mapping["status"] == "failed"
+        assert "UNIQUE constraint failed" in row._mapping["failure_reason"]
+
+        # Failed changes are filterable (list API)
+        res = test_client.get("/api/approvals?status=failed")
+        assert res.status_code == 200
+        assert any(item["id"] == change_id for item in res.json())
+
+    def test_retry_apply_from_failed(self, test_client, test_db, seed_test_data):
+        """A failed change can be retried and reaches 'applied' (#309)."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "entity_id": "V-UPD-001",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {"function_score": 0.77},
+            },
+        )
+        change_id = create_res.json()["id"]
+        test_client.post(
+            f"/api/approvals/{change_id}/review", json={"status": "approved"}
+        )
+
+        # Simulate a failed apply landed on the row
+        test_db.execute(
+            text(
+                "UPDATE pending_changes SET status='failed',"
+                " failure_reason='Apply failed: transient' WHERE id=:c"
+            ),
+            {"c": change_id},
+        )
+        test_db.commit()
+
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+        assert apply_res.json()["status"] == "applied"
+
+        row = test_db.execute(
+            text(
+                "SELECT status, failure_reason, applied_at"
+                " FROM pending_changes WHERE id=:c"
+            ),
+            {"c": change_id},
+        ).fetchone()
+        assert row._mapping["status"] == "applied"
+        assert row._mapping["applied_at"] is not None
+        assert row._mapping["failure_reason"] is None
+
+    def test_apply_writes_audit_log(self, test_client, test_db, seed_test_data):
+        """Applying a change records an audit_log entry for the admin (#310)."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "entity_id": "V-UPD-001",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {"function_score": 0.42},
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = self._approve_and_apply_helper(test_client, change_id)
+        assert apply_res.status_code == 200
+
+        row = test_db.execute(
+            text(
+                "SELECT table_name, record_id, action, user_login, old_values,"
+                " new_values FROM audit_log ORDER BY id DESC LIMIT 1"
+            )
+        ).fetchone()
+        assert row._mapping["table_name"] == "variants"
+        assert row._mapping["record_id"] == "V-UPD-001"
+        assert row._mapping["action"] == "UPDATE"
+        assert row._mapping["user_login"] == "test_admin"
+        old_values = (
+            json.loads(row._mapping["old_values"])
+            if isinstance(row._mapping["old_values"], str)
+            else row._mapping["old_values"]
+        )
+        new_values = (
+            json.loads(row._mapping["new_values"])
+            if isinstance(row._mapping["new_values"], str)
+            else row._mapping["new_values"]
+        )
+        assert old_values is not None
+        assert new_values["function_score"] == 0.42
+
+    def test_apply_gene_delete_audits_old_values(
+        self, test_client, test_db, seed_test_data
+    ):
+        """Deleting via approval records the before-rows in audit_log."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "gene",
+                "entity_id": "RNU4-2",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "RNU4-2"},
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = self._approve_and_apply_helper(test_client, change_id)
+        assert apply_res.status_code == 200
+
+        row = test_db.execute(
+            text(
+                "SELECT table_name, record_id, action, user_login, old_values"
+                " FROM audit_log WHERE action='DELETE' ORDER BY id DESC LIMIT 1"
+            )
+        ).fetchone()
+        assert row._mapping["table_name"] == "genes"
+        assert row._mapping["record_id"] == "RNU4-2"
+        assert row._mapping["user_login"] == "test_admin"
+        old_values = (
+            json.loads(row._mapping["old_values"])
+            if isinstance(row._mapping["old_values"], str)
+            else row._mapping["old_values"]
+        )
+        assert old_values["id"] == "RNU4-2"
+
+    @staticmethod
+    def _approve_and_apply_helper(client, change_id):
+        client.post(f"/api/approvals/{change_id}/review", json={"status": "approved"})
+        return client.post(f"/api/approvals/{change_id}/apply")
+
+
+class TestSubmissionNotification:
+    """Submitting a change notifies admins (#320)."""
+
+    def test_create_pending_change_notifies(self, test_client, monkeypatch):
+        calls = []
+
+        def fake_notify(entity_type, action, requested_by):
+            calls.append((entity_type, action, requested_by))
+            return True
+
+        import api.routers.approvals as approvals_module
+
+        monkeypatch.setattr(approvals_module, "notify_change_submitted", fake_notify)
+        res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {"id": "V-N-001"},
+            },
+        )
+        assert res.status_code == 200
+        assert calls == [("variant", "update", "test_curator")]
 
 
 class TestApplyCascadeDeletes:

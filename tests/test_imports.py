@@ -2,6 +2,7 @@
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy import text
 
 from api.main import app
 from api.routers.auth import require_admin, require_curator
@@ -604,6 +605,92 @@ class TestLiteratureImport:
         )
         # With mock curator auth, should succeed (empty identifier returns early)
         assert response.status_code == 200
+
+    def test_lookup_does_not_insert_rows(self, test_client, test_db, monkeypatch):
+        """Lookup returns metadata without writing to the database (#321)."""
+        from api.routers import imports as imports_module
+
+        monkeypatch.setattr(
+            imports_module,
+            "_fetch_pubmed_metadata",
+            lambda doi: imports_module.PubMedLookupResult(
+                doi=doi,
+                success=True,
+                title="Found paper",
+                authors="Smith J",
+                journal="Nature",
+                year="2024",
+            ),
+        )
+
+        response = test_client.post(
+            "/api/imports/literature/lookup",
+            json=["10.1000/example-lookup"],
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data[0]["success"] is True
+        assert data[0]["title"] == "Found paper"
+
+        count = test_db.execute(
+            text("SELECT COUNT(*) FROM literature WHERE id='10.1000/example-lookup'")
+        ).scalar()
+        assert count == 0
+
+    def test_lookup_failure_creates_no_placeholder_rows(
+        self, test_client, test_db, monkeypatch
+    ):
+        """Failed lookups must not create 'Unknown' placeholder rows (#321)."""
+        from api.routers import imports as imports_module
+
+        monkeypatch.setattr(
+            imports_module,
+            "_fetch_pubmed_metadata",
+            lambda doi: imports_module.PubMedLookupResult(
+                doi=doi, success=False, error="DOI not found"
+            ),
+        )
+
+        response = test_client.post(
+            "/api/imports/literature/lookup",
+            json=["10.1000/does-not-exist"],
+        )
+        assert response.status_code == 200
+        assert response.json()[0]["success"] is False
+
+        count = test_db.execute(
+            text("SELECT COUNT(*) FROM literature WHERE id='10.1000/does-not-exist'")
+        ).scalar()
+        assert count == 0
+
+    def test_fetch_does_not_insert_rows(self, test_client, test_db, monkeypatch):
+        """Fetch returns metadata without writing to the database (#321)."""
+        from api.routers import imports as imports_module
+
+        monkeypatch.setattr(
+            imports_module,
+            "_fetch_pubmed_metadata",
+            lambda ident: imports_module.PubMedLookupResult(
+                doi=ident,
+                success=True,
+                title="Fetched paper",
+                authors="Doe A",
+                journal="Science",
+                year="2025",
+            ),
+        )
+
+        response = test_client.post(
+            "/api/imports/literature/fetch",
+            json={"identifier": "10.1000/example-fetch"},
+        )
+        assert response.status_code == 200
+        assert response.json()["title"] == "Fetched paper"
+
+        count = test_db.execute(
+            text("SELECT COUNT(*) FROM literature WHERE id='10.1000/example-fetch'")
+        ).scalar()
+        assert count == 0
 
 
 class TestVCFImport:
