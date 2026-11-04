@@ -53,6 +53,10 @@ const Admin: React.FC = () => {
   const [pendingUsers, setPendingUsers] = useState<UserRecord[]>([]);
   const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<PendingChange[]>([]);
+  const [approvedAwaitingApply, setApprovedAwaitingApply] = useState<PendingChange[]>(
+    [],
+  );
+  const [failedChanges, setFailedChanges] = useState<PendingChange[]>([]);
   const [changeLog, setChangeLog] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [changeLogPage, setChangeLogPage] = useState(1);
@@ -78,10 +82,15 @@ const Admin: React.FC = () => {
       if (pendingRes.ok) setPendingUsers(await pendingRes.json());
       if (allRes.ok) setAllUsers(await allRes.json());
 
-      const changes = await listChanges({ status: "pending" });
-      setPendingApprovals(changes);
-
-      const allChanges = await listChanges({});
+      const [pending, approved, failed, allChanges] = await Promise.all([
+        listChanges({ status: "pending" }),
+        listChanges({ status: "approved" }),
+        listChanges({ status: "failed" }),
+        listChanges({}),
+      ]);
+      setPendingApprovals(pending);
+      setApprovedAwaitingApply(approved);
+      setFailedChanges(failed);
       setChangeLog(allChanges);
     } catch (error) {
       console.error("Error loading admin data:", error);
@@ -115,16 +124,29 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleApproveChange = async (id: number) => {
+  const handleApproveOnly = async (id: number) => {
     const result = await reviewChange(id, "approved");
     if (!result) {
       alert("Failed to approve change");
       return;
     }
+    await loadData();
+  };
+
+  const handleApplyChange = async (id: number) => {
     const applied = await applyChange(id);
     if (!applied) {
       alert("Failed to apply change");
       return;
+    }
+    await loadData();
+  };
+
+  const handleApplyAll = async () => {
+    if (approvedAwaitingApply.length === 0) return;
+    const ids = [...approvedAwaitingApply.map((c) => c.id)];
+    for (const id of ids) {
+      await applyChange(id);
     }
     await loadData();
   };
@@ -284,29 +306,172 @@ const Admin: React.FC = () => {
                   Curator Change Requests
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
-                {loading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-16 w-full" />
-                    ))}
+              <CardContent className="pt-4 space-y-6">
+                {/* -------------------- Pending Review -------------------- */}
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-slate-400" />
+                    Pending Review ({pendingApprovals.length})
+                  </h3>
+                  {loading ? (
+                    <div className="space-y-3">
+                      {Array.from({ length: 2 }).map((_, i) => (
+                        <Skeleton key={i} className="h-16 w-full" />
+                      ))}
+                    </div>
+                  ) : pendingApprovals.length === 0 ? (
+                    <div className="text-center py-6 text-slate-500 border border-dashed border-slate-200 rounded-lg">
+                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
+                      <p>No pending approvals</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {pendingApprovals.map((change) => (
+                        <div
+                          key={change.id}
+                          className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors shadow-sm overflow-hidden"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                {getEntityIcon(change.entity_type)}
+                                <span className="font-semibold capitalize">
+                                  {change.entity_type}
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className={getActionColor(change.action)}
+                                >
+                                  {change.action}
+                                </Badge>
+                                <Badge variant="outline">{change.gene_id}</Badge>
+                              </div>
+                              <p className="text-sm text-slate-600 mb-1">
+                                Requested by{" "}
+                                <span className="font-medium">
+                                  {change.requested_by}
+                                </span>{" "}
+                                {new Date(change.requested_at).toLocaleDateString()}
+                              </p>
+                              <pre className="text-xs bg-slate-50 p-2 rounded mt-2 overflow-x-auto max-h-60 break-all">
+                                {JSON.stringify(change.payload, null, 2)}
+                              </pre>
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveOnly(change.id)}
+                                disabled={approvalLoading}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRejectChange(change.id)}
+                                disabled={approvalLoading}
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ------------- Approved — Awaiting Apply ------------- */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                      <Database className="h-4 w-4 text-slate-400" />
+                      Approved — Awaiting Apply ({approvedAwaitingApply.length})
+                    </h3>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleApplyAll}
+                      disabled={approvalLoading || approvedAwaitingApply.length === 0}
+                      className="text-teal-700 border-teal-200 hover:bg-teal-50"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Apply All
+                    </Button>
                   </div>
-                ) : pendingApprovals.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
-                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
-                    <p>No pending approvals</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {pendingApprovals.map((change) => (
-                      <div
-                        key={change.id}
-                        className="border border-slate-200 bg-white rounded-lg p-4 hover:border-teal-200 transition-colors shadow-sm overflow-hidden"
-                      >
-                        <div className="flex items-start justify-between">
+                  {approvedAwaitingApply.length === 0 ? (
+                    <div className="text-center py-6 text-slate-500 border border-dashed border-slate-200 rounded-lg">
+                      <p>Nothing approved but not yet applied</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {approvedAwaitingApply.map((change) => (
+                        <div
+                          key={change.id}
+                          className="border border-teal-200 bg-teal-50/40 rounded-lg p-4 flex items-start justify-between shadow-sm"
+                        >
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              {getEntityIcon(change.entity_type)}
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="font-semibold capitalize">
+                                {change.entity_type}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={getActionColor(change.action)}
+                              >
+                                {change.action}
+                              </Badge>
+                              <Badge variant="outline">{change.gene_id}</Badge>
+                              {change.reviewed_by && (
+                                <span className="text-xs text-slate-500">
+                                  approved by {change.reviewed_by}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-slate-600">
+                              Requested by {change.requested_by}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 ml-4">
+                            <Button
+                              size="sm"
+                              onClick={() => handleApplyChange(change.id)}
+                              disabled={approvalLoading}
+                              className="bg-teal-600 hover:bg-teal-700 text-white"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Apply
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* -------------------- Failed -------------------- */}
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    <XCircle className="h-4 w-4 text-red-500" />
+                    Failed ({failedChanges.length})
+                  </h3>
+                  {failedChanges.length === 0 ? (
+                    <div className="text-center py-6 text-slate-500 border border-dashed border-slate-200 rounded-lg">
+                      <p>No failed applies</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {failedChanges.map((change) => (
+                        <div
+                          key={change.id}
+                          className="border border-red-200 bg-red-50/40 rounded-lg p-4 flex items-start justify-between shadow-sm"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="font-semibold capitalize">
                                 {change.entity_type}
                               </span>
@@ -318,48 +483,32 @@ const Admin: React.FC = () => {
                               </Badge>
                               <Badge variant="outline">{change.gene_id}</Badge>
                             </div>
-                            <p className="text-sm text-slate-600 mb-1">
-                              Requested by{" "}
-                              <span className="font-medium">{change.requested_by}</span>{" "}
-                              {new Date(change.requested_at).toLocaleDateString()}
+                            {change.failure_reason && (
+                              <p className="text-xs text-red-600 mb-1 break-words">
+                                {change.failure_reason}
+                              </p>
+                            )}
+                            <p className="text-sm text-slate-600">
+                              Requested by {change.requested_by}
                             </p>
-                            <pre className="text-xs bg-slate-50 p-2 rounded mt-2 overflow-x-auto max-h-60 break-all">
-                              {JSON.stringify(change.payload, null, 2)}
-                            </pre>
                           </div>
                           <div className="flex gap-2 ml-4">
                             <Button
                               size="sm"
-                              onClick={() => {
-                                console.log(
-                                  "Approve button clicked for id:",
-                                  change.id,
-                                );
-                                handleApproveChange(change.id);
-                              }}
-                              disabled={approvalLoading}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-
-                            <Button
-                              size="sm"
                               variant="outline"
-                              onClick={() => handleRejectChange(change.id)}
+                              onClick={() => handleApplyChange(change.id)}
                               disabled={approvalLoading}
                               className="text-red-600 border-red-200 hover:bg-red-50"
                             >
                               <XCircle className="h-4 w-4 mr-1" />
-                              Reject
+                              Retry Apply
                             </Button>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -554,7 +703,9 @@ const Admin: React.FC = () => {
                                     ? "bg-red-500"
                                     : change.status === "applied"
                                       ? "bg-blue-500"
-                                      : "bg-slate-400"
+                                      : change.status === "failed"
+                                        ? "bg-red-600"
+                                        : "bg-slate-400"
                               }`}
                             />
                             <span
@@ -565,7 +716,9 @@ const Admin: React.FC = () => {
                                     ? "text-red-600"
                                     : change.status === "applied"
                                       ? "text-blue-600"
-                                      : "text-slate-500"
+                                      : change.status === "failed"
+                                        ? "text-red-700"
+                                        : "text-slate-500"
                               }`}
                             >
                               {change.status}

@@ -16,8 +16,15 @@ import {
   DnaIcon,
   ChevronRight,
   Pencil,
+  History,
 } from "lucide-react";
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import "@/components/GenomeBrowser/GenomeBrowser.css";
 
@@ -52,7 +59,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useApprovals } from "@/hooks/useApprovals";
+import { useApprovals, type PendingChange } from "@/hooks/useApprovals";
 
 interface Gene {
   id: string;
@@ -123,7 +130,26 @@ const Curate: React.FC = () => {
   const regionViewerRef = useRef<HTMLDivElement>(null);
   const tabPanelRef = useRef<HTMLDivElement>(null);
   const [regionViewerWidth, setRegionViewerWidth] = useState(1100);
-  const { submitChange } = useApprovals();
+  const { submitChange, listChanges } = useApprovals();
+  const [myRequests, setMyRequests] = useState<PendingChange[]>([]);
+  const [showMyRequests, setShowMyRequests] = useState(false);
+  const [myRequestsLoading, setMyRequestsLoading] = useState(false);
+
+  const loadMyRequests = useCallback(async () => {
+    setMyRequestsLoading(true);
+    try {
+      const changes = await listChanges({});
+      setMyRequests(changes);
+    } finally {
+      setMyRequestsLoading(false);
+    }
+  }, [listChanges]);
+
+  useEffect(() => {
+    if (showMyRequests) {
+      loadMyRequests();
+    }
+  }, [showMyRequests, loadMyRequests]);
 
   useLayoutEffect(() => {
     if (!regionViewerRef.current) return;
@@ -537,6 +563,80 @@ const Curate: React.FC = () => {
             Manage gene data, variants, structures, literature, and annotation tracks
           </p>
         </div>
+
+        <Card className="bg-white border border-slate-200 shadow-sm mb-6 overflow-hidden">
+          <CardContent className="px-6 py-4">
+            <button
+              onClick={() => setShowMyRequests(!showMyRequests)}
+              className="flex items-center gap-3 w-full text-left"
+            >
+              <History className="h-5 w-5 text-teal-600" />
+              <span className="font-semibold text-slate-900">My Change Requests</span>
+              <Badge variant="outline" className="bg-teal-50 text-teal-700 ml-2">
+                {myRequests.length}
+              </Badge>
+              <ChevronDown
+                className={`h-4 w-4 text-slate-400 ml-auto transition-transform ${
+                  showMyRequests ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {showMyRequests && (
+              <div className="mt-3 space-y-2 max-h-96 overflow-y-auto">
+                {myRequestsLoading ? (
+                  <Skeleton className="h-12 w-full" />
+                ) : myRequests.length === 0 ? (
+                  <p className="text-sm text-slate-500">No submissions yet.</p>
+                ) : (
+                  myRequests.map((cr) => (
+                    <div
+                      key={cr.id}
+                      className="flex items-start justify-between p-3 bg-slate-50 rounded-lg border border-slate-100"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="font-medium capitalize text-sm">
+                            {cr.action}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs capitalize ${
+                              cr.status === "applied"
+                                ? "bg-blue-100 text-blue-700"
+                                : cr.status === "approved"
+                                  ? "bg-teal-50 text-teal-700"
+                                  : cr.status === "rejected"
+                                    ? "bg-red-50 text-red-700"
+                                    : cr.status === "failed"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {cr.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          {cr.entity_type} &middot; {cr.gene_id}
+                          &middot; {new Date(cr.requested_at).toLocaleDateString()}
+                        </p>
+                        {cr.review_notes && (
+                          <p className="text-xs text-teal-600 italic mt-1">
+                            &ldquo;{cr.review_notes}&rdquo;
+                          </p>
+                        )}
+                        {cr.failure_reason && (
+                          <p className="text-xs text-red-600 mt-1 break-words">
+                            {cr.failure_reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Gene Selector */}
         <div className="mb-8 flex items-center gap-3">

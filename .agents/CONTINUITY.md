@@ -60,6 +60,11 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
   - Scope boundary (documented in PR): variant-classifications CRUD/bulk + gene create/update + refresh-variants remain curator-gated as association/operation data with NO approval entity type yet. Follow-up needed to extend approval to a `classification` entity (epic note).
   - Tests: rewrote auth/role tests (new `enforce_real_admin_auth` fixture; `TestAdminOnlyRoleAccess` asserts 401 on all locked endpoints). 172 backend pass / 2 skip, vitest 159, build/lint/pre-commit pass.
 
+- `[2026-11-04T18:00Z] [TOOL]` **Batch 4 of epic #346** on branch `fix/approval-ux-my-requests-313-314` (stacked on #347/#348/#349):
+  - #314 Admin UX: split Approve (review-only) from Apply; "Apply All" button; separate "Pending Review", "Approved — Awaiting Apply", "Failed" sections on the Admin page. `failed` status now rendered with distinct color in the change log.
+  - #313 Curator UX: "My Change Requests" collapsible panel on the Curate page, listing the curator's submissions (status, action, entity, date, review notes, failure reason). Loads on demand when expanded.
+  - 172 backend pass / 2 skip, vitest 159, build/lint/pre-commit pass.
+
 ## [OUTCOMES]
 
 - `[2026-11-04T14:50Z] [TOOL]` Continuity file moved to `.agents/CONTINUITY.md`. Issue #344 → branch `chore/continuity-md-to-agents-344` → PR #345 (commit `16fecaa`). pytest 140 passed/2 skipped, npm build + pre-commit pass. Awaiting merge.
