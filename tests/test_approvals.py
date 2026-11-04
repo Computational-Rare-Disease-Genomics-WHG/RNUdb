@@ -2,7 +2,6 @@
 
 import json
 
-import pytest
 from sqlalchemy import text
 
 
@@ -94,13 +93,51 @@ class TestApprovalsAPI:
         assert len(data) >= 1
         assert all(item["requested_by"] == "test_curator" for item in data)
 
-    def test_admin_can_list_all(self, test_client):
-        """(Placeholder for when separate admin auth tests exist)."""
-        pytest.skip("Requires separate admin user fixture")
+    def test_admin_can_list_all(self, curator_client, admin_client):
+        """Admin sees all pending changes, not just their own."""
+        create = curator_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {"id": "V-ADM-1"},
+            },
+        )
+        assert create.status_code == 200, f"create failed: {create.json()}"
+        cid = create.json()["id"]
 
-    def test_reviewer_cannot_access_other_users_submissions(self, test_client):
-        """Curators shouldn't see each other's pending changes."""
-        pytest.skip("Requires second curator fixture")
+        # admin_client fetches all (should see the change created by the curator)
+        res = admin_client.get("/api/approvals")
+        assert res.status_code == 200
+        data = res.json()
+        assert any(
+            item["id"] == cid and item["requested_by"] == "test_curator"
+            for item in data
+        ), f"admin list did not contain change {cid}: {[d['id'] for d in data]}"
+        assert any(item["requested_by"] != "test_admin" for item in data)
+
+    def test_reviewer_cannot_access_other_users_submissions(
+        self, curator_client, curator_bob_client
+    ):
+        """Curators must not see each other's pending changes."""
+        # Alice submits as herself (curator_client with default user)
+        create_alice = curator_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {"id": "V-SEC-A"},
+            },
+        )
+        assert create_alice.status_code == 200
+
+        # Bob (curator_bob_client) should NOT see Alice's change
+        bob_list = curator_bob_client.get("/api/approvals")
+        assert bob_list.status_code == 200
+        bob_ids = {c["id"] for c in bob_list.json()}
+        assert create_alice.json()["id"] not in bob_ids
 
     def test_review_approve(self, test_client):
         """Admin can approve a pending change."""
@@ -1092,22 +1129,14 @@ class TestApplyVariantCreateWhitelist:
 class TestApprovalsAuthorization:
     """Tests for authorization in approval workflow."""
 
-    def test_unauthenticated_cannot_list(self, test_client):
-        """Unauthenticated users cannot list approvals."""
-        # Clear auth header but keep base headers
-        original_headers = test_client.headers.copy()
-        test_client.headers = {}
-        res = test_client.get("/api/approvals")
-        # NOTE: with the autouse mock_auth override (see #316) requests without
-        # headers still pass auth, so 200 is accepted until per-role fixtures land.
-        assert res.status_code in (200, 401, 403, 404)
-        # Restore headers
-        test_client.headers = original_headers
+    def test_unauthenticated_cannot_list(self, anon_client):
+        """Unauthenticated users cannot list approvals (real auth → 401)."""
+        res = anon_client.get("/api/approvals")
+        assert res.status_code == 401
 
-    def test_unauthenticated_cannot_create(self, test_client):
+    def test_unauthenticated_cannot_create(self, anon_client):
         """Unauthenticated users cannot create approvals."""
-        test_client.headers = {}
-        res = test_client.post(
+        res = anon_client.post(
             "/api/approvals",
             json={
                 "entity_type": "variant",
@@ -1116,8 +1145,30 @@ class TestApprovalsAuthorization:
                 "payload": {},
             },
         )
-        # Expect auth error or different response when no auth
-        assert res.status_code in (200, 401, 403, 422, 500)
+        assert res.status_code == 401
+
+    def test_guest_cannot_list_or_submit(self, guest_client):
+        """A guest gets 403 from curator-gated approval endpoints."""
+        assert guest_client.get("/api/approvals").status_code == 403
+        res = guest_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {},
+            },
+        )
+        assert res.status_code == 403
+
+    def test_curator_cannot_review_or_apply(self, curator_client):
+        """Review/apply endpoints are admin-only — curators get 403."""
+        review = curator_client.post(
+            "/api/approvals/1/review", json={"status": "approved"}
+        )
+        assert review.status_code == 403
+        apply = curator_client.post("/api/approvals/1/apply")
+        assert apply.status_code == 403
 
     def test_review_without_approval_returns_404(self, test_client):
         """Reviewing a nonexistent change returns 404."""
