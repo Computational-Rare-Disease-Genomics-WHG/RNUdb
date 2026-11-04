@@ -10,6 +10,11 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router";
+import {
+  getEquivalentEvidence,
+  getEquivalentPairsForGene,
+  type EquivalentEvidence,
+} from "../lib/equivalentEvidence";
 import { buildGnomadGeneUrl, buildUcscRegionUrl } from "../lib/externalLinks";
 import { getAffectedNucleotideIds } from "../lib/rnaUtils";
 import { getSgeEvidence, type SgeEvidenceCode } from "../lib/sgeEvidence";
@@ -22,12 +27,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type {
   SnRNAGene,
   Literature,
   Variant,
   Nucleotide,
   LiteratureCounts,
+  VariantEquivalence,
 } from "@/types";
 
 interface InfoPanelProps {
@@ -35,7 +42,14 @@ interface InfoPanelProps {
   paperData: Literature[];
   literatureCounts: LiteratureCounts[];
   variantData: Variant[];
-  overlayMode: "none" | "clinvar" | "gnomad" | "function_score" | "depletion_group";
+  equivalences?: VariantEquivalence[];
+  overlayMode:
+    | "none"
+    | "clinvar"
+    | "gnomad"
+    | "function_score"
+    | "depletion_group"
+    | "equivalents";
   onCycleOverlay: () => void;
   hoveredNucleotide: Nucleotide | null;
   onNavigateToVariant?: (nucleotideId: number) => void;
@@ -98,12 +112,71 @@ const SgeEvidenceBadge: React.FC<{ functionScore?: number | null }> = ({
   );
 };
 
+const EquivalentEvidenceBadge: React.FC<{
+  evidence: EquivalentEvidence;
+}> = ({ evidence }) => {
+  if (!evidence.code) return null;
+  return (
+    <Badge
+      className={
+        evidence.code === "PM5"
+          ? "bg-violet-600 text-white border-violet-700 shrink-0"
+          : "bg-emerald-100 text-emerald-700 border-emerald-200 shrink-0"
+      }
+      title={
+        evidence.code === "PM5"
+          ? "PM5: exact-equivalent (likely) pathogenic variant in a disease-linked paralog/analog gene with the same underlying mechanism"
+          : "Informative variant: exact-equivalent (likely) benign variant in a disease-linked paralog/analog gene with the same underlying mechanism (SVC v4)"
+      }
+    >
+      {evidence.code === "PM5" ? "PM5" : "informative"}
+    </Badge>
+  );
+};
+
+/** Help tooltip explaining the PM5 / Recommendation 8 equivalent-variant concept. */
+const Pm5Help: React.FC = () => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <button
+        type="button"
+        aria-label="About PM5 equivalent variants"
+        className="inline-flex items-center text-slate-400 hover:text-violet-600 transition-colors"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+    </TooltipTrigger>
+    <TooltipContent className="max-w-xs text-xs leading-relaxed">
+      <p className="font-semibold mb-1">Recommendation 8 (PM5 — equivalent variants)</p>
+      <p>
+        Where two paralogous genes or minor/major spliceosomal analogs are both linked
+        to disease with the{" "}
+        <span className="font-medium">same underlying mechanism</span>, a (likely)
+        pathogenic or (likely) benign variant in one gene can be used as evidence toward
+        an <span className="font-medium">exact-equivalent</span> variant in the other
+        gene.
+      </p>
+      <ul className="list-disc pl-4 mt-1 space-y-0.5">
+        <li>
+          Do <span className="font-medium">not</span> use when the mechanism differs
+          (e.g. dominant gain-of-function vs recessive loss-of-function).
+        </li>
+        <li>
+          The reference variant must be classified (likely) pathogenic/benign without
+          evidence from this variant (avoid circularity).
+        </li>
+      </ul>
+    </TooltipContent>
+  </Tooltip>
+);
+
 const InfoPanel: React.FC<InfoPanelProps> = ({
   currentData,
   paperData,
   literatureCounts,
   hoveredNucleotide,
   variantData,
+  equivalences = [],
 }) => {
   const navigate = useNavigate();
   const geneLength = currentData.end - currentData.start + 1;
@@ -150,6 +223,31 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       populationVariants,
       allVariants: filteredVariants,
     };
+  };
+
+  const getVariantNucleotidePosition = (variant: Variant): number | null => {
+    if (
+      variant.nucleotidePosition !== undefined &&
+      variant.nucleotidePosition !== null
+    ) {
+      return variant.nucleotidePosition;
+    }
+    if (variant.position) {
+      return currentData.strand === "-"
+        ? currentData.end - variant.position + 1
+        : variant.position - currentData.start + 1;
+    }
+    return null;
+  };
+
+  const getEquivalencesForNucleotide = (nucleotideId: number) => {
+    return getEquivalentPairsForGene(equivalences, currentData.name).filter((pair) => {
+      const pos = getVariantNucleotidePosition(pair.localVariant);
+      if (pos === null) return false;
+      return getAffectedNucleotideIds(pair.localVariant.hgvs, pos).includes(
+        nucleotideId,
+      );
+    });
   };
 
   const normalizeVariantId = (id: string) => id.replace(/^chr/, "");
@@ -613,6 +711,71 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                           })}
                       </div>
                     )}
+                    {(() => {
+                      const equivalencesAtNucleotide = getEquivalencesForNucleotide(
+                        hoveredNucleotide.id,
+                      );
+                      if (equivalencesAtNucleotide.length === 0) return null;
+                      return (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <span>
+                              PM5 — Equivalent Variants (Rec 8) (
+                              {equivalencesAtNucleotide.length})
+                            </span>
+                            <Pm5Help />
+                          </div>
+                          {equivalencesAtNucleotide.map((pair, index) => {
+                            const evidence = getEquivalentEvidence({
+                              equivalentClinicalSignificance:
+                                pair.otherVariant.clinical_significance,
+                            });
+                            return (
+                              <div
+                                key={`${pair.otherVariant.id}-${index}`}
+                                className="p-2.5 bg-violet-50 rounded-lg border border-violet-200"
+                              >
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <button
+                                    onClick={() =>
+                                      navigate(`/gene/${pair.otherGeneId}`)
+                                    }
+                                    className="text-sm font-semibold text-slate-900 hover:text-violet-700 hover:underline text-left"
+                                  >
+                                    {pair.otherGeneId}{" "}
+                                    {pair.otherVariant.hgvs ||
+                                      `${pair.otherVariant.ref}>${pair.otherVariant.alt}`}
+                                  </button>
+                                  <div className="flex items-center gap-1.5">
+                                    {pair.otherVariant.clinical_significance && (
+                                      <span
+                                        className={`text-xs font-semibold px-1.5 py-0.5 rounded ${getSignificanceColor(
+                                          pair.otherVariant.clinical_significance,
+                                        )}`}
+                                      >
+                                        {pair.otherVariant.clinical_significance}
+                                      </span>
+                                    )}
+                                    <EquivalentEvidenceBadge evidence={evidence} />
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
+                                  <span>{pair.equivalence.relationship_type}</span>
+                                  {pair.equivalence.status && (
+                                    <span>status: {pair.equivalence.status}</span>
+                                  )}
+                                </div>
+                                {!evidence.usable && evidence.reason && (
+                                  <div className="text-xs text-amber-700 mt-1">
+                                    {evidence.reason}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })()}

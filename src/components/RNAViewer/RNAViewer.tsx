@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Activity,
   Users,
+  Link as LinkIcon,
 } from "lucide-react";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
@@ -42,9 +43,10 @@ interface RNAViewerProps {
   overlayData?: OverlayData;
   onNucleotideClick?: (nucleotide: Nucleotide) => void;
   onNucleotideHover?: (nucleotide: Nucleotide | null) => void;
-  overlayMode?: "none" | "clinvar" | "gnomad" | "depletion_group";
+  overlayMode?: "none" | "clinvar" | "gnomad" | "depletion_group" | "equivalents";
   onCycleOverlay?: () => void;
   hasSgeData?: boolean;
+  hasEquivalents?: boolean;
   variantData?: Variant[];
   gnomadVariants?: Variant[];
   selectedNucleotide?: Nucleotide | null;
@@ -60,9 +62,16 @@ interface RNAViewerProps {
   };
 }
 
+const OVERLAY_MODES = [
+  "none",
+  "clinvar",
+  "gnomad",
+  "equivalents",
+  "depletion_group",
+] as const;
+
 const cyclesFromMode = (mode: string): number => {
-  const modes = ["none", "clinvar", "gnomad", "depletion_group"];
-  return modes.indexOf(mode);
+  return OVERLAY_MODES.indexOf(mode as (typeof OVERLAY_MODES)[number]);
 };
 
 const RNAViewer: React.FC<RNAViewerProps> = ({
@@ -74,6 +83,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
   overlayMode = "clinvar",
   onCycleOverlay,
   hasSgeData = true,
+  hasEquivalents = false,
   variantData = [],
   gnomadVariants = [],
   selectedNucleotide = null,
@@ -315,6 +325,11 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         return { value: 0 };
       }
 
+      if (overlayMode === "equivalents") {
+        const hasEquivalent = overlayData[nucleotideId] !== undefined;
+        return { value: hasEquivalent ? 1 : 0 };
+      }
+
       return { value: 0 };
     },
     [
@@ -405,6 +420,10 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
       if (value === 2) return COLORBLIND_FRIENDLY_PALETTE.DEPLETION.MODERATE;
       if (value === 1) return COLORBLIND_FRIENDLY_PALETTE.DEPLETION.NORMAL;
       return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
+    } else if (overlayMode === "equivalents") {
+      return value
+        ? COLORBLIND_FRIENDLY_PALETTE.EQUIVALENTS
+        : COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
     }
 
     return COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.BACKGROUND;
@@ -528,9 +547,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                       onClick={() => {
                         if (overlayMode !== "none") {
                           const cycles =
-                            ["none", "clinvar", "gnomad", "depletion_group"].indexOf(
-                              "none",
-                            ) - cyclesFromMode(overlayMode);
+                            OVERLAY_MODES.indexOf("none") - cyclesFromMode(overlayMode);
                           for (let i = 0; i < Math.abs(cycles || 1); i++)
                             onCycleOverlay();
                         }
@@ -549,14 +566,15 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => {
-                        const targetIndex = [
-                          "none",
-                          "clinvar",
-                          "gnomad",
-                          "depletion_group",
-                        ].indexOf("clinvar");
+                        const targetIndex = OVERLAY_MODES.indexOf("clinvar");
                         const current = cyclesFromMode(overlayMode);
-                        for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
+                        for (
+                          let i = 0;
+                          i <
+                          (targetIndex - current + OVERLAY_MODES.length) %
+                            OVERLAY_MODES.length;
+                          i++
+                        )
                           onCycleOverlay();
                       }}
                       className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "clinvar" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
@@ -575,14 +593,15 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => {
-                        const targetIndex = [
-                          "none",
-                          "clinvar",
-                          "gnomad",
-                          "depletion_group",
-                        ].indexOf("gnomad");
+                        const targetIndex = OVERLAY_MODES.indexOf("gnomad");
                         const current = cyclesFromMode(overlayMode);
-                        for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
+                        for (
+                          let i = 0;
+                          i <
+                          (targetIndex - current + OVERLAY_MODES.length) %
+                            OVERLAY_MODES.length;
+                          i++
+                        )
                           onCycleOverlay();
                       }}
                       className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "gnomad" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
@@ -595,19 +614,50 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                     <p>Show population frequency data from gnomAD and All of Us</p>
                   </TooltipContent>
                 </Tooltip>
+                {hasEquivalents && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          const targetIndex = OVERLAY_MODES.indexOf("equivalents");
+                          const current = cyclesFromMode(overlayMode);
+                          for (
+                            let i = 0;
+                            i <
+                            (targetIndex - current + OVERLAY_MODES.length) %
+                              OVERLAY_MODES.length;
+                            i++
+                          )
+                            onCycleOverlay?.();
+                        }}
+                        className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "equivalents" ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
+                      >
+                        <LinkIcon className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Equivalents</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Show nucleotides with equivalent variants in paralog/analog
+                        genes (PM5 evidence)
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 {hasSgeData && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => {
-                          const targetIndex = [
-                            "none",
-                            "clinvar",
-                            "gnomad",
-                            "depletion_group",
-                          ].indexOf("depletion_group");
+                          const targetIndex = OVERLAY_MODES.indexOf("depletion_group");
                           const current = cyclesFromMode(overlayMode);
-                          for (let i = 0; i < (targetIndex - current + 4) % 4; i++)
+                          for (
+                            let i = 0;
+                            i <
+                            (targetIndex - current + OVERLAY_MODES.length) %
+                              OVERLAY_MODES.length;
+                            i++
+                          )
                             onCycleOverlay?.();
                         }}
                         className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${overlayMode === "depletion_group" ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
@@ -1066,7 +1116,9 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                 ? "gnomAD Legend:"
                 : overlayMode === "depletion_group"
                   ? "Depletion Group Legend:"
-                  : "Legend:"}
+                  : overlayMode === "equivalents"
+                    ? "Equivalent Variants Legend:"
+                    : "Legend:"}
           </div>
           <div className="flex flex-wrap gap-4 text-xs">
             {overlayMode === "clinvar" ? (
@@ -1150,6 +1202,16 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   <span>Normal</span>
                 </div>
               </>
+            ) : overlayMode === "equivalents" ? (
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-4 h-4 rounded-sm"
+                  style={{
+                    backgroundColor: COLORBLIND_FRIENDLY_PALETTE.EQUIVALENTS,
+                  }}
+                ></div>
+                <span>Equivalent variant in paralog/analog gene (PM5)</span>
+              </div>
             ) : null}
           </div>
         </div>

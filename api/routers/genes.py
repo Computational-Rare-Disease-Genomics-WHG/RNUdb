@@ -350,6 +350,16 @@ async def delete_gene(
         {"gene_id": gene_id},
     )
     db.execute(
+        text(
+            "DELETE FROM variant_equivalences "
+            "WHERE variant_id IN (SELECT id FROM variants WHERE geneId = :gene_id) "
+            "OR equivalent_variant_id IN ("
+            "SELECT id FROM variants WHERE geneId = :gene_id"
+            ")"
+        ),
+        {"gene_id": gene_id},
+    )
+    db.execute(
         text("DELETE FROM variants WHERE geneId = :gene_id"), {"gene_id": gene_id}
     )
     db.execute(
@@ -438,11 +448,18 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
             )
             row_dict["clinvar_significance"] = primary_class.get("clinvar_significance")
 
-            linked_ids = primary_class.get("linked_variant_ids")
-            if linked_ids:
-                linked_id_list = [v.strip() for v in linked_ids.split(",") if v.strip()]
-                if linked_id_list:
-                    row_dict["linkedVariantIds"] = linked_id_list
+            # Compound-heterozygous partner variants: union across ALL of this
+            # variant's classifications (each paper may record a different
+            # partner), not just the first classification.
+            linked_set = set(linked_ids)
+            for classification in classifications:
+                raw = classification.get("linked_variant_ids")
+                if not raw:
+                    continue
+                for part in (v.strip() for v in raw.split(",") if v.strip()):
+                    linked_set.add(part)
+            if linked_set:
+                row_dict["linkedVariantIds"] = sorted(linked_set)
 
         variants.append(VariantPublic(**row_dict))
 

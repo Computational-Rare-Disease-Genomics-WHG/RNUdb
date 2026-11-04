@@ -29,12 +29,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { COLORBLIND_FRIENDLY_PALETTE } from "@/lib/colors";
-import type { Variant, Literature, LiteratureCounts } from "@/types";
+import {
+  getEquivalentPairsForGene,
+  type NormalizedEquivalentPair,
+} from "@/lib/equivalentEvidence";
+import type {
+  Variant,
+  Literature,
+  LiteratureCounts,
+  VariantEquivalence,
+} from "@/types";
 
 interface VariantLiteratureCardProps {
   variantData: Variant[];
   paperData: Literature[];
   literatureCounts: LiteratureCounts[];
+  equivalences?: VariantEquivalence[];
   currentGene: string;
 }
 
@@ -54,6 +64,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
   variantData,
   paperData,
   literatureCounts,
+  equivalences = [],
   currentGene,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("variants");
@@ -126,6 +137,16 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
     if (!variant?.linkedVariantIds) return [];
     return variantData.filter((v) => variant.linkedVariantIds!.includes(v.id));
   };
+
+  const equivalentPairsByVariant = useMemo(() => {
+    const map = new Map<string, NormalizedEquivalentPair[]>();
+    for (const pair of getEquivalentPairsForGene(equivalences, currentGene)) {
+      const id = pair.localVariant.id;
+      if (!map.has(id)) map.set(id, []);
+      map.get(id)!.push(pair);
+    }
+    return map;
+  }, [equivalences, currentGene]);
 
   const filteredVariants = useMemo(() => {
     let variants = clinicalVariants;
@@ -605,7 +626,24 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                             className="py-3 px-2 font-mono text-slate-700 truncate"
                             title={variant.hgvs || variant.id}
                           >
-                            {variant.hgvs || variant.id}
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="truncate">
+                                {variant.hgvs || variant.id}
+                              </span>
+                              {(() => {
+                                const pairs =
+                                  equivalentPairsByVariant.get(variant.id) || [];
+                                if (pairs.length === 0) return null;
+                                return (
+                                  <span
+                                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 border border-violet-200 shrink-0"
+                                    title={`${pairs.length} equivalent variant(s) in paralog/analog gene(s) — PM5 evidence`}
+                                  >
+                                    ≡ {pairs.length}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                           </td>
                           <td className="py-3 px-2">
                             {(() => {
@@ -813,7 +851,7 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                 {linkedVariants.length > 0 && (
                                   <div>
                                     <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                      Linked Variants ({linkedVariants.length})
+                                      Compound-Het Partners ({linkedVariants.length})
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                       <button
@@ -858,6 +896,46 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                     </div>
                                   </div>
                                 )}
+
+                                {(() => {
+                                  const pairs =
+                                    equivalentPairsByVariant.get(variant.id) || [];
+                                  if (pairs.length === 0) return null;
+                                  return (
+                                    <div>
+                                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
+                                        Equivalent Variants ({pairs.length})
+                                      </div>
+                                      <div className="space-y-2">
+                                        {pairs.map((pair) => (
+                                          <div
+                                            key={`eq-${pair.otherVariant.id}`}
+                                            className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 rounded-lg border border-violet-200 text-xs flex-wrap"
+                                          >
+                                            <LinkIcon className="h-3 w-3 text-violet-500" />
+                                            <span className="font-mono font-medium text-slate-700">
+                                              {pair.otherGeneId}{" "}
+                                              {pair.otherVariant.hgvs ||
+                                                `${pair.otherVariant.ref}→${pair.otherVariant.alt}`}
+                                            </span>
+                                            {pair.otherVariant
+                                              .clinical_significance && (
+                                              <span className="text-slate-700 font-medium">
+                                                {
+                                                  pair.otherVariant
+                                                    .clinical_significance
+                                                }
+                                              </span>
+                                            )}
+                                            <span className="text-slate-500">
+                                              {pair.equivalence.relationship_type}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
 
                                 {variantLit.length > 0 ? (
                                   <div>

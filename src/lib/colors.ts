@@ -70,6 +70,9 @@ export const COLORBLIND_FRIENDLY_PALETTE = {
     NORMAL: "#059669", // Green (normal/no depletion)
   },
 
+  // Equivalent-variant (PM5) overlay color - violet/purple
+  EQUIVALENTS: "#8B5CF6", // Violet (cross-gene equivalent evidence)
+
   // Neutral colors
   NEUTRAL: {
     BACKGROUND: "#FFFFFF",

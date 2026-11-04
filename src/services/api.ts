@@ -5,6 +5,7 @@ import type {
   LiteratureCounts,
   RNAStructure,
   PDBStructure,
+  VariantEquivalence,
 } from "../types";
 
 const API_BASE_URL = "/api";
@@ -49,6 +50,14 @@ class ApiService {
 
   async getGeneVariants(geneId: string, signal?: AbortSignal): Promise<Variant[]> {
     return this.fetchFromApi<Variant[]>(`/genes/${geneId}/variants`, { signal });
+  }
+
+  async getGeneEquivalences(geneId: string): Promise<VariantEquivalence[]> {
+    return this.fetchFromApi<VariantEquivalence[]>(`/genes/${geneId}/equivalences`);
+  }
+
+  async getAllVariants(): Promise<Variant[]> {
+    return this.fetchFromApi<Variant[]>("/variants");
   }
 
   async getVariant(variantId: string): Promise<Variant> {
@@ -129,6 +138,9 @@ export const getAllGenes = (signal?: AbortSignal) => apiService.getAllGenes(sign
 export const getGene = (geneId: string) => apiService.getGene(geneId);
 export const getGeneVariants = (geneId: string, signal?: AbortSignal) =>
   apiService.getGeneVariants(geneId, signal);
+export const getGeneEquivalences = (geneId: string) =>
+  apiService.getGeneEquivalences(geneId);
+export const getAllVariants = () => apiService.getAllVariants();
 export const getVariant = (variantId: string) => apiService.getVariant(variantId);
 export const getAllLiterature = () => apiService.getAllLiterature();
 export const getGeneLiterature = (geneId: string) =>
