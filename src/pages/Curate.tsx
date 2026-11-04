@@ -236,11 +236,15 @@ const Curate: React.FC = () => {
     )
       return;
 
-    for (const id of Array.from(selectedVariants)) {
-      await submitChange("variant", selectedGene.id, "delete", { id }, id);
+    try {
+      for (const id of Array.from(selectedVariants)) {
+        await submitChange("variant", selectedGene.id, "delete", { id }, id);
+      }
+      setSelectedVariants(new Set());
+      alert("Delete request submitted for approval");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to submit delete request");
     }
-    setSelectedVariants(new Set());
-    alert("Delete request submitted for approval");
   };
 
   const handleDeleteStructure = async (structureId: string) => {
@@ -255,8 +259,8 @@ const Curate: React.FC = () => {
         structureId,
       );
       alert("Structure delete submitted for approval");
-    } catch {
-      alert("Network error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 
@@ -271,8 +275,8 @@ const Curate: React.FC = () => {
         trackId,
       );
       alert("BED track delete submitted for approval");
-    } catch {
-      alert("Network error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 
@@ -326,8 +330,8 @@ const Curate: React.FC = () => {
         setEditingGene(null);
         alert("Gene update submitted for approval");
       }
-    } catch {
-      alert("Network error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 
@@ -340,8 +344,8 @@ const Curate: React.FC = () => {
         await loadGenes();
         alert("Gene creation submitted for approval");
       }
-    } catch {
-      alert("Network error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 
@@ -412,8 +416,8 @@ const Curate: React.FC = () => {
         setEditingVariant(null);
         alert("Variant creation submitted for approval");
       }
-    } catch {
-      alert("Network error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 
@@ -432,8 +436,8 @@ const Curate: React.FC = () => {
         setEditingVariant(null);
         alert("Variant update submitted for approval");
       }
-    } catch {
-      alert("Network error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 

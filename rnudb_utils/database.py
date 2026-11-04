@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, select, update
+from sqlalchemy import create_engine, select, text, update
 from sqlalchemy.orm import Session, sessionmaker
 
 from api.models import (
@@ -338,6 +338,142 @@ def get_linked_variants(variant_id: str) -> list[str]:
         )
 
         return list(result1) + list(result2)
+
+
+# ---------------------------------------------------------------------------
+# Cascade deletes
+# ---------------------------------------------------------------------------
+
+
+def delete_variant_cascade(db: Session, variant_id: str) -> None:
+    """Delete a variant and all dependent rows (links, classifications)."""
+    db.execute(
+        text(
+            "DELETE FROM variant_links WHERE variant_id_1 = :vid OR variant_id_2 = :vid"
+        ),
+        {"vid": variant_id},
+    )
+    db.execute(
+        text("DELETE FROM variant_classifications WHERE variant_id = :vid"),
+        {"vid": variant_id},
+    )
+    db.execute(text("DELETE FROM variants WHERE id = :vid"), {"vid": variant_id})
+
+
+def delete_structure_cascade(db: Session, structure_id: str) -> None:
+    """Delete an RNA structure and its child rows."""
+    db.execute(
+        text("DELETE FROM nucleotides WHERE structure_id = :sid"),
+        {"sid": structure_id},
+    )
+    db.execute(
+        text("DELETE FROM base_pairs WHERE structure_id = :sid"),
+        {"sid": structure_id},
+    )
+    db.execute(
+        text("DELETE FROM annotations WHERE structure_id = :sid"),
+        {"sid": structure_id},
+    )
+    db.execute(
+        text("DELETE FROM structural_features WHERE structure_id = :sid"),
+        {"sid": structure_id},
+    )
+    db.execute(
+        text("DELETE FROM rna_structures WHERE id = :sid"), {"sid": structure_id}
+    )
+
+
+def delete_literature_cascade(db: Session, literature_id: str) -> None:
+    """Delete a literature entry and all classifications referencing it."""
+    db.execute(
+        text("DELETE FROM variant_classifications WHERE literature_id = :lid"),
+        {"lid": literature_id},
+    )
+    db.execute(text("DELETE FROM literature WHERE id = :lid"), {"lid": literature_id})
+
+
+def delete_gene_cascade(db: Session, gene_id: str) -> None:
+    """Delete a gene and every dependent row across all related tables.
+
+    Ordering matters (children before parents) because the SQLite test
+    database does not enforce FK cascades by default.
+    """
+    # Structure children then the structures themselves
+    db.execute(
+        text(
+            "DELETE FROM nucleotides WHERE structure_id IN "
+            "(SELECT id FROM rna_structures WHERE geneId = :gid)"
+        ),
+        {"gid": gene_id},
+    )
+    db.execute(
+        text(
+            "DELETE FROM base_pairs WHERE structure_id IN "
+            "(SELECT id FROM rna_structures WHERE geneId = :gid)"
+        ),
+        {"gid": gene_id},
+    )
+    db.execute(
+        text(
+            "DELETE FROM annotations WHERE structure_id IN "
+            "(SELECT id FROM rna_structures WHERE geneId = :gid)"
+        ),
+        {"gid": gene_id},
+    )
+    db.execute(
+        text(
+            "DELETE FROM structural_features WHERE structure_id IN "
+            "(SELECT id FROM rna_structures WHERE geneId = :gid)"
+        ),
+        {"gid": gene_id},
+    )
+    db.execute(text("DELETE FROM rna_structures WHERE geneId = :gid"), {"gid": gene_id})
+    # Variant links and classifications before the variants themselves
+    db.execute(
+        text(
+            "DELETE FROM variant_links "
+            "WHERE variant_id_1 IN (SELECT id FROM variants WHERE geneId = :gid) "
+            "OR variant_id_2 IN (SELECT id FROM variants WHERE geneId = :gid)"
+        ),
+        {"gid": gene_id},
+    )
+    db.execute(
+        text(
+            "DELETE FROM variant_classifications WHERE variant_id IN "
+            "(SELECT id FROM variants WHERE geneId = :gid)"
+        ),
+        {"gid": gene_id},
+    )
+    db.execute(text("DELETE FROM variants WHERE geneId = :gid"), {"gid": gene_id})
+    db.execute(text("DELETE FROM bed_tracks WHERE geneId = :gid"), {"gid": gene_id})
+    db.execute(text("DELETE FROM genes WHERE id = :gid"), {"gid": gene_id})
+
+
+def insert_bed_tracks(
+    bed_tracks_data: list[dict], session: Session | None = None
+) -> None:
+    """Insert BED track rows (no upsert - rows are independent intervals)."""
+
+    def _do_insert(sess: Session) -> None:
+        for t in bed_tracks_data:
+            sess.execute(
+                text("""
+                    INSERT INTO bed_tracks
+                        (geneId, track_name, chrom, interval_start, interval_end,
+                         label, score, color, created_by)
+                    VALUES
+                        (:geneId, :track_name, :chrom, :interval_start,
+                         :interval_end, :label, :score, :color, :created_by)
+                """),
+                t,
+            )
+        sess.commit()
+
+    if session is not None:
+        _do_insert(session)
+    else:
+        with SessionLocal() as session:
+            _do_insert(session)
 
 
 # ---------------------------------------------------------------------------

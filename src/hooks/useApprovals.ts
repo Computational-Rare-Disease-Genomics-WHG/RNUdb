@@ -16,6 +16,24 @@ export interface PendingChange {
   applied_at: string | null;
 }
 
+/** Format FastAPI error shapes (string, {message}, or validation array) into a readable message. */
+function formatApiError(err: unknown, fallback: string): string {
+  const detail = (err as { detail?: unknown })?.detail;
+  if (typeof detail === "string") return detail;
+  if (detail && typeof detail === "object") {
+    const obj = detail as { message?: string };
+    if (typeof obj.message === "string") return obj.message;
+    if (Array.isArray(detail)) {
+      const msgs = (detail as Array<{ msg?: string }>)
+        .map((d) => d.msg)
+        .filter((m): m is string => Boolean(m));
+      if (msgs.length) return msgs.join("; ");
+    }
+    return JSON.stringify(detail);
+  }
+  return fallback;
+}
+
 export function useApprovals() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,13 +62,13 @@ export function useApprovals() {
           }),
         });
         if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || "Failed to submit change");
+          const err = await res.json().catch(() => ({}));
+          throw new Error(formatApiError(err, "Failed to submit change"));
         }
         return await res.json();
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : String(err));
-        return null;
+        throw err;
       } finally {
         setLoading(false);
       }

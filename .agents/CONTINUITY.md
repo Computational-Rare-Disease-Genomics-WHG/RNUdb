@@ -8,6 +8,7 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 ## [PLANS]
 
 - `[2026-10-13T12:25Z] [USER]` Upgrade `AGENTS.md` per issue #270: add Global Guidance + curation skill.
+- `[2026-11-04T16:30Z] [USER]` Approval-system hardening epic #346: 5 batched PRs over issues #298–#303, #307–#321 (+ #285). Decisions: admin-only direct endpoints; imports via real `import` apply action; payload keys validated at submission. Batch 1 (apply-path integrity) landed on branch `fix/approval-apply-integrity-307-308-311-312-317-318`.
 
 ## [DECISIONS]
 
@@ -16,6 +17,9 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 - `[2026-10-13T17:20Z] [USER]` Keep `variants.py` version of `/literature-counts`; fix `users.py` auth too.
 - `[2026-10-14T12:45Z] [USER]` #134 direction: change code to `require_curator` (docstrings were right). Single PR for #132+#134. Include `/imports/literature/lookup`, `/literature/bulk`, and audit attribution.
 - `[2026-11-04T14:35Z] [USER]` Continuity file moved `.agent/CONTINUITY.md` → `.agents/CONTINUITY.md` (consolidates with `.agents/skills/`). File remains git-tracked. All 5 `AGENTS.md` references updated in the same change.
+- `[2026-11-04T16:30Z] [USER]` Approval epic #346 decisions (all recommended options): (1) all 24 issues, staged; (2) direct write endpoints become `require_admin`, curators→approval; (3) import action implemented in apply; (4) payload keys validated at submission (422), never silently dropped.
+- `[2026-11-04T16:45Z] [CODE]` Latent bug found+fixed: `# noqa: S608` comments were embedded inside SQL f-strings in approvals apply (`text(f"""  # noqa: S608`) → SQLite "unrecognized token: #" → every variant-create/update apply 500'd. Moved noqa comments to Python-comment positions.
+- `[2026-11-04T16:45Z] [CODE]` Gene-create population fetch moved to submission time (`create_pending_change` calls `merge_population_variants`, stores under payload `population_variants`); apply is now deterministic DB-only (fixes #317 + always-truthy `query_gnomad_variants` guard).
 
 ## [PROGRESS]
 
@@ -31,6 +35,15 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 - `[2026-10-29T16:30Z] [TOOL]` CI/CD audit → created issues #323 (coverage visibility), #324 (CI reliability: E2E double-start port race/health poll, concurrency, timeouts, build.yml gate), #325 (security: CodeQL/dependency-review/audits), #326 (Dependabot: add github-actions + python/uv; #140 premise outdated). Updated #171 (deploy) with label `ci` + decision comment (Podman auto-update vs self-hosted runner).
 
 - `[2026-10-29T18:00Z] [TOOL]` Branch `feat/sge-evidence-codes-328` → issue #328: SGE function-score ACMG evidence codes in InfoPanel. Generic score→code util `src/lib/sgeEvidence.ts` (breakpoints from De Jonghe et al. *Nature* 654:429–436 (2026) Brnich OddsPath calibration; PS3 strong strict < −0.45; benign-side midpoint approximation) + 12 vitest tests + badge in InfoPanel clinical & population variant rows. No gene/CR hard-coding by design (works for any future gene with functional data). 159 vitest pass, build/lint/pre-commit pass, pytest 140 passed/2 skipped.
+
+- `[2026-11-04T17:00Z] [TOOL]` **Batch 1 of epic #346** on branch `fix/approval-apply-integrity-307-308-311-312-317-318`:
+  - #318: single whitelist source `_ALLOWED_COLUMNS` (+meta/import-shape keys); both create/update apply branches reference it.
+  - #312: payload keys validated at submission → 422 with `invalid_fields`/`allowed_fields`; frontend `submitChange` formats API errors and Curate handlers now surface `err.message` instead of hardcoded "Network error"/false success alerts.
+  - #307: `action: "import"` implemented in apply for variant/structure/bed_track via shared `api/services/import_ops.py` (also used by imports router — dedup); migration `ed2f69106e20` adds `import` to `check_action`. Also rejects unsupported (entity, action) combos at submission (no silent no-op applies).
+  - #317: gene-create population fetch moved to submission time; apply is DB-only; fixed always-truthy guard; `merge_population_variants` helper in `rnudb_utils/external_apis.py` dedups genes.py create + refresh paths.
+  - #311 (+ #285): cascade-delete helpers in `rnudb_utils/database.py` (`delete_variant_cascade`, `delete_structure_cascade`, `delete_literature_cascade`, `delete_gene_cascade`); used by apply AND direct endpoints (genes.py/delete_gene, variants.py, literature.py).
+  - #308: `applied` added to list status regex.
+  - Tests: rewritten `tests/test_approvals.py` (43 new/updated: cascade, import-apply writes, whitelist, deterministic gene create, filter by applied). 154 backend pass / 2 skip, vitest 159, build, lint, pre-commit all pass. Migration chain verified on scratch SQLite DB.
 
 ## [OUTCOMES]
 

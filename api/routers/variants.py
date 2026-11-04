@@ -15,7 +15,7 @@ from api.models import (
     VariantUpdate,
 )
 from api.routers.auth import require_curator
-from rnudb_utils.database import audit_log, get_db
+from rnudb_utils.database import audit_log, delete_variant_cascade, get_db
 
 router = APIRouter()
 
@@ -159,7 +159,8 @@ async def delete_variant(
 
     old_values = existing.model_dump()
 
-    db.delete(existing)
+    # Cascade delete dependent rows (variant links + classifications)
+    delete_variant_cascade(db, variant_id)
     db.commit()
 
     audit_log(

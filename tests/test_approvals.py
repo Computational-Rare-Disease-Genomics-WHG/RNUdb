@@ -1,6 +1,7 @@
 """Tests for approval workflow (pending_changes table)."""
 
 import pytest
+from sqlalchemy import text
 
 
 class TestApprovalsAPI:
@@ -9,6 +10,11 @@ class TestApprovalsAPI:
     def _create_pending(self, client, payload):
         """Helper: create a pending change."""
         return client.post("/api/approvals", json=payload)
+
+    def _approve_and_apply(self, client, change_id):
+        """Helper: approve then apply a change."""
+        client.post(f"/api/approvals/{change_id}/review", json={"status": "approved"})
+        return client.post(f"/api/approvals/{change_id}/apply")
 
     def test_create_pending_change(self, test_client):
         """Curator can submit a change request."""
@@ -19,7 +25,7 @@ class TestApprovalsAPI:
                 "entity_id": None,
                 "gene_id": "RNU4-2",
                 "action": "update",
-                "payload": {"id": "V1", "clinical_significance": "Pathogenic"},
+                "payload": {"id": "V1", "function_score": 0.75},
             },
         )
         assert res.status_code == 200
@@ -27,6 +33,47 @@ class TestApprovalsAPI:
         assert data["status"] == "pending"
         assert data["requested_by"] == "test_curator"
         assert data["entity_type"] == "variant"
+
+    def test_create_pending_change_rejects_invalid_payload_keys(self, test_client):
+        """Non-whitelisted payload keys are rejected with 422, not silently dropped."""
+        res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "variant",
+                "entity_id": None,
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {
+                    "id": "V1",
+                    "function_score": 0.5,
+                    "clinical_significance": "Pathogenic",
+                    "DROP TABLE variants": "x",
+                },
+            },
+        )
+        assert res.status_code == 422
+        detail = res.json()["detail"]
+        assert "clinical_significance" in detail["invalid_fields"]
+        assert "DROP TABLE variants" in detail["invalid_fields"]
+        assert "function_score" not in detail["invalid_fields"]  # valid key allowed
+
+    def test_create_pending_change_allows_import_shape_keys(self, test_client):
+        """At submission, import payloads may carry nested data + meta keys."""
+        res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "import",
+                "payload": {
+                    "geneId": "RNU4-2",
+                    "variants": [{"position": 120291764, "ref": "C", "alt": "T"}],
+                    "skip_invalid": True,
+                },
+            },
+        )
+        assert res.status_code == 200
+        assert res.json()["action"] == "import"
 
     def test_list_pending_shows_own(self, test_client):
         """Curator only sees their own submissions."""
@@ -62,7 +109,7 @@ class TestApprovalsAPI:
                 "entity_type": "variant",
                 "gene_id": "RNU4-2",
                 "action": "update",
-                "payload": {"id": "V3", "note": "approve me"},
+                "payload": {"id": "V3", "function_score": 0.1},
             },
         )
         change_id = create_res.json()["id"]
@@ -170,6 +217,21 @@ class TestApprovalsAPI:
         )
         assert res.status_code == 422
 
+    def test_unsupported_entity_action_combination_rejected(self, test_client):
+        """e.g. structure 'create' is not supported and must be rejected."""
+        for entity_type, action in (("structure", "create"), ("gene", "import")):
+            res = test_client.post(
+                "/api/approvals",
+                json={
+                    "entity_type": entity_type,
+                    "gene_id": "RNU4-2",
+                    "action": action,
+                    "payload": {},
+                },
+            )
+            assert res.status_code == 422
+            assert "not supported" in res.json()["detail"]["message"]
+
     def test_filter_by_status(self, test_client):
         """Filtering by status returns only matching records."""
         # Create 2 pending + approve 1
@@ -206,6 +268,29 @@ class TestApprovalsAPI:
         assert res2.status_code == 200
         data2 = res2.json()
         assert all(item["status"] == "pending" for item in data2)
+
+    def test_filter_by_applied_status(self, test_client, test_db, seed_test_data):
+        """Applied changes can be filtered by status=applied (#308)."""
+        create_res = self._create_pending(
+            test_client,
+            {
+                "entity_type": "variant",
+                "entity_id": "V-UPD-001",
+                "gene_id": "RNU4-2",
+                "action": "update",
+                "payload": {"function_score": 0.9},
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = self._approve_and_apply(test_client, change_id)
+        assert apply_res.status_code == 200
+        assert apply_res.json()["status"] == "applied"
+
+        res = test_client.get("/api/approvals?status=applied")
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data) >= 1
+        assert all(item["status"] == "applied" for item in data)
 
     def test_filter_by_gene_id(self, test_client):
         """Filtering by gene_id works."""
@@ -393,8 +478,8 @@ class TestApprovalsAPI:
         assert data["entity_type"] == "literature"
         assert data["action"] == "create"
 
-    def test_approve_and_apply_literature_create(self, test_client):
-        """Admin can approve literature creation."""
+    def test_approve_and_apply_literature_create(self, test_client, test_db):
+        """Admin can approve and apply literature creation."""
         # Create
         create_res = self._create_pending(
             test_client,
@@ -408,18 +493,21 @@ class TestApprovalsAPI:
                     "authors": "Doe J",
                     "journal": "Science",
                     "year": 2025,
+                    "doi": "10.1126/science.12345",
                 },
             },
         )
         change_id = create_res.json()["id"]
 
-        # Approve - this is the main test
-        review_res = test_client.post(
-            f"/api/approvals/{change_id}/review",
-            json={"status": "approved", "notes": "Approved for database"},
-        )
-        assert review_res.status_code == 200
-        assert review_res.json()["status"] == "approved"
+        apply_res = self._approve_and_apply(test_client, change_id)
+        assert apply_res.status_code == 200
+        assert apply_res.json()["status"] == "applied"
+
+        row = test_db.execute(
+            text("SELECT * FROM literature WHERE id = 'LIT-APPLY-001'")
+        ).fetchone()
+        assert row is not None
+        assert row._mapping["title"] == "New Paper"
 
     def test_structure_delete_approval(self, test_client):
         """Curator can submit structure deletion for approval."""
@@ -454,6 +542,348 @@ class TestApprovalsAPI:
         assert res.json()["action"] == "delete"
 
 
+class TestApplyCascadeDeletes:
+    """Applied deletes must cascade dependent rows (#311 / #285)."""
+
+    def _seed_rich_gene(self, test_db):
+        """Seed a gene with variants, literature, classifications, structure,
+        bed track, and variant links."""
+        from api.models import (
+            BedTrack,
+            Literature,
+            Nucleotide,
+            RNAStructure,
+            VariantClassification,
+            VariantLink,
+        )
+
+        test_db.execute(
+            text(
+                "INSERT INTO genes (id, name, fullName, chromosome, start, end,"
+                " strand, sequence, description)"
+                " VALUES ('RNU4-2', 'RNU4-2', 'RNA, U4 small nuclear 2', 'chr12',"
+                " 120291759, 120291903, '+', 'ACGUACGU', 'Test gene')"
+            )
+        )
+        test_db.execute(
+            text(
+                "INSERT INTO variants (id, geneId, position, ref, alt)"
+                " VALUES ('V-A', 'RNU4-2', 120291764, 'C', 'T'),"
+                " ('V-B', 'RNU4-2', 120291782, 'A', 'C')"
+            )
+        )
+        lit = Literature(
+            id="LIT-C-001",
+            title="Paper",
+            authors="A",
+            journal="J",
+            year=2024,
+            doi="10.1/abc",
+        )
+        test_db.add(lit)
+        classification = VariantClassification(
+            variant_id="V-A", literature_id="LIT-C-001"
+        )
+        test_db.add(classification)
+        structure = RNAStructure(id="STR-C-001", geneId="RNU4-2")
+        test_db.add(structure)
+        test_db.add(Nucleotide(id=1, structure_id="STR-C-001", base="A", x=0, y=0))
+        test_db.add(
+            BedTrack(
+                geneId="RNU4-2",
+                track_name="t",
+                chrom="12",
+                interval_start=120291760,
+                interval_end=120291770,
+                created_by="test_curator",
+            )
+        )
+        test_db.add(VariantLink(variant_id_1="V-A", variant_id_2="V-B"))
+        test_db.commit()
+
+    def test_apply_gene_delete_cascades(self, test_client, test_db):
+        """Applying gene delete removes variants, classifications, structures,
+        nucleotides, bed tracks, and links."""
+        self._seed_rich_gene(test_db)
+
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "gene",
+                "entity_id": "RNU4-2",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "RNU4-2"},
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        assert apply_res.status_code == 200
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+        tables = {
+            "variants": "SELECT COUNT(*) FROM variants WHERE geneId='RNU4-2'",
+            "variant_classifications": ("SELECT COUNT(*) FROM variant_classifications"),
+            "rna_structures": "SELECT COUNT(*) FROM rna_structures",
+            "nucleotides": "SELECT COUNT(*) FROM nucleotides",
+            "bed_tracks": "SELECT COUNT(*) FROM bed_tracks",
+            "variant_links": "SELECT COUNT(*) FROM variant_links",
+            "genes": "SELECT COUNT(*) FROM genes WHERE id='RNU4-2'",
+        }
+        for table, sql in tables.items():
+            count = test_db.execute(text(sql)).scalar()
+            assert count == 0, f"{table} should be empty after cascade delete"
+
+    def test_apply_variant_delete_cascades(self, test_client, test_db, seed_gene):
+        """Applying variant delete removes its classifications and links."""
+        from api.models import (
+            Literature,
+            Variant,
+            VariantClassification,
+            VariantLink,
+        )
+
+        test_db.add(
+            Variant(
+                id="V-CC-001", geneId="RNU4-2", position=120291764, ref="C", alt="T"
+            )
+        )
+        test_db.add(
+            Variant(
+                id="V-CC-002", geneId="RNU4-2", position=120291782, ref="A", alt="C"
+            )
+        )
+        test_db.add(
+            Literature(
+                id="LIT-CC-001", title="P", authors="A", journal="J", year=2024, doi="x"
+            )
+        )
+        test_db.add(
+            VariantClassification(variant_id="V-CC-001", literature_id="LIT-CC-001")
+        )
+        test_db.add(VariantLink(variant_id_1="V-CC-001", variant_id_2="V-CC-002"))
+        test_db.commit()
+
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "entity_id": "V-CC-001",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "V-CC-001"},
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = self._approve_and_apply_helper(test_client, change_id)
+        assert apply_res.status_code == 200
+
+        assert (
+            test_db.execute(
+                text("SELECT COUNT(*) FROM variants WHERE id='V-CC-001'")
+            ).scalar()
+            == 0
+        )
+        assert (
+            test_db.execute(
+                text(
+                    "SELECT COUNT(*) FROM variant_classifications"
+                    " WHERE variant_id='V-CC-001'"
+                )
+            ).scalar()
+            == 0
+        )
+        assert test_db.execute(text("SELECT COUNT(*) FROM variant_links")).scalar() == 0
+        # Literature (not variant-owned) survives
+        assert (
+            test_db.execute(
+                text("SELECT COUNT(*) FROM literature WHERE id='LIT-CC-001'")
+            ).scalar()
+            == 1
+        )
+
+    def test_apply_literature_delete_cascades(self, test_client, test_db, seed_gene):
+        """Applying literature delete removes classifications referencing it."""
+        from api.models import (
+            Literature,
+            Variant,
+            VariantClassification,
+        )
+
+        test_db.add(
+            Variant(
+                id="V-LIT-001", geneId="RNU4-2", position=120291764, ref="C", alt="T"
+            )
+        )
+        test_db.add(
+            Literature(
+                id="LIT-DEL-001",
+                title="P",
+                authors="A",
+                journal="J",
+                year=2024,
+                doi="x",
+            )
+        )
+        test_db.add(
+            VariantClassification(variant_id="V-LIT-001", literature_id="LIT-DEL-001")
+        )
+        test_db.commit()
+
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "literature",
+                "entity_id": "LIT-DEL-001",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "LIT-DEL-001"},
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = self._approve_and_apply_helper(test_client, change_id)
+        assert apply_res.status_code == 200
+
+        assert (
+            test_db.execute(
+                text(
+                    "SELECT COUNT(*) FROM variant_classifications"
+                    " WHERE literature_id='LIT-DEL-001'"
+                )
+            ).scalar()
+            == 0
+        )
+        assert (
+            test_db.execute(
+                text("SELECT COUNT(*) FROM literature WHERE id='LIT-DEL-001'")
+            ).scalar()
+            == 0
+        )
+
+    def test_apply_structure_delete_cascades(self, test_client, test_db, seed_gene):
+        """Applying structure delete removes nucleotide/base-pair child rows."""
+        from api.models import (
+            BasePair,
+            Nucleotide,
+            RNAStructure,
+        )
+
+        test_db.add(RNAStructure(id="STR-DEL-001", geneId="RNU4-2"))
+        test_db.add(Nucleotide(id=1, structure_id="STR-DEL-001", base="A", x=0, y=0))
+        test_db.add(BasePair(structure_id="STR-DEL-001", from_pos=1, to_pos=2))
+        test_db.commit()
+
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "structure",
+                "entity_id": "STR-DEL-001",
+                "gene_id": "RNU4-2",
+                "action": "delete",
+                "payload": {"id": "STR-DEL-001"},
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = self._approve_and_apply_helper(test_client, change_id)
+        assert apply_res.status_code == 200
+
+        assert (
+            test_db.execute(
+                text(
+                    "SELECT COUNT(*) FROM nucleotides WHERE structure_id='STR-DEL-001'"
+                )
+            ).scalar()
+            == 0
+        )
+        assert (
+            test_db.execute(
+                text("SELECT COUNT(*) FROM base_pairs WHERE structure_id='STR-DEL-001'")
+            ).scalar()
+            == 0
+        )
+        assert (
+            test_db.execute(
+                text("SELECT COUNT(*) FROM rna_structures WHERE id='STR-DEL-001'")
+            ).scalar()
+            == 0
+        )
+
+    @staticmethod
+    def _approve_and_apply_helper(client, change_id):
+        client.post(f"/api/approvals/{change_id}/review", json={"status": "approved"})
+        return client.post(f"/api/approvals/{change_id}/apply")
+
+
+class TestApplyVariantCreateWhitelist:
+    """Variant create/update whitelists share a single source (#318)."""
+
+    def test_apply_variant_create_with_id_and_gene_id(
+        self, test_client, test_db, seed_test_data
+    ):
+        """Create allows id + geneId (plus the shared update columns)."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {
+                    "id": "V-NEW-001",
+                    "geneId": "RNU4-2",
+                    "position": 120291770,
+                    "ref": "G",
+                    "alt": "A",
+                    "function_score": -0.5,
+                },
+            },
+        )
+        assert create_res.status_code == 200
+        change_id = create_res.json()["id"]
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        assert apply_res.status_code == 200
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+        row = test_db.execute(
+            text("SELECT * FROM variants WHERE id='V-NEW-001'")
+        ).fetchone()
+        assert row is not None
+        assert row._mapping["geneId"] == "RNU4-2"
+        assert row._mapping["position"] == 120291770
+
+    def test_variant_create_duplicate_id_rejected(self, test_client, seed_test_data):
+        """A variant create for an existing id fails loudly at apply."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "create",
+                "payload": {
+                    "id": "V-DEL-001",  # already seeded
+                    "geneId": "RNU4-2",
+                    "position": 120291764,
+                    "ref": "C",
+                    "alt": "T",
+                },
+            },
+        )
+        change_id = create_res.json()["id"]
+        test_client.post(
+            f"/api/approvals/{change_id}/review", json={"status": "approved"}
+        )
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        # SQLite PK conflict surfaces as a 500 here rather than silently passing
+        assert apply_res.status_code == 500
+
+
 class TestApprovalsAuthorization:
     """Tests for authorization in approval workflow."""
 
@@ -463,7 +893,8 @@ class TestApprovalsAuthorization:
         original_headers = test_client.headers.copy()
         test_client.headers = {}
         res = test_client.get("/api/approvals")
-        # Expect 401/403 or 404 depending on auth implementation
+        # NOTE: with the autouse mock_auth override (see #316) requests without
+        # headers still pass auth, so 200 is accepted until per-role fixtures land.
         assert res.status_code in (200, 401, 403, 404)
         # Restore headers
         test_client.headers = original_headers
@@ -498,12 +929,7 @@ class TestApprovalsAuthorization:
 
 
 class TestImportApprovalWorkflow:
-    """Tests for import approval workflow.
-
-    These tests verify that imports can be submitted through the approval system.
-    Currently imports execute directly - these tests document the expected behavior
-    after implementing import-through-approval.
-    """
+    """Imports route through approval via the ``import`` action (#307)."""
 
     def test_create_variant_import_pending_change(self, test_client, seed_gene):
         """Creating a pending change for variant import."""
@@ -526,8 +952,8 @@ class TestImportApprovalWorkflow:
                 },
             },
         )
-        # With mock auth, should succeed
-        assert res.status_code in (200, 422)
+        assert res.status_code == 200
+        assert res.json()["action"] == "import"
 
     def test_create_structure_import_pending_change(self, test_client, seed_gene):
         """Creating a pending change for structure import."""
@@ -547,7 +973,8 @@ class TestImportApprovalWorkflow:
                 },
             },
         )
-        assert res.status_code in (200, 422)
+        assert res.status_code == 200
+        assert res.json()["action"] == "import"
 
     def test_create_bed_track_import_pending_change(self, test_client, seed_gene):
         """Creating a pending change for BED track import."""
@@ -564,36 +991,8 @@ class TestImportApprovalWorkflow:
                 },
             },
         )
-        assert res.status_code in (200, 422)
-
-    def test_approve_variant_import(self, test_client, seed_gene):
-        """Admin can approve a variant import pending change."""
-        # First create pending change
-        create_res = test_client.post(
-            "/api/approvals",
-            json={
-                "entity_type": "variant",
-                "gene_id": "RNU4-2",
-                "action": "import",
-                "payload": {
-                    "id": "test-var-001",
-                    "geneId": "RNU4-2",
-                    "position": 120291764,
-                    "ref": "C",
-                    "alt": "T",
-                },
-            },
-        )
-        if create_res.status_code == 200:
-            change_id = create_res.json()["id"]
-
-            # Then approve
-            approve_res = test_client.post(
-                f"/api/approvals/{change_id}/review",
-                json={"status": "approved"},
-            )
-            assert approve_res.status_code == 200
-            assert approve_res.json()["status"] == "approved"
+        assert res.status_code == 200
+        assert res.json()["action"] == "import"
 
     def test_reject_variant_import(self, test_client, seed_gene):
         """Admin can reject a variant import pending change."""
@@ -612,20 +1011,16 @@ class TestImportApprovalWorkflow:
                 },
             },
         )
-        if create_res.status_code == 200:
-            change_id = create_res.json()["id"]
+        change_id = create_res.json()["id"]
+        reject_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "rejected", "notes": "Duplicate variant"},
+        )
+        assert reject_res.status_code == 200
+        assert reject_res.json()["status"] == "rejected"
 
-            # Then reject
-            reject_res = test_client.post(
-                f"/api/approvals/{change_id}/review",
-                json={"status": "rejected", "notes": "Duplicate variant"},
-            )
-            assert reject_res.status_code == 200
-            assert reject_res.json()["status"] == "rejected"
-
-    def test_apply_approved_variant_import(self, test_client, seed_gene):
-        """Admin can apply an approved variant import."""
-        # Create pending change
+    def test_approve_and_apply_variant_import(self, test_client, test_db, seed_gene):
+        """Applying an approved variant import inserts the variants."""
         create_res = test_client.post(
             "/api/approvals",
             json={
@@ -633,25 +1028,248 @@ class TestImportApprovalWorkflow:
                 "gene_id": "RNU4-2",
                 "action": "import",
                 "payload": {
-                    "id": "test-var-003",
                     "geneId": "RNU4-2",
-                    "position": 120291900,
-                    "ref": "A",
-                    "alt": "G",
+                    "variants": [
+                        {
+                            "position": 120291900,
+                            "ref": "A",
+                            "alt": "G",
+                            "hgvs": "n.150A>G",
+                        },
+                        {
+                            "position": 120291785,
+                            "ref": "T",
+                            "alt": "C",
+                            "hgvs": "n.119A>G",
+                        },
+                    ],
+                    "skip_invalid": True,
                 },
             },
         )
-        if create_res.status_code == 200:
-            change_id = create_res.json()["id"]
+        assert create_res.status_code == 200
+        change_id = create_res.json()["id"]
 
-            # Approve it
-            test_client.post(
-                f"/api/approvals/{change_id}/review",
-                json={"status": "approved"},
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        assert apply_res.status_code == 200
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+        assert apply_res.json()["status"] == "applied"
+
+        rows = test_db.execute(
+            text("SELECT id, position, ref, alt FROM variants WHERE geneId='RNU4-2'")
+        ).fetchall()
+        positions = {r._mapping["position"] for r in rows}
+        assert 120291900 in positions
+        assert 120291785 in positions
+
+    def test_apply_variant_import_invalid_rows_skipped(
+        self, test_client, test_db, seed_gene
+    ):
+        """Applying an import with invalid rows skips them (skip_invalid)."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "variant",
+                "gene_id": "RNU4-2",
+                "action": "import",
+                "payload": {
+                    "geneId": "RNU4-2",
+                    "variants": [
+                        {"position": 120291900, "ref": "A", "alt": "G"},  # valid
+                        {"position": 120290000, "ref": "A", "alt": "G"},  # OOB
+                    ],
+                    "skip_invalid": True,
+                },
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+        count = test_db.execute(
+            text("SELECT COUNT(*) FROM variants WHERE geneId='RNU4-2'")
+        ).scalar()
+        assert count == 1  # only the valid row was inserted
+
+    def test_approve_and_apply_structure_import(
+        self, test_client, test_db, seed_gene, valid_structure_data
+    ):
+        """Applying an approved structure import inserts the structure."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "structure",
+                "gene_id": "RNU4-2",
+                "action": "import",
+                "payload": {"geneId": "RNU4-2", "structure": valid_structure_data},
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+        row = test_db.execute(
+            text("SELECT * FROM rna_structures WHERE id='rnu4-2-test'")
+        ).fetchone()
+        assert row is not None
+        count = test_db.execute(
+            text("SELECT COUNT(*) FROM nucleotides WHERE structure_id='rnu4-2-test'")
+        ).scalar()
+        assert count == 4
+
+    def test_approve_and_apply_bed_track_import(
+        self, test_client, test_db, seed_gene, valid_bed_intervals
+    ):
+        """Applying an approved bed track import inserts intervals."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "bed_track",
+                "gene_id": "RNU4-2",
+                "action": "import",
+                "payload": {
+                    "geneId": "RNU4-2",
+                    "track_name": "approved_track",
+                    "intervals": valid_bed_intervals,
+                    "color": "#112233",
+                },
+            },
+        )
+        change_id = create_res.json()["id"]
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+        count = test_db.execute(
+            text(
+                "SELECT COUNT(*) FROM bed_tracks"
+                " WHERE track_name='approved_track' AND geneId='RNU4-2'"
             )
+        ).scalar()
+        assert count == 3
 
-            # Apply it
-            apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
-            assert apply_res.status_code == 200
-            applied = apply_res.json()
-            assert applied["status"] in ("applied", "approved")
+
+class TestGeneCreateApplyDeterministic:
+    """Gene-create apply runs no external API calls (#317)."""
+
+    def test_population_data_fetched_at_submission_and_applied(
+        self, test_client, test_db, monkeypatch
+    ):
+        """Population variants are fetched during submission and applied from
+        the payload, so apply itself is DB-only."""
+        from unittest.mock import patch
+
+        fake_pop = [
+            {
+                "id": "chr12-120291764-C-T",
+                "geneId": "TEST-GENE",
+                "position": 120291764,
+                "ref": "C",
+                "alt": "T",
+                "gnomad_ac": 3,
+                "gnomad_hom": 0,
+                "aou_ac": 5,
+                "aou_hom": 0,
+            }
+        ]
+        with patch(
+            "rnudb_utils.external_apis.merge_population_variants",
+            return_value=fake_pop,
+        ):
+            create_res = test_client.post(
+                "/api/approvals",
+                json={
+                    "entity_type": "gene",
+                    "gene_id": "TEST-GENE",
+                    "action": "create",
+                    "payload": {
+                        "id": "TEST-GENE",
+                        "name": "Test Gene",
+                        "fullName": "Test full",
+                        "chromosome": "chr12",
+                        "start": 120291200,
+                        "end": 120292400,
+                        "strand": "+",
+                        "sequence": "ACGU",
+                        "description": "desc",
+                        "fetch_population_data": True,
+                    },
+                },
+            )
+        assert create_res.status_code == 200
+        stored_payload = create_res.json()["payload"]
+        assert stored_payload["population_variants"] == fake_pop
+
+        change_id = create_res.json()["id"]
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+        gene = test_db.execute(
+            text("SELECT * FROM genes WHERE id='TEST-GENE'")
+        ).fetchone()
+        assert gene is not None
+        variant = test_db.execute(
+            text("SELECT * FROM variants WHERE id='chr12-120291764-C-T'")
+        ).fetchone()
+        assert variant is not None
+        assert variant._mapping["gnomad_ac"] == 3
+
+    def test_gene_create_apply_without_population_data(
+        self, test_client, test_db, monkeypatch
+    ):
+        """Gene create without fetch_population_data applies a bare gene."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "gene",
+                "gene_id": "BARE-GENE",
+                "action": "create",
+                "payload": {
+                    "id": "BARE-GENE",
+                    "name": "Bare",
+                    "fullName": "Bare gene",
+                    "chromosome": "chr1",
+                    "start": 1000,
+                    "end": 2000,
+                    "strand": "+",
+                    "sequence": "ACGUACGUACGU",
+                    "description": "no pop data",
+                },
+            },
+        )
+        assert create_res.status_code == 200
+        assert "population_variants" not in create_res.json()["payload"]
+
+        change_id = create_res.json()["id"]
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+        assert (
+            test_db.execute(
+                text("SELECT COUNT(*) FROM genes WHERE id='BARE-GENE'")
+            ).scalar()
+            == 1
+        )
