@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from api.models import (
     Gene,
     ImportResult,
+    Literature,
     RNAStructure,
     ValidationErrorModel,
     ValidationReportResponse,
@@ -240,6 +241,104 @@ def exec_structure_import(
         errors=[],
         warnings=report_to_response(report).warnings,
     )
+
+
+def exec_literature_bulk_import(
+    db: Session,
+    literature: list[dict],
+    created_by: str,
+) -> dict:
+    """Validate and insert literature rows in bulk (mirrors /literature/bulk)."""
+    import re as regex_lib
+
+    imported_count = 0
+    skipped_count = 0
+    errors: list[dict] = []
+
+    for idx, lit_data in enumerate(literature):
+        try:
+            doi = lit_data.get("doi", "").strip()
+            title = lit_data.get("title", "").strip()
+            authors = lit_data.get("authors", "").strip()
+            journal = lit_data.get("journal", "").strip()
+            year = lit_data.get("year", "").strip()
+
+            row_errors: list[dict] = []
+            if not doi:
+                row_errors.append({"field": "doi", "message": "DOI is required"})
+            if not title:
+                row_errors.append({"field": "title", "message": "Title is required"})
+            if not authors:
+                row_errors.append(
+                    {"field": "authors", "message": "Authors is required"}
+                )
+            if not journal:
+                row_errors.append(
+                    {"field": "journal", "message": "Journal is required"}
+                )
+            if not year:
+                row_errors.append({"field": "year", "message": "Year is required"})
+            elif not regex_lib.match(r"^\d{4}$", year):
+                row_errors.append(
+                    {"field": "year", "message": "Year must be a 4-digit number"}
+                )
+
+            if row_errors:
+                for err in row_errors:
+                    errors.append(
+                        {
+                            "row": idx + 2,
+                            "field": err["field"],
+                            "message": err["message"],
+                        }
+                    )
+                skipped_count += 1
+                continue
+
+            existing = db.get(Literature, doi)
+            if existing:
+                skipped_count += 1
+                continue
+
+            new_lit = Literature(
+                id=doi,
+                title=title or "Unknown",
+                authors=authors or "Unknown",
+                journal=journal or "Unknown",
+                year=year or "Unknown",
+                doi=doi,
+                pmid=lit_data.get("pmid", "").strip() or None,
+                url=lit_data.get("url", "").strip() or None,
+            )
+            db.add(new_lit)
+            imported_count += 1
+
+        except (ValueError, TypeError, KeyError) as e:
+            errors.append({"row": idx + 2, "field": "unknown", "message": str(e)})
+            skipped_count += 1
+
+    db.commit()
+
+    audit_log(
+        "literature",
+        "bulk_import",
+        "CREATE",
+        None,
+        {
+            "imported": imported_count,
+            "skipped": skipped_count,
+            "created_by": created_by,
+        },
+        created_by,
+        db,
+    )
+
+    return {
+        "success": True,
+        "imported_count": imported_count,
+        "skipped_count": skipped_count,
+        "errors": errors,
+    }
 
 
 def exec_bed_track_import(

@@ -358,20 +358,14 @@ const Curate: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`/api/genes/${geneId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail?.message || "Failed to delete gene");
-      }
+      // Gene deletion goes through the approval workflow (#301)
+      await submitChange("gene", geneId, "delete", { id: geneId }, geneId);
       setShowGeneForm(false);
       setEditingGene(null);
       await loadGenes();
-      alert(`Gene ${geneId} deleted successfully`);
-    } catch (err: any) {
-      alert(err.message || "Network error");
+      alert(`Gene ${geneId} delete request submitted for approval`);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 
@@ -442,53 +436,46 @@ const Curate: React.FC = () => {
   };
 
   const handleCreateLiterature = async (data: any) => {
+    if (!selectedGene) return;
     try {
-      const res = await fetch("/api/literature", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
+      // Literature creation goes through the approval workflow (#299)
+      const result = await submitChange("literature", selectedGene.id, "create", data);
+      if (result) {
         setShowLiteratureForm(false);
         setEditingLiterature(null);
-        const litRes = await fetch(`/api/genes/${selectedGene?.id}/literature`, {
+        const litRes = await fetch(`/api/genes/${selectedGene.id}/literature`, {
           credentials: "include",
         });
         if (litRes.ok) setLiterature(await litRes.json());
-      } else {
-        const err = await res.json();
-        alert(err.detail || "Failed to create literature");
+        alert("Literature creation submitted for approval");
       }
-    } catch {
-      alert("Network error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 
   const handleUpdateLiterature = async (data: any) => {
+    if (!editingLiterature || !selectedGene) return;
     try {
-      const res = await fetch(
-        `/api/literature?literature_id=${encodeURIComponent(editingLiterature.id)}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
+      // Literature update goes through the approval workflow (#299)
+      const result = await submitChange(
+        "literature",
+        selectedGene.id,
+        "update",
+        data,
+        editingLiterature.id,
       );
-      if (res.ok) {
+      if (result) {
         setShowLiteratureForm(false);
         setEditingLiterature(null);
-        const litRes = await fetch(`/api/genes/${selectedGene?.id}/literature`, {
+        const litRes = await fetch(`/api/genes/${selectedGene.id}/literature`, {
           credentials: "include",
         });
         if (litRes.ok) setLiterature(await litRes.json());
-      } else {
-        const err = await res.json();
-        alert(err.detail || "Failed to update literature");
+        alert("Literature update submitted for approval");
       }
-    } catch {
-      alert("Network error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
     }
   };
 
@@ -1108,27 +1095,27 @@ const Curate: React.FC = () => {
                                         confirm(`Delete literature "${paper.title}"?`)
                                       ) {
                                         try {
-                                          const res = await fetch(
-                                            `/api/literature?literature_id=${encodeURIComponent(paper.id)}`,
-                                            {
-                                              method: "DELETE",
-                                              credentials: "include",
-                                            },
+                                          // Literature deletion goes through the approval workflow (#299)
+                                          const result = await submitChange(
+                                            "literature",
+                                            selectedGene?.id || "",
+                                            "delete",
+                                            { id: paper.id },
+                                            paper.id,
                                           );
-                                          if (res.ok) {
+                                          if (result) {
                                             setLiterature(
                                               literature.filter(
                                                 (l: any) => l.id !== paper.id,
                                               ),
                                             );
-                                          } else {
-                                            const err = await res.text();
-                                            alert(
-                                              `Failed to delete: ${res.status} ${err}`,
-                                            );
                                           }
-                                        } catch {
-                                          alert("Failed to delete");
+                                        } catch (err: unknown) {
+                                          alert(
+                                            err instanceof Error
+                                              ? err.message
+                                              : "Failed to delete",
+                                          );
                                         }
                                       }
                                     }}
@@ -1474,6 +1461,7 @@ const Curate: React.FC = () => {
       <LiteratureImportWizard
         open={showLiteratureImport}
         onClose={() => setShowLiteratureImport(false)}
+        geneId={selectedGene?.id || ""}
         onSuccess={async () => {
           const litRes = await fetch(`/api/genes/${selectedGene?.id}/literature`, {
             credentials: "include",

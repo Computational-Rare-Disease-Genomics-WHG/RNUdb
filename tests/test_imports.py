@@ -1,16 +1,10 @@
 """Tests for import API endpoints."""
 
 import pytest
-from fastapi import HTTPException
 from sqlalchemy import text
 
 from api.main import app
 from api.routers.auth import require_admin, require_curator
-
-
-def _deny_admin() -> dict:
-    """Always raise 403 — used to prove endpoints depend on require_curator."""
-    raise HTTPException(status_code=403, detail="Admin privileges required")
 
 
 @pytest.fixture
@@ -24,21 +18,15 @@ def enforce_real_curator_auth(test_client):
     yield test_client
 
 
-def _request_with_admin_denied(client, method, path, **kwargs):
-    """Perform a request while require_admin raises 403.
+@pytest.fixture
+def enforce_real_admin_auth(test_client):
+    """Use the real require_admin dependency instead of the mock.
 
-    If the endpoint (incorrectly) depended on require_admin, this returns
-    403. A non-403 response proves it uses require_curator instead.
+    Requests without a session cookie then hit real auth and return 401.
+    The autouse mock_auth fixture re-applies its override on the next test.
     """
-    app.dependency_overrides[require_admin] = _deny_admin
-    try:
-        response = getattr(client, method)(path, **kwargs)
-        assert response.status_code != 403, (
-            f"{method.upper()} {path} returned 403 — endpoint still uses require_admin"
-        )
-        return response
-    finally:
-        app.dependency_overrides.pop(require_admin, None)
+    app.dependency_overrides.pop(require_admin, None)
+    yield test_client
 
 
 class TestVariantImportAPI:
@@ -309,33 +297,31 @@ class TestBEDTrackAPI:
 
 
 class TestImportEndpointAuth:
-    """Import write endpoints must require curator authentication."""
+    """Import write endpoints must require admin; read-only lookups require curator."""
 
-    def test_variant_batch_without_auth_fails(
-        self, enforce_real_curator_auth, seed_gene
-    ):
+    def test_variant_batch_without_auth_fails(self, enforce_real_admin_auth, seed_gene):
         """POST /imports/variants/batch without credentials returns 401."""
-        response = enforce_real_curator_auth.post(
+        response = enforce_real_admin_auth.post(
             "/api/imports/variants/batch",
             json={"geneId": "RNU4-2", "variants": [], "skip_invalid": True},
         )
         assert response.status_code == 401
 
     def test_structure_import_without_auth_fails(
-        self, enforce_real_curator_auth, seed_gene
+        self, enforce_real_admin_auth, seed_gene
     ):
         """POST /imports/structures without credentials returns 401."""
-        response = enforce_real_curator_auth.post(
+        response = enforce_real_admin_auth.post(
             "/api/imports/structures",
             json={"geneId": "RNU4-2", "structure": valid_structure_data()},
         )
         assert response.status_code == 401
 
     def test_bed_track_import_without_auth_fails(
-        self, enforce_real_curator_auth, seed_gene
+        self, enforce_real_admin_auth, seed_gene
     ):
         """POST /imports/bed-tracks without credentials returns 401."""
-        response = enforce_real_curator_auth.post(
+        response = enforce_real_admin_auth.post(
             "/api/imports/bed-tracks",
             json={
                 "geneId": "RNU4-2",
@@ -347,22 +333,22 @@ class TestImportEndpointAuth:
         )
         assert response.status_code == 401
 
-    def test_vcf_import_without_auth_fails(self, enforce_real_curator_auth, seed_gene):
+    def test_vcf_import_without_auth_fails(self, enforce_real_admin_auth, seed_gene):
         """POST /imports/variants/vcf without credentials returns 401."""
         vcf_content = (
             "##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         )
-        response = enforce_real_curator_auth.post(
+        response = enforce_real_admin_auth.post(
             "/api/imports/variants/vcf?geneId=RNU4-2",
             files={"file": ("test.vcf", vcf_content, "text/vnd.vcf")},
         )
         assert response.status_code == 401
 
     def test_classifications_import_without_auth_fails(
-        self, enforce_real_curator_auth, seed_gene
+        self, enforce_real_admin_auth, seed_gene
     ):
         """POST /imports/variants/classifications without credentials returns 401."""
-        response = enforce_real_curator_auth.post(
+        response = enforce_real_admin_auth.post(
             "/api/imports/variants/classifications",
             json={"geneId": "RNU4-2", "classifications": []},
         )
@@ -394,17 +380,15 @@ class TestImportEndpointAuth:
         assert response.status_code == 200
 
 
-class TestCuratorRoleAccess:
-    """Endpoints documented as 'curator only' must use require_curator.
+class TestAdminOnlyRoleAccess:
+    """Direct write endpoints must require admin (curators route through approval).
 
-    require_admin is made to raise 403 for the duration of each request.
-    A non-403 response proves the endpoint no longer depends on require_admin.
+    Unauthenticated requests hit the real require_admin dependency and must
+    return 401; this proves the endpoint is no longer curator-gated.
     """
 
-    def test_create_variant_uses_require_curator(self, test_client, seed_gene):
-        response = _request_with_admin_denied(
-            test_client,
-            "post",
+    def test_create_variant_requires_admin(self, enforce_real_admin_auth, seed_gene):
+        response = enforce_real_admin_auth.post(
             "/api/variants",
             json={
                 "id": "test-role-create",
@@ -414,28 +398,21 @@ class TestCuratorRoleAccess:
                 "alt": "T",
             },
         )
-        assert response.status_code == 200
+        assert response.status_code == 401
 
-    def test_update_variant_uses_require_curator(self, test_client, seed_gene):
-        response = _request_with_admin_denied(
-            test_client,
-            "put",
+    def test_update_variant_requires_admin(self, enforce_real_admin_auth, seed_gene):
+        response = enforce_real_admin_auth.put(
             "/api/variants/chr12-120291764-C-T",
             json={"consequence": "missense"},
         )
-        # Mock curator auth passes; variant may or may not exist
-        assert response.status_code in (200, 404)
+        assert response.status_code == 401
 
-    def test_delete_variant_uses_require_curator(self, test_client, seed_gene):
-        response = _request_with_admin_denied(
-            test_client, "delete", "/api/variants/chr12-120291764-C-T"
-        )
-        assert response.status_code in (200, 404)
+    def test_delete_variant_requires_admin(self, enforce_real_admin_auth, seed_gene):
+        response = enforce_real_admin_auth.delete("/api/variants/chr12-120291764-C-T")
+        assert response.status_code == 401
 
-    def test_create_literature_uses_require_curator(self, test_client):
-        response = _request_with_admin_denied(
-            test_client,
-            "post",
+    def test_create_literature_requires_admin(self, enforce_real_admin_auth):
+        response = enforce_real_admin_auth.post(
             "/api/literature",
             json={
                 "id": "10.1000/role.test",
@@ -446,27 +423,54 @@ class TestCuratorRoleAccess:
                 "doi": "10.1000/role.test",
             },
         )
-        assert response.status_code == 200
+        assert response.status_code == 401
 
-    def test_update_literature_uses_require_curator(self, test_client):
-        response = _request_with_admin_denied(
-            test_client,
-            "put",
+    def test_update_literature_requires_admin(self, enforce_real_admin_auth):
+        response = enforce_real_admin_auth.put(
             "/api/literature/10.1000/role.test",
             json={"title": "Updated Title"},
         )
-        assert response.status_code in (200, 404)
+        assert response.status_code == 401
 
-    def test_delete_literature_uses_require_curator(self, test_client):
-        response = _request_with_admin_denied(
-            test_client, "delete", "/api/literature/10.1000/role.test"
+    def test_delete_literature_requires_admin(self, enforce_real_admin_auth):
+        response = enforce_real_admin_auth.delete("/api/literature/10.1000/role.test")
+        assert response.status_code == 401
+
+    def test_bulk_import_literature_requires_admin(self, enforce_real_admin_auth):
+        response = enforce_real_admin_auth.post(
+            "/api/literature/bulk",
+            json=[
+                {
+                    "doi": "10.1000/role.bulk",
+                    "title": "Bulk Paper",
+                    "authors": "Doe A",
+                    "journal": "Science",
+                    "year": "2024",
+                }
+            ],
         )
-        assert response.status_code in (200, 404)
+        assert response.status_code == 401
 
-    def test_create_gene_uses_require_curator(self, test_client):
-        response = _request_with_admin_denied(
-            test_client,
-            "post",
+    def test_delete_gene_requires_admin(self, enforce_real_admin_auth, seed_gene):
+        response = enforce_real_admin_auth.delete("/api/genes/RNU4-2")
+        assert response.status_code == 401
+
+    def test_delete_structure_requires_admin(self, enforce_real_admin_auth, seed_gene):
+        response = enforce_real_admin_auth.delete(
+            "/api/genes/RNU4-2/structures/nonexistent"
+        )
+        assert response.status_code in (401, 404)
+
+
+class TestCuratorRoleAccess:
+    """Endpoints documented as 'curator only' must still use require_curator.
+
+    Unauthenticated requests hit the real require_curator dependency and return
+    401; a non-401 proves the endpoint accidentally depends on require_admin.
+    """
+
+    def test_create_gene_uses_require_curator(self, enforce_real_curator_auth):
+        response = enforce_real_curator_auth.post(
             "/api/genes?fetch_population_data=false",
             json={
                 "id": "ROLE-TEST",
@@ -480,39 +484,16 @@ class TestCuratorRoleAccess:
                 "description": "Role test gene",
             },
         )
-        assert response.status_code == 200
+        assert response.status_code == 401
 
-    def test_update_gene_uses_require_curator(self, test_client, seed_gene):
-        response = _request_with_admin_denied(
-            test_client,
-            "put",
+    def test_update_gene_uses_require_curator(
+        self, enforce_real_curator_auth, seed_gene
+    ):
+        response = enforce_real_curator_auth.put(
             "/api/genes/RNU4-2",
             json={"description": "Updated description"},
         )
-        assert response.status_code == 200
-
-    def test_delete_gene_uses_require_curator(self, test_client, seed_gene):
-        response = _request_with_admin_denied(
-            test_client, "delete", "/api/genes/RNU4-2"
-        )
-        assert response.status_code == 200
-
-    def test_bulk_import_literature_uses_require_curator(self, test_client):
-        response = _request_with_admin_denied(
-            test_client,
-            "post",
-            "/api/literature/bulk",
-            json=[
-                {
-                    "doi": "10.1000/role.bulk",
-                    "title": "Bulk Paper",
-                    "authors": "Doe A",
-                    "journal": "Science",
-                    "year": "2024",
-                }
-            ],
-        )
-        assert response.status_code == 200
+        assert response.status_code == 401
 
 
 def valid_structure_data():

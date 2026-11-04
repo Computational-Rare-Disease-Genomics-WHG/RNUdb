@@ -98,21 +98,27 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/imports/structures", {
+      // Structure imports go through the approval workflow (`import` action)
+      const res = await fetch("/api/approvals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ geneId, structure: parsedStructure }),
+        body: JSON.stringify({
+          entity_type: "structure",
+          gene_id: geneId,
+          action: "import",
+          payload: { geneId, structure: parsedStructure },
+        }),
       });
       if (res.ok) {
         setStep(4);
         onSuccess();
       } else {
         const data = await res.json();
-        setError(data.detail?.message || "Import failed");
+        setError(data.detail?.message || "Failed to submit import request");
       }
     } catch {
-      setError("Import failed");
+      setError("Failed to submit import request");
     } finally {
       setLoading(false);
     }
@@ -387,17 +393,17 @@ const StructureImportWizard: React.FC<StructureImportWizardProps> = ({
             </div>
           )}
 
-          {/* Step 4: Success */}
+          {/* Step 4: Submitted for approval */}
           {step === 4 && (
             <div className="text-center py-8">
               <div className="p-4 bg-emerald-100 rounded-full w-fit mx-auto mb-6">
                 <CheckCircle2 className="h-12 w-12 text-emerald-600" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">
-                Import Complete!
+                Submitted for Approval!
               </h3>
               <p className="text-slate-500 mb-8 max-w-sm mx-auto">
-                Successfully imported the RNA structure into {geneId}
+                Your structure import request for {geneId} is awaiting admin review.
               </p>
               <Button
                 onClick={handleClose}

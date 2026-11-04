@@ -121,15 +121,21 @@ const BEDTrackImportWizard: React.FC<BEDTrackImportWizardProps> = ({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/imports/bed-tracks", {
+      // BED track imports go through the approval workflow (`import` action)
+      const res = await fetch("/api/approvals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          geneId,
-          track_name: trackName,
-          intervals: parsedIntervals,
-          color: trackColor,
+          entity_type: "bed_track",
+          gene_id: geneId,
+          action: "import",
+          payload: {
+            geneId,
+            track_name: trackName,
+            intervals: parsedIntervals,
+            color: trackColor,
+          },
         }),
       });
       if (res.ok) {
@@ -137,10 +143,10 @@ const BEDTrackImportWizard: React.FC<BEDTrackImportWizardProps> = ({
         onSuccess();
       } else {
         const data = await res.json();
-        setError(data.detail?.message || "Import failed");
+        setError(data.detail?.message || "Failed to submit import request");
       }
     } catch {
-      setError("Import failed");
+      setError("Failed to submit import request");
     } finally {
       setLoading(false);
     }
@@ -434,18 +440,18 @@ const BEDTrackImportWizard: React.FC<BEDTrackImportWizardProps> = ({
             </div>
           )}
 
-          {/* Step 4: Success */}
+          {/* Step 4: Submitted for approval */}
           {step === 4 && (
             <div className="text-center py-8">
               <div className="p-4 bg-emerald-100 rounded-full w-fit mx-auto mb-6">
                 <CheckCircle2 className="h-12 w-12 text-emerald-600" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">
-                Import Complete!
+                Submitted for Approval!
               </h3>
               <p className="text-slate-500 mb-8 max-w-sm mx-auto">
-                Successfully imported the BED track &ldquo;{trackName}&rdquo; into{" "}
-                {geneId}
+                Your BED track &ldquo;{trackName}&rdquo; import request for {geneId} is
+                awaiting admin review.
               </p>
               <Button
                 onClick={handleClose}

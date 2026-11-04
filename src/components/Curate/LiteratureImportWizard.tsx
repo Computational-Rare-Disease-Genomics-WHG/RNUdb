@@ -30,6 +30,7 @@ interface LiteratureImportWizardProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  geneId?: string;
 }
 
 interface LiteratureRow {
@@ -99,6 +100,7 @@ const LiteratureImportWizard = ({
   open,
   onClose,
   onSuccess,
+  geneId = "",
 }: LiteratureImportWizardProps) => {
   const [step, setStep] = useState(1);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -357,16 +359,22 @@ const LiteratureImportWizard = ({
     setError("");
 
     try {
-      const res = await fetch("/api/literature/bulk", {
+      // Literature imports go through the approval workflow (`import` action)
+      const res = await fetch("/api/approvals", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsedData),
+        body: JSON.stringify({
+          entity_type: "literature",
+          gene_id: geneId,
+          action: "import",
+          payload: { literature: parsedData },
+        }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.detail || "Import failed");
+        throw new Error(data.detail?.message || "Failed to submit import request");
       }
 
       const data = await res.json();
@@ -775,55 +783,18 @@ const LiteratureImportWizard = ({
 
           {step === 4 && importResult && (
             <div className="space-y-5">
-              <div
-                className={`flex items-center gap-3 p-4 rounded-lg ${
-                  importResult.success
-                    ? "bg-emerald-50 border border-emerald-200"
-                    : "bg-red-50 border border-red-200"
-                }`}
-              >
-                {importResult.success ? (
-                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                ) : (
-                  <AlertCircle className="h-6 w-6 text-red-600" />
-                )}
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                 <div>
                   <h3 className="text-base font-semibold text-slate-900">
-                    Import {importResult.success ? "Successful" : "Failed"}
+                    Submitted for Approval!
                   </h3>
                   <p className="text-sm text-slate-500">
-                    {importResult.imported_count} records imported,{" "}
-                    {importResult.skipped_count} skipped
-                    {importResult.errors.length > 0 &&
-                      `, ${importResult.errors.length} errors`}
+                    Your literature import request for {parsedData.length} record(s) is
+                    awaiting admin review.
                   </p>
                 </div>
               </div>
-
-              {importResult.errors.length > 0 && (
-                <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-lg">
-                  <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
-                    <h4 className="text-sm font-medium text-slate-700">
-                      Errors ({importResult.errors.length})
-                    </h4>
-                  </div>
-                  <div className="px-3 py-2 space-y-1">
-                    {importResult.errors.slice(0, 5).map((err, i) => (
-                      <p
-                        key={i}
-                        className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-                      >
-                        Row {err.row}: {err.message}
-                      </p>
-                    ))}
-                    {importResult.errors.length > 5 && (
-                      <p className="text-xs text-slate-500">
-                        ...and {importResult.errors.length - 5} more
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
 
               <div className="flex justify-end">
                 <Button

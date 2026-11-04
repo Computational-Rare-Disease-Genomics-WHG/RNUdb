@@ -29,7 +29,7 @@ from api.models import (
     VariantClassification,
     VariantPublic,
 )
-from api.routers.auth import require_curator
+from api.routers.auth import require_admin, require_curator
 from rnudb_utils.database import audit_log, get_db
 
 router = APIRouter()
@@ -223,9 +223,9 @@ async def refresh_gene_variants(
 
 @router.delete("/genes/{gene_id}")
 async def delete_gene(
-    gene_id: str, db: Session = Depends(get_db), user: dict = Depends(require_curator)
+    gene_id: str, db: Session = Depends(get_db), user: dict = Depends(require_admin)
 ):
-    """Delete a gene and all associated data (curator only)"""
+    """Delete a gene and all its data (admin only; curators: approval)."""
 
     existing = db.get(Gene, gene_id)
     if not existing:
@@ -496,9 +496,9 @@ async def delete_gene_structure(
     gene_id: str,
     structure_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Delete a specific RNA structure (curator only)"""
+    """Delete a specific RNA structure (admin only - curators route through approval)"""
 
     existing = db.execute(
         select(RNAStructure).where(
@@ -511,24 +511,10 @@ async def delete_gene_structure(
 
     old_values = existing.model_dump()
 
-    # Delete related data
-    db.execute(
-        text("DELETE FROM structural_features WHERE structure_id = :sid"),
-        {"sid": structure_id},
-    )
-    db.execute(
-        text("DELETE FROM annotations WHERE structure_id = :sid"),
-        {"sid": structure_id},
-    )
-    db.execute(
-        text("DELETE FROM base_pairs WHERE structure_id = :sid"),
-        {"sid": structure_id},
-    )
-    db.execute(
-        text("DELETE FROM nucleotides WHERE structure_id = :sid"),
-        {"sid": structure_id},
-    )
-    db.delete(existing)
+    # Cascade delete child rows (nucleotides, base_pairs, annotations, features)
+    from rnudb_utils.database import delete_structure_cascade
+
+    delete_structure_cascade(db, structure_id)
     db.commit()
 
     audit_log(

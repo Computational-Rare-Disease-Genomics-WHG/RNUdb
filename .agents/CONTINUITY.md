@@ -53,6 +53,13 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
   - #319: user approve/reject now 404-if-missing, 409-if-already-in-target-state (and refuse to demote/reject admins), audit role changes. Also fixed latent route bug: router mounted at `/api/users` AND route paths `/users/{login}/approve` → real URL was `/api/users/users/...` while frontend calls `/api/users/{login}/approve` → paths corrected.
   - Tests: 170 backend pass / 2 skip, vitest 159, build/lint/pre-commit pass, full migration chain verified on scratch DB.
 
+- `[2026-11-04T17:50Z] [TOOL]` **Batch 3 of epic #346** on branch `fix/approval-admin-only-writes-298-299-300-301-302-303` (stacked on #347/#348):
+  - Direct write endpoints → `require_admin` (curator writes via approval): variants POST/PUT/DELETE (#303), genes DELETE (#301), literature POST/PUT/DELETE + /literature/bulk (#299), structures DELETE (#302), import write endpoints variants/batch, variants/vcf, structures, bed-tracks, variants/classifications (#300). BED-track DELETE was already admin (#298) → verified + role test added.
+  - Extends import action to **literature** (`exec_literature_bulk_import` in import_ops + apply branch) so the LiteratureImportWizard can route through approval.
+  - Frontend rerouting: gene delete, literature create/update/delete (incl. table rows) → `submitChange`; Structure/BEDTrack/Variant(VCF→JSON rows)/Literature import wizards → POST `/api/approvals` with `action: "import"` + "Submitted for Approval" success screens.
+  - Scope boundary (documented in PR): variant-classifications CRUD/bulk + gene create/update + refresh-variants remain curator-gated as association/operation data with NO approval entity type yet. Follow-up needed to extend approval to a `classification` entity (epic note).
+  - Tests: rewrote auth/role tests (new `enforce_real_admin_auth` fixture; `TestAdminOnlyRoleAccess` asserts 401 on all locked endpoints). 172 backend pass / 2 skip, vitest 159, build/lint/pre-commit pass.
+
 ## [OUTCOMES]
 
 - `[2026-11-04T14:50Z] [TOOL]` Continuity file moved to `.agents/CONTINUITY.md`. Issue #344 → branch `chore/continuity-md-to-agents-344` → PR #345 (commit `16fecaa`). pytest 140 passed/2 skipped, npm build + pre-commit pass. Awaiting merge.
