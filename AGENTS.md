@@ -161,14 +161,14 @@ Start every task by determining:
 
 ### CONTINUITY.md (REQUIRED)
 
-Maintain a single continuity file for the current workspace: `.agent/CONTINUITY.md`.
+Maintain a single continuity file for the current workspace: `.agents/CONTINUITY.md`.
 
-- `.agent/CONTINUITY.md` is a living document and canonical briefing designed to survive compaction; do not rely on earlier chat/tool output unless it's reflected there.
-- At the start of each assistant turn: read `.agent/CONTINUITY.md` before acting.
+- `.agents/CONTINUITY.md` is a living document and canonical briefing designed to survive compaction; do not rely on earlier chat/tool output unless it's reflected there.
+- At the start of each assistant turn: read `.agents/CONTINUITY.md` before acting.
 
 #### File Format
 
-Update `.agent/CONTINUITY.md` only when there is a meaningful delta in:
+Update `.agents/CONTINUITY.md` only when there is a meaningful delta in:
 
 - `[PLANS]`: "Plans Log" is a guide for the next contributor as much as checklists for you.
 - `[DECISIONS]`: "Decisions Log" is used to record all decisions made.
@@ -199,4 +199,4 @@ A task is done when:
 - documentation is updated exhaustively for impacted areas,
 - impact is explained (what changed, where, why),
 - follow-ups are listed if anything was intentionally left out.
-- `.agent/CONTINUITY.md` is updated if the change materially affects goal/state/decisions.
+- `.agents/CONTINUITY.md` is updated if the change materially affects goal/state/decisions.

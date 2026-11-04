@@ -15,6 +15,7 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 - `[2026-10-14T12:40Z] [CODE]` Latest `main` = `0610cb2` (frontend PRs #274/#275/#276 merged).
 - `[2026-10-13T17:20Z] [USER]` Keep `variants.py` version of `/literature-counts`; fix `users.py` auth too.
 - `[2026-10-14T12:45Z] [USER]` #134 direction: change code to `require_curator` (docstrings were right). Single PR for #132+#134. Include `/imports/literature/lookup`, `/literature/bulk`, and audit attribution.
+- `[2026-11-04T14:35Z] [USER]` Continuity file moved `.agent/CONTINUITY.md` → `.agents/CONTINUITY.md` (consolidates with `.agents/skills/`). File remains git-tracked. All 5 `AGENTS.md` references updated in the same change.
 
 ## [PROGRESS]
 
