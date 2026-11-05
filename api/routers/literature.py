@@ -12,7 +12,7 @@ from api.models import (
     LiteraturePublic,
     LiteratureUpdate,
 )
-from api.routers.auth import require_curator
+from api.routers.auth import require_admin
 from rnudb_utils.database import audit_log, delete_literature_cascade, get_db
 
 router = APIRouter()
@@ -40,9 +40,9 @@ async def get_literature(literature_id: str, db: Session = Depends(get_db)):
 async def create_literature(
     lit: LiteratureCreate,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Create new literature (curator only)"""
+    """Create new literature (admin only - curators route through approval)"""
 
     if db.get(Literature, lit.id):
         raise HTTPException(
@@ -66,9 +66,9 @@ async def update_literature(
     literature_id: str,
     lit: LiteratureUpdate,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Update literature (curator only)"""
+    """Update literature (admin only - curators route through approval)"""
 
     existing = db.get(Literature, literature_id)
     if not existing:
@@ -100,9 +100,9 @@ async def update_literature(
 async def delete_literature(
     literature_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Delete literature (curator only)"""
+    """Delete literature (admin only - curators route through approval)"""
 
     existing = db.get(Literature, literature_id)
     if not existing:
@@ -131,9 +131,9 @@ async def delete_literature(
 async def bulk_import_literature(
     literature: list[dict],
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Bulk import literature entries (curator only)"""
+    """Bulk import literature entries (admin only - curators route through approval)"""
 
     imported_count = 0
     skipped_count = 0

@@ -20,7 +20,7 @@ from api.models import (
     VariantBatchImportRequest,
     VariantClassification,
 )
-from api.routers.auth import require_curator
+from api.routers.auth import require_admin, require_curator
 from api.services.import_ops import (
     exec_bed_track_import,
     exec_structure_import,
@@ -61,9 +61,9 @@ async def validate_variant_import(
 async def import_variant_batch(
     request: VariantBatchImportRequest,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Import a batch of validated variants (curator only)."""
+    """Import a batch of validated variants (admin only)."""
     return exec_variant_batch(
         db,
         request.geneId,
@@ -105,9 +105,9 @@ async def validate_structure_import(
 async def import_structure(
     request: StructureImportRequest,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Import an RNA structure for a gene (curator only)."""
+    """Import an RNA structure for a gene (admin only)."""
     return exec_structure_import(
         db, request.geneId, request.structure, user["github_login"]
     )
@@ -130,9 +130,9 @@ async def validate_bed_import(
 async def import_bed_track(
     request: BEDTrackImportRequest,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Import a BED track for a gene (curator only)."""
+    """Import a BED track for a gene (admin only - curators route through approval)."""
     return exec_bed_track_import(
         db,
         request.geneId,
@@ -239,9 +239,9 @@ async def import_variants_vcf(
     file: UploadFile = File(...),
     field_mappings: str | None = Form(None),
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Import variants from a VCF file with optional field mappings (curator only)."""
+    """Import variants from a VCF file with optional field mappings (admin only)."""
     gene = get_gene(db, geneId)
     if not gene:
         raise HTTPException(status_code=404, detail=f"Gene {geneId} not found")
@@ -374,9 +374,9 @@ async def import_variants_vcf(
 async def import_variant_classifications(
     request: ClassificationImportRequest,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Import variant classifications from CSV (curator only)."""
+    """Import variant classifications from CSV (admin only)."""
     results: list[PubMedLookupResult] = []
     dois_to_lookup: dict[str, ClassificationCSVRow] = {}
 

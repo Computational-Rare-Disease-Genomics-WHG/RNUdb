@@ -14,7 +14,7 @@ from api.models import (
     VariantPublic,
     VariantUpdate,
 )
-from api.routers.auth import require_curator
+from api.routers.auth import require_admin, require_curator
 from rnudb_utils.database import audit_log, delete_variant_cascade, get_db
 
 router = APIRouter()
@@ -82,10 +82,10 @@ async def get_variant(variant_id: str, db: Session = Depends(get_db)):
 @router.post("/variants", response_model=VariantPublic)
 async def create_variant(
     variant: VariantCreate,
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    """Create a new variant (curator only)"""
+    """Create a new variant (admin only - curators route through approval)"""
 
     if db.get(Variant, variant.id):
         raise HTTPException(
@@ -115,9 +115,9 @@ async def update_variant(
     variant_id: str,
     variant: VariantUpdate,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Update a variant (curator only)"""
+    """Update a variant (admin only - curators route through approval)"""
 
     existing = db.get(Variant, variant_id)
     if not existing:
@@ -149,9 +149,9 @@ async def update_variant(
 async def delete_variant(
     variant_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_curator),
+    user: dict = Depends(require_admin),
 ):
-    """Delete a variant (curator only)"""
+    """Delete a variant (admin only - curators route through approval)"""
 
     existing = db.get(Variant, variant_id)
     if not existing:

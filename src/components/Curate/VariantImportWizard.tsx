@@ -271,28 +271,45 @@ const VariantImportWizard = ({
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", vcfFile);
+      // Variant imports go through the approval workflow (`import` action).
+      // The VCF is already parsed client-side, so rows are submitted as JSON.
+      const rows = parsedVariants.map((v) => ({
+        position: v.pos,
+        ref: v.ref,
+        alt: v.alt,
+        hgvs: v.hgvs,
+        consequence: v.consequence,
+        nucleotidePosition: v.nucleotidePosition,
+        function_score: v.function_score,
+        pvalues: v.pvalues,
+        qvalues: v.qvalues,
+        depletion_group: v.depletion_group,
+        gnomad_ac: v.gnomad_ac,
+        gnomad_hom: v.gnomad_hom,
+        aou_ac: v.aou_ac,
+        aou_hom: v.aou_hom,
+      }));
 
-      const filteredMappings = fieldMappings.filter(
-        (m) => m.targetColumn && m.targetColumn !== "skip",
-      );
-      const mappingJson = JSON.stringify(filteredMappings);
-      formData.append("field_mappings", mappingJson);
-
-      const res = await fetch(`/api/imports/variants/vcf?geneId=${geneId}`, {
+      const res = await fetch("/api/approvals", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: formData,
+        body: JSON.stringify({
+          entity_type: "variant",
+          gene_id: geneId,
+          action: "import",
+          payload: { geneId, variants: rows, skip_invalid: true },
+        }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.detail?.message || "VCF import failed");
+        throw new Error(data.detail?.message || "Failed to submit import request");
       }
 
       const data = await res.json();
       setImportResult(data);
+      setStep(4);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Import failed";
       setError(message);
@@ -669,55 +686,18 @@ const VariantImportWizard = ({
 
           {importResult && (
             <div className="space-y-5">
-              <div
-                className={`flex items-center gap-3 p-4 rounded-lg ${
-                  importResult.success
-                    ? "bg-emerald-50 border border-emerald-200"
-                    : "bg-red-50 border border-red-200"
-                }`}
-              >
-                {importResult.success ? (
-                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                ) : (
-                  <AlertCircle className="h-6 w-6 text-red-600" />
-                )}
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                 <div>
                   <h3 className="text-base font-semibold text-slate-900">
-                    Import {importResult.success ? "Successful" : "Failed"}
+                    Submitted for Approval!
                   </h3>
                   <p className="text-sm text-slate-500">
-                    {importResult.imported_count} variants imported,{" "}
-                    {importResult.skipped_count} skipped
-                    {importResult.errors.length > 0 &&
-                      `, ${importResult.errors.length} errors`}
+                    Your import request for {parsedVariants.length} variant(s) to{" "}
+                    {geneId} is awaiting admin review.
                   </p>
                 </div>
               </div>
-
-              {importResult.errors.length > 0 && (
-                <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-lg">
-                  <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
-                    <h4 className="text-sm font-medium text-slate-700">
-                      Errors ({importResult.errors.length})
-                    </h4>
-                  </div>
-                  <div className="px-3 py-2 space-y-1">
-                    {importResult.errors.slice(0, 5).map((err, i) => (
-                      <p
-                        key={i}
-                        className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-                      >
-                        Row {err.row}: {err.message}
-                      </p>
-                    ))}
-                    {importResult.errors.length > 5 && (
-                      <p className="text-xs text-slate-500">
-                        ...and {importResult.errors.length - 5} more
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
 
               <div className="flex justify-end">
                 <Button

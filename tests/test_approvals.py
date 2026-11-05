@@ -1368,6 +1368,48 @@ class TestImportApprovalWorkflow:
         ).scalar()
         assert count == 3
 
+    def test_approve_and_apply_literature_import(self, test_client, test_db, seed_gene):
+        """Applying an approved literature import inserts rows."""
+        create_res = test_client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "literature",
+                "gene_id": "RNU4-2",
+                "action": "import",
+                "payload": {
+                    "literature": [
+                        {
+                            "doi": "10.1000/imported-l1",
+                            "title": "Paper One",
+                            "authors": "Smith J",
+                            "journal": "Nature",
+                            "year": "2024",
+                        },
+                        {
+                            "doi": "10.1000/imported-l2",
+                            "title": "Paper Two",
+                            "authors": "Doe A",
+                            "journal": "Science",
+                            "year": "2025",
+                        },
+                    ]
+                },
+            },
+        )
+        assert create_res.status_code == 200
+        change_id = create_res.json()["id"]
+        apply_res = test_client.post(
+            f"/api/approvals/{change_id}/review",
+            json={"status": "approved"},
+        )
+        apply_res = test_client.post(f"/api/approvals/{change_id}/apply")
+        assert apply_res.status_code == 200
+
+        count = test_db.execute(
+            text("SELECT COUNT(*) FROM literature WHERE doi LIKE '10.1000/imported-%'")
+        ).scalar()
+        assert count == 2
+
 
 class TestGeneCreateApplyDeterministic:
     """Gene-create apply runs no external API calls (#317)."""

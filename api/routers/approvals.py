@@ -19,6 +19,7 @@ from api.notifications import (
 from api.routers.auth import require_admin, require_curator
 from api.services.import_ops import (
     exec_bed_track_import,
+    exec_literature_bulk_import,
     exec_structure_import,
     exec_variant_batch,
 )
@@ -104,6 +105,7 @@ _IMPORT_SHAPE_KEYS = {
     "variant": {"geneId", "variants", "skip_invalid"},
     "structure": {"geneId", "structure", "set_primary"},
     "bed_track": {"geneId", "track_name", "intervals", "color"},
+    "literature": {"geneId", "literature"},
 }
 
 _ENTITY_TABLE_MAP = {
@@ -120,7 +122,7 @@ _ENTITY_TABLE_MAP = {
 _SUPPORTED_ACTIONS = {
     "variant": {"create", "update", "delete", "import"},
     "gene": {"create", "update", "delete"},
-    "literature": {"create", "update", "delete"},
+    "literature": {"create", "update", "delete", "import"},
     "structure": {"delete", "import"},
     "bed_track": {"delete", "import"},
 }
@@ -656,6 +658,19 @@ async def apply_approved_change(
                     "DELETE",
                     old_row,
                     None,
+                    user["github_login"],
+                )
+            elif action == "import":
+                entries = payload.get("literature") or [payload]
+                created_by = change.requested_by
+                exec_literature_bulk_import(db, entries, created_by)
+                _audit_entry(
+                    db,
+                    "literature",
+                    "bulk_import",
+                    "CREATE",
+                    None,
+                    {"count": len(entries), "created_by": created_by},
                     user["github_login"],
                 )
 
