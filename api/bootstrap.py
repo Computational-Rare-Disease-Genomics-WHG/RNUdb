@@ -11,10 +11,31 @@ from rnudb_utils.database import update_user_role
 
 logger = logging.getLogger(__name__)
 
+# Sentinel for when ADMIN_GITHUB_LOGINS is completely absent from the environment
+_ADMIN_LOGINS_UNSET = object()
+
+
+def _get_raw_admin_logins_env() -> str | None:
+    """Return the raw value of ADMIN_GITHUB_LOGINS, or ``None`` if unset."""
+    return os.environ.get("ADMIN_GITHUB_LOGINS")
+
+
+def _admin_logins_explicitly_empty() -> bool:
+    """``ADMIN_GITHUB_LOGINS`` is set in the environment but resolves to empty.
+
+    An unset variable means the operator hasn't configured it yet (likely dev
+    or CI), so we warn but don't block.  An explicitly empty variable is a
+    deliberate misconfiguration that would cause permanent lockout.
+    """
+    raw = _get_raw_admin_logins_env()
+    if raw is None:
+        return False  # not set → dev/CI
+    return not any(u.strip() for u in raw.split(","))
+
 
 def get_admin_logins() -> list[str]:
     """Parse ADMIN_GITHUB_LOGINS env var into a deduplicated list."""
-    raw = os.environ.get("ADMIN_GITHUB_LOGINS", "")
+    raw = _get_raw_admin_logins_env() or ""
     seen: set[str] = set()
     result: list[str] = []
     for u in raw.split(","):
@@ -30,13 +51,30 @@ def check_bootstrap_config(admin_logins: list[str] | None = None) -> list[str]:
 
     Call at startup (not import-time) so it can safely query the database.
     Returns a list of issue strings (empty = all good).
+
+    When ``ADMIN_GITHUB_LOGINS`` is completely unset we assume a dev/CI
+    environment and only log a warning — the check only hard-blocks when the
+    variable is **explicitly set to empty**, which is a clear misconfiguration.
     """
     if admin_logins is None:
         admin_logins = get_admin_logins()
+        # Distinguish between unset (dev/CI — warn only) and explicitly empty
+        is_explicitly_empty = _admin_logins_explicitly_empty()
+    else:
+        # Explicitly passed — caller decides, no env distinction needed
+        is_explicitly_empty = len(admin_logins) == 0
 
     issues: list[str] = []
 
     if not admin_logins:
+        if not is_explicitly_empty:
+            logger.warning(
+                "ADMIN_GITHUB_LOGINS is not set — first user will be created as "
+                "'pending'. In production, set ADMIN_GITHUB_LOGINS to at least "
+                "one GitHub username before starting the service."
+            )
+            return issues
+
         try:
             from sqlalchemy import text
 
@@ -50,11 +88,12 @@ def check_bootstrap_config(admin_logins: list[str] | None = None) -> list[str]:
 
         if count == 0:
             issues.append(
-                "ADMIN_GITHUB_LOGINS is empty/unset AND the database has no users. "
-                "The first user would be created as 'pending', making the platform "
-                "permanently unrecoverable. Set ADMIN_GITHUB_LOGINS to at least one "
-                "GitHub username before starting the service, then log in with that "
-                "GitHub account to become an admin."
+                "ADMIN_GITHUB_LOGINS is explicitly empty AND the database has "
+                "no users. The first user would be created as 'pending', making "
+                "the platform permanently unrecoverable. Set "
+                "ADMIN_GITHUB_LOGINS to at least one GitHub username before "
+                "starting the service, then log in with that GitHub account "
+                "to become an admin."
             )
 
     return issues
