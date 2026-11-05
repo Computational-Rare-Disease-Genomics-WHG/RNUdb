@@ -78,7 +78,7 @@ async def approve_user(
             detail=f"User {github_login} already has role '{target.role}'",
         )
 
-    old_values = target.model_dump()
+    old_values = target.model_dump(mode="json")
     target.role = "curator"
     db.commit()
     db.refresh(target)
@@ -117,7 +117,7 @@ async def reject_user(
             detail=f"User {github_login} is an admin and cannot be rejected",
         )
 
-    old_values = target.model_dump()
+    old_values = target.model_dump(mode="json")
     target.role = "guest"
     db.commit()
     db.refresh(target)

@@ -1,6 +1,7 @@
 """Tests for user approve/reject endpoints (#319)."""
 
 import json
+from datetime import datetime
 
 from sqlalchemy import text
 
@@ -10,16 +11,21 @@ def _as_dict(value):
 
 
 def _seed_user(db, login: str, role: str):
+    # created_at/updated_at are set like a real GitHub-signup user so the
+    # approve/reject audit path must serialize datetimes (regression for #354).
     db.execute(
         text(
-            "INSERT INTO users (github_login, name, email, avatar_url, role)"
-            " VALUES (:login, :name, :email, NULL, :role)"
+            "INSERT INTO users"
+            " (github_login, name, email, avatar_url, role, created_at, updated_at)"
+            " VALUES (:login, :name, :email, NULL, :role, :created_at, :updated_at)"
         ),
         {
             "login": login,
             "name": f"User {login}",
             "email": f"{login}@test.local",
             "role": role,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
         },
     )
     db.commit()
