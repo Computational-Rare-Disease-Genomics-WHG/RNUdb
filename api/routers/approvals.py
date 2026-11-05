@@ -10,8 +10,12 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlmodel import SQLModel
 
-from api.models import PendingChange, PendingChangeOut
-from api.notifications import notify_change_approved, notify_change_rejected
+from api.models import AuditLog, PendingChange, PendingChangeOut
+from api.notifications import (
+    notify_change_approved,
+    notify_change_rejected,
+    notify_change_submitted,
+)
 from api.routers.auth import require_admin, require_curator
 from api.services.import_ops import (
     exec_bed_track_import,
@@ -176,6 +180,42 @@ def _row_to_dict(row) -> dict:
     return d
 
 
+def _fetch_row(db: Session, table: str, entity_id: Any) -> dict | None:
+    """Fetch a single row by primary key (table name comes from the whitelist)."""
+    if entity_id is None:
+        return None
+    row = db.execute(
+        text(f"SELECT * FROM {table} WHERE id = :eid"), {"eid": entity_id}
+    ).fetchone()
+    return dict(row._mapping) if row else None
+
+
+def _audit_entry(
+    db: Session,
+    table: str,
+    record_id: str | None,
+    action: str,
+    old_values: Any,
+    new_values: Any,
+    actor: str,
+) -> None:
+    """Queue an audit-log entry on the current session.
+
+    Unlike rnudb_utils.database.audit_log this does NOT commit, so the entry is
+    persisted atomically with the apply mutation it describes (#310).
+    """
+    db.add(
+        AuditLog(
+            table_name=table,
+            record_id=record_id,
+            action=action,
+            old_values=old_values,
+            new_values=new_values,
+            user_login=actor,
+        )
+    )
+
+
 def _entity_exists(db: Session, entity_type: str, entity_id: str) -> bool:
     """Check whether an entity row exists (for delete/create collision checks)."""
     table = _ENTITY_TABLE_MAP.get(entity_type)
@@ -245,12 +285,21 @@ async def create_pending_change(
     db.commit()
     db.refresh(new_change)
 
+    # Notify admins that a new change needs review (#320, fail silently)
+    notify_change_submitted(
+        body.entity_type,
+        body.action,
+        user["github_login"],
+    )
+
     return _row_to_dict(new_change)
 
 
 @router.get("", response_model=list[PendingChangeOut])
 async def list_pending_changes(
-    status: str | None = Query(None, pattern="^(pending|approved|rejected|applied)$"),
+    status: str | None = Query(
+        None, pattern="^(pending|approved|rejected|applied|failed)$"
+    ),
     gene_id: str | None = Query(None),
     entity_type: str | None = Query(
         None, pattern="^(gene|variant|literature|structure|bed_track)$"
@@ -351,14 +400,19 @@ async def apply_approved_change(
     if not change:
         raise HTTPException(status_code=404, detail="Change request not found")
 
-    if change.status not in ("approved", "applied"):
+    if change.status not in ("approved", "failed", "applied"):
         raise HTTPException(
-            status_code=400, detail="Only approved changes can be applied"
+            status_code=400, detail="Only approved or failed changes can be applied"
         )
 
     # Idempotent: if already applied, return current state
     if change.applied_at is not None:
         return _row_to_dict(change)
+
+    # Retrying a failed apply: clear the previous failure marker
+    if change.status == "failed":
+        change.status = "approved"
+        change.failure_reason = None
 
     entity_type = change.entity_type
     action = change.action
@@ -385,16 +439,22 @@ async def apply_approved_change(
                     """),
                     {c: payload[c] for c in cols},
                 )
+                _audit_entry(
+                    db,
+                    "variants",
+                    str(payload.get("id")),
+                    "CREATE",
+                    None,
+                    {c: payload[c] for c in cols},
+                    user["github_login"],
+                )
             elif action == "update":
                 allowed = _ALLOWED_COLUMNS["variant"]
-                set_clauses = []
-                params: dict[str, Any] = {}
-                for key, value in payload.items():
-                    if key in allowed:
-                        set_clauses.append(f"{key} = :{key}")
-                        params[key] = value
-                if set_clauses:
-                    params["entity_id"] = entity_id
+                changed = {k: v for k, v in payload.items() if k in allowed}
+                if changed:
+                    old_row = _fetch_row(db, "variants", entity_id)
+                    set_clauses = [f"{k} = :{k}" for k in changed]
+                    params = {**changed, "entity_id": entity_id}
                     db.execute(
                         text(f"""
                             UPDATE variants
@@ -403,12 +463,31 @@ async def apply_approved_change(
                         """),  # noqa: S608
                         params,
                     )
+                    _audit_entry(
+                        db,
+                        "variants",
+                        str(entity_id),
+                        "UPDATE",
+                        old_row,
+                        changed,
+                        user["github_login"],
+                    )
             elif action == "delete":
                 if not _entity_exists(db, "variant", entity_id or ""):
                     raise HTTPException(
                         status_code=404, detail=f"Variant {entity_id} not found"
                     )
+                old_row = _fetch_row(db, "variants", entity_id)
                 delete_variant_cascade(db, entity_id)
+                _audit_entry(
+                    db,
+                    "variants",
+                    str(entity_id),
+                    "DELETE",
+                    old_row,
+                    None,
+                    user["github_login"],
+                )
             elif action == "import":
                 gene_id = payload.get("geneId") or change.gene_id
                 rows = payload.get("variants")
@@ -442,22 +521,40 @@ async def apply_approved_change(
                     """),
                     gene_payload,
                 )
+                _audit_entry(
+                    db,
+                    "genes",
+                    str(gene_payload.get("id")),
+                    "CREATE",
+                    None,
+                    gene_payload,
+                    user["github_login"],
+                )
 
                 # Population data was fetched at submission time, so apply is a
                 # deterministic DB operation with no external API calls (#317).
                 population_variants = payload.get("population_variants", [])
                 if population_variants:
                     insert_variants(population_variants, db)
+                    _audit_entry(
+                        db,
+                        "variants",
+                        "population_import",
+                        "CREATE",
+                        None,
+                        {
+                            "geneId": gene_payload.get("id"),
+                            "count": len(population_variants),
+                        },
+                        user["github_login"],
+                    )
             elif action == "update":
                 allowed = _ALLOWED_COLUMNS["gene"]
-                set_clauses = []
-                params = {}
-                for key, value in payload.items():
-                    if key in allowed:
-                        set_clauses.append(f"{key} = :{key}")
-                        params[key] = value
-                if set_clauses:
-                    params["entity_id"] = entity_id
+                changed = {k: v for k, v in payload.items() if k in allowed}
+                if changed:
+                    old_row = _fetch_row(db, "genes", entity_id)
+                    set_clauses = [f"{k} = :{k}" for k in changed]
+                    params = {**changed, "entity_id": entity_id}
                     db.execute(
                         text(f"""
                             UPDATE genes
@@ -466,12 +563,31 @@ async def apply_approved_change(
                         """),  # noqa: S608
                         params,
                     )
+                    _audit_entry(
+                        db,
+                        "genes",
+                        str(entity_id),
+                        "UPDATE",
+                        old_row,
+                        changed,
+                        user["github_login"],
+                    )
             elif action == "delete":
                 if not _entity_exists(db, "gene", entity_id or ""):
                     raise HTTPException(
                         status_code=404, detail=f"Gene {entity_id} not found"
                     )
+                old_row = _fetch_row(db, "genes", entity_id)
                 delete_gene_cascade(db, entity_id)
+                _audit_entry(
+                    db,
+                    "genes",
+                    str(entity_id),
+                    "DELETE",
+                    old_row,
+                    None,
+                    user["github_login"],
+                )
 
         elif entity_type == "literature":
             if action == "create":
@@ -493,16 +609,22 @@ async def apply_approved_change(
                         "url": payload.get("url"),
                     },
                 )
+                _audit_entry(
+                    db,
+                    "literature",
+                    str(payload.get("id")),
+                    "CREATE",
+                    None,
+                    payload,
+                    user["github_login"],
+                )
             elif action == "update":
                 allowed = _ALLOWED_COLUMNS["literature"]
-                set_clauses = []
-                params = {}
-                for key, value in payload.items():
-                    if key in allowed:
-                        set_clauses.append(f"{key} = :{key}")
-                        params[key] = value
-                if set_clauses:
-                    params["entity_id"] = entity_id
+                changed = {k: v for k, v in payload.items() if k in allowed}
+                if changed:
+                    old_row = _fetch_row(db, "literature", entity_id)
+                    set_clauses = [f"{k} = :{k}" for k in changed]
+                    params = {**changed, "entity_id": entity_id}
                     db.execute(
                         text(f"""
                             UPDATE literature
@@ -511,12 +633,31 @@ async def apply_approved_change(
                         """),  # noqa: S608
                         params,
                     )
+                    _audit_entry(
+                        db,
+                        "literature",
+                        str(entity_id),
+                        "UPDATE",
+                        old_row,
+                        changed,
+                        user["github_login"],
+                    )
             elif action == "delete":
                 if not _entity_exists(db, "literature", entity_id or ""):
                     raise HTTPException(
                         status_code=404, detail=f"Literature {entity_id} not found"
                     )
+                old_row = _fetch_row(db, "literature", entity_id)
                 delete_literature_cascade(db, entity_id)
+                _audit_entry(
+                    db,
+                    "literature",
+                    str(entity_id),
+                    "DELETE",
+                    old_row,
+                    None,
+                    user["github_login"],
+                )
 
         elif entity_type == "structure":
             if action == "delete":
@@ -525,7 +666,17 @@ async def apply_approved_change(
                         status_code=404,
                         detail=f"Structure {entity_id} not found",
                     )
+                old_row = _fetch_row(db, "rna_structures", entity_id)
                 delete_structure_cascade(db, entity_id)
+                _audit_entry(
+                    db,
+                    "rna_structures",
+                    str(entity_id),
+                    "DELETE",
+                    old_row,
+                    None,
+                    user["github_login"],
+                )
             elif action == "import":
                 gene_id = payload.get("geneId") or change.gene_id
                 structure = payload.get("structure")
@@ -538,9 +689,19 @@ async def apply_approved_change(
 
         elif entity_type == "bed_track":
             if action == "delete":
+                old_row = _fetch_row(db, "bed_tracks", entity_id)
                 db.execute(
                     text("DELETE FROM bed_tracks WHERE id = :entity_id"),
                     {"entity_id": entity_id},
+                )
+                _audit_entry(
+                    db,
+                    "bed_tracks",
+                    str(entity_id),
+                    "DELETE",
+                    old_row,
+                    None,
+                    user["github_login"],
                 )
             elif action == "import":
                 gene_id = payload.get("geneId") or change.gene_id
@@ -574,8 +735,32 @@ async def apply_approved_change(
 
     except HTTPException:
         db.rollback()
+        _mark_apply_failed(db, change_id, exc_info=None)
         raise
-    except Exception:
+    except Exception as exc:
         db.rollback()
         logger.exception("Failed to apply approved change %s", change_id)
+        _mark_apply_failed(db, change_id, exc_info=str(exc))
         raise HTTPException(status_code=500, detail="Internal server error") from None
+
+
+def _mark_apply_failed(db: Session, change_id: int, exc_info: str | None) -> None:
+    """Persist a failed-apply state so the change is visible and retryable (#309).
+
+    Uses a direct UPDATE because the ORM object may be expired/detached after the
+    rollback of the failed apply.
+    """
+    try:
+        detail = f"Apply failed: {exc_info}" if exc_info else "Apply failed"
+        db.execute(
+            text(
+                "UPDATE pending_changes"
+                " SET status = 'failed', failure_reason = :reason WHERE id = :id"
+            ),
+            {"reason": detail[:1000], "id": change_id},
+        )
+        db.commit()
+    except Exception:
+        # Never mask the original error if the marker write fails
+        db.rollback()
+        logger.exception("Failed to record failed-apply state for change %s", change_id)
