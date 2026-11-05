@@ -1,6 +1,8 @@
 """RNUdb FastAPI application."""
 
+import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
@@ -10,6 +12,7 @@ from fastapi.responses import FileResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
+from .bootstrap import check_bootstrap_config
 from .config import JWT_SECRET_KEY
 from .routers import genes, literature, variants
 from .routers.admin import router as admin_router
@@ -19,10 +22,23 @@ from .routers.bed_tracks import router as bed_tracks_router
 from .routers.imports import router as imports_router
 from .routers.users import router as users_router
 
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Startup/shutdown hooks — fail fast on a lockout-inducing bootstrap (#315)."""
+    for issue in check_bootstrap_config():
+        logger.error("Bootstrap configuration error: %s", issue)
+        raise RuntimeError(issue)
+    yield
+
+
 app = FastAPI(
     title="RNUdb API",
     description="API for RNUdb - RNA variant database and curation platform",
     default_response_class=ORJSONResponse,
+    lifespan=lifespan,
 )
 
 # Session middleware for OAuth state (using JWT_SECRET_KEY as secret)

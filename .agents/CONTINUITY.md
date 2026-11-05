@@ -65,8 +65,15 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
   - #313 Curator UX: "My Change Requests" collapsible panel on the Curate page, listing the curator's submissions (status, action, entity, date, review notes, failure reason). Loads on demand when expanded.
   - 172 backend pass / 2 skip, vitest 159, build/lint/pre-commit pass.
 
+- `[2026-11-04T18:30Z] [TOOL]` **Batch 5 of epic #346** on branch `fix/approval-test-hardening-315-316` (stacked on batches 1–4):
+  - #316: per-role TestClients (`curator_client`, `admin_client`, `guest_client`, `anon_client`, `curator_bob_client`) in conftest. Each applies its role's auth overrides per-request (`_RoleTestClient`), so multiple role clients coexist in one test (global override dict footgun solved). Un-skipped `test_admin_can_list_all` + `test_reviewer_cannot_access_other_users_submissions`; tightened unauthenticated tests to strict 401 and added guest/curator 403 enforcement tests.
+  - #315: startup fail-fast in `main.py` lifespan via `api/bootstrap.check_bootstrap_config()` — blocks boot when `ADMIN_GITHUB_LOGINS` empty AND users table empty; `scripts/promote_to_admin.py` one-shot recovery; `get_admin_logins()` dedupes/parses.
+  - **IMPORTANT caution recorded**: Python module-level `from rnudb_utils.database import SessionLocal` binds at import-time and IGNORES the conftest test_engine swap; tests must import SessionLocal lazily. During development this bug briefly wrote test users into real `data/database.db` — rows removed immediately, DB verified clean.
+  - Tests: 183 backend pass / 0 skipped (was 172/2), vitest 159, build/lint/pre-commit pass. Migration chain unchanged (no new migration in batch 5).
+
 ## [OUTCOMES]
 
+- `[2026-11-04T18:40Z] [TOOL]` **Epic #346 (approval-system hardening) implementation complete** — all 24 issues (#298–#303, #307–#321, + #285) fixed across 5 stacked PRs: #347 (apply integrity), #348 (failure/audit/observability), #349 (admin-only writes + UX), #350 (test hardening + bootstrap). pytest 183/0, vitest 159, build/lint/pre-commit pass. Merge order: #347 → #348 → #349 → #350 (retarget to main sequentially). Follow-ups documented on #346: classification-entity approval + gene create/update/refresh routing.
 - `[2026-11-04T14:50Z] [TOOL]` Continuity file moved to `.agents/CONTINUITY.md`. Issue #344 → branch `chore/continuity-md-to-agents-344` → PR #345 (commit `16fecaa`). pytest 140 passed/2 skipped, npm build + pre-commit pass. Awaiting merge.
 - `[2026-10-13T17:20Z] [TOOL]` PR ready: fixes 5 backend issues (dead fields, auth patterns, duplicate endpoints, bare exception handlers). Ready for commit, push, and PR.
 - `[2026-10-14T12:45Z] [TOOL]` PR ready: fixes #132 + #134 (import endpoint auth + curator/admin role mismatch). Ready for commit, push, PR.

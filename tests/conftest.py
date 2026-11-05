@@ -106,6 +106,137 @@ def mock_auth():
     app.dependency_overrides.pop(require_admin, None)
 
 
+# ---------------------------------------------------------------------------
+# Per-role test clients (#316) — override mock_auth per test.
+# Use these instead of test_client when role-specific enforcement is needed.
+# ---------------------------------------------------------------------------
+
+_CURATOR_USER = {
+    "github_login": "test_curator",
+    "name": "Test Curator",
+    "email": "test@example.com",
+    "avatar_url": None,
+    "role": "curator",
+}
+
+_ADMIN_USER = {
+    "github_login": "test_admin",
+    "name": "Test Admin",
+    "email": "admin@example.com",
+    "avatar_url": None,
+    "role": "admin",
+}
+
+_GUEST_USER = {
+    "github_login": "test_guest",
+    "name": "Test Guest",
+    "email": "guest@example.com",
+    "avatar_url": None,
+    "role": "guest",
+}
+
+
+class _RoleTestClient(TestClient):
+    """A TestClient that applies its role's auth overrides per-request.
+
+    The FastAPI dependency_overrides dict is process-global, so a naive fixture
+    would let a second client's overrides clobber the first's. Instead we apply
+    this client's auth overrides for the duration of each individual request and
+    restore them afterwards, so multiple role clients can coexist in one test.
+    """
+
+    def __init__(self, app, auth_overrides: dict):
+        super().__init__(app)
+        self._auth_overrides = auth_overrides
+
+    def request(self, method: str, url: str, **kwargs):
+        from api.routers.auth import require_admin, require_curator
+
+        app.dependency_overrides.pop(require_curator, None)
+        app.dependency_overrides.pop(require_admin, None)
+        for dep, resolver in self._auth_overrides.items():
+            app.dependency_overrides[dep] = resolver
+        try:
+            return super().request(method, url, **kwargs)
+        finally:
+            app.dependency_overrides.pop(require_curator, None)
+            app.dependency_overrides.pop(require_admin, None)
+
+
+def _role_client(
+    db_session,
+    role: str,
+) -> TestClient:
+    """Build a TestClient whose auth-dependency overrides match the role."""
+    from api.routers.auth import require_admin, require_curator
+
+    def _get_test_db():
+        return db_session
+
+    app.dependency_overrides[get_db] = _get_test_db
+
+    auth_overrides: dict = {}
+
+    if role == "admin":
+        auth_overrides[require_curator] = lambda: _ADMIN_USER
+        auth_overrides[require_admin] = lambda: _ADMIN_USER
+    elif role == "guest":
+        from fastapi import HTTPException
+
+        def _deny():
+            raise HTTPException(status_code=403, detail="Insufficient privileges")
+
+        auth_overrides[require_curator] = _deny
+        auth_overrides[require_admin] = _deny
+    elif role == "curator":
+        from fastapi import HTTPException
+
+        auth_overrides[require_curator] = lambda: _CURATOR_USER
+
+        def _deny_admin():
+            raise HTTPException(status_code=403, detail="Admin privileges required")
+
+        auth_overrides[require_admin] = _deny_admin
+    elif role == "bob":
+        user = dict(_CURATOR_USER)
+        user["github_login"] = "bob_curator"
+        auth_overrides[require_curator] = lambda _u=user: _u
+    elif role == "none":
+        pass  # real auth runs → 401 without a session
+
+    return _RoleTestClient(app, auth_overrides)
+
+
+@pytest.fixture
+def curator_client(test_db) -> TestClient:
+    """A client that authenticates as **curator** (cannot call admin endpoints)."""
+    return _role_client(test_db, "curator")
+
+
+@pytest.fixture
+def admin_client(test_db) -> TestClient:
+    """A client that authenticates as **admin** (satisfies both deps)."""
+    return _role_client(test_db, "admin")
+
+
+@pytest.fixture
+def guest_client(test_db) -> TestClient:
+    """A client that authenticates as **guest** — both deps return 403."""
+    return _role_client(test_db, "guest")
+
+
+@pytest.fixture
+def anon_client(test_db) -> TestClient:
+    """A client with **no** auth overrides — hits real auth → 401."""
+    return _role_client(test_db, "none")
+
+
+@pytest.fixture
+def curator_bob_client(test_db) -> TestClient:
+    """A client as a **second curator** (different login)."""
+    return _role_client(test_db, "bob")
+
+
 @pytest.fixture
 def seed_test_data(test_db):
     """Seed test data for approval and other tests."""
