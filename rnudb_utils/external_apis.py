@@ -6,6 +6,72 @@ from typing import Any
 import requests
 
 
+def merge_population_variants(
+    gene_id: str,
+    chromosome: str,
+    start: int,
+    end: int,
+) -> list[dict[str, Any]]:
+    """Fetch gnomAD + All of Us variants for a gene region and merge them.
+
+    Returns a list of variant insert dicts keyed by ``chr<chrom>-<pos>-<ref>-<alt>``,
+    with gnomAD and All of Us allele counts merged onto matching variants. External
+    API failures are swallowed (returning fewer/no variants) so callers can safely
+    use this outside a DB transaction during the approval workflow.
+    """
+    chrom = chromosome[3:] if chromosome.startswith("chr") else chromosome
+
+    gnomad_variants = query_gnomad_variants(chrom, start, end)
+    aou_variants = query_all_of_us_variants(chrom, start, end)
+
+    variants_to_insert: list[dict[str, Any]] = []
+
+    for v in gnomad_variants:
+        variants_to_insert.append(
+            {
+                "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
+                "geneId": gene_id,
+                "position": v["position"],
+                "ref": v["ref"],
+                "alt": v["alt"],
+                "gnomad_ac": v.get("gnomad_ac"),
+                "gnomad_hom": v.get("gnomad_hom"),
+                "gnomad_af": v.get("gnomad_af"),
+                "aou_ac": None,
+                "aou_hom": None,
+                "aou_af": None,
+            }
+        )
+
+    for v in aou_variants:
+        if not v.get("position"):
+            continue
+        vid = f"chr{chrom}-{v['position']}-{v.get('ref', '')}-{v.get('alt', '')}"
+        existing = next((x for x in variants_to_insert if x["id"] == vid), None)
+        if existing:
+            existing["aou_ac"] = v.get("aou_ac")
+            existing["aou_hom"] = v.get("aou_hom")
+            existing["aou_af"] = v.get("aou_af")
+        else:
+            variants_to_insert.append(
+                {
+                    "id": vid,
+                    "geneId": gene_id,
+                    "position": v["position"],
+                    "ref": v.get("ref", ""),
+                    "alt": v.get("alt", ""),
+                    "gnomad_ac": None,
+                    "gnomad_hom": None,
+                    "gnomad_af": None,
+                    "aou_ac": v.get("aou_ac"),
+                    "aou_hom": v.get("aou_hom"),
+                    "aou_af": v.get("aou_af"),
+                }
+            )
+
+    return variants_to_insert
+
+
 def query_gnomad_variants(
     chromosome: str, start: int, end: int, reference_genome: str = "GRCh38"
 ) -> list[dict[str, Any]]:

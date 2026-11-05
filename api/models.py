@@ -550,7 +550,7 @@ class PendingChange(PendingChangeBase, table=True):
             name="check_entity_type",
         ),
         CheckConstraint(
-            "action IN ('create', 'update', 'delete')",
+            "action IN ('create', 'update', 'delete', 'import')",
             name="check_action",
         ),
         CheckConstraint(

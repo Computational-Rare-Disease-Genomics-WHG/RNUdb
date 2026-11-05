@@ -90,64 +90,13 @@ async def create_gene(
     )
 
     if fetch_population_data:
-        from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
+        from rnudb_utils.external_apis import merge_population_variants
 
-        chrom = (
-            gene.chromosome
-            if not gene.chromosome.startswith("chr")
-            else gene.chromosome[3:]
+        variants_to_insert = merge_population_variants(
+            gene.id, gene.chromosome, gene.start, gene.end
         )
-
-        start, end = gene.start, gene.end
-        gnomad_variants = (
-            query_gnomad_variants(chrom, start, end) if query_gnomad_variants else []
-        )
-        aou_variants = (
-            query_all_of_us_variants(chrom, start, end)
-            if query_all_of_us_variants
-            else []
-        )
-
-        gnomad_count = len(gnomad_variants)
-        aou_count = len(aou_variants)
-
-        variants_to_insert = []
-
-        for v in gnomad_variants:
-            variants_to_insert.append(
-                {
-                    "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
-                    "geneId": gene.id,
-                    "position": v["position"],
-                    "ref": v["ref"],
-                    "alt": v["alt"],
-                    "gnomad_ac": v.get("gnomad_ac"),
-                    "gnomad_hom": v.get("gnomad_hom"),
-                    "aou_ac": None,
-                    "aou_hom": None,
-                }
-            )
-
-        for v in aou_variants:
-            vid = f"chr{chrom}-{v['position']}-{v.get('ref', '')}-{v.get('alt', '')}"
-            existing = next((x for x in variants_to_insert if x["id"] == vid), None)
-            if existing:
-                existing["aou_ac"] = v.get("aou_ac")
-                existing["aou_hom"] = v.get("aou_hom")
-            else:
-                variants_to_insert.append(
-                    {
-                        "id": vid,
-                        "geneId": gene.id,
-                        "position": v["position"],
-                        "ref": v.get("ref", ""),
-                        "alt": v.get("alt", ""),
-                        "gnomad_ac": None,
-                        "gnomad_hom": None,
-                        "aou_ac": v.get("aou_ac"),
-                        "aou_hom": v.get("aou_hom"),
-                    }
-                )
+        gnomad_count = sum(1 for v in variants_to_insert if v.get("gnomad_ac"))
+        aou_count = sum(1 for v in variants_to_insert if v.get("aou_ac"))
 
         for v in variants_to_insert:
             db.execute(
@@ -229,70 +178,13 @@ async def refresh_gene_variants(
     if not gene:
         raise HTTPException(status_code=404, detail="Gene not found")
 
-    chrom = (
-        gene.chromosome
-        if not gene.chromosome.startswith("chr")
-        else gene.chromosome[3:]
+    from rnudb_utils.external_apis import merge_population_variants
+
+    variants_to_insert = merge_population_variants(
+        gene.id, gene.chromosome, gene.start, gene.end
     )
-
-    from rnudb_utils import query_all_of_us_variants, query_gnomad_variants
-
-    gnomad_variants = (
-        query_gnomad_variants(chrom, gene.start, gene.end)
-        if query_gnomad_variants
-        else []
-    )
-    aou_variants = (
-        query_all_of_us_variants(chrom, gene.start, gene.end)
-        if query_all_of_us_variants
-        else []
-    )
-
-    gnomad_count = len(gnomad_variants)
-    aou_count = len(aou_variants)
-
-    variants_to_insert = []
-
-    for v in gnomad_variants:
-        variants_to_insert.append(
-            {
-                "id": f"chr{chrom}-{v['position']}-{v['ref']}-{v['alt']}",
-                "geneId": gene.id,
-                "position": v["position"],
-                "ref": v["ref"],
-                "alt": v["alt"],
-                "gnomad_ac": v.get("gnomad_ac"),
-                "gnomad_hom": v.get("gnomad_hom"),
-                "gnomad_af": v.get("gnomad_af"),
-                "aou_ac": None,
-                "aou_hom": None,
-                "aou_af": None,
-            }
-        )
-
-    for v in aou_variants:
-        vid = f"chr{chrom}-{v['position']}-{v.get('ref', '')}-{v.get('alt', '')}"
-        existing = next((x for x in variants_to_insert if x["id"] == vid), None)
-        if existing:
-            existing["aou_ac"] = v.get("aou_ac")
-            existing["aou_hom"] = v.get("aou_hom")
-            existing["aou_af"] = v.get("aou_af")
-        else:
-            variants_to_insert.append(
-                {
-                    "id": vid,
-                    "geneId": gene.id,
-                    "position": v["position"],
-                    "ref": v.get("ref", ""),
-                    "alt": v.get("alt", ""),
-                    "gnomad_ac": None,
-                    "gnomad_hom": None,
-                    "gnomad_af": None,
-                    "aou_ac": v.get("aou_ac"),
-                    "aou_hom": v.get("aou_hom"),
-                    "aou_af": v.get("aou_af"),
-                }
-            )
+    gnomad_count = sum(1 for v in variants_to_insert if v.get("gnomad_ac"))
+    aou_count = sum(1 for v in variants_to_insert if v.get("aou_ac"))
 
     for v in variants_to_insert:
         db.execute(
@@ -341,21 +233,11 @@ async def delete_gene(
 
     old_values = existing.model_dump()
 
-    # Delete associated data
-    db.execute(
-        text(
-            "DELETE FROM variant_classifications "
-            "WHERE variant_id IN (SELECT id FROM variants WHERE geneId = :gene_id)"
-        ),
-        {"gene_id": gene_id},
-    )
-    db.execute(
-        text("DELETE FROM variants WHERE geneId = :gene_id"), {"gene_id": gene_id}
-    )
-    db.execute(
-        text("DELETE FROM rna_structures WHERE geneId = :gene_id"), {"gene_id": gene_id}
-    )
-    db.delete(existing)
+    # Cascade delete all dependent rows (variants, structures and their child
+    # rows, bed tracks, links, classifications) before the gene itself.
+    from rnudb_utils.database import delete_gene_cascade
+
+    delete_gene_cascade(db, gene_id)
     db.commit()
 
     audit_log(

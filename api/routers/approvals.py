@@ -6,14 +6,26 @@ from datetime import UTC, datetime
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlmodel import SQLModel
 
 from api.models import PendingChange, PendingChangeOut
 from api.notifications import notify_change_approved, notify_change_rejected
 from api.routers.auth import require_admin, require_curator
-from rnudb_utils.database import get_db
+from api.services.import_ops import (
+    exec_bed_track_import,
+    exec_structure_import,
+    exec_variant_batch,
+)
+from rnudb_utils.database import (
+    delete_gene_cascade,
+    delete_literature_cascade,
+    delete_structure_cascade,
+    delete_variant_cascade,
+    get_db,
+    insert_variants,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +40,7 @@ class CreateChangeRequest(SQLModel):
     entity_type: Literal["variant", "gene", "literature", "structure", "bed_track"]
     entity_id: str | None = None
     gene_id: str
-    action: Literal["create", "update", "delete"]
+    action: Literal["create", "update", "delete", "import"]
     payload: dict[str, Any]
 
 
@@ -38,11 +50,10 @@ class ReviewRequest(SQLModel):
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Column whitelists (single source of truth — #318)
 # ---------------------------------------------------------------------------
 
-
-# Allowed columns for each entity type (whitelist to prevent SQL injection)
+#: DB columns each entity type may be written to.
 _ALLOWED_COLUMNS = {
     "variant": {
         "position",
@@ -51,14 +62,14 @@ _ALLOWED_COLUMNS = {
         "alt",
         "hgvs",
         "consequence",
-        "gnomad_ac",
-        "gnomad_hom",
-        "aou_ac",
-        "aou_hom",
         "function_score",
         "pvalues",
         "qvalues",
         "depletion_group",
+        "gnomad_ac",
+        "gnomad_hom",
+        "aou_ac",
+        "aou_hom",
     },
     "gene": {
         "name",
@@ -70,7 +81,25 @@ _ALLOWED_COLUMNS = {
         "sequence",
         "description",
     },
-    "literature": {"title", "authors", "journal", "year", "doi"},
+    "literature": {"title", "authors", "journal", "year", "doi", "pmid", "url"},
+    "structure": set(),  # only delete supported directly
+    "bed_track": set(),  # only delete supported directly
+}
+
+#: Meta keys accepted on top of DB columns (mostly for create actions).
+_META_KEYS = {
+    "variant": {"id", "geneId"},
+    "gene": {"id"},
+    "literature": {"id"},
+    "structure": {"id"},
+    "bed_track": {"id"},
+}
+
+#: Top-level keys accepted for the ``import`` action payloads.
+_IMPORT_SHAPE_KEYS = {
+    "variant": {"geneId", "variants", "skip_invalid"},
+    "structure": {"geneId", "structure", "set_primary"},
+    "bed_track": {"geneId", "track_name", "intervals", "color"},
 }
 
 _ENTITY_TABLE_MAP = {
@@ -82,9 +111,62 @@ _ENTITY_TABLE_MAP = {
 }
 
 
-def _row_to_dict(row) -> dict:
-    import json
+#: Supported (entity, action) combinations. Anything else is rejected at
+#: submission so an approved change can never apply as a silent no-op.
+_SUPPORTED_ACTIONS = {
+    "variant": {"create", "update", "delete", "import"},
+    "gene": {"create", "update", "delete"},
+    "literature": {"create", "update", "delete"},
+    "structure": {"delete", "import"},
+    "bed_track": {"delete", "import"},
+}
 
+
+def _validate_action_supported(entity_type: str, action: str) -> None:
+    supported = _SUPPORTED_ACTIONS.get(entity_type, set())
+    if action not in supported:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": (
+                    f"Action '{action}' is not supported for entity "
+                    f"type '{entity_type}'"
+                ),
+                "allowed_actions": sorted(supported),
+            },
+        )
+
+
+def _payload_allowed_keys(entity_type: str, action: str) -> set[str]:
+    """Allowed top-level payload keys for an entity/action pair."""
+    allowed = set(_ALLOWED_COLUMNS.get(entity_type, set()))
+    allowed |= _META_KEYS.get(entity_type, set())
+    if entity_type == "gene" and action == "create":
+        allowed.add("fetch_population_data")
+    if action == "import":
+        allowed |= _IMPORT_SHAPE_KEYS.get(entity_type, set())
+    return allowed
+
+
+def _validate_payload_keys(entity_type: str, action: str, payload: dict) -> None:
+    """Reject payloads with non-whitelisted keys instead of silently dropping them."""
+    allowed = _payload_allowed_keys(entity_type, action)
+    invalid = sorted(k for k in payload.keys() if k not in allowed)
+    if invalid:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": (
+                    f"Invalid payload fields for {entity_type} {action}: "
+                    f"{', '.join(invalid)}"
+                ),
+                "invalid_fields": invalid,
+                "allowed_fields": sorted(allowed),
+            },
+        )
+
+
+def _row_to_dict(row) -> dict:
     if hasattr(row, "__table__"):
         d = {key: getattr(row, key) for key in row.__table__.columns.keys()}
     else:
@@ -92,6 +174,17 @@ def _row_to_dict(row) -> dict:
     if d.get("payload") and isinstance(d["payload"], str):
         d["payload"] = json.loads(d["payload"])
     return d
+
+
+def _entity_exists(db: Session, entity_type: str, entity_id: str) -> bool:
+    """Check whether an entity row exists (for delete/create collision checks)."""
+    table = _ENTITY_TABLE_MAP.get(entity_type)
+    if not table:
+        return False
+    row = db.execute(
+        text(f"SELECT 1 FROM {table} WHERE id = :eid"), {"eid": entity_id}
+    ).fetchone()
+    return row is not None
 
 
 # ---------------------------------------------------------------------------
@@ -107,12 +200,44 @@ async def create_pending_change(
 ):
     """Curator submits a change request for admin approval."""
 
+    # Reject unsupported entity/action combinations so an approved change can
+    # never be applied as a silent no-op.
+    _validate_action_supported(body.entity_type, body.action)
+
+    # Reject unknown payload keys at submission time (#312)
+    _validate_payload_keys(body.entity_type, body.action, body.payload)
+
+    payload = dict(body.payload)
+
+    # For gene creation with population data, fetch gnomAD/All of Us NOW (outside
+    # any DB transaction) so apply is a deterministic DB operation (#317).
+    if (
+        body.entity_type == "gene"
+        and body.action == "create"
+        and payload.get("fetch_population_data")
+    ):
+        try:
+            from rnudb_utils.external_apis import merge_population_variants
+
+            payload["population_variants"] = merge_population_variants(
+                payload.get("id", body.gene_id),
+                payload.get("chromosome", ""),
+                payload.get("start"),
+                payload.get("end"),
+            )
+        except Exception:
+            logger.exception(
+                "Failed to fetch population variants for gene %s at submission",
+                payload.get("id", body.gene_id),
+            )
+            payload["population_variants"] = []
+
     new_change = PendingChange(
         entity_type=body.entity_type,
         entity_id=body.entity_id,
         gene_id=body.gene_id,
         action=body.action,
-        payload=body.payload,
+        payload=payload,
         requested_by=user["github_login"],
         status="pending",
     )
@@ -125,7 +250,7 @@ async def create_pending_change(
 
 @router.get("", response_model=list[PendingChangeOut])
 async def list_pending_changes(
-    status: str | None = Query(None, pattern="^(pending|approved|rejected)$"),
+    status: str | None = Query(None, pattern="^(pending|approved|rejected|applied)$"),
     gene_id: str | None = Query(None),
     entity_type: str | None = Query(
         None, pattern="^(gene|variant|literature|structure|bed_track)$"
@@ -135,6 +260,8 @@ async def list_pending_changes(
 ):
     """List pending changes - curators see their own, admins see all."""
     is_admin = user["role"] == "admin"
+
+    from sqlalchemy import select
 
     query = select(PendingChange)
 
@@ -245,43 +372,25 @@ async def apply_approved_change(
     try:
         if entity_type == "variant":
             if action == "create":
-                # Build dynamic INSERT based on payload fields
-                # Validate column names against whitelist to prevent SQL injection
-                allowed_cols = {
-                    "id",
-                    "geneId",
-                    "position",
-                    "nucleotidePosition",
-                    "ref",
-                    "alt",
-                    "hgvs",
-                    "consequence",
-                    "function_score",
-                    "pvalues",
-                    "qvalues",
-                    "depletion_group",
-                    "gnomad_ac",
-                    "gnomad_hom",
-                    "aou_ac",
-                    "aou_hom",
-                }
-                cols = [c for c in payload.keys() if c in allowed_cols]
+                # Build dynamic INSERT based on payload fields. Column names are
+                # validated against the whitelist at submission time (#312) and
+                # filtered again here to prevent SQL injection.
+                allowed = _payload_allowed_keys("variant", "create")
+                cols = [c for c in payload.keys() if c in allowed]
                 placeholders = [f":{c}" for c in cols]
-                # Column names are validated against whitelist above, safe to use
-                db.execute(
-                    text(f"""  # noqa: S608
+                db.execute(  # noqa: S608 - cols validated against whitelist above
+                    text(f"""
                         INSERT INTO variants ({", ".join(cols)})
                         VALUES ({", ".join(placeholders)})
                     """),
-                    payload,
+                    {c: payload[c] for c in cols},
                 )
             elif action == "update":
-                # Build safe update query
-                allowed = _ALLOWED_COLUMNS.get("variant", set())
+                allowed = _ALLOWED_COLUMNS["variant"]
                 set_clauses = []
-                params = {}
+                params: dict[str, Any] = {}
                 for key, value in payload.items():
-                    if key not in ("id", "geneId") and (not allowed or key in allowed):
+                    if key in allowed:
                         set_clauses.append(f"{key} = :{key}")
                         params[key] = value
                 if set_clauses:
@@ -295,10 +404,19 @@ async def apply_approved_change(
                         params,
                     )
             elif action == "delete":
-                db.execute(
-                    text("DELETE FROM variants WHERE id = :entity_id"),
-                    {"entity_id": entity_id},
-                )
+                if not _entity_exists(db, "variant", entity_id or ""):
+                    raise HTTPException(
+                        status_code=404, detail=f"Variant {entity_id} not found"
+                    )
+                delete_variant_cascade(db, entity_id)
+            elif action == "import":
+                gene_id = payload.get("geneId") or change.gene_id
+                rows = payload.get("variants")
+                skip_invalid = bool(payload.get("skip_invalid", True))
+                if rows is None:
+                    # Flat single-variant payload shape
+                    rows = [payload]
+                exec_variant_batch(db, gene_id, rows, skip_invalid, change.requested_by)
 
         elif entity_type == "gene":
             if action == "create":
@@ -325,99 +443,17 @@ async def apply_approved_change(
                     gene_payload,
                 )
 
-                fetch_pop = payload.get("fetch_population_data", False)
-                if fetch_pop:
-                    from rnudb_utils import (
-                        query_all_of_us_variants,
-                        query_gnomad_variants,
-                    )
-
-                    chrom = payload.get("chromosome", "")
-                    if chrom.startswith("chr"):
-                        chrom = chrom[3:]
-
-                    start = payload.get("start")
-                    end = payload.get("end")
-                    gene_id = payload["id"]
-
-                    gnomad_variants = (
-                        query_gnomad_variants(chrom, start, end)
-                        if (query_gnomad_variants and start and end)
-                        else []
-                    )
-                    aou_variants = (
-                        query_all_of_us_variants(chrom, start, end)
-                        if (query_all_of_us_variants and start and end)
-                        else []
-                    )
-
-                    variants_to_insert = []
-
-                    for v in gnomad_variants:
-                        variants_to_insert.append(
-                            {
-                                "id": f"chr{chrom}-{v['position']}-{v['ref']}"
-                                f"-{v['alt']}",
-                                "geneId": gene_id,
-                                "position": v["position"],
-                                "ref": v["ref"],
-                                "alt": v["alt"],
-                                "gnomad_ac": v.get("gnomad_ac"),
-                                "gnomad_hom": v.get("gnomad_hom"),
-                                "aou_ac": None,
-                                "aou_hom": None,
-                            }
-                        )
-
-                    for v in aou_variants:
-                        if not v.get("position"):
-                            continue
-                        vid = f"chr{chrom}-{v['position']}-{v.get('ref', '')}"
-                        vid = f"{vid}-{v.get('alt', '')}"
-                        existing = next(
-                            (x for x in variants_to_insert if x["id"] == vid), None
-                        )
-                        if existing:
-                            existing["aou_ac"] = v.get("aou_ac")
-                            existing["aou_hom"] = v.get("aou_hom")
-                        else:
-                            variants_to_insert.append(
-                                {
-                                    "id": vid,
-                                    "geneId": gene_id,
-                                    "position": v["position"],
-                                    "ref": v.get("ref", ""),
-                                    "alt": v.get("alt", ""),
-                                    "gnomad_ac": None,
-                                    "gnomad_hom": None,
-                                    "aou_ac": v.get("aou_ac"),
-                                    "aou_hom": v.get("aou_hom"),
-                                }
-                            )
-
-                    for v in variants_to_insert:
-                        db.execute(
-                            text("""
-                                INSERT INTO variants
-                                (id, geneId, position, ref, alt, gnomad_ac,
-                                 gnomad_hom, aou_ac, aou_hom)
-                                VALUES
-                                (:id, :geneId, :position, :ref, :alt, :gnomad_ac,
-                                 :gnomad_hom, :aou_ac, :aou_hom)
-                                ON CONFLICT(id) DO UPDATE SET
-                                    gnomad_ac = EXCLUDED.gnomad_ac,
-                                    gnomad_hom = EXCLUDED.gnomad_hom,
-                                    aou_ac = EXCLUDED.aou_ac,
-                                    aou_hom = EXCLUDED.aou_hom
-                            """),
-                            v,
-                        )
+                # Population data was fetched at submission time, so apply is a
+                # deterministic DB operation with no external API calls (#317).
+                population_variants = payload.get("population_variants", [])
+                if population_variants:
+                    insert_variants(population_variants, db)
             elif action == "update":
-                allowed = _ALLOWED_COLUMNS.get("gene", set())
+                allowed = _ALLOWED_COLUMNS["gene"]
                 set_clauses = []
                 params = {}
                 for key, value in payload.items():
-                    if key != "id" and (not allowed or key in allowed):
+                    if key in allowed:
                         set_clauses.append(f"{key} = :{key}")
                         params[key] = value
                 if set_clauses:
@@ -431,27 +467,38 @@ async def apply_approved_change(
                         params,
                     )
             elif action == "delete":
-                db.execute(
-                    text("DELETE FROM genes WHERE id = :entity_id"),
-                    {"entity_id": entity_id},
-                )
+                if not _entity_exists(db, "gene", entity_id or ""):
+                    raise HTTPException(
+                        status_code=404, detail=f"Gene {entity_id} not found"
+                    )
+                delete_gene_cascade(db, entity_id)
 
         elif entity_type == "literature":
             if action == "create":
                 db.execute(
                     text("""
                         INSERT INTO literature
-                            (id, title, authors, journal, year, doi)
-                        VALUES (:id, :title, :authors, :journal, :year, :doi)
+                            (id, title, authors, journal, year, doi, pmid, url)
+                        VALUES (:id, :title, :authors, :journal, :year, :doi,
+                                :pmid, :url)
                     """),
-                    payload,
+                    {
+                        "id": payload.get("id"),
+                        "title": payload.get("title"),
+                        "authors": payload.get("authors"),
+                        "journal": payload.get("journal"),
+                        "year": payload.get("year"),
+                        "doi": payload.get("doi"),
+                        "pmid": payload.get("pmid"),
+                        "url": payload.get("url"),
+                    },
                 )
             elif action == "update":
-                allowed = _ALLOWED_COLUMNS.get("literature", set())
+                allowed = _ALLOWED_COLUMNS["literature"]
                 set_clauses = []
                 params = {}
                 for key, value in payload.items():
-                    if key != "id" and (not allowed or key in allowed):
+                    if key in allowed:
                         set_clauses.append(f"{key} = :{key}")
                         params[key] = value
                 if set_clauses:
@@ -465,23 +512,55 @@ async def apply_approved_change(
                         params,
                     )
             elif action == "delete":
-                db.execute(
-                    text("DELETE FROM literature WHERE id = :entity_id"),
-                    {"entity_id": entity_id},
-                )
+                if not _entity_exists(db, "literature", entity_id or ""):
+                    raise HTTPException(
+                        status_code=404, detail=f"Literature {entity_id} not found"
+                    )
+                delete_literature_cascade(db, entity_id)
 
         elif entity_type == "structure":
             if action == "delete":
-                db.execute(
-                    text("DELETE FROM rna_structures WHERE id = :entity_id"),
-                    {"entity_id": entity_id},
-                )
+                if not _entity_exists(db, "structure", entity_id or ""):
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Structure {entity_id} not found",
+                    )
+                delete_structure_cascade(db, entity_id)
+            elif action == "import":
+                gene_id = payload.get("geneId") or change.gene_id
+                structure = payload.get("structure")
+                if not structure:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Structure import payload missing 'structure' field",
+                    )
+                exec_structure_import(db, gene_id, structure, change.requested_by)
 
         elif entity_type == "bed_track":
             if action == "delete":
                 db.execute(
                     text("DELETE FROM bed_tracks WHERE id = :entity_id"),
                     {"entity_id": entity_id},
+                )
+            elif action == "import":
+                gene_id = payload.get("geneId") or change.gene_id
+                track_name = payload.get("track_name")
+                intervals = payload.get("intervals")
+                if not track_name or intervals is None:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=(
+                            "Bed track import payload missing "
+                            "'track_name' or 'intervals' field"
+                        ),
+                    )
+                exec_bed_track_import(
+                    db,
+                    gene_id,
+                    track_name,
+                    intervals,
+                    payload.get("color"),
+                    change.requested_by,
                 )
 
         db.commit()
@@ -493,6 +572,9 @@ async def apply_approved_change(
         db.refresh(change)
         return _row_to_dict(change)
 
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception:
         db.rollback()
         logger.exception("Failed to apply approved change %s", change_id)

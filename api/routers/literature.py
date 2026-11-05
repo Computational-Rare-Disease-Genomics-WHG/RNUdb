@@ -13,7 +13,7 @@ from api.models import (
     LiteratureUpdate,
 )
 from api.routers.auth import require_curator
-from rnudb_utils.database import audit_log, get_db
+from rnudb_utils.database import audit_log, delete_literature_cascade, get_db
 
 router = APIRouter()
 
@@ -110,7 +110,8 @@ async def delete_literature(
 
     old_values = existing.model_dump()
 
-    db.delete(existing)
+    # Cascade delete classifications referencing this literature entry
+    delete_literature_cascade(db, literature_id)
     db.commit()
 
     audit_log(
