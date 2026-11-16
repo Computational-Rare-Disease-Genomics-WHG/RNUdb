@@ -78,18 +78,30 @@ const Home: React.FC = () => {
             >
               RNU4-2
             </button>
-            <span className="text-slate-300">|</span>
-            <button
-              onClick={() => setSearchTerm("c.34A>G")}
-              className="text-teal-600 hover:text-teal-700 hover:underline underline-offset-2"
-            >
-              c.34A&gt;G
-            </button>
             <span className="text-slate-300 ml-2">
               · {availableSnRNAs.length} genes
             </span>
           </div>
         </div>
+
+        {/* Supported genes */}
+        {availableSnRNAs.length > 0 && (
+          <div className="text-center text-sm text-slate-500 mt-[-2rem] mb-8">
+            <span>Currently supported genes: </span>
+            {availableSnRNAs.map((id, index) => (
+              <span key={id}>
+                <button
+                  onClick={() => handleGeneSelect(id)}
+                  className="text-teal-600 hover:text-teal-700 hover:underline underline-offset-2 inline"
+                >
+                  {id}
+                </button>
+                {index < availableSnRNAs.length - 2 && <span>, </span>}
+                {index === availableSnRNAs.length - 2 && <span> and </span>}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <Footer />
