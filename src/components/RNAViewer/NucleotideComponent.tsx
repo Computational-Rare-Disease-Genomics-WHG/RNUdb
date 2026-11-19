@@ -14,6 +14,8 @@ interface NucleotideComponentProps {
   hasVariants?: boolean;
   variantCount?: number;
   clinicalSignificance?: string;
+  // Classification comes from ClinVar and has not been curated (#364)
+  uncuratedClinvar?: boolean;
 }
 
 const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
@@ -25,6 +27,7 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
   onHover,
   onClick,
   clinicalSignificance,
+  uncuratedClinvar = false,
 }) => {
   // Determine visual state priority: selected > highlighted > hovered > default
   const getStrokeColor = () => {
@@ -48,7 +51,7 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
     return 18;
   };
 
-  const label = `Nucleotide ${nucleotide.base} at position ${nucleotide.id}${clinicalSignificance ? `, clinical significance: ${clinicalSignificance}` : ""}`;
+  const label = `Nucleotide ${nucleotide.base} at position ${nucleotide.id}${clinicalSignificance ? `, clinical significance: ${clinicalSignificance}` : ""}${uncuratedClinvar ? " (ClinVar)" : ""}`;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -79,6 +82,21 @@ const NucleotideComponent: React.FC<NucleotideComponentProps> = ({
           style={{
             animation: "pulse 2s ease-in-out infinite",
           }}
+        />
+      )}
+
+      {/* Dashed ring: classification is from ClinVar, not curated */}
+      {uncuratedClinvar && (
+        <circle
+          data-testid="clinvar-ring"
+          cx={nucleotide.x}
+          cy={nucleotide.y}
+          r={24}
+          fill="none"
+          stroke={COLORBLIND_FRIENDLY_PALETTE.NEUTRAL.DARK_GRAY}
+          strokeWidth="2"
+          strokeDasharray="4,3"
+          pointerEvents="none"
         />
       )}
 

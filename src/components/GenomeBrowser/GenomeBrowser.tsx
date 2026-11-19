@@ -277,7 +277,7 @@ const GenomeBrowser: React.FC<GenomeBrowserProps> = ({
         <RegionViewer
           regions={regions}
           width={viewerWidth}
-          leftPanelWidth={140}
+          leftPanelWidth={200}
           rightPanelWidth={0}
         >
           <PositionAxisTrack />

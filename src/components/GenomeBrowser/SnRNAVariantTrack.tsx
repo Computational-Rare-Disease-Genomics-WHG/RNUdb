@@ -52,11 +52,20 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
       allele_freq: (variant.gnomad_ac || 0) / 1000000,
       consequence: variant.consequence || "unknown",
       clinical_significance: variant.clinical_significance,
+      classification_source: variant.classification_source,
       isHighlighted:
         isSelectedPos(variant.position) ||
         toOverlaySignificance(variant.clinical_significance) === "Pathogenic" ||
         toOverlaySignificance(variant.clinical_significance) === "Likely Pathogenic",
     }));
+
+  // Classifications that come from ClinVar and have not been curated (#364)
+  const curatedVariants = clinvarVariants.filter(
+    (variant) => variant.classification_source !== "clinvar",
+  );
+  const uncuratedClinvarVariants = clinvarVariants.filter(
+    (variant) => variant.classification_source === "clinvar",
+  );
 
   // Filter and transform gnomAD variants
   const filteredGnomad = gnomadVariants.filter((variant) =>
@@ -112,9 +121,18 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
         />
       )}
       <VariantTrack
-        title={`Clinical Variants (${clinvarVariants.length} variants)`}
+        title={`Curated Variants (${curatedVariants.length} variants)`}
         height={40}
-        variants={clinvarVariants}
+        variants={curatedVariants}
+        variantColor={(variant) =>
+          getClinvarColor(variant.clinical_significance || "unknown")
+        }
+      />
+      <div className="border-t border-slate-300 my-1" role="separator" />
+      <VariantTrack
+        title={`ClinVar Variants (${uncuratedClinvarVariants.length} variants)`}
+        height={40}
+        variants={uncuratedClinvarVariants}
         variantColor={(variant) =>
           getClinvarColor(variant.clinical_significance || "unknown")
         }
