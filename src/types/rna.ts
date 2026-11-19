@@ -23,6 +23,9 @@ export interface Variant {
   // Clinical annotation fields (nullable)
   consequence?: string; // Variant consequence type
   clinvar_significance?: string; // ClinVar pathogenicity
+  clinvar_review_status?: string; // ClinVar review status
+  clinvar_release?: string; // ClinVar release, e.g. "clinvar_20261108"
+  classification_source?: "curated" | "clinvar" | null; // Where clinical_significance comes from
   clinical_significance?: string; // Clinical interpretation
   disease_type?: string; // Disease association (e.g., "ReNU Syndrome", "Retinitis Pigmentosa")
   pmid?: string; // PubMed ID for evidence
