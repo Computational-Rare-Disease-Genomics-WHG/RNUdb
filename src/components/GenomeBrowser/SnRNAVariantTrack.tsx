@@ -113,7 +113,7 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
         />
       )}
       <VariantTrack
-        title={`ClinVar Variants (${clinvarVariants.length} variants)`}
+        title={`Clinical Variants (${clinvarVariants.length} variants)`}
         height={40}
         variants={clinvarVariants}
         variantColor={(variant) =>

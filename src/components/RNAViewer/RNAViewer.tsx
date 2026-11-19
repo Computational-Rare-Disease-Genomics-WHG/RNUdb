@@ -567,7 +567,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      Show ClinVar clinical variants with pathogenicity classifications
+                      Show clinical variants (curated and ClinVar) with pathogenicity
+                      classifications
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -1061,7 +1062,7 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
           <div className="text-sm font-medium text-gray-700 mb-2">
             {overlayMode === "clinvar"
-              ? "ClinVar Legend:"
+              ? "Clinical Significance Legend:"
               : overlayMode === "gnomad"
                 ? "gnomAD Legend:"
                 : overlayMode === "depletion_group"
