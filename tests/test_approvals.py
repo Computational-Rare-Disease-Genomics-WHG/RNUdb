@@ -792,6 +792,7 @@ class TestApplyCascadeDeletes:
         bed track, and variant links."""
         from api.models import (
             BedTrack,
+            ClinvarClassification,
             Literature,
             Nucleotide,
             RNAStructure,
@@ -841,6 +842,7 @@ class TestApplyCascadeDeletes:
             )
         )
         test_db.add(VariantLink(variant_id_1="V-A", variant_id_2="V-B"))
+        test_db.add(ClinvarClassification(variant_id="V-B", release="clinvar_20261108"))
         test_db.commit()
 
     def test_apply_gene_delete_cascades(self, test_client, test_db):
@@ -870,6 +872,7 @@ class TestApplyCascadeDeletes:
         tables = {
             "variants": "SELECT COUNT(*) FROM variants WHERE geneId='RNU4-2'",
             "variant_classifications": ("SELECT COUNT(*) FROM variant_classifications"),
+            "clinvar_classifications": "SELECT COUNT(*) FROM clinvar_classifications",
             "rna_structures": "SELECT COUNT(*) FROM rna_structures",
             "nucleotides": "SELECT COUNT(*) FROM nucleotides",
             "bed_tracks": "SELECT COUNT(*) FROM bed_tracks",
@@ -883,6 +886,7 @@ class TestApplyCascadeDeletes:
     def test_apply_variant_delete_cascades(self, test_client, test_db, seed_gene):
         """Applying variant delete removes its classifications and links."""
         from api.models import (
+            ClinvarClassification,
             Literature,
             Variant,
             VariantClassification,
@@ -908,6 +912,9 @@ class TestApplyCascadeDeletes:
             VariantClassification(variant_id="V-CC-001", literature_id="LIT-CC-001")
         )
         test_db.add(VariantLink(variant_id_1="V-CC-001", variant_id_2="V-CC-002"))
+        test_db.add(
+            ClinvarClassification(variant_id="V-CC-001", release="clinvar_20261108")
+        )
         test_db.commit()
 
         create_res = test_client.post(
@@ -940,6 +947,12 @@ class TestApplyCascadeDeletes:
             == 0
         )
         assert test_db.execute(text("SELECT COUNT(*) FROM variant_links")).scalar() == 0
+        assert (
+            test_db.execute(
+                text("SELECT COUNT(*) FROM clinvar_classifications")
+            ).scalar()
+            == 0
+        )
         # Literature (not variant-owned) survives
         assert (
             test_db.execute(

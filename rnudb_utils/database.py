@@ -347,7 +347,7 @@ def get_linked_variants(variant_id: str) -> list[str]:
 
 
 def delete_variant_cascade(db: Session, variant_id: str) -> None:
-    """Delete a variant and all dependent rows (links, classifications)."""
+    """Delete a variant and all dependent rows (links, classifications, ClinVar)."""
     db.execute(
         text(
             "DELETE FROM variant_links WHERE variant_id_1 = :vid OR variant_id_2 = :vid"
@@ -356,6 +356,10 @@ def delete_variant_cascade(db: Session, variant_id: str) -> None:
     )
     db.execute(
         text("DELETE FROM variant_classifications WHERE variant_id = :vid"),
+        {"vid": variant_id},
+    )
+    db.execute(
+        text("DELETE FROM clinvar_classifications WHERE variant_id = :vid"),
         {"vid": variant_id},
     )
     db.execute(text("DELETE FROM variants WHERE id = :vid"), {"vid": variant_id})
@@ -441,6 +445,13 @@ def delete_gene_cascade(db: Session, gene_id: str) -> None:
     db.execute(
         text(
             "DELETE FROM variant_classifications WHERE variant_id IN "
+            "(SELECT id FROM variants WHERE geneId = :gid)"
+        ),
+        {"gid": gene_id},
+    )
+    db.execute(
+        text(
+            "DELETE FROM clinvar_classifications WHERE variant_id IN "
             "(SELECT id FROM variants WHERE geneId = :gid)"
         ),
         {"gid": gene_id},
