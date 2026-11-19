@@ -956,6 +956,11 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                           ?.clinical_significance
                       : undefined
                   }
+                  uncuratedClinvar={
+                    overlayMode === "clinvar" &&
+                    (getFilteredOverlayValue(nucleotide.id) as any).variant
+                      ?.classification_source === "clinvar"
+                  }
                 />
               );
             })}
@@ -1093,6 +1098,10 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
                     }}
                   ></div>
                   <span>Uncertain Significance</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full border-2 border-dashed border-slate-600"></div>
+                  <span>ClinVar</span>
                 </div>
               </>
             ) : overlayMode === "gnomad" ? (
