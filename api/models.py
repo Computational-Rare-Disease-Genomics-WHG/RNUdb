@@ -181,6 +181,9 @@ class VariantPublic(VariantBase):
     zygosity: str | None = None
     pmid: str | None = None
     clinvar_significance: str | None = None
+    clinvar_review_status: str | None = None
+    clinvar_release: str | None = None
+    classification_source: str | None = None  # "curated" | "clinvar"
     cohort: str | None = None
 
 
