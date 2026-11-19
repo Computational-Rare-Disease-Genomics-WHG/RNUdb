@@ -397,3 +397,106 @@ class TestLiteratureBulkImport:
         )
         # With mock admin auth, should succeed or return validation error
         assert response.status_code in (200, 401, 422)
+
+
+class TestClinvarInGeneVariants:
+    """ClinVar classifications merged into GET /api/genes/{id}/variants (#364)."""
+
+    @staticmethod
+    def _add_variant(db, variant_id, position):
+        from api.models import Variant
+
+        db.add(
+            Variant(id=variant_id, geneId="RNU4-2", position=position, ref="C", alt="T")
+        )
+        db.commit()
+
+    @staticmethod
+    def _add_clinvar(db, variant_id, significance, conditions):
+        from api.models import ClinvarClassification
+
+        db.add(
+            ClinvarClassification(
+                variant_id=variant_id,
+                release="clinvar_20261108",
+                clinical_significance=significance,
+                review_status="criteria provided, single submitter",
+                conditions=conditions,
+            )
+        )
+        db.commit()
+
+    @staticmethod
+    def _by_id(response):
+        assert response.status_code == 200
+        return {v["id"]: v for v in response.json()}
+
+    def test_clinvar_only_variant_uses_clinvar(self, test_client, test_db, seed_gene):
+        self._add_variant(test_db, "chr12-120291800-C-T", 120291800)
+        self._add_clinvar(
+            test_db, "chr12-120291800-C-T", "Likely Pathogenic", "Disorder X"
+        )
+        self._add_variant(test_db, "chr12-120291801-C-T", 120291801)
+
+        data = self._by_id(test_client.get("/api/genes/RNU4-2/variants"))
+
+        clinvar_only = data["chr12-120291800-C-T"]
+        assert clinvar_only["clinical_significance"] == "Likely Pathogenic"
+        assert clinvar_only["disease_type"] == "Disorder X"
+        assert clinvar_only["classification_source"] == "clinvar"
+        assert clinvar_only["clinvar_significance"] == "Likely Pathogenic"
+        assert clinvar_only["clinvar_release"] == "clinvar_20261108"
+        assert (
+            clinvar_only["clinvar_review_status"]
+            == "criteria provided, single submitter"
+        )
+        plain = data["chr12-120291801-C-T"]
+        assert plain["classification_source"] is None
+        assert plain["clinical_significance"] is None
+        assert plain["clinvar_significance"] is None
+
+    def test_curated_wins_over_clinvar(
+        self, test_client, test_db, seed_gene, sample_variant_classification
+    ):
+        self._add_clinvar(
+            test_db, "chr12-120291764-C-T", "Likely Pathogenic", "Disorder X"
+        )
+
+        variant = self._by_id(test_client.get("/api/genes/RNU4-2/variants"))[
+            "chr12-120291764-C-T"
+        ]
+
+        assert variant["clinical_significance"] == "VUS"
+        assert variant["disease_type"] == "Retinitis Pigmentosa"
+        assert variant["classification_source"] == "curated"
+        assert variant["clinvar_significance"] == "Likely Pathogenic"
+        assert variant["clinvar_release"] == "clinvar_20261108"
+
+    def test_clinvar_not_provided_disease_shown(self, test_client, test_db, seed_gene):
+        self._add_variant(test_db, "chr12-120291800-C-T", 120291800)
+        self._add_clinvar(test_db, "chr12-120291800-C-T", "VUS", "not provided")
+        self._add_variant(test_db, "chr12-120291801-C-T", 120291801)
+        self._add_clinvar(
+            test_db, "chr12-120291801-C-T", "VUS", "Disorder X|not provided"
+        )
+
+        data = self._by_id(test_client.get("/api/genes/RNU4-2/variants"))
+
+        assert data["chr12-120291800-C-T"]["disease_type"] == "Not provided"
+        assert data["chr12-120291801-C-T"]["disease_type"] == "Disorder X; Not provided"
+
+    def test_distinct_lists_include_clinvar(self, test_client, test_db, seed_gene):
+        self._add_variant(test_db, "chr12-120291800-C-T", 120291800)
+        self._add_clinvar(
+            test_db, "chr12-120291800-C-T", "Likely Pathogenic", "Disorder X"
+        )
+        self._add_variant(test_db, "chr12-120291801-C-T", 120291801)
+        self._add_clinvar(test_db, "chr12-120291801-C-T", "VUS", "not specified")
+
+        significances = test_client.get("/api/variants/clinical-significances").json()
+        assert "Likely Pathogenic" in significances
+        for path in ("/api/variants/disease-types", "/api/genes/RNU4-2/disease-types"):
+            diseases = test_client.get(path).json()
+            assert "Disorder X" in diseases, path
+            assert "Not specified" not in diseases, path
+            assert "not specified" not in diseases, path

@@ -97,6 +97,29 @@ Constraint: `PrimaryKeyConstraint("variant_id", "literature_id")`
 
 ---
 
+### 4a. clinvar_classifications
+
+ClinVar's classification of a variant, kept separate from the paper-based (curated) classifications above. One row per variant, loaded by `scripts/import_clinvar.py`; a newer ClinVar release replaces the row.
+
+| Column                   | Type     | Constraints | Description                                                           |
+| ------------------------ | -------- | ----------- | --------------------------------------------------------------------- |
+| variant_id               | TEXT     | PRIMARY KEY | Foreign key to variants.id                                            |
+| release                  | TEXT     | NOT NULL    | ClinVar release, e.g. `clinvar_20261108`                              |
+| clinvar_variation_id     | TEXT     | NULLABLE    | ClinVar VariationID                                                   |
+| allele_id                | TEXT     | NULLABLE    | ClinVar AlleleID                                                      |
+| clinical_significance    | TEXT     | NULLABLE    | Significance in the app's spelling (e.g. `VUS`, `Likely Pathogenic`) |
+| raw_significance         | TEXT     | NULLABLE    | Significance as ClinVar wrote it (e.g. `Uncertain_significance`)      |
+| conflicting_significance | TEXT     | NULLABLE    | Per-classification counts when submitters disagree                    |
+| review_status            | TEXT     | NULLABLE    | ClinVar review status                                                 |
+| conditions               | TEXT     | NULLABLE    | `\|`-separated condition names                                        |
+| condition_ids            | TEXT     | NULLABLE    | Disease database identifiers (MONDO, MedGen, OMIM)                    |
+| scv_accessions           | TEXT     | NULLABLE    | Submissions behind the classification                                 |
+| imported_at              | DATETIME | NULLABLE    | When the row was imported or last replaced                            |
+
+`GET /api/genes/{geneId}/variants` uses a curated classification when one exists and falls back to ClinVar otherwise; `classification_source` (`curated` / `clinvar`) says which, and `clinvar_significance`, `clinvar_review_status` and `clinvar_release` are filled whenever a ClinVar row exists.
+
+---
+
 ### 5. literature_counts
 
 Links variants to literature with diagnosed individuals counts.
@@ -295,6 +318,7 @@ genes
 
 variant_links (self-referential via variants)
 literature_counts (variant ↔ literature many-to-many)
+clinvar_classifications (one-to-one with variants)
 
 users → pending_changes (one-to-many)
 users → audit_log (one-to-many)

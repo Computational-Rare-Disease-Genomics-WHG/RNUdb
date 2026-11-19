@@ -38,7 +38,8 @@ export const getClinicalCategory = (sig?: string | null): ClinicalCategory => {
   if (
     normalized === "VUS" ||
     normalized.includes("UNCERTAIN") ||
-    normalized.includes("UNKNOWN")
+    normalized.includes("UNKNOWN") ||
+    normalized.includes("CONFLICTING")
   )
     return "VUS";
 
@@ -86,4 +87,14 @@ export const clinicalCategoryToDisplay = (
       // Fall back to original string if present, otherwise 'Unknown'
       return original || "Unknown";
   }
+};
+
+/**
+ * The overlay term ("Pathogenic", "Likely Pathogenic", "VUS", "Likely Benign",
+ * "Benign") for any spelling, including ClinVar's combined terms such as
+ * "Pathogenic/Likely Pathogenic". Undefined when the term has no overlay colour.
+ */
+export const toOverlaySignificance = (sig?: string | null): string | undefined => {
+  const category = getClinicalCategory(sig);
+  return category === "OTHER" ? undefined : clinicalCategoryToDisplay(category);
 };

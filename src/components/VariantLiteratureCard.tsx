@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import React, { useState, useMemo } from "react";
+import { ClinVarPill } from "@/components/ClinVarPill";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -613,11 +614,19 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                                 variant.clinical_significance || "",
                               );
                               return (
-                                <span
-                                  className="text-xs px-1.5 py-0.5 rounded-full text-center font-medium"
-                                  style={style}
-                                >
-                                  {variant.clinical_significance || "Unknown"}
+                                <span className="inline-flex items-center gap-1 flex-wrap">
+                                  <span
+                                    className="text-xs px-1.5 py-0.5 rounded-full text-center font-medium"
+                                    style={style}
+                                  >
+                                    {variant.clinical_significance || "Unknown"}
+                                  </span>
+                                  {variant.classification_source === "clinvar" && (
+                                    <ClinVarPill
+                                      reviewStatus={variant.clinvar_review_status}
+                                      release={variant.clinvar_release}
+                                    />
+                                  )}
                                 </span>
                               );
                             })()}
@@ -627,7 +636,11 @@ const VariantLiteratureCard: React.FC<VariantLiteratureCardProps> = ({
                           </td>
                           <td className="py-3 px-2">
                             <span className="text-xs font-medium text-slate-700">
-                              {isBiallelic ? "Biallelic" : "Dominant"}
+                              {variant.classification_source === "clinvar"
+                                ? "—"
+                                : isBiallelic
+                                  ? "Biallelic"
+                                  : "Dominant"}
                             </span>
                           </td>
                           <td className="py-3 px-2">
