@@ -51,6 +51,30 @@ uv run python scripts/insert_clinical_variants.py
 
 ---
 
+### External Data Scripts
+
+#### `fetch_clinvar.py`
+
+Downloads a ClinVar GRCh38 VCF release and filters it to the genes in the `genes` table.
+
+```bash
+# Latest release
+uv run python scripts/fetch_clinvar.py
+
+# A specific release (older releases are fetched from ClinVar's archive)
+uv run python scripts/fetch_clinvar.py --release clinvar_20261108
+```
+
+**What it does:**
+
+- Downloads the release VCF, its `.tbi` index and `.md5` checksum into `data/clinvar/` (git-ignored) and verifies the checksum. A verified copy is reused on re-runs.
+- Keeps every ClinVar allele whose position overlaps a gene's coordinates, including variants ClinVar labels with a neighbouring gene (e.g. `SIRT4|RNU4-2`).
+- Writes `data/clinvar/<release>_variants.csv`, one row per allele, with the release name, gene, `variant_id` (`chr{CHR}-{POS}-{REF}-{ALT}`) and ClinVar fields (significance, review status, conditions, HGVS, etc.). `scv_accessions` lists the submissions behind each classification, `conflicting_significance` gives the per-classification counts when submitters disagree, and `condition_ids` holds the disease database identifiers (OMIM, MONDO, MedGen).
+
+It does not write to the database. Logic lives in `rnudb_utils/clinvar.py`.
+
+---
+
 ### Database Setup Scripts
 
 #### 4. `init.py`

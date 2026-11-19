@@ -18,6 +18,7 @@ dependencies = [
     "sqlmodel>=0.0.38",
     "alembic>=1.18.4",
     "itsdangerous>=2.2.0",
+    "pysam>=0.24.1",
 ]
 
 [dependency-groups]

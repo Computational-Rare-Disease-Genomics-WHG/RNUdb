@@ -7,11 +7,14 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 
 ## [PLANS]
 
+- `[2026-11-05T14:45Z] [USER]` Maintainer onboarding: understand dataflow, models, files and processes; first intended development is weekly ClinVar ingestion including literature. Current task is analysis, not implementation.
+- `[2026-11-10T12:00Z] [USER]` Weekly ClinVar sync, stage 1: `scripts/fetch_clinvar.py` downloads dated GRCh38 ClinVar VCF (+.tbi, md5), filters to genes in `genes` table with pysam, writes CSV tagged with release. Out of scope: DB import, weekly diff, literature, scheduling. Branch `feat/clinvar-fetch` (issue UNCONFIRMED, to be created by user; agreed with Elston; related #212).
 - `[2026-10-13T12:25Z] [USER]` Upgrade `AGENTS.md` per issue #270: add Global Guidance + curation skill.
 - `[2026-11-04T16:30Z] [USER]` Approval-system hardening epic #346: 5 batched PRs over issues #298–#303, #307–#321 (+ #285). Decisions: admin-only direct endpoints; imports via real `import` apply action; payload keys validated at submission. Batch 1 (apply-path integrity) landed on branch `fix/approval-apply-integrity-307-308-311-312-317-318`.
 
 ## [DECISIONS]
 
+- `[2026-11-10T12:00Z] [USER]` ClinVar fetch: full VCF download (not remote tabix range-fetch); filter with pysam (new dependency approved). Record release name (e.g. `clinvar_20261108`) on every row; ClinVar keeps dated archives back to 2017 under `vcf_GRCh38/archive_2.0/`, so local copies are not needed for reproducibility.
 - `[2026-10-13T12:17Z] [CODE]` Latest `main` = `8ebbbae` (2026-10-13). Superseded 2026-10-14 by `0610cb2` (3 frontend PRs merged).
 - `[2026-10-14T12:40Z] [CODE]` Latest `main` = `0610cb2` (frontend PRs #274/#275/#276 merged).
 - `[2026-10-13T17:20Z] [USER]` Keep `variants.py` version of `/literature-counts`; fix `users.py` auth too.
@@ -79,8 +82,21 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
   - **Prod status [USER]: migrated `b051df0029e7` → `08cf1ba3f420` on Oracle VM** (docker compose exec `rnudb /app/.venv/bin/python -m alembic upgrade head`; distroless image has no `uv`). Prod DB was clean (no #331 `equivalence` data — that branch never deployed there). This is the env running sampling of approve users; code fix ships via PR #356.
   - **Local dev `data/database.db` still in mixed state** (alembic_version=`f1e659c3d839` from unmerged `feat/equivalent-variants-331`; 104 `equivalence` pending_changes rows + `variant_equivalences` table). Recovery agreed: backup → archive equivalence rows to `pending_changes_equiv_backup` → delete them → `UPDATE alembic_version SET version_num='b051df0029e7'` → `alembic upgrade head`. **NOT yet executed.**
 
+- `[2026-11-11T14:10Z] [USER]` ClinVar CSV widened 17 → 20 columns on `feat/clinvar-fetch` (uncommitted): `scv_accessions` (CLNSIGSCV), `conflicting_significance` (CLNSIGCONF), `condition_ids` (CLNDISDB). 3 new tests (19 in `tests/test_clinvar.py`). Literature for stage 2 is not in the VCF; source is `tab_delimited/var_citations.txt` keyed by AlleleID/VariationID (both already in the CSV).
+- `[2026-11-11T19:24Z] [USER]` ClinVar stage 1 is tracked by issue #359 (created by user; supersedes "issue UNCONFIRMED" in [PLANS]). Commit message approved by user; no AI attribution in commits/PRs.
+
+## [DISCOVERIES]
+
+- `[2026-11-10T20:30Z] [TOOL]` ClinVar GRCh38 VCF uses contigs `12` (no `chr`); release name is in the `clinvar.vcf.gz.md5` line; newest dated release sits in `vcf_GRCh38/` before reaching `archive_2.0/<year>/` (~1 week lag). 67/77 RNU4-2 records have `GENEINFO=SIRT4|RNU4-2` → filter by coordinates, not first gene symbol. pysam splits `Number=.` INFO on commas (breaks CLNDN disease names) → re-join with `,`.
+
+- `[2026-11-11T13:37Z] [TOOL]` `clinvar_20261108` has records ClinVar labels `RNU4-2` that sit outside the `genes` window (120291759–120291903) and are therefore not in the CSV: 6 at 120291734–120291758 (3' flank), 8 at 120291909–120291918 (5' flank). Including flanks is an open question for stage 2 (UNCONFIRMED whether wanted). Local `genes` table holds only RNU4-2; `variants` table is empty.
+
+- `[2026-11-11T17:07Z] [TOOL]` `tab_delimited/var_citations.txt` (259 MB, plain TSV, has `.md5`, no index, undated and NOT in `tab_delimited/archive/` → overwritten each release, so keep our own filtered copy per run). Joined on VariationID to the 77 RNU4-2 rows: 123 citation rows, 62/77 variants cited, 15 distinct papers. Most rows are guideline papers, not variant papers: Ellingford 2022 (PMID 35850704, 35 variants), Richards 2015 ACMG (PMID 25741868, 33; also listed again as PMC4544753, 33). Gene papers present: Greene 2024 (38821540), Chen 2024 (38991538). Stage 2 literature import needs a guideline filter and PubMed/PMC de-duplication.
+
 ## [OUTCOMES]
 
+- `[2026-11-10T20:45Z] [TOOL]` ClinVar fetch stage 1 implemented on `feat/clinvar-fetch` (uncommitted; issue not yet created): `rnudb_utils/clinvar.py` + `scripts/fetch_clinvar.py` + `tests/test_clinvar.py` (16 tests, network faked) + `scripts/README.md`; `pysam==0.24.1` added via `uv add` (uv 0.13.4 also bumped uv.lock format revision 1→5, no other version changes). Real run on `clinvar_20261108`: 77 RNU4-2 variants, 25 s download, re-run reuses verified copy. pytest 199 pass, npm build + pre-commit pass. Follow-ups: Dockerfile does not copy `scripts/` (matters for scheduling); ALT `.` records skipped.
+- `[2026-11-05T14:45Z] [CODE]` Onboarding inspection at `1e7ac39`, branch `fix/chromosome-validation-327`: SQLite/SQLModel with paper claims in `variant_classifications`; direct imports coexist with pending approvals. No recurring ClinVar ingestion found. `_fetch_pubmed_metadata` uses Crossref DOI lookup; gene variant response selects first returned paper classification without explicit ordering. `docs/schema.md` contains stale tables/fields. Pipeline design should preserve external assertions separately from curated paper claims and retain release provenance. Production deployment parity UNCONFIRMED; web reader could not inspect live API.
 - `[2026-11-04T18:40Z] [TOOL]` **Epic #346 (approval-system hardening) implementation complete** — all 24 issues (#298–#303, #307–#321, + #285) fixed across 5 stacked PRs: #347 (apply integrity), #348 (failure/audit/observability), #349 (admin-only writes + UX), #350 (test hardening + bootstrap). pytest 183/0, vitest 159, build/lint/pre-commit pass. Merge order: #347 → #348 → #349 → #350 (retarget to main sequentially). Follow-ups documented on #346: classification-entity approval + gene create/update/refresh routing.
 - `[2026-11-04T14:50Z] [TOOL]` Continuity file moved to `.agents/CONTINUITY.md`. Issue #344 → branch `chore/continuity-md-to-agents-344` → PR #345 (commit `16fecaa`). pytest 140 passed/2 skipped, npm build + pre-commit pass. Awaiting merge.
 - `[2026-10-13T17:20Z] [TOOL]` PR ready: fixes 5 backend issues (dead fields, auth patterns, duplicate endpoints, bare exception handlers). Ready for commit, push, and PR.
