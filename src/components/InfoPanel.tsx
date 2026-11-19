@@ -12,6 +12,7 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { buildGnomadGeneUrl, buildUcscRegionUrl } from "../lib/externalLinks";
 import { getAffectedNucleotideIds } from "../lib/rnaUtils";
+import { ClinVarPill, formatClinvarRelease } from "@/components/ClinVarPill";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -433,6 +434,12 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                       >
                                         {variant.clinical_significance}
                                       </span>
+                                      {variant.classification_source === "clinvar" && (
+                                        <ClinVarPill
+                                          reviewStatus={variant.clinvar_review_status}
+                                          release={variant.clinvar_release}
+                                        />
+                                      )}
                                     </div>
                                     <span className="text-sm font-semibold text-slate-900">
                                       {variant.hgvs || `${variant.ref}>${variant.alt}`}
@@ -457,6 +464,24 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                 >
                                   {normalizeVariantId(variant.id)}
                                 </button>
+
+                                {variant.classification_source === "curated" &&
+                                  variant.clinvar_significance && (
+                                    <p className="text-xs text-slate-500 mb-2">
+                                      ClinVar: {variant.clinvar_significance}
+                                      {(variant.clinvar_review_status ||
+                                        variant.clinvar_release) &&
+                                        ` (${[
+                                          variant.clinvar_review_status,
+                                          variant.clinvar_release &&
+                                            formatClinvarRelease(
+                                              variant.clinvar_release,
+                                            ),
+                                        ]
+                                          .filter(Boolean)
+                                          .join(", ")})`}
+                                    </p>
+                                  )}
 
                                 {hasMeta && (
                                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mb-2">
