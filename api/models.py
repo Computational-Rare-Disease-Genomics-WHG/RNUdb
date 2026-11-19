@@ -278,6 +278,33 @@ class VariantClassificationPublic(VariantClassificationBase):
 
 
 # ---------------------------------------------------------------------------
+# ClinvarClassification model (table only)
+# ---------------------------------------------------------------------------
+
+
+class ClinvarClassification(SQLModel, table=True):
+    """ClinVar's classification of a variant, one row per variant (#364)."""
+
+    __tablename__ = "clinvar_classifications"
+
+    variant_id: str = Field(primary_key=True, foreign_key="variants.id")
+    release: str
+    clinvar_variation_id: str | None = None
+    allele_id: str | None = None
+    clinical_significance: str | None = None
+    raw_significance: str | None = None
+    conflicting_significance: str | None = None
+    review_status: str | None = None
+    conditions: str | None = None
+    condition_ids: str | None = None
+    scv_accessions: str | None = None
+    imported_at: datetime | None = Field(
+        default_factory=lambda: datetime.utcnow(),
+        sa_column=Column(DateTime, nullable=True),
+    )
+
+
+# ---------------------------------------------------------------------------
 # RNAStructure models
 # ---------------------------------------------------------------------------
 
