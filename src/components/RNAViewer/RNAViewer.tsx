@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { toOverlaySignificance } from "@/lib/clinicalUtils";
 import "./RNAViewer.css";
 import {
   getGeneDistinctDiseaseTypes,
@@ -157,10 +158,8 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
           // Filter by Significance
           if (selectedClinicalSig !== "all") {
             if (selectedClinicalSig === "Pathogenic / Likely Pathogenic") {
-              if (
-                variant.clinical_significance !== "Pathogenic" &&
-                variant.clinical_significance !== "Likely Pathogenic"
-              )
+              const overlaySig = toOverlaySignificance(variant.clinical_significance);
+              if (overlaySig !== "Pathogenic" && overlaySig !== "Likely Pathogenic")
                 return false;
             } else if (variant.clinical_significance !== selectedClinicalSig) {
               return false;
@@ -199,10 +198,12 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
             "Likely Benign": 1,
             Benign: 0,
           };
-          const order = significanceOrder[v.clinical_significance!] ?? -1;
-          const maxOrder = significanceOrder[max.clinical_significance!] ?? -1;
+          const sig = toOverlaySignificance(v.clinical_significance);
+          const maxSig = toOverlaySignificance(max.clinical_significance);
+          const order = (sig && significanceOrder[sig]) ?? -1;
+          const maxOrder = (maxSig && significanceOrder[maxSig]) ?? -1;
           if (order > maxOrder) return v;
-          if (order === maxOrder && v.clinical_significance === "Pathogenic") return v;
+          if (order === maxOrder && sig === "Pathogenic") return v;
           return max;
         }, filteredVariants[0]);
 
@@ -215,7 +216,10 @@ const RNAViewer: React.FC<RNAViewerProps> = ({
         };
 
         return {
-          value: valueMap[maxSignificance.clinical_significance!] ?? 0,
+          value:
+            valueMap[
+              toOverlaySignificance(maxSignificance.clinical_significance) ?? ""
+            ] ?? 0,
           variant: maxSignificance,
         };
       }

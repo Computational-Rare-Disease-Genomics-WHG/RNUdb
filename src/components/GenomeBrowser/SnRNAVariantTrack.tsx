@@ -2,6 +2,7 @@
 import VariantTrack from "@gnomad/track-variants";
 import React from "react";
 import { COLORBLIND_FRIENDLY_PALETTE, getClinvarColor } from "../../lib/colors";
+import { toOverlaySignificance } from "@/lib/clinicalUtils";
 
 interface SnRNAVariantTrackProps {
   variants: any[];
@@ -53,10 +54,8 @@ const SnRNAVariantTrack: React.FC<SnRNAVariantTrackProps> = ({
       clinical_significance: variant.clinical_significance,
       isHighlighted:
         isSelectedPos(variant.position) ||
-        variant.clinical_significance === "Pathogenic" ||
-        variant.clinical_significance === "Likely Pathogenic" ||
-        variant.clinical_significance === "PATH" ||
-        variant.clinical_significance === "LP",
+        toOverlaySignificance(variant.clinical_significance) === "Pathogenic" ||
+        toOverlaySignificance(variant.clinical_significance) === "Likely Pathogenic",
     }));
 
   // Filter and transform gnomAD variants

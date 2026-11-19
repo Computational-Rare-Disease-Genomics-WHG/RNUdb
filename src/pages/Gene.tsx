@@ -19,6 +19,7 @@ import type {
   RNAStructure,
 } from "../types";
 import { Button } from "@/components/ui/button";
+import { toOverlaySignificance } from "@/lib/clinicalUtils";
 
 const Gene: React.FC = () => {
   const { geneId } = useParams<{ geneId: string }>();
@@ -141,11 +142,12 @@ const Gene: React.FC = () => {
               {
                 value:
                   // Pathogenic variants
-                  v.clinical_significance === "Pathogenic"
+                  toOverlaySignificance(v.clinical_significance) === "Pathogenic"
                     ? 1
-                    : v.clinical_significance === "Likely Pathogenic"
+                    : toOverlaySignificance(v.clinical_significance) ===
+                        "Likely Pathogenic"
                       ? 0.75
-                      : v.clinical_significance === "VUS"
+                      : toOverlaySignificance(v.clinical_significance) === "VUS"
                         ? 0.25
                         : 0,
                 label: v.clinical_significance,
