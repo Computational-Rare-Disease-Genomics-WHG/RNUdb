@@ -30,6 +30,7 @@ from api.models import (
     VariantPublic,
 )
 from api.routers.auth import require_admin, require_curator
+from rnudb_utils.clinvar import clinvar_disease, merge_disease_lists
 from rnudb_utils.database import audit_log, get_db
 
 router = APIRouter()
@@ -288,6 +289,18 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
             classifications_by_variant[vid] = []
         classifications_by_variant[vid].append(row_dict)
 
+    clinvar_rows = db.execute(
+        text("""
+            SELECT cc.variant_id, cc.clinical_significance, cc.review_status,
+                   cc.release, cc.conditions
+            FROM clinvar_classifications cc
+            JOIN variants v ON cc.variant_id = v.id
+            WHERE v.geneId = :gene_id
+        """),
+        {"gene_id": gene_id},
+    ).fetchall()
+    clinvar_by_variant = {row.variant_id: row for row in clinvar_rows}
+
     variants = []
     for row in rows:
         row_dict = dict(row._mapping)
@@ -318,13 +331,23 @@ async def get_gene_variants(gene_id: str, db: Session = Depends(get_db)):
                 if raw_zyg == "Heterozygous"
                 else None
             )
-            row_dict["clinvar_significance"] = primary_class.get("clinvar_significance")
+            row_dict["classification_source"] = "curated"
 
             linked_ids = primary_class.get("linked_variant_ids")
             if linked_ids:
                 linked_id_list = [v.strip() for v in linked_ids.split(",") if v.strip()]
                 if linked_id_list:
                     row_dict["linkedVariantIds"] = linked_id_list
+
+        clinvar_row = clinvar_by_variant.get(variant_id)
+        if clinvar_row:
+            row_dict["clinvar_significance"] = clinvar_row.clinical_significance
+            row_dict["clinvar_review_status"] = clinvar_row.review_status
+            row_dict["clinvar_release"] = clinvar_row.release
+            if not classifications:
+                row_dict["clinical_significance"] = clinvar_row.clinical_significance
+                row_dict["disease_type"] = clinvar_disease(clinvar_row.conditions)
+                row_dict["classification_source"] = "clinvar"
 
         variants.append(VariantPublic(**row_dict))
 
@@ -345,7 +368,19 @@ async def get_gene_disease_types(gene_id: str, db: Session = Depends(get_db)):
         """),
         {"gene_id": gene_id},
     ).fetchall()
-    return [row._mapping["disease"] for row in rows]
+    clinvar_rows = db.execute(
+        text("""
+            SELECT DISTINCT cc.conditions
+            FROM clinvar_classifications cc
+            JOIN variants v ON cc.variant_id = v.id
+            WHERE v.geneId = :gene_id AND cc.conditions IS NOT NULL
+        """),
+        {"gene_id": gene_id},
+    ).fetchall()
+    return merge_disease_lists(
+        [row._mapping["disease"] for row in rows],
+        [row._mapping["conditions"] for row in clinvar_rows],
+    )
 
 
 @router.get("/genes/{gene_id}/literature", response_model=list[LiteraturePublic])

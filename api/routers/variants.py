@@ -15,6 +15,7 @@ from api.models import (
     VariantUpdate,
 )
 from api.routers.auth import require_admin, require_curator
+from rnudb_utils.clinvar import merge_disease_lists
 from rnudb_utils.database import audit_log, delete_variant_cascade, get_db
 
 router = APIRouter()
@@ -55,7 +56,16 @@ async def get_distinct_disease_types(db: Session = Depends(get_db)):
             ORDER BY disease
         """)
     ).fetchall()
-    return [row._mapping["disease"] for row in rows]
+    clinvar_rows = db.execute(
+        text("""
+            SELECT DISTINCT conditions FROM clinvar_classifications
+            WHERE conditions IS NOT NULL
+        """)
+    ).fetchall()
+    return merge_disease_lists(
+        [row._mapping["disease"] for row in rows],
+        [row._mapping["conditions"] for row in clinvar_rows],
+    )
 
 
 @router.get("/variants/clinical-significances")
@@ -63,7 +73,10 @@ async def get_distinct_clinical_significances(db: Session = Depends(get_db)):
     """Get all distinct clinical significances from variant_classifications"""
     rows = db.execute(
         text("""
-            SELECT DISTINCT clinical_significance FROM variant_classifications
+            SELECT clinical_significance FROM variant_classifications
+            WHERE clinical_significance IS NOT NULL AND clinical_significance != ''
+            UNION
+            SELECT clinical_significance FROM clinvar_classifications
             WHERE clinical_significance IS NOT NULL AND clinical_significance != ''
             ORDER BY clinical_significance
         """)

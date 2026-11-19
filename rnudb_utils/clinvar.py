@@ -193,6 +193,30 @@ SIGNIFICANCE_TERMS = {
 
 IMPORT_USER = "clinvar-import"
 
+# ClinVar statements that are not a disease; shown, but kept out of filter lists.
+NO_CONDITION = {"not provided": "Not provided", "not specified": "Not specified"}
+
+
+def clinvar_disease(conditions: str | None) -> str | None:
+    """Display text for ClinVar's ``|``-separated conditions."""
+    if not conditions:
+        return None
+    return "; ".join(NO_CONDITION.get(c, c) for c in conditions.split("|"))
+
+
+def merge_disease_lists(curated: list[str], clinvar_conditions: list[str]) -> list[str]:
+    """Curated diseases plus ClinVar disease texts as variants display them.
+
+    ClinVar's "Not provided" / "Not specified" are not diseases, so they are
+    left out of filter lists.
+    """
+    diseases = set(curated)
+    for conditions in clinvar_conditions:
+        disease = clinvar_disease(conditions)
+        if disease and disease not in NO_CONDITION.values():
+            diseases.add(disease)
+    return sorted(diseases)
+
 
 def normalise_significance(raw: str) -> str | None:
     """Translate a ClinVar CLNSIG term into the app's spelling."""
