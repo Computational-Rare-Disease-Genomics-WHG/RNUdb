@@ -1,10 +1,75 @@
 """Tests for validation services."""
 
+import importlib.util
+from pathlib import Path
+
+import pydantic
+import pytest
+
+from api.models import GenePublic
 from api.services.validation import (
     validate_bed_intervals,
     validate_structure,
     validate_variant_batch,
 )
+
+SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
+
+
+class TestGeneChromosomeValidation:
+    """Test chromosome validation on gene models."""
+
+    @pytest.mark.parametrize(
+        "chromosome",
+        [f"chr{i}" for i in range(1, 23)] + ["chrX", "chrY", "chrMT"],
+    )
+    def test_valid_chromosomes_pass(self, sample_gene, chromosome):
+        """Every chr-prefixed human chromosome should be accepted."""
+        gene = GenePublic.model_validate({**sample_gene, "chromosome": chromosome})
+
+        assert gene.chromosome == chromosome
+
+    @pytest.mark.parametrize("chromosome", ["12", "X", "chr23", "chrZ", ""])
+    def test_invalid_chromosomes_fail(self, sample_gene, chromosome):
+        """Bare numbers and unknown chromosomes should be rejected."""
+        with pytest.raises(pydantic.ValidationError, match="Invalid chromosome"):
+            GenePublic.model_validate({**sample_gene, "chromosome": chromosome})
+
+
+class TestSeedScriptGenes:
+    """Seed scripts must produce genes the API can serve."""
+
+    @staticmethod
+    def _load_script(name):
+        spec = importlib.util.spec_from_file_location(name, SCRIPTS_DIR / f"{name}.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_insert_sample_data_genes_are_valid(self, monkeypatch):
+        """insert_sample_data.py genes should pass GenePublic validation."""
+        module = self._load_script("insert_sample_data")
+        captured = []
+        monkeypatch.setattr(module, "insert_genes", captured.extend)
+
+        module.insert_sample_genes()
+
+        assert captured
+        for gene in captured:
+            GenePublic.model_validate(gene)
+
+    def test_insert_gene_and_structure_genes_are_valid(self, monkeypatch):
+        """insert_gene_and_structure.py genes should pass GenePublic validation."""
+        module = self._load_script("insert_gene_and_structure")
+        captured = []
+        monkeypatch.setattr(module, "insert_genes", captured.extend)
+        monkeypatch.setattr(module, "insert_structures", lambda _: None)
+
+        module.main()
+
+        assert captured
+        for gene in captured:
+            GenePublic.model_validate(gene)
 
 
 class TestVariantValidation:

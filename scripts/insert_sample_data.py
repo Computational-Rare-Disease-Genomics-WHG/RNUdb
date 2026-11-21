@@ -25,7 +25,7 @@ def insert_sample_genes():
             "id": "RNU4-2",
             "name": "RNU4-2",
             "fullName": "RNA, U4 small nuclear 2",
-            "chromosome": "12",
+            "chromosome": "chr12",
             "start": 120291759,
             "end": 120291903,
             "strand": "-",
