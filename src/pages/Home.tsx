@@ -96,7 +96,7 @@ const Home: React.FC = () => {
             <div className="mt-5 space-y-5 text-sm">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-700">
-                  December
+                  December 2026
                 </p>
                 <p className="mt-1 text-slate-700">RNU6-1, RNU6-2, RNU6-8, RNU6-9</p>
                 <p className="text-slate-500">Retinitis pigmentosa (AD)</p>
@@ -104,7 +104,7 @@ const Home: React.FC = () => {
 
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-700">
-                  January
+                  January 2027
                 </p>
                 <p className="mt-1 text-slate-700">RNU5A-1, RNU5B-1</p>
                 <p className="text-slate-500">NDD (AD)</p>
