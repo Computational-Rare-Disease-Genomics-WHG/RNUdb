@@ -70,38 +70,52 @@ const Home: React.FC = () => {
             />
           </div>
           {/* Search Examples */}
-          <div className="flex flex-wrap justify-center items-center gap-3 text-sm text-slate-500">
+          <div className="flex flex-wrap justify-center items-center gap-2 text-sm text-slate-500">
             <span>Try:</span>
-            <button
-              onClick={() => handleGeneSelect("RNU4-2")}
-              className="text-teal-600 hover:text-teal-700 hover:underline underline-offset-2"
-            >
-              RNU4-2
-            </button>
-            <span className="text-slate-300 ml-2">
-              · {availableSnRNAs.length} genes
-            </span>
+            {["RNU4-2", "RNU2-2", "RNU4atac", "RNU12"].map((gene) => (
+              <button
+                key={gene}
+                onClick={() => handleGeneSelect(gene)}
+                className="text-teal-600 hover:text-teal-700 hover:underline underline-offset-2"
+              >
+                {gene}
+              </button>
+            ))}
+            <span className="text-slate-300">· {availableSnRNAs.length} genes</span>
           </div>
         </div>
 
-        {/* Supported genes */}
-        {availableSnRNAs.length > 0 && (
-          <div className="text-center text-sm text-slate-500 mt-[-2rem] mb-8">
-            <span>Currently supported genes: </span>
-            {availableSnRNAs.map((id, index) => (
-              <span key={id}>
-                <button
-                  onClick={() => handleGeneSelect(id)}
-                  className="text-teal-600 hover:text-teal-700 hover:underline underline-offset-2 inline"
-                >
-                  {id}
-                </button>
-                {index < availableSnRNAs.length - 2 && <span>, </span>}
-                {index === availableSnRNAs.length - 2 && <span> and </span>}
-              </span>
-            ))}
+        {/* Coming Soon */}
+        <div className="mx-auto max-w-md mb-8">
+          <div className="rounded-xl border border-slate-200 bg-white/95 px-6 py-5 shadow-sm">
+            <h2 className="text-sm font-semibold tracking-wide text-slate-800">
+              Coming Soon
+            </h2>
+            <div className="mt-1.5 h-0.5 w-8 rounded-full bg-teal-600" />
+
+            <div className="mt-5 space-y-5 text-sm">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-700">
+                  December
+                </p>
+                <p className="mt-1 text-slate-700">RNU6-1, RNU6-2, RNU6-8, RNU6-9</p>
+                <p className="text-slate-500">Retinitis pigmentosa (AD)</p>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-700">
+                  January
+                </p>
+                <p className="mt-1 text-slate-700">RNU5A-1, RNU5B-1</p>
+                <p className="text-slate-500">NDD (AD)</p>
+                <p className="mt-2 text-slate-700">RNU6ATAC</p>
+                <p className="text-slate-500">
+                  Multi-system disorders (AR), autoimmune diabetes (AR)
+                </p>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <Footer />
