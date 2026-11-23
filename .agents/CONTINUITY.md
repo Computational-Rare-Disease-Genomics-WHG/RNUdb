@@ -79,6 +79,10 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
   - **Prod status [USER]: migrated `b051df0029e7` → `08cf1ba3f420` on Oracle VM** (docker compose exec `rnudb /app/.venv/bin/python -m alembic upgrade head`; distroless image has no `uv`). Prod DB was clean (no #331 `equivalence` data — that branch never deployed there). This is the env running sampling of approve users; code fix ships via PR #356.
   - **Local dev `data/database.db` still in mixed state** (alembic_version=`f1e659c3d839` from unmerged `feat/equivalent-variants-331`; 104 `equivalence` pending_changes rows + `variant_equivalences` table). Recovery agreed: backup → archive equivalence rows to `pending_changes_equiv_backup` → delete them → `UPDATE alembic_version SET version_num='b051df0029e7'` → `alembic upgrade head`. **NOT yet executed.**
 
+## [PROGRESS]
+
+- `[2026-11-16T15:50Z] [TOOL]` PR #363 — home page update (issue #358): removed c.34A>G variant example button + dangling `|` from "Try:" line; added "Currently supported genes" section below hero, listing all loaded genes as clickable links to `/gene/<id>`, derived dynamically from API. File changed: `src/pages/Home.tsx`. All 159 vitest + 183 pytest + build + pre-commit pass.
+
 ## [OUTCOMES]
 
 - `[2026-11-04T18:40Z] [TOOL]` **Epic #346 (approval-system hardening) implementation complete** — all 24 issues (#298–#303, #307–#321, + #285) fixed across 5 stacked PRs: #347 (apply integrity), #348 (failure/audit/observability), #349 (admin-only writes + UX), #350 (test hardening + bootstrap). pytest 183/0, vitest 159, build/lint/pre-commit pass. Merge order: #347 → #348 → #349 → #350 (retarget to main sequentially). Follow-ups documented on #346: classification-entity approval + gene create/update/refresh routing.

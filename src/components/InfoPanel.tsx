@@ -22,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type {
   SnRNAGene,
   Literature,
@@ -35,6 +36,7 @@ interface InfoPanelProps {
   paperData: Literature[];
   literatureCounts: LiteratureCounts[];
   variantData: Variant[];
+  variantEquivalents?: { variant: any; counterpart: any | null }[];
   overlayMode: "none" | "clinvar" | "gnomad" | "function_score" | "depletion_group";
   onCycleOverlay: () => void;
   hoveredNucleotide: Nucleotide | null;
@@ -104,6 +106,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   literatureCounts,
   hoveredNucleotide,
   variantData,
+  variantEquivalents = [],
 }) => {
   const navigate = useNavigate();
   const geneLength = currentData.end - currentData.start + 1;
@@ -613,6 +616,109 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                           })}
                       </div>
                     )}
+
+                    {(() => {
+                      const nucPos = hoveredNucleotide.id;
+                      const equivs =
+                        variantEquivalents?.filter((e) => {
+                          const v = e.variant;
+                          if (!v || !v.nucleotidePosition) return false;
+                          let nId: number;
+                          if (v.nucleotidePosition !== undefined) {
+                            nId = v.nucleotidePosition;
+                          } else {
+                            nId =
+                              currentData.strand === "-"
+                                ? currentData.end - v.position + 1
+                                : v.position - currentData.start + 1;
+                          }
+                          return nId === nucPos;
+                        }) || [];
+
+                      if (equivs.length === 0) return null;
+
+                      return (
+                        <div className="space-y-2 mt-3">
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <span>
+                              PM5 — Equivalent Variants (Rec 8) ({equivs.length})
+                            </span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="About PM5 equivalent variants"
+                                  className="inline-flex items-center text-slate-400 hover:text-violet-600 transition-colors"
+                                >
+                                  <HelpCircle className="h-3.5 w-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs text-xs leading-relaxed">
+                                <p className="font-semibold mb-1">
+                                  Recommendation 8 (PM5 — equivalent variants)
+                                </p>
+                                <p>
+                                  Where two paralogous genes or minor/major spliceosomal
+                                  analogs are both linked to disease with the same
+                                  underlying mechanism, a (likely) pathogenic or
+                                  (likely) benign variant in one gene can be used as
+                                  evidence toward an exact- equivalent variant in the
+                                  other gene.
+                                </p>
+                                <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                                  <li>
+                                    Do <span className="font-medium">not</span> use when
+                                    the mechanism differs.
+                                  </li>
+                                  <li>
+                                    The reference variant must be classified (likely)
+                                    pathogenic/benign without evidence from this variant
+                                    (avoid circularity).
+                                  </li>
+                                </ul>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          {equivs.map((e: any, i: number) => {
+                            const cp = e.counterpart;
+                            if (!cp) return null;
+                            const sig = (cp.clinical_significance || "").toLowerCase();
+                            const isP =
+                              sig.includes("pathogenic") || sig === "p" || sig === "lp";
+                            return (
+                              <div
+                                key={i}
+                                className="p-2.5 bg-violet-50 rounded-lg border border-violet-200"
+                              >
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <button
+                                    onClick={() => navigate(`/gene/${cp.geneId}`)}
+                                    className="text-sm font-semibold text-slate-900 hover:text-violet-700 hover:underline text-left"
+                                  >
+                                    {cp.geneId} {cp.hgvs || `${cp.ref}>{cp.alt}`}
+                                  </button>
+                                  {cp.clinical_significance && (
+                                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">
+                                      {cp.clinical_significance}
+                                    </span>
+                                  )}
+                                  {isP && (
+                                    <Badge className="bg-violet-600 text-white border-violet-700 text-[10px] px-1.5">
+                                      PM5
+                                    </Badge>
+                                  )}
+                                  {cp.is_synthetic && (
+                                    <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-1.5">
+                                      Equivalent (created)
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })()}

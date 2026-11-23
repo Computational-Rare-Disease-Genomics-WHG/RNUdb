@@ -42,7 +42,9 @@ router = APIRouter(prefix="/approvals")
 
 
 class CreateChangeRequest(SQLModel):
-    entity_type: Literal["variant", "gene", "literature", "structure", "bed_track"]
+    entity_type: Literal[
+        "variant", "gene", "literature", "structure", "bed_track", "equivalence"
+    ]
     entity_id: str | None = None
     gene_id: str
     action: Literal["create", "update", "delete", "import"]
@@ -89,6 +91,7 @@ _ALLOWED_COLUMNS = {
     "literature": {"title", "authors", "journal", "year", "doi", "pmid", "url"},
     "structure": set(),  # only delete supported directly
     "bed_track": set(),  # only delete supported directly
+    "equivalence": {"gene_a", "pos_a", "gene_b", "pos_b", "literature_id", "notes"},
 }
 
 #: Meta keys accepted on top of DB columns (mostly for create actions).
@@ -98,6 +101,7 @@ _META_KEYS = {
     "literature": {"id"},
     "structure": {"id"},
     "bed_track": {"id"},
+    "equivalence": set(),
 }
 
 #: Top-level keys accepted for the ``import`` action payloads.
@@ -114,6 +118,7 @@ _ENTITY_TABLE_MAP = {
     "literature": "literature",
     "structure": "rna_structures",
     "bed_track": "bed_tracks",
+    "equivalence": "equivalent_positions",
 }
 
 
@@ -125,6 +130,7 @@ _SUPPORTED_ACTIONS = {
     "literature": {"create", "update", "delete", "import"},
     "structure": {"delete", "import"},
     "bed_track": {"delete", "import"},
+    "equivalence": {"create", "delete"},
 }
 
 
@@ -737,6 +743,124 @@ async def apply_approved_change(
                     intervals,
                     payload.get("color"),
                     change.requested_by,
+                )
+
+        elif entity_type == "equivalence":
+            if action == "create":
+                gene_a = str(payload.get("gene_a"))
+                pos_a = int(payload.get("pos_a"))
+                gene_b = str(payload.get("gene_b"))
+                pos_b = int(payload.get("pos_b"))
+                if gene_a == gene_b:
+                    raise HTTPException(
+                        status_code=400, detail="Cannot map a gene to itself"
+                    )
+                if pos_a < 1 or pos_b < 1:
+                    raise HTTPException(
+                        status_code=400, detail="Positions must be >= 1"
+                    )
+                # Normalise order: gene_a < gene_b
+                if gene_a > gene_b:
+                    gene_a, gene_b = gene_b, gene_a  # noqa: PLW2901
+                    pos_a, pos_b = pos_b, pos_a
+                # Check base equivalence.
+                row_a = db.execute(
+                    text(
+                        "SELECT upper(substr(n.base,1,1)) FROM nucleotides n "
+                        "JOIN rna_structures s ON s.id=n.structure_id "
+                        "WHERE s.geneId=:g AND n.id=:p"
+                    ),
+                    {"g": gene_a, "p": pos_a},
+                ).fetchone()
+                row_b = db.execute(
+                    text(
+                        "SELECT upper(substr(n.base,1,1)) FROM nucleotides n "
+                        "JOIN rna_structures s ON s.id=n.structure_id "
+                        "WHERE s.geneId=:g AND n.id=:p"
+                    ),
+                    {"g": gene_b, "p": pos_b},
+                ).fetchone()
+                base_a = row_a._mapping[0] if row_a else None
+                base_b = row_b._mapping[0] if row_b else None
+                if base_a is None or base_b is None:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="One or both positions not in structure",
+                    )
+                if base_a.upper() != base_b.upper():
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Base mismatch: {gene_a} n.{pos_a}={base_a} vs "
+                        f"{gene_b} n.{pos_b}={base_b}",
+                    )
+                db.execute(
+                    text("""
+                        INSERT INTO equivalent_positions
+                            (gene_a, pos_a, gene_b, pos_b, literature_id, notes)
+                        VALUES (:ga, :pa, :gb, :pb, :lit, :notes)
+                    """),
+                    {
+                        "ga": gene_a,
+                        "pa": pos_a,
+                        "gb": gene_b,
+                        "pb": pos_b,
+                        "lit": payload.get("literature_id"),
+                        "notes": payload.get("notes"),
+                    },
+                )
+                _audit_entry(
+                    db,
+                    "equivalent_positions",
+                    f"{gene_a}_{pos_a}",
+                    "CREATE",
+                    None,
+                    {
+                        "gene_a": gene_a,
+                        "pos_a": pos_a,
+                        "gene_b": gene_b,
+                        "pos_b": pos_b,
+                    },
+                    user["github_login"],
+                )
+            elif action == "delete":
+                if entity_id and "_" in entity_id:
+                    gene_a, pos_a_raw = entity_id.split("_", 1)
+                    pos_a = int(pos_a_raw)
+                elif payload.get("gene_a") and payload.get("pos_a"):
+                    gene_a = str(payload["gene_a"])
+                    pos_a = int(payload["pos_a"])
+                else:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=(
+                            "Equivalence delete requires gene_a/pos_a (or entity_id)"
+                        ),
+                    )
+                if not db.execute(
+                    text(
+                        "SELECT 1 FROM equivalent_positions "
+                        "WHERE gene_a=:g AND pos_a=:p"
+                    ),
+                    {"g": gene_a, "p": pos_a},
+                ).fetchone():
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"No equivalence at {gene_a} n.{pos_a}",
+                    )
+                db.execute(
+                    text(
+                        "DELETE FROM equivalent_positions WHERE gene_a=:g AND pos_a=:p"
+                    ),
+                    {"g": gene_a, "p": pos_a},
+                )
+                _audit_entry(
+                    db,
+                    "equivalent_positions",
+                    f"{gene_a}_{pos_a}",
+                    "DELETE",
+                    None,
+                    None,
+                    user["github_login"],
                 )
 
         db.commit()

@@ -5,6 +5,7 @@ import type {
   LiteratureCounts,
   RNAStructure,
   PDBStructure,
+  EquivalentPositionPublic,
 } from "../types";
 
 const API_BASE_URL = "/api";
@@ -121,6 +122,20 @@ class ApiService {
   async getDistinctClinicalSignificances(): Promise<string[]> {
     return this.fetchFromApi<string[]>("/variants/clinical-significances");
   }
+
+  async getGeneEquivalentPositions(
+    geneId: string,
+  ): Promise<EquivalentPositionPublic[]> {
+    return this.fetchFromApi<EquivalentPositionPublic[]>(
+      `/genes/${geneId}/equivalent-positions`,
+    );
+  }
+
+  async getGeneVariantEquivalents(
+    geneId: string,
+  ): Promise<{ variant: any; counterpart: any | null }[]> {
+    return this.fetchFromApi(`/genes/${geneId}/variant-equivalents`);
+  }
 }
 
 export const apiService = new ApiService();
@@ -148,3 +163,7 @@ export const getGeneDistinctDiseaseTypes = (geneId: string) =>
   apiService.getGeneDistinctDiseaseTypes(geneId);
 export const getDistinctClinicalSignificances = () =>
   apiService.getDistinctClinicalSignificances();
+export const getGeneEquivalentPositions = (geneId: string) =>
+  apiService.getGeneEquivalentPositions(geneId);
+export const getGeneVariantEquivalentsById = (geneId: string) =>
+  apiService.getGeneVariantEquivalents(geneId);

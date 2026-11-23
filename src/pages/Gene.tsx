@@ -9,7 +9,7 @@ import { getLiterature } from "../data/literature";
 import { getRNAStructure } from "../data/structures";
 import { getVariants } from "../data/variants";
 import { COLORBLIND_FRIENDLY_PALETTE } from "../lib/colors";
-import { getLiteratureCounts } from "../services/api";
+import { getGeneVariantEquivalentsById, getLiteratureCounts } from "../services/api";
 import type {
   OverlayData,
   SnRNAGene,
@@ -44,6 +44,7 @@ const Gene: React.FC = () => {
   const [paperData, setPaperData] = useState<Literature[]>([]);
   const [literatureCounts, setLiteratureCounts] = useState<LiteratureCounts[]>([]);
   const [rnaStructureData, setRnaStructureData] = useState<RNAStructure | null>(null);
+  const [variantEquivalents, setVariantEquivalents] = useState<any[]>([]);
 
   // Load data when selectedSnRNA changes
   useEffect(() => {
@@ -54,13 +55,14 @@ const Gene: React.FC = () => {
       setError(null);
 
       try {
-        const [gene, variants, literature, literatureCountsData, rnaStructure] =
+        const [gene, variants, literature, literatureCountsData, rnaStructure, equivs] =
           await Promise.all([
             getGeneData(selectedSnRNA),
             getVariants(selectedSnRNA),
             getLiterature(selectedSnRNA),
             getLiteratureCounts(),
             getRNAStructure(selectedSnRNA),
+            getGeneVariantEquivalentsById(selectedSnRNA).catch(() => []),
           ]);
 
         if (!gene) {
@@ -72,6 +74,7 @@ const Gene: React.FC = () => {
         setPaperData(literature);
         setLiteratureCounts(literatureCountsData);
         setRnaStructureData(rnaStructure);
+        setVariantEquivalents(equivs);
       } catch (err) {
         console.error("Error loading gene data:", err);
         setError(err instanceof Error ? err.message : "Failed to load gene data");
@@ -311,6 +314,7 @@ const Gene: React.FC = () => {
             paperData={paperData}
             literatureCounts={literatureCounts}
             variantData={variantData}
+            variantEquivalents={variantEquivalents}
             gnomadVariants={gnomadVariants}
             overlayMode={overlayMode}
             getCurrentOverlayData={getCurrentOverlayData}
