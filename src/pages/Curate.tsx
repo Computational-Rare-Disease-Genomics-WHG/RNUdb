@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Pencil,
   History,
+  Link2,
 } from "lucide-react";
 import React, {
   useState,
@@ -31,6 +32,8 @@ import "@/components/GenomeBrowser/GenomeBrowser.css";
 import BEDTrackImportWizard from "../components/Curate/BEDTrackImportWizard";
 import BEDTrackViewer from "../components/Curate/BEDTrackViewer";
 import CuratorVariantTrack from "../components/Curate/CuratorVariantTrack";
+import EquivalenceForm from "../components/Curate/EquivalenceForm";
+import EquivalenceImportWizard from "../components/Curate/EquivalenceImportWizard";
 import GeneForm from "../components/Curate/GeneForm";
 
 import LiteratureForm from "../components/Curate/LiteratureForm";
@@ -51,6 +54,7 @@ import {
   getGeneStructure,
   getBedTracks,
   getVariantClassifications,
+  getGeneEquivalentPositions,
 } from "../services/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,6 +86,7 @@ const Curate: React.FC = () => {
   const [structures, setStructures] = useState<any[]>([]);
   const [bedTracks, setBedTracks] = useState<any[]>([]);
   const [variantAssociations, setVariantAssociations] = useState<any[]>([]);
+  const [equivalentPositions, setEquivalentPositions] = useState<any[]>([]);
 
   // Transform flat BED API rows into nested tracks for BEDTrackViewer
   const nestedBedTracks = React.useMemo(() => {
@@ -122,6 +127,8 @@ const Curate: React.FC = () => {
   const [showVariantAssociationForm, setShowVariantAssociationForm] = useState(false);
   const [showVariantAssociationImport, setShowVariantAssociationImport] =
     useState(false);
+  const [showEquivalenceForm, setShowEquivalenceForm] = useState(false);
+  const [showEquivalenceImport, setShowEquivalenceImport] = useState(false);
   const [editingGene, setEditingGene] = useState<any>(null);
   const [editingVariant, setEditingVariant] = useState<any>(null);
   const [editingLiterature, setEditingLiterature] = useState<any>(null);
@@ -212,18 +219,20 @@ const Curate: React.FC = () => {
   const loadGeneData = async (geneId: string) => {
     setLoading(true);
     try {
-      const [variants, lit, struct, bedRes, vaRes] = await Promise.all([
+      const [variants, lit, struct, bedRes, vaRes, eqRes] = await Promise.all([
         getGeneVariants(geneId).catch(() => []),
         getGeneLiterature(geneId).catch(() => []),
         getGeneStructure(geneId).catch(() => null),
         getBedTracks(geneId).catch(() => null),
         getVariantClassifications(geneId).catch(() => null),
+        getGeneEquivalentPositions(geneId).catch(() => []),
       ]);
       setVariants(variants);
       setLiterature(lit);
       setStructures(struct ? (Array.isArray(struct) ? struct : [struct]) : []);
       setBedTracks(Array.isArray(bedRes) ? bedRes : []);
       setVariantAssociations(Array.isArray(vaRes) ? vaRes : []);
+      setEquivalentPositions(Array.isArray(eqRes) ? eqRes : []);
     } catch {
       console.error("Error loading gene data");
     } finally {
@@ -455,6 +464,59 @@ const Curate: React.FC = () => {
         setShowVariantForm(false);
         setEditingVariant(null);
         alert("Variant update submitted for approval");
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
+    }
+  };
+
+  const handleCreateEquivalence = async (data: any) => {
+    if (!selectedGene) return;
+    try {
+      const result = await submitChange("equivalence", selectedGene.id, "create", data);
+      if (result) {
+        setShowEquivalenceForm(false);
+        alert("Equivalence pair submitted for approval");
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
+    }
+  };
+
+  const handleDeleteEquivalence = async (pair: any) => {
+    if (!selectedGene) return;
+    if (
+      !confirm(
+        `Delete equivalence ${pair.gene_a} n.${pair.pos_a} ↔ ${pair.gene_b} n.${pair.pos_b}?`,
+      )
+    ) {
+      return;
+    }
+    try {
+      const result = await submitChange(
+        "equivalence",
+        selectedGene.id,
+        "delete",
+        { gene_a: pair.gene_a, pos_a: pair.pos_a },
+        `${pair.gene_a}_${pair.pos_a}`,
+      );
+      if (result) alert("Equivalence deletion submitted for approval");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Network error");
+    }
+  };
+
+  const handleImportEquivalences = async (pairs: any[]) => {
+    if (!selectedGene || pairs.length === 0) return;
+    try {
+      const result = await submitChange("equivalence", selectedGene.id, "import", {
+        pairs,
+      });
+      if (result) {
+        setShowEquivalenceImport(false);
+        alert(
+          `${pairs.length} equivalence pair(s) submitted for approval as one change`,
+        );
       }
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Network error");
@@ -877,6 +939,19 @@ const Curate: React.FC = () => {
                       className="ml-2 bg-slate-100 text-slate-600"
                     >
                       {variantAssociations.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="equivalences"
+                    className="data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm rounded-md px-4 py-2"
+                  >
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Equivalences
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-slate-100 text-slate-600"
+                    >
+                      {equivalentPositions.length}
                     </Badge>
                   </TabsTrigger>
                 </TabsList>
@@ -1442,6 +1517,100 @@ const Curate: React.FC = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
+
+                {/* Equivalences Tab */}
+                <TabsContent value="equivalences" className="mt-0">
+                  <Card className="bg-white border border-slate-200 shadow-sm">
+                    <div className="p-6 border-b border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            Equivalent Positions
+                          </h3>
+                          <p className="text-sm text-slate-500 mt-0.5">
+                            {equivalentPositions.length} position pair(s) mapped across
+                            genes
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowEquivalenceForm(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Pair
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowEquivalenceImport(true)}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import CSV
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <CardContent className="p-6">
+                      {loading ? (
+                        <div className="space-y-3">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <Skeleton key={i} className="h-16 w-full" />
+                          ))}
+                        </div>
+                      ) : equivalentPositions.length === 0 ? (
+                        <div className="text-center py-16">
+                          <div className="bg-slate-50 rounded-2xl w-fit mx-auto mb-4 p-4">
+                            <Link2 className="h-8 w-8 text-slate-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            No equivalent positions yet
+                          </h3>
+                          <p className="text-slate-500 max-w-md mx-auto">
+                            Map positions in this gene to positions in another snRNA
+                            gene. Equivalent variants across paralogous or analog genes
+                            provide PM5 evidence (Recommendation 8).
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {equivalentPositions.map((pair: any) => (
+                            <div
+                              key={`${pair.gene_a}-${pair.pos_a}`}
+                              className="border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors group"
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="bg-teal-50 text-teal-700 rounded-lg px-3 py-1.5 font-mono text-sm">
+                                    {pair.gene_a} n.{pair.pos_a}
+                                  </div>
+                                  <span className="text-slate-400">↔</span>
+                                  <div className="bg-violet-50 text-violet-700 rounded-lg px-3 py-1.5 font-mono text-sm">
+                                    {pair.gene_b} n.{pair.pos_b}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleDeleteEquivalence(pair)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              {pair.notes && (
+                                <p className="text-xs text-slate-500 mt-2">
+                                  {pair.notes}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
               </Tabs>
             </div>
           </>
@@ -1624,6 +1793,37 @@ const Curate: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Equivalence Create Modal */}
+      <Dialog open={showEquivalenceForm} onOpenChange={setShowEquivalenceForm}>
+        <DialogContent className="sm:max-w-[600px]">
+          <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-violet-700 -mx-6 -mt-6 px-6 py-4 rounded-t-xl mb-4">
+            <DialogTitle className="text-white text-lg font-semibold">
+              Add Equivalent Position Pair
+            </DialogTitle>
+          </div>
+          {selectedGene && (
+            <EquivalenceForm
+              selectedGene={selectedGene}
+              genes={genes}
+              existingPairs={equivalentPositions}
+              onSubmit={handleCreateEquivalence}
+              onCancel={() => setShowEquivalenceForm(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Equivalence Import Wizard */}
+      {selectedGene && (
+        <EquivalenceImportWizard
+          geneId={selectedGene.id}
+          genes={genes}
+          open={showEquivalenceImport}
+          onClose={() => setShowEquivalenceImport(false)}
+          onImport={handleImportEquivalences}
+        />
+      )}
 
       <Footer />
     </div>

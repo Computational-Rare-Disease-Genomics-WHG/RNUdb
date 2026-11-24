@@ -175,3 +175,145 @@ class TestEquivalentPositionsApproval:
         )
         assert res.status_code == 200
         assert res.json()["entity_type"] == "equivalence"
+
+
+@pytest.fixture
+def equiv_structures(test_db, equiv_test_data):
+    """Structures + nucleotides so base-for-base validation can run.
+
+    RNU4-2 positions 27-34 and RNU4atac positions 32-39 both carry the
+    K-turn sequence ``CCAAUGAG``; positions 118-125 / 116-123 carry the Sm
+    sequence ``AAUUUUUG``.
+    """
+    from api.models import Nucleotide, RNAStructure
+
+    k_turn = "CCAAUGAG"
+    sm = "AAUUUUUG"
+    for gene_id, start, seq, tag in (
+        ("RNU4-2", 27, k_turn, "kturn"),
+        ("RNU4-2", 118, sm, "sm"),
+        ("RNU4atac", 32, k_turn, "kturn"),
+        ("RNU4atac", 116, sm, "sm"),
+    ):
+        structure_id = f"{gene_id}-{tag}"
+        test_db.add(RNAStructure(id=structure_id, geneId=gene_id))
+        for offset, base in enumerate(seq):
+            test_db.add(
+                Nucleotide(
+                    id=start + offset,
+                    structure_id=structure_id,
+                    base=base,
+                    x=0.0,
+                    y=0.0,
+                )
+            )
+    test_db.commit()
+    return {"k_turn": k_turn, "sm": sm}
+
+
+class TestEquivalenceImport:
+    """Bulk import action for equivalent positions."""
+
+    def _submit_import(self, client, pairs):
+        return client.post(
+            "/api/approvals",
+            json={
+                "entity_type": "equivalence",
+                "gene_id": "RNU4-2",
+                "action": "import",
+                "payload": {"pairs": pairs},
+            },
+        )
+
+    def _approve_and_apply(self, client, cid):
+        client.post(f"/api/approvals/{cid}/review", json={"status": "approved"})
+        return client.post(f"/api/approvals/{cid}/apply")
+
+    def test_import_inserts_all_pairs(self, test_client, equiv_structures):
+        """One import change inserts every valid pair atomically."""
+        pairs = [
+            {
+                "gene_a": "RNU4-2",
+                "pos_a": 27,
+                "gene_b": "RNU4atac",
+                "pos_b": 32,
+                "notes": "K-turn",
+            },
+            {
+                "gene_a": "RNU4-2",
+                "pos_a": 28,
+                "gene_b": "RNU4atac",
+                "pos_b": 33,
+                "notes": "K-turn",
+            },
+        ]
+        res = self._submit_import(test_client, pairs)
+        assert res.status_code == 200
+        cid = res.json()["id"]
+
+        applied = self._approve_and_apply(test_client, cid)
+        assert applied.status_code == 200
+
+        rows = test_client.get("/api/genes/RNU4-2/equivalent-positions").json()
+        assert len(rows) == 2
+        assert {r["pos_a"] for r in rows} == {27, 28}
+
+    def test_import_rejects_base_mismatch(self, test_client, equiv_structures):
+        """A pair whose bases differ is rejected and nothing is written."""
+        pairs = [
+            {
+                "gene_a": "RNU4-2",
+                "pos_a": 27,
+                "gene_b": "RNU4atac",
+                "pos_b": 32,
+            },
+            {
+                # 27 is C in RNU4-2; 38 is A in RNU4atac -> mismatch.
+                "gene_a": "RNU4-2",
+                "pos_a": 27,
+                "gene_b": "RNU4atac",
+                "pos_b": 38,
+            },
+        ]
+        res = self._submit_import(test_client, pairs)
+        assert res.status_code == 200
+        cid = res.json()["id"]
+
+        applied = self._approve_and_apply(test_client, cid)
+        assert applied.status_code == 400
+
+        rows = test_client.get("/api/genes/RNU4-2/equivalent-positions").json()
+        assert rows == []
+
+    def test_import_rejects_duplicate_position(self, test_client, equiv_structures):
+        """Bijection: a position cannot be mapped twice."""
+        pairs = [
+            {
+                "gene_a": "RNU4-2",
+                "pos_a": 27,
+                "gene_b": "RNU4atac",
+                "pos_b": 32,
+            },
+            {
+                "gene_a": "RNU4-2",
+                "pos_a": 27,
+                "gene_b": "RNU4atac",
+                "pos_b": 33,
+            },
+        ]
+        res = self._submit_import(test_client, pairs)
+        assert res.status_code == 200
+        cid = res.json()["id"]
+
+        applied = self._approve_and_apply(test_client, cid)
+        assert applied.status_code == 409
+
+        rows = test_client.get("/api/genes/RNU4-2/equivalent-positions").json()
+        assert rows == []
+
+    def test_import_rejects_empty_pairs(self, test_client):
+        res = self._submit_import(test_client, [])
+        assert res.status_code == 200
+        cid = res.json()["id"]
+        applied = self._approve_and_apply(test_client, cid)
+        assert applied.status_code == 400

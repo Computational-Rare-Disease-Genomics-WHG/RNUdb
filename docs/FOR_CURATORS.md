@@ -122,6 +122,27 @@ The Variant Association tab links variants to literature with clinical classific
    - Custom annotations
 3. Specify chromosome, start/end positions, and scores
 
+### Equivalent Positions (PM5 / Recommendation 8)
+
+Equivalent positions link a position in one snRNA gene to the position in a
+paralogous or analog gene that carries the **same transcript base**. A variant
+at one position is then the "equivalent variant" of a variant at the other,
+which provides PM5 evidence (Recommendation 8).
+
+The mapping is **manual and bijective** — each position maps to at most one
+position in another gene. It is never derived automatically.
+
+1. Go to the "Equivalences" tab in the Curate dashboard
+2. **Add Pair** — choose the other gene and enter both positions. The server
+   rejects the pair when the two transcript bases differ, when a position is
+   already mapped, or when both positions belong to the same gene.
+3. **Import CSV** — bulk-submit pairs in one change. Header:
+   `gene_a,pos_a,gene_b,pos_b,notes`. Rows are normalised so `gene_a < gene_b`.
+
+Every pair is submitted as a pending change and only takes effect after an
+admin approves and applies it. Importing many pairs creates **one** pending
+change rather than one per row.
+
 ---
 
 ## Import Wizards
@@ -137,6 +158,7 @@ RNUdb provides batch import wizards for each data type:
 | **Variant Association Import** | Bulk import clinical classifications | CSV         |
 | **Structure Import**           | Import RNA structures                | JSON        |
 | **BED Track Import**           | Import annotation tracks             | BED/CSV     |
+| **Equivalence Import**         | Bulk import equivalent positions     | CSV         |
 
 Access wizards from the curate dashboard tabs.
 
