@@ -87,6 +87,13 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 
 - `[2026-11-16T15:50Z] [TOOL]` PR #363 — home page update (issue #358): removed c.34A>G variant example button + dangling `|` from "Try:" line; added "Currently supported genes" section below hero, listing all loaded genes as clickable links to `/gene/<id>`, derived dynamically from API. File changed: `src/pages/Home.tsx`. All 159 vitest + 183 pytest + build + pre-commit pass.
 
+- `[2026-11-24T16:00Z] [TOOL]` **Issue #358 (SGE evidence codes) on branch `feat/per-variant-sge-evidence-358`** (off `main` `e013731`): replaced the interpolated score→code mapping (from the merged #329) with the dataset's actual per-variant codes. Generated data + backend + frontend:
+  - New generator `scripts/generate_sge_vcf_from_csv.py`: regenerates `data/rnu4-2/sge_variants.vcf` from `data/rnu4-2/de_jonghe_et_al.csv` (539 records, UTF-8 BOM; `FUNCTION_SCORE`←`function_score_mean`, `DEPLETION_GROUP` computed from cutoffs `< −1.0` strong / `< −0.39` moderate / else normal derived from `rnu4-2_sge.txt`, `EVIDENCE_CODE`←CSV). 127 records carry a code; worked example `n.76C>T` → `EVIDENCE_CODE=PS3_mod`. Verified the CSV is a strict superset of the old VCF (0 variants lost; adds the 8 deletions).
+  - Schema: migration `995d7b423fb0` adds `variants.evidence_code` (down_revision `fe0bd101a6b3`). Model (`VariantBase`/`VariantUpdate`), `_ALLOWED_VARIANT_COLUMNS`/`variants.py`, `approvals.py` `_ALLOWED_COLUMNS["variant"]`, `imports.py` VCF upsert, `vcf_parser.py` (`EVIDENCE_CODE`), `database.py::insert_variants` all carry the field.
+  - **Removed `scripts/insert_sample_data.py`** (unnecessary seeder; superseded by VCF import wizard). `init.py` no longer offers a sample-data step (`readme.md` updated). Data still loads via `/curate` VCF import.
+  - Frontend: **deleted** `src/lib/sgeEvidence.ts` + test (no interpolation); `src/types/rna.ts` adds `evidence_code?: string|null` to `Variant` (removed `SgeEvidenceCode` re-export); `InfoPanel.tsx` badge reads `variant.evidence_code` directly, renders nothing for null/unknown.
+  - Docs: `schema.md` variants table row. Verified: 197 pytest/1 skip, 147 vitest, build pass.
+
 ## [OUTCOMES]
 
 - `[2026-11-04T18:40Z] [TOOL]` **Epic #346 (approval-system hardening) implementation complete** — all 24 issues (#298–#303, #307–#321, + #285) fixed across 5 stacked PRs: #347 (apply integrity), #348 (failure/audit/observability), #349 (admin-only writes + UX), #350 (test hardening + bootstrap). pytest 183/0, vitest 159, build/lint/pre-commit pass. Merge order: #347 → #348 → #349 → #350 (retarget to main sequentially). Follow-ups documented on #346: classification-entity approval + gene create/update/refresh routing.

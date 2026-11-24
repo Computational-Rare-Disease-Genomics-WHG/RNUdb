@@ -6,20 +6,13 @@ This directory contains utility scripts for data management and database operati
 
 ### Data Import Scripts
 
-#### 1. `insert_sample_data.py`
+#### 1. `generate_sge_vcf_from_csv.py`
 
-Inserts sample gene and variant data into the database for testing and development.
+Regenerates `data/rnu4-2/sge_variants.vcf` from the De Jonghe et al. dataset (`data/rnu4-2/de_jonghe_et_al.csv`), adding `FUNCTION_SCORE` (from `function_score_mean`), computed `DEPLETION_GROUP`, and `EVIDENCE_CODE`.
 
 ```bash
-# Run all sample data inserts
-uv run python scripts/insert_sample_data.py
+uv run python scripts/generate_sge_vcf_from_csv.py
 ```
-
-**What it inserts:**
-
-- Sample genes (e.g., RNU4-2, RNU1-1, RNU2-1)
-- Sample variants with population data
-- Sample literature entries
 
 ---
 
@@ -64,8 +57,9 @@ uv run python scripts/init.py
 **What it does:**
 
 - Creates the database schema
-- Initializes default data
-- Sets up initial configuration
+- Applies Alembic migrations
+
+**Note:** `init.py` no longer offers a sample-data import step (the `insert_sample_data.py` seeder was removed). Gene/variant data is imported via the web UI (`/curate`) using the data files under `data/`.
 
 ---
 

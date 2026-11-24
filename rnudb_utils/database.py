@@ -158,6 +158,7 @@ def insert_variants(variants_data: list[dict], session=None) -> None:
                 pvalues=v.get("pvalues"),
                 qvalues=v.get("qvalues"),
                 depletion_group=v.get("depletion_group"),
+                evidence_code=v.get("evidence_code"),
                 gnomad_ac=v.get("gnomad_ac"),
                 gnomad_hom=v.get("gnomad_hom"),
                 aou_ac=v.get("aou_ac"),

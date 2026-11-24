@@ -32,6 +32,7 @@ export interface Variant {
   pvalues?: number; // Statistical p-value
   qvalues?: number; // Adjusted q-value
   depletion_group?: string; // Depletion category ("normal", "moderate", "strong")
+  evidence_code?: string | null; // ACMG functional evidence code from SGE (De Jonghe et al.)
 
   // Population genetics fields (nullable)
   gnomad_ac?: number; // gnomAD allele count
@@ -142,9 +143,6 @@ export interface PDBStructure {
 }
 
 // Overlay and Track System - Backward compatible
-// SGE function-score ACMG evidence codes (see src/lib/sgeEvidence.ts)
-export type { SgeEvidenceCode } from "../lib/sgeEvidence";
-
 export interface OverlayData {
   [nucleotidePosition: number]: OverlayPoint | number; // Support both old and new formats
 }
