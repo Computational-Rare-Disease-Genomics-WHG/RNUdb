@@ -47,6 +47,21 @@ export interface Variant {
   zygosity?: "hom" | "het"; // Zygosity (homozygous/heterozygous)
   cohort?: string; // Study/cohort name
   linkedVariantIds?: string[]; // IDs of linked biallelic variants
+  is_synthetic?: boolean; // Auto-created counterpart variant
+}
+
+// ---------------------------------------------------------------------------
+// Equivalent Positions (base-for-base bijective mapping between snRNA genes)
+// ---------------------------------------------------------------------------
+
+export interface EquivalentPositionPublic {
+  gene_a: string;
+  pos_a: number;
+  gene_b: string;
+  pos_b: number;
+  notes?: string | null;
+  variant_a?: { id: string; hgvs?: string } | null;
+  variant_b?: { id: string; hgvs?: string } | null;
 }
 
 export interface Literature {

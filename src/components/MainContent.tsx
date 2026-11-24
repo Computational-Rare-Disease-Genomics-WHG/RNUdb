@@ -27,6 +27,7 @@ interface MainContentProps {
   paperData: Literature[];
   literatureCounts: LiteratureCounts[];
   variantData: Variant[];
+  variantEquivalents?: any[];
   gnomadVariants: Variant[];
   aouVariants: Variant[];
   overlayMode: "none" | "clinvar" | "gnomad" | "depletion_group";
@@ -41,6 +42,7 @@ const MainContent: React.FC<MainContentProps> = ({
   paperData,
   literatureCounts,
   variantData,
+  variantEquivalents = [],
   gnomadVariants,
   aouVariants,
   overlayMode,
@@ -171,6 +173,7 @@ const MainContent: React.FC<MainContentProps> = ({
               paperData={paperData}
               literatureCounts={literatureCounts}
               variantData={variantData}
+              variantEquivalents={variantEquivalents}
               hoveredNucleotide={getDisplayNucleotide()}
               overlayMode={overlayMode}
               onCycleOverlay={cycleOverlayMode}

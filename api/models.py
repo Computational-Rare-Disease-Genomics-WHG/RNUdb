@@ -146,6 +146,7 @@ class Variant(VariantBase, table=True):
     __tablename__ = "variants"
 
     geneId: str = Field(foreign_key="genes.id", index=True)
+    is_synthetic: bool | None = None
 
 
 class VariantCreate(VariantBase):
@@ -378,6 +379,49 @@ class VariantLink(SQLModel, table=True):
 
 
 # ---------------------------------------------------------------------------
+# EquivalentPosition model (table only)
+# ---------------------------------------------------------------------------
+
+
+class EquivalentPositionBase(SQLModel):
+    """A manually curated position-to-position equivalence across two snRNA
+    genes.
+
+    Every pair is bijective: (gene_a, pos_a) AND (gene_b, pos_b) are each
+    unique — one position in one gene maps to exactly one position in the
+    other. The transcript bases at both positions must match (validated at
+    submission time). Writes are routed through the approval workflow.
+    """
+
+    gene_a: str
+    pos_a: int
+    gene_b: str
+    pos_b: int
+    notes: str | None = None
+
+
+class EquivalentPosition(EquivalentPositionBase, table=True):
+    __tablename__ = "equivalent_positions"
+    __table_args__ = (
+        PrimaryKeyConstraint("gene_a", "pos_a"),
+        CheckConstraint("gene_a < gene_b", name="check_equiv_gene_order"),
+    )
+
+    gene_a: str = Field(foreign_key="genes.id")
+    pos_a: int
+    gene_b: str = Field(foreign_key="genes.id")
+    pos_b: int
+
+
+class EquivalentPositionCreate(EquivalentPositionBase):
+    """EquivalentPosition creation input."""
+
+
+class EquivalentPositionPublic(EquivalentPositionBase):
+    """EquivalentPosition public output."""
+
+
+# ---------------------------------------------------------------------------
 # User models
 # ---------------------------------------------------------------------------
 
@@ -547,7 +591,7 @@ class PendingChange(PendingChangeBase, table=True):
     __table_args__ = (
         CheckConstraint(
             "entity_type IN ('gene', 'variant', 'literature', 'structure', "
-            "'bed_track')",
+            "'bed_track', 'equivalence')",
             name="check_entity_type",
         ),
         CheckConstraint(
