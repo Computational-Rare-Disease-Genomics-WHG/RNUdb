@@ -274,9 +274,33 @@ Stores curator changes awaiting admin approval.
 
 **Constraints:**
 
-- `entity_type`: gene, variant, literature, structure, bed_track
-- `action`: create, update, delete
-- `status`: pending, approved, rejected, applied
+- `entity_type`: gene, variant, literature, structure, bed_track, equivalence
+- `action`: create, update, delete, import
+- `status`: pending, approved, rejected, applied, failed
+
+---
+
+### 15. equivalent_positions
+
+Manually curated, base-for-base bijective position mapping between two snRNA
+genes (Recommendation 8 / PM5). Each row pairs one transcript position in gene
+A with one transcript position in gene B; the transcript bases at the two
+positions must be identical.
+
+| Column | Type    | Constraints                      | Description                   |
+| ------ | ------- | -------------------------------- | ----------------------------- |
+| gene_a | TEXT    | PK, FK → genes.id                | First gene (alphabetically)   |
+| pos_a  | INTEGER | PK                               | Transcript position in gene_a |
+| gene_b | TEXT    | FK → genes.id, UNIQUE with pos_b | Second gene                   |
+| pos_b  | INTEGER | UNIQUE with gene_b               | Transcript position in gene_b |
+| notes  | TEXT    | NULLABLE                         | Optional curation notes       |
+
+**Constraints:**
+
+- `(gene_a, pos_a)` primary key; `(gene_b, pos_b)` unique — enforces the bijection
+- `gene_a < gene_b` — rows are always stored in canonical order
+- `gene_a != gene_b` — a gene cannot map to itself
+- Writes go through the approval workflow (`entity_type = 'equivalence'`)
 
 ---
 
@@ -309,23 +333,27 @@ For interactive API documentation, visit: `/api-docs` (when running locally) or 
 
 ### Public Endpoints
 
-| Endpoint                               | Methods | Description                 |
-| -------------------------------------- | ------- | --------------------------- |
-| `/api/genes`                           | GET     | List all genes              |
-| `/api/genes/{geneId}`                  | GET     | Get gene details            |
-| `/api/genes/{geneId}/variants`         | GET     | Get variants for gene       |
-| `/api/genes/{geneId}/structure`        | GET     | Get RNA structure           |
-| `/api/genes/{geneId}/bed-tracks`       | GET     | Get BED tracks              |
-| `/api/genes/{geneId}/literature`       | GET     | Get literature              |
-| `/api/genes/{geneId}/pdb`              | GET     | Get PDB data                |
-| `/api/variants`                        | GET     | List all variants           |
-| `/api/variants/{variantId}`            | GET     | Get variant details         |
-| `/api/variants/disease-types`          | GET     | List disease types          |
-| `/api/variants/clinical-significances` | GET     | List clinical significances |
-| `/api/literature`                      | GET     | List literature             |
-| `/api/literature/{literatureId}`       | GET     | Get literature details      |
-| `/api/literature-counts`               | GET     | Get literature counts       |
-| `/api/bed-tracks`                      | GET     | List all BED tracks         |
+| Endpoint                                   | Methods | Description                       |
+| ------------------------------------------ | ------- | --------------------------------- |
+| `/api/genes`                               | GET     | List all genes                    |
+| `/api/genes/{geneId}`                      | GET     | Get gene details                  |
+| `/api/genes/{geneId}/variants`             | GET     | Get variants for gene             |
+| `/api/genes/{geneId}/structure`            | GET     | Get RNA structure                 |
+| `/api/genes/{geneId}/bed-tracks`           | GET     | Get BED tracks                    |
+| `/api/genes/{geneId}/literature`           | GET     | Get literature                    |
+| `/api/genes/{geneId}/pdb`                  | GET     | Get PDB data                      |
+| `/api/variants`                            | GET     | List all variants                 |
+| `/api/variants/{variantId}`                | GET     | Get variant details               |
+| `/api/variants/disease-types`              | GET     | List disease types                |
+| `/api/variants/clinical-significances`     | GET     | List clinical significances       |
+| `/api/literature`                          | GET     | List literature                   |
+| `/api/literature/{literatureId}`           | GET     | Get literature details            |
+| `/api/literature-counts`                   | GET     | Get literature counts             |
+| `/api/bed-tracks`                          | GET     | List all BED tracks               |
+| `/api/equivalent-positions`                | GET     | List all equivalent positions     |
+| `/api/genes/{geneId}/equivalent-positions` | GET     | Get equivalent positions for gene |
+| `/api/genes/{geneId}/variant-equivalents`  | GET     | Get variants with counterparts    |
+| `/api/variants/{variantId}/equivalent`     | GET     | Get counterpart for a variant     |
 
 ### Authenticated Endpoints
 

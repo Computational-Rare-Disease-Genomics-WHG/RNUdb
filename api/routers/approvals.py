@@ -17,6 +17,7 @@ from api.notifications import (
     notify_change_submitted,
 )
 from api.routers.auth import require_admin, require_curator
+from api.services.equivalents import normalize_gene_order, validate_position_pair
 from api.services.import_ops import (
     exec_bed_track_import,
     exec_literature_bulk_import,
@@ -110,6 +111,7 @@ _IMPORT_SHAPE_KEYS = {
     "structure": {"geneId", "structure", "set_primary"},
     "bed_track": {"geneId", "track_name", "intervals", "color"},
     "literature": {"geneId", "literature"},
+    "equivalence": {"pairs"},
 }
 
 _ENTITY_TABLE_MAP = {
@@ -130,7 +132,7 @@ _SUPPORTED_ACTIONS = {
     "literature": {"create", "update", "delete", "import"},
     "structure": {"delete", "import"},
     "bed_track": {"delete", "import"},
-    "equivalence": {"create", "delete"},
+    "equivalence": {"create", "delete", "import"},
 }
 
 
@@ -233,6 +235,55 @@ def _entity_exists(db: Session, entity_type: str, entity_id: str) -> bool:
         text(f"SELECT 1 FROM {table} WHERE id = :eid"), {"eid": entity_id}
     ).fetchone()
     return row is not None
+
+
+def _apply_equivalence_pair(
+    db: Session,
+    gene_a: str,
+    pos_a: int,
+    gene_b: str,
+    pos_b: int,
+    notes: str | None,
+    actor: str,
+) -> tuple[str, int, str, int]:
+    """Validate and insert one bijective equivalent position pair.
+
+    Enforces: distinct genes, positive positions, base-for-base identity at the
+    two transcript positions, and 1:1 uniqueness (neither position may already
+    be mapped). Returns the normalised (gene_a, pos_a, gene_b, pos_b) tuple with
+    ``gene_a < gene_b`` so callers can report the canonical key.
+    """
+    if gene_a == gene_b:
+        raise HTTPException(status_code=400, detail="Cannot map a gene to itself")
+    if pos_a < 1 or pos_b < 1:
+        raise HTTPException(status_code=400, detail="Positions must be >= 1")
+
+    # Normalise order: gene_a < gene_b
+    gene_a, pos_a, gene_b, pos_b = normalize_gene_order(gene_a, pos_a, gene_b, pos_b)
+
+    error = validate_position_pair(db, gene_a, pos_a, gene_b, pos_b)
+    if error:
+        status = 409 if "already mapped" in error else 400
+        raise HTTPException(status_code=status, detail=error)
+
+    db.execute(
+        text("""
+            INSERT INTO equivalent_positions
+                (gene_a, pos_a, gene_b, pos_b, notes)
+            VALUES (:ga, :pa, :gb, :pb, :notes)
+        """),
+        {"ga": gene_a, "pa": pos_a, "gb": gene_b, "pb": pos_b, "notes": notes},
+    )
+    _audit_entry(
+        db,
+        "equivalent_positions",
+        f"{gene_a}_{pos_a}",
+        "CREATE",
+        None,
+        {"gene_a": gene_a, "pos_a": pos_a, "gene_b": gene_b, "pos_b": pos_b},
+        actor,
+    )
+    return gene_a, pos_a, gene_b, pos_b
 
 
 # ---------------------------------------------------------------------------
@@ -747,80 +798,52 @@ async def apply_approved_change(
 
         elif entity_type == "equivalence":
             if action == "create":
-                gene_a = str(payload.get("gene_a"))
-                pos_a = int(payload.get("pos_a"))
-                gene_b = str(payload.get("gene_b"))
-                pos_b = int(payload.get("pos_b"))
-                if gene_a == gene_b:
-                    raise HTTPException(
-                        status_code=400, detail="Cannot map a gene to itself"
-                    )
-                if pos_a < 1 or pos_b < 1:
-                    raise HTTPException(
-                        status_code=400, detail="Positions must be >= 1"
-                    )
-                # Normalise order: gene_a < gene_b
-                if gene_a > gene_b:
-                    gene_a, gene_b = gene_b, gene_a  # noqa: PLW2901
-                    pos_a, pos_b = pos_b, pos_a
-                # Check base equivalence.
-                row_a = db.execute(
-                    text(
-                        "SELECT upper(substr(n.base,1,1)) FROM nucleotides n "
-                        "JOIN rna_structures s ON s.id=n.structure_id "
-                        "WHERE s.geneId=:g AND n.id=:p"
-                    ),
-                    {"g": gene_a, "p": pos_a},
-                ).fetchone()
-                row_b = db.execute(
-                    text(
-                        "SELECT upper(substr(n.base,1,1)) FROM nucleotides n "
-                        "JOIN rna_structures s ON s.id=n.structure_id "
-                        "WHERE s.geneId=:g AND n.id=:p"
-                    ),
-                    {"g": gene_b, "p": pos_b},
-                ).fetchone()
-                base_a = row_a._mapping[0] if row_a else None
-                base_b = row_b._mapping[0] if row_b else None
-                if base_a is None or base_b is None:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="One or both positions not in structure",
-                    )
-                if base_a.upper() != base_b.upper():
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Base mismatch: {gene_a} n.{pos_a}={base_a} vs "
-                        f"{gene_b} n.{pos_b}={base_b}",
-                    )
-                db.execute(
-                    text("""
-                        INSERT INTO equivalent_positions
-                            (gene_a, pos_a, gene_b, pos_b, notes)
-                        VALUES (:ga, :pa, :gb, :pb, :notes)
-                    """),
-                    {
-                        "ga": gene_a,
-                        "pa": pos_a,
-                        "gb": gene_b,
-                        "pb": pos_b,
-                        "notes": payload.get("notes"),
-                    },
-                )
-                _audit_entry(
+                _apply_equivalence_pair(
                     db,
-                    "equivalent_positions",
-                    f"{gene_a}_{pos_a}",
-                    "CREATE",
-                    None,
-                    {
-                        "gene_a": gene_a,
-                        "pos_a": pos_a,
-                        "gene_b": gene_b,
-                        "pos_b": pos_b,
-                    },
+                    str(payload.get("gene_a")),
+                    int(payload.get("pos_a")),
+                    str(payload.get("gene_b")),
+                    int(payload.get("pos_b")),
+                    payload.get("notes"),
                     user["github_login"],
                 )
+            elif action == "import":
+                pairs = payload.get("pairs")
+                if not isinstance(pairs, list) or not pairs:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Equivalence import requires a non-empty 'pairs' list",
+                    )
+                applied = 0
+                for idx, pair in enumerate(pairs):
+                    if not isinstance(pair, dict):
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"pairs[{idx}] must be an object",
+                        )
+                    try:
+                        _apply_equivalence_pair(
+                            db,
+                            str(pair.get("gene_a")),
+                            int(pair.get("pos_a")),
+                            str(pair.get("gene_b")),
+                            int(pair.get("pos_b")),
+                            pair.get("notes"),
+                            user["github_login"],
+                        )
+                    except (HTTPException, TypeError, ValueError) as exc:
+                        detail = getattr(exc, "detail", str(exc))
+                        status = getattr(exc, "status_code", 400)
+                        raise HTTPException(
+                            status_code=status,
+                            detail=f"pairs[{idx}] rejected: {detail}",
+                        ) from exc
+                    applied += 1
+                if applied == 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="No equivalence pairs were imported",
+                    )
             elif action == "delete":
                 if entity_id and "_" in entity_id:
                     gene_a, pos_a_raw = entity_id.split("_", 1)
