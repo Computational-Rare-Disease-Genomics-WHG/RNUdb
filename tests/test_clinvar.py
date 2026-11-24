@@ -159,7 +159,10 @@ class _FakeResponse:
     def __init__(self, body: bytes | None):
         self.status_code = 200 if body is not None else 404
         self._body = body or b""
-        self.text = self._body.decode()
+
+    @property
+    def text(self):
+        return self._body.decode()
 
     def raise_for_status(self):
         if self.status_code != 200:
@@ -472,3 +475,30 @@ class TestImportClinvarCsv:
         assert summary.clinvar_added == 1
         assert test_db.get(Variant, "chr1-100-A-G") is None
         assert test_db.get(ClinvarClassification, "chr1-100-A-G") is None
+
+
+class TestSyncRelease:
+    def test_fetches_filters_and_imports(
+        self, test_db, seed_gene, tmp_path, clinvar_vcf, fake_ftp
+    ):
+        from pathlib import Path
+
+        from api.models import ClinvarClassification
+
+        files, _ = fake_ftp
+        url = clinvar.release_url_candidates("clinvar_20261108")[0]
+        vcf = Path(clinvar_vcf).read_bytes()
+        files[url] = vcf
+        files[f"{url}.tbi"] = Path(f"{clinvar_vcf}.tbi").read_bytes()
+        files[f"{url}.md5"] = _md5_line(vcf).encode()
+        out_dir = tmp_path / "out"
+
+        csv_path, summary = clinvar.sync_release(test_db, "clinvar_20261108", out_dir)
+
+        assert csv_path == out_dir / "clinvar_20261108_variants.csv"
+        assert csv_path.exists()
+        # Only the two RNU4-2 alleles; seed_gene is the only gene in the DB
+        assert summary.clinvar_added == 2
+        row = test_db.get(ClinvarClassification, "chr12-120291800-G-A")
+        assert row.release == "clinvar_20261108"
+        assert row.clinical_significance == "VUS"

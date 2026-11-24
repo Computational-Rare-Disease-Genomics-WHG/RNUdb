@@ -86,6 +86,20 @@ uv run python scripts/import_clinvar.py data/clinvar/clinvar_20261108_variants.c
 
 The database must be at the latest Alembic migration (`uv run alembic upgrade head`).
 
+#### `sync_clinvar.py`
+
+Runs `fetch_clinvar.py` and then `import_clinvar.py` in one go. This is the command for routine updates.
+
+```bash
+# Latest release, into data/database.db
+uv run python scripts/sync_clinvar.py
+
+# A specific release, into another database file
+uv run python scripts/sync_clinvar.py --release clinvar_20261108 --db /tmp/copy.db
+```
+
+Takes `--release` and `--out-dir` like `fetch_clinvar.py` and `--db` like `import_clinvar.py`. Genes are read from the database being imported into, and the CSV is still written to `--out-dir`. Behaviour is otherwise the same as running the two scripts in turn.
+
 ---
 
 ### Database Setup Scripts

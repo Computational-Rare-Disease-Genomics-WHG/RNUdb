@@ -354,3 +354,20 @@ def import_clinvar_csv(session: Session, csv_path: Path) -> ImportSummary:
 
     session.commit()
     return summary
+
+
+def sync_release(
+    session: Session, release: str, out_dir: Path
+) -> tuple[Path, ImportSummary]:
+    """Fetch ``release``, filter it to the session's genes and import it.
+
+    Writes ``<out_dir>/<release>_variants.csv`` like scripts/fetch_clinvar.py,
+    then imports it like scripts/import_clinvar.py. Returns the CSV path and
+    the import summary.
+    """
+    genes = [g.model_dump() for g in session.execute(select(Gene)).scalars()]
+    vcf_path = download_release(release, out_dir)
+    rows = filter_clinvar_vcf(vcf_path, genes, release)
+    csv_path = out_dir / f"{release}_variants.csv"
+    write_csv(rows, csv_path)
+    return csv_path, import_clinvar_csv(session, csv_path)
