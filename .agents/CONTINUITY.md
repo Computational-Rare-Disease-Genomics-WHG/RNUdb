@@ -81,6 +81,8 @@ Keep short and high-signal (anti-bloat). Provenance tags: `[USER]`, `[CODE]`, `[
 
 ## [PROGRESS]
 
+- `[2026-11-24T12:20Z] [TOOL]` PR #368 follow-up on branch `feat/equivalent-positions-331` (issue #331): dropped the `literature_id` column from `equivalent_positions` (migration `fe0bd101a6b3`; model, approvals whitelist, TS type all updated) and replaced the discarded derivation scripts with a hand-curated `data/equivalences/equivalences.csv` — **20 base-identical pairs** from the regions the guidance names (K-turn/5' stem-loop RNU4-2 27–34 ↔ RNU4atac 32–39 = 8; K-turn 43–46 ↔ 48–51 = 4; Sm site 118–125 ↔ 116–123 = 8), including the worked example n.32G>A ≡ n.37G>A. Verified: 20 rows, all base-identical, no duplicates; 193 pytest / 159 vitest / ruff / prettier / eslint / tsc / build / pre-commit all pass; CI green. DECISION [USER]: no scripts, no auto-derived rows, no DB seeding — file imported manually via Curate. Follow-up still open: Curate → Equivalences tab + equivalents 2D overlay.
+
 - `[2026-11-16T15:50Z] [TOOL]` PR #363 — home page update (issue #358): removed c.34A>G variant example button + dangling `|` from "Try:" line; added "Currently supported genes" section below hero, listing all loaded genes as clickable links to `/gene/<id>`, derived dynamically from API. File changed: `src/pages/Home.tsx`. All 159 vitest + 183 pytest + build + pre-commit pass.
 
 ## [OUTCOMES]
