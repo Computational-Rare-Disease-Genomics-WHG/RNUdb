@@ -19,6 +19,7 @@ def parse_vcf(
     - PVALUES
     - QVALUES
     - DEPLETION_GROUP
+    - EVIDENCE_CODE
     - CADD_SCORE
     - GNOMAD_AC
     - GNOMAD_HOM
@@ -131,6 +132,8 @@ def parse_info_field(
                 result["hgvs"] = value if value and value != "." else None
             elif target_key == "depletion_group":
                 result["depletion_group"] = value if value and value != "." else None
+            elif target_key == "evidence_code":
+                result["evidence_code"] = value if value and value != "." else None
             elif target_key == "nucleotideposition":
                 result["nucleotidePosition"] = (
                     int(value) if value and value != "." else None

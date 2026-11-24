@@ -50,6 +50,7 @@ Stores variant information with clinical and population data.
 | pvalues               | REAL    | NULLABLE    | P-value                                   |
 | qvalues               | REAL    | NULLABLE    | Q-value (adjusted)                        |
 | depletion_group       | TEXT    | NULLABLE    | Depletion group                           |
+| evidence_code         | TEXT    | NULLABLE    | ACMG functional evidence code from SGE (De Jonghe et al.) |
 | gnomad_ac             | INTEGER | NULLABLE    | gnomAD allele count                       |
 | gnomad_hom            | INTEGER | NULLABLE    | gnomAD homozygous count                   |
 | gnomad_af             | REAL    | NULLABLE    | gnomAD allele frequency                   |

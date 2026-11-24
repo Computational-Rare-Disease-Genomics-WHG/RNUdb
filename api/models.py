@@ -132,6 +132,7 @@ class VariantBase(SQLModel):
     pvalues: float | None = None
     qvalues: float | None = None
     depletion_group: str | None = None
+    evidence_code: str | None = None
     gnomad_ac: int | None = None
     gnomad_hom: int | None = None
     gnomad_af: float | None = None
@@ -166,6 +167,7 @@ class VariantUpdate(SQLModel):
     pvalues: float | None = None
     qvalues: float | None = None
     depletion_group: str | None = None
+    evidence_code: str | None = None
     gnomad_ac: int | None = None
     gnomad_hom: int | None = None
     aou_ac: int | None = None

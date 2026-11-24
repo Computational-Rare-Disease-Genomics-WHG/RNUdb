@@ -301,11 +301,12 @@ async def import_variants_vcf(
             text("""
                 INSERT INTO variants
                 (id, geneId, position, ref, alt, nucleotidePosition, hgvs,
-                 function_score, pvalues, qvalues, depletion_group,
+                 function_score, pvalues, qvalues, depletion_group, evidence_code,
                  gnomad_ac, gnomad_hom, gnomad_af, aou_ac, aou_hom, aou_af)
                 VALUES
                 (:id, :geneId, :position, :ref, :alt, :nucleotidePosition,
                  :hgvs, :function_score, :pvalues, :qvalues, :depletion_group,
+                 :evidence_code,
                  :gnomad_ac, :gnomad_hom, :gnomad_af, :aou_ac, :aou_hom, :aou_af)
                 ON CONFLICT(id) DO UPDATE SET
                      hgvs = EXCLUDED.hgvs,
@@ -317,6 +318,9 @@ async def import_variants_vcf(
                      qvalues = COALESCE(EXCLUDED.qvalues, variants.qvalues),
                      depletion_group = COALESCE(
                          EXCLUDED.depletion_group, variants.depletion_group
+                     ),
+                     evidence_code = COALESCE(
+                         EXCLUDED.evidence_code, variants.evidence_code
                      ),
                      gnomad_ac = COALESCE(EXCLUDED.gnomad_ac, variants.gnomad_ac),
                      gnomad_hom = COALESCE(EXCLUDED.gnomad_hom, variants.gnomad_hom),
@@ -337,6 +341,7 @@ async def import_variants_vcf(
                 "pvalues": variant.get("pvalues"),
                 "qvalues": variant.get("qvalues"),
                 "depletion_group": variant.get("depletion_group"),
+                "evidence_code": variant.get("evidence_code"),
                 "gnomad_ac": variant.get("gnomad_ac"),
                 "gnomad_hom": variant.get("gnomad_hom"),
                 "gnomad_af": variant.get("gnomad_af"),

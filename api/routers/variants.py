@@ -30,6 +30,7 @@ _ALLOWED_VARIANT_COLUMNS = {
     "pvalues",
     "qvalues",
     "depletion_group",
+    "evidence_code",
     "gnomad_ac",
     "gnomad_hom",
     "aou_ac",
