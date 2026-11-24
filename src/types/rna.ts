@@ -59,7 +59,6 @@ export interface EquivalentPositionPublic {
   pos_a: number;
   gene_b: string;
   pos_b: number;
-  literature_id?: string | null;
   notes?: string | null;
   variant_a?: { id: string; hgvs?: string } | null;
   variant_b?: { id: string; hgvs?: string } | null;

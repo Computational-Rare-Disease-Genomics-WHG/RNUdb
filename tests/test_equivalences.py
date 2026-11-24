@@ -140,15 +140,6 @@ class TestEquivalentPositionsApproval:
 
     def test_create_equivalence_approval_flow(self, test_client, test_db):
         """Full cycle: submit → approve → apply → verify."""
-        payload = {
-            "action": "create",
-            "payload": {
-                "gene_a": "RNU4-2",
-                "pos_a": 32,
-                "gene_b": "RNU4atac",
-                "pos_b": 37,
-            },
-        }
         cid = test_client.post(
             "/api/approvals",
             json={

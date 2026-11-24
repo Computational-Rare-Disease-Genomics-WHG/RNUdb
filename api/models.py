@@ -397,7 +397,6 @@ class EquivalentPositionBase(SQLModel):
     pos_a: int
     gene_b: str
     pos_b: int
-    literature_id: str | None = None
     notes: str | None = None
 
 
@@ -412,7 +411,6 @@ class EquivalentPosition(EquivalentPositionBase, table=True):
     pos_a: int
     gene_b: str = Field(foreign_key="genes.id")
     pos_b: int
-    literature_id: str | None = Field(default=None, foreign_key="literature.id")
 
 
 class EquivalentPositionCreate(EquivalentPositionBase):

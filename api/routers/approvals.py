@@ -91,7 +91,7 @@ _ALLOWED_COLUMNS = {
     "literature": {"title", "authors", "journal", "year", "doi", "pmid", "url"},
     "structure": set(),  # only delete supported directly
     "bed_track": set(),  # only delete supported directly
-    "equivalence": {"gene_a", "pos_a", "gene_b", "pos_b", "literature_id", "notes"},
+    "equivalence": {"gene_a", "pos_a", "gene_b", "pos_b", "notes"},
 }
 
 #: Meta keys accepted on top of DB columns (mostly for create actions).
@@ -796,15 +796,14 @@ async def apply_approved_change(
                 db.execute(
                     text("""
                         INSERT INTO equivalent_positions
-                            (gene_a, pos_a, gene_b, pos_b, literature_id, notes)
-                        VALUES (:ga, :pa, :gb, :pb, :lit, :notes)
+                            (gene_a, pos_a, gene_b, pos_b, notes)
+                        VALUES (:ga, :pa, :gb, :pb, :notes)
                     """),
                     {
                         "ga": gene_a,
                         "pa": pos_a,
                         "gb": gene_b,
                         "pb": pos_b,
-                        "lit": payload.get("literature_id"),
                         "notes": payload.get("notes"),
                     },
                 )
