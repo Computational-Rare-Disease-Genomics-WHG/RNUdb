@@ -406,10 +406,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                           (variant: Variant, index: number) => {
                             const paperGroups = getPaperGroupsForVariant(variant.id);
                             const hasMeta =
-                              (variant.gnomad_ac !== undefined &&
-                                variant.gnomad_ac > 0) ||
-                              (variant.aou_ac !== undefined && variant.aou_ac > 0) ||
-                              (variant.ukbb_ac !== undefined && variant.ukbb_ac > 0) ||
+                              variant.gnomad_ac != null ||
+                              variant.gnomad_hom != null ||
+                              variant.aou_ac != null ||
+                              variant.aou_hom != null ||
+                              variant.ukbb_ac != null ||
                               (variant.function_score !== undefined &&
                                 variant.function_score !== null) ||
                               variant.depletion_group != null;
@@ -459,25 +460,32 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
 
                                 {hasMeta && (
                                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mb-2">
-                                    {variant.gnomad_ac !== undefined &&
-                                      variant.gnomad_ac > 0 && (
-                                        <span>
-                                          gnomAD AC:{" "}
-                                          {variant.gnomad_ac.toLocaleString()}
-                                        </span>
-                                      )}
-                                    {variant.aou_ac !== undefined &&
-                                      variant.aou_ac > 0 && (
-                                        <span>
-                                          AoU AC: {variant.aou_ac.toLocaleString()}
-                                        </span>
-                                      )}
-                                    {variant.ukbb_ac !== undefined &&
-                                      variant.ukbb_ac > 0 && (
-                                        <span>
-                                          UKBB AC: {variant.ukbb_ac.toLocaleString()}
-                                        </span>
-                                      )}
+                                    {variant.gnomad_ac != null && (
+                                      <span>
+                                        gnomAD AC: {variant.gnomad_ac.toLocaleString()}
+                                      </span>
+                                    )}
+                                    {variant.gnomad_hom != null && (
+                                      <span>
+                                        gnomAD Hom:{" "}
+                                        {variant.gnomad_hom.toLocaleString()}
+                                      </span>
+                                    )}
+                                    {variant.aou_ac != null && (
+                                      <span>
+                                        AoU AC: {variant.aou_ac.toLocaleString()}
+                                      </span>
+                                    )}
+                                    {variant.aou_hom != null && (
+                                      <span>
+                                        AoU Hom: {variant.aou_hom.toLocaleString()}
+                                      </span>
+                                    )}
+                                    {variant.ukbb_ac != null && (
+                                      <span>
+                                        UKBB AC: {variant.ukbb_ac.toLocaleString()}
+                                      </span>
+                                    )}
                                     {variant.function_score !== undefined &&
                                       variant.function_score !== null && (
                                         <span>
@@ -570,18 +578,21 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                     </button>
                                   </div>
                                   <div className="flex flex-wrap gap-x-2 text-xs text-slate-500">
-                                    {variant.gnomad_ac !== undefined &&
-                                      variant.gnomad_ac > 0 && (
-                                        <span>gnomAD: {variant.gnomad_ac}</span>
-                                      )}
-                                    {variant.aou_ac !== undefined &&
-                                      variant.aou_ac > 0 && (
-                                        <span>AoU: {variant.aou_ac}</span>
-                                      )}
-                                    {variant.ukbb_ac !== undefined &&
-                                      variant.ukbb_ac > 0 && (
-                                        <span>UKBB: {variant.ukbb_ac}</span>
-                                      )}
+                                    {variant.gnomad_ac != null && (
+                                      <span>gnomAD AC: {variant.gnomad_ac}</span>
+                                    )}
+                                    {variant.gnomad_hom != null && (
+                                      <span>gnomAD Hom: {variant.gnomad_hom}</span>
+                                    )}
+                                    {variant.aou_ac != null && (
+                                      <span>AoU AC: {variant.aou_ac}</span>
+                                    )}
+                                    {variant.aou_hom != null && (
+                                      <span>AoU Hom: {variant.aou_hom}</span>
+                                    )}
+                                    {variant.ukbb_ac != null && (
+                                      <span>UKBB AC: {variant.ukbb_ac}</span>
+                                    )}
                                     {variant.function_score !== undefined &&
                                       variant.function_score !== null && (
                                         <span>
