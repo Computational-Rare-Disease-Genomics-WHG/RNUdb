@@ -402,9 +402,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                   <div className="space-y-4">
                     {variantInfo.clinicalVariants.length > 0 && (
                       <div className="space-y-3">
-                        {variantInfo.clinicalVariants
-                          .slice(0, 3)
-                          .map((variant: Variant, index: number) => {
+                        {variantInfo.clinicalVariants.map(
+                          (variant: Variant, index: number) => {
                             const paperGroups = getPaperGroupsForVariant(variant.id);
                             const hasMeta =
                               (variant.gnomad_ac !== undefined &&
@@ -541,7 +540,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                 )}
                               </div>
                             );
-                          })}
+                          },
+                        )}
                       </div>
                     )}
 
@@ -550,9 +550,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                         <div className="text-xs font-medium text-slate-500">
                           Population ({variantInfo.populationVariants.length})
                         </div>
-                        {variantInfo.populationVariants
-                          .slice(0, 3)
-                          .map((variant: Variant, index: number) => {
+                        {variantInfo.populationVariants.map(
+                          (variant: Variant, index: number) => {
                             return (
                               <div
                                 key={index}
@@ -599,7 +598,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                                 </div>
                               </div>
                             );
-                          })}
+                          },
+                        )}
                       </div>
                     )}
 
