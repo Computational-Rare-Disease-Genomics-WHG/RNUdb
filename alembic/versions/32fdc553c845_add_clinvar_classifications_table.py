@@ -1,7 +1,7 @@
 """add clinvar_classifications table
 
 Revision ID: 32fdc553c845
-Revises: 08cf1ba3f420
+Revises: 995d7b423fb0
 Create Date: 2026-11-19 12:19:30.380894
 
 """
@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "32fdc553c845"
-down_revision: str | Sequence[str] | None = "08cf1ba3f420"
+down_revision: str | Sequence[str] | None = "995d7b423fb0"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
