@@ -66,6 +66,40 @@ uv run python scripts/fetch_clinvar.py --release clinvar_20261108
 
 It does not write to the database. Logic lives in `rnudb_utils/clinvar.py`.
 
+#### `import_clinvar.py`
+
+Imports a CSV written by `fetch_clinvar.py` into the `clinvar_classifications` table.
+
+```bash
+uv run python scripts/import_clinvar.py data/clinvar/clinvar_20261108_variants.csv
+
+# Into another database file (e.g. a copy, for a trial run)
+uv run python scripts/import_clinvar.py data/clinvar/clinvar_20261108_variants.csv --db /tmp/copy.db
+```
+
+**What it does:**
+
+- Stores ClinVar's classification for each variant (one row per variant), tagged with the release, with the significance translated to the app's spelling (e.g. `Uncertain_significance` → `VUS`) and ClinVar's original kept in `raw_significance`.
+- Adds a minimal `variants` row (id, position, ref/alt, HGVS, nucleotide position) only for variants not already in the database. Existing variants, curated classifications and literature are never changed.
+- A newer release replaces a variant's ClinVar row; an older release never does, and re-importing the same file changes nothing.
+- Skips rows whose gene is not in the `genes` table, writes every change to `audit_log` as `clinvar-import`, and commits in one transaction.
+
+The database must be at the latest Alembic migration (`uv run alembic upgrade head`).
+
+#### `sync_clinvar.py`
+
+Runs `fetch_clinvar.py` and then `import_clinvar.py` in one go. This is the command for routine updates.
+
+```bash
+# Latest release, into data/database.db
+uv run python scripts/sync_clinvar.py
+
+# A specific release, into another database file
+uv run python scripts/sync_clinvar.py --release clinvar_20261108 --db /tmp/copy.db
+```
+
+Takes `--release` and `--out-dir` like `fetch_clinvar.py` and `--db` like `import_clinvar.py`. Genes are read from the database being imported into, and the CSV is still written to `--out-dir`. Behaviour is otherwise the same as running the two scripts in turn.
+
 ---
 
 ### Database Setup Scripts

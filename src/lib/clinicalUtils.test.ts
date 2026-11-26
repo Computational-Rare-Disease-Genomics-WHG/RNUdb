@@ -3,6 +3,7 @@ import {
   normalizeClinicalString,
   getClinicalCategory,
   clinicalCategoryToValue,
+  toOverlaySignificance,
   clinicalCategoryToDisplay,
 } from "./clinicalUtils";
 
@@ -115,5 +116,27 @@ describe("clinicalCategoryToDisplay", () => {
 
   it("returns 'Unknown' for OTHER without original", () => {
     expect(clinicalCategoryToDisplay("OTHER")).toBe("Unknown");
+  });
+});
+
+describe("toOverlaySignificance", () => {
+  it("maps ClinVar's combined and conflicting terms onto the overlay scale", () => {
+    expect(toOverlaySignificance("Pathogenic/Likely Pathogenic")).toBe(
+      "Likely Pathogenic",
+    );
+    expect(toOverlaySignificance("Conflicting")).toBe("VUS");
+    expect(toOverlaySignificance("Benign/Likely Benign")).toBe("Benign");
+  });
+
+  it("keeps the app's own terms", () => {
+    expect(toOverlaySignificance("Pathogenic")).toBe("Pathogenic");
+    expect(toOverlaySignificance("Likely Pathogenic")).toBe("Likely Pathogenic");
+    expect(toOverlaySignificance("VUS")).toBe("VUS");
+    expect(toOverlaySignificance("LB")).toBe("Likely Benign");
+  });
+
+  it("returns undefined for terms with no overlay colour", () => {
+    expect(toOverlaySignificance("drug response")).toBeUndefined();
+    expect(toOverlaySignificance(undefined)).toBeUndefined();
   });
 });

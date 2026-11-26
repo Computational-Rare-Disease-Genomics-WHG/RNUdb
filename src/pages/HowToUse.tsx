@@ -130,8 +130,8 @@ const HowToUse: React.FC = () => {
                     Data Overlays
                   </h3>
                   <p className="text-slate-500 text-base leading-relaxed">
-                    Toggle ClinVar, gnomAD, or function score overlays to identify
-                    potentially pathogenic variants.
+                    Toggle clinical variant, gnomAD, or function score overlays to
+                    identify potentially pathogenic variants.
                   </p>
                   <div className="mt-4 text-sm text-teal-600 bg-teal-50 px-3 py-2 rounded-lg inline-block">
                     Multiple annotation layers

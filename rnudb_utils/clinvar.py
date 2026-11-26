@@ -4,10 +4,16 @@ from __future__ import annotations
 
 import csv
 import hashlib
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 import pysam
 import requests
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from api.models import AuditLog, ClinvarClassification, Gene, Variant
 
 CLINVAR_VCF_BASE = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38"
 
@@ -173,3 +179,195 @@ def download_release(release: str, dest_dir: Path) -> Path:
         return vcf_path
 
     raise FileNotFoundError(f"ClinVar release {release} not found")
+
+
+# ClinVar terms that differ from the app's own spelling (src/lib/colors.ts).
+SIGNIFICANCE_TERMS = {
+    "Likely_pathogenic": "Likely Pathogenic",
+    "Pathogenic/Likely_pathogenic": "Pathogenic/Likely Pathogenic",
+    "Uncertain_significance": "VUS",
+    "Likely_benign": "Likely Benign",
+    "Benign/Likely_benign": "Benign/Likely Benign",
+    "Conflicting_classifications_of_pathogenicity": "Conflicting",
+}
+
+IMPORT_USER = "clinvar-import"
+
+# ClinVar statements that are not a disease; shown, but kept out of filter lists.
+NO_CONDITION = {"not provided": "Not provided", "not specified": "Not specified"}
+
+
+def clinvar_disease(conditions: str | None) -> str | None:
+    """Display text for ClinVar's ``|``-separated conditions."""
+    if not conditions:
+        return None
+    return "; ".join(NO_CONDITION.get(c, c) for c in conditions.split("|"))
+
+
+def merge_disease_lists(curated: list[str], clinvar_conditions: list[str]) -> list[str]:
+    """Curated diseases plus ClinVar disease texts as variants display them.
+
+    ClinVar's "Not provided" / "Not specified" are not diseases, so they are
+    left out of filter lists.
+    """
+    diseases = set(curated)
+    for conditions in clinvar_conditions:
+        disease = clinvar_disease(conditions)
+        if disease and disease not in NO_CONDITION.values():
+            diseases.add(disease)
+    return sorted(diseases)
+
+
+def normalise_significance(raw: str) -> str | None:
+    """Translate a ClinVar CLNSIG term into the app's spelling."""
+    if not raw:
+        return None
+    return SIGNIFICANCE_TERMS.get(raw, raw.replace("_", " "))
+
+
+def nucleotide_position(position: int, gene: Gene) -> int | None:
+    """1-based position in the snRNA, or None outside the gene."""
+    if not gene.start <= position <= gene.end:
+        return None
+    if gene.strand == "-":
+        return gene.end - position + 1
+    return position - gene.start + 1
+
+
+@dataclass
+class ImportSummary:
+    variants_added: int = 0
+    clinvar_added: int = 0
+    clinvar_updated: int = 0
+    unchanged: int = 0
+    skipped_older: int = 0
+    skipped_unknown_gene: int = 0
+
+
+def _spaced(value: str) -> str | None:
+    return value.replace("_", " ") if value else None
+
+
+def _clinvar_fields(row: dict) -> dict:
+    return {
+        "release": row["release"],
+        "clinvar_variation_id": row["clinvar_variation_id"] or None,
+        "allele_id": row["allele_id"] or None,
+        "clinical_significance": normalise_significance(row["clinical_significance"]),
+        "raw_significance": row["clinical_significance"] or None,
+        "conflicting_significance": row["conflicting_significance"] or None,
+        "review_status": _spaced(row["review_status"]),
+        "conditions": _spaced(row["conditions"]),
+        "condition_ids": row["condition_ids"] or None,
+        "scv_accessions": row["scv_accessions"] or None,
+    }
+
+
+def _audit(session: Session, table: str, record_id: str, action: str, old, new):
+    """Queue an audit entry; committed with the rest of the import."""
+    session.add(
+        AuditLog(
+            table_name=table,
+            record_id=record_id,
+            action=action,
+            old_values=old,
+            new_values=new,
+            user_login=IMPORT_USER,
+        )
+    )
+
+
+def import_clinvar_csv(session: Session, csv_path: Path) -> ImportSummary:
+    """Load a filtered ClinVar CSV into ``clinvar_classifications``.
+
+    Adds a minimal ``variants`` row only for variants not already in the
+    database and never changes an existing one. A ClinVar row is replaced
+    only by a newer release. Everything is committed in one transaction.
+    """
+    genes = {g.id: g for g in session.execute(select(Gene)).scalars()}
+    summary = ImportSummary()
+
+    with csv_path.open(newline="") as f:
+        rows = list(csv.DictReader(f))
+
+    for row in rows:
+        gene = genes.get(row["gene_id"])
+        if gene is None:
+            summary.skipped_unknown_gene += 1
+            continue
+
+        variant_id = row["variant_id"]
+        if session.get(Variant, variant_id) is None:
+            position = int(row["position"])
+            variant = Variant(
+                id=variant_id,
+                geneId=gene.id,
+                position=position,
+                ref=row["ref"],
+                alt=row["alt"],
+                hgvs=row["hgvs"] or None,
+                nucleotidePosition=nucleotide_position(position, gene),
+            )
+            session.add(variant)
+            _audit(
+                session,
+                "variants",
+                variant_id,
+                "CREATE",
+                None,
+                variant.model_dump(mode="json"),
+            )
+            summary.variants_added += 1
+
+        fields = _clinvar_fields(row)
+        existing = session.get(ClinvarClassification, variant_id)
+        if existing is None:
+            new = ClinvarClassification(variant_id=variant_id, **fields)
+            session.add(new)
+            _audit(
+                session,
+                "clinvar_classifications",
+                variant_id,
+                "CREATE",
+                None,
+                new.model_dump(mode="json"),
+            )
+            summary.clinvar_added += 1
+        elif existing.release > fields["release"]:
+            summary.skipped_older += 1
+        elif all(getattr(existing, k) == v for k, v in fields.items()):
+            summary.unchanged += 1
+        else:
+            old = existing.model_dump(mode="json")
+            for key, value in fields.items():
+                setattr(existing, key, value)
+            existing.imported_at = datetime.utcnow()
+            _audit(
+                session,
+                "clinvar_classifications",
+                variant_id,
+                "UPDATE",
+                old,
+                existing.model_dump(mode="json"),
+            )
+            summary.clinvar_updated += 1
+
+    session.commit()
+    return summary
+
+
+def sync_release(
+    session: Session, release: str, out_dir: Path
+) -> tuple[Path, ImportSummary]:
+    """Fetch ``release``, filter it to the session's genes and import it.
+
+    Writes ``<out_dir>/<release>_variants.csv`` like scripts/fetch_clinvar.py,
+    then imports it like scripts/import_clinvar.py. Returns the CSV path and
+    the import summary.
+    """
+    genes = [g.model_dump() for g in session.execute(select(Gene)).scalars()]
+    vcf_path = download_release(release, out_dir)
+    rows = filter_clinvar_vcf(vcf_path, genes, release)
+    csv_path = out_dir / f"{release}_variants.csv"
+    write_csv(rows, csv_path)
+    return csv_path, import_clinvar_csv(session, csv_path)

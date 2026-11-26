@@ -159,7 +159,10 @@ class _FakeResponse:
     def __init__(self, body: bytes | None):
         self.status_code = 200 if body is not None else 404
         self._body = body or b""
-        self.text = self._body.decode()
+
+    @property
+    def text(self):
+        return self._body.decode()
 
     def raise_for_status(self):
         if self.status_code != 200:
@@ -255,3 +258,247 @@ class TestVerifyMd5:
         md5.write_text(_md5_line(b"hello"))
         with pytest.raises(ValueError, match="md5"):
             clinvar.verify_md5(data, md5)
+
+
+def _clinvar_row(**overrides) -> dict:
+    """One CSV row as written by write_csv (real clinvar_20261108 values)."""
+    row = {
+        "release": "clinvar_20261108",
+        "gene_id": "RNU4-2",
+        "variant_id": "chr12-120291764-C-T",
+        "clinvar_variation_id": "4795829",
+        "chromosome": "chr12",
+        "position": "120291764",
+        "ref": "C",
+        "alt": "T",
+        "allele_id": "4907006",
+        "clinical_significance": "Uncertain_significance",
+        "conflicting_significance": "",
+        "review_status": "criteria_provided,_single_submitter",
+        "scv_accessions": "SCV007494717",
+        "conditions": "Neurodevelopmental_disorder|not_provided",
+        "condition_ids": "MONDO:MONDO:0971172,MedGen:C5935628",
+        "hgvs": "NC_000012.12:g.120291764C>T",
+        "variant_type": "single_nucleotide_variant",
+        "molecular_consequence": "SO:0001619|non-coding_transcript_variant",
+        "gene_info": "RNU4-2:26834",
+        "origin": "1",
+    }
+    row.update(overrides)
+    return row
+
+
+def _write_rows(tmp_path, rows, name="clinvar.csv"):
+    path = tmp_path / name
+    clinvar.write_csv(rows, path)
+    return path
+
+
+def _audit_rows(db, table):
+    from sqlmodel import select
+
+    from api.models import AuditLog
+
+    return db.exec(select(AuditLog).where(AuditLog.table_name == table)).all()
+
+
+class TestNormaliseSignificance:
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("Pathogenic", "Pathogenic"),
+            ("Likely_pathogenic", "Likely Pathogenic"),
+            ("Pathogenic/Likely_pathogenic", "Pathogenic/Likely Pathogenic"),
+            ("Uncertain_significance", "VUS"),
+            ("Likely_benign", "Likely Benign"),
+            ("Benign", "Benign"),
+            ("Benign/Likely_benign", "Benign/Likely Benign"),
+            ("Conflicting_classifications_of_pathogenicity", "Conflicting"),
+            ("drug_response", "drug response"),
+            ("", None),
+        ],
+    )
+    def test_maps_clinvar_terms(self, raw, expected):
+        assert clinvar.normalise_significance(raw) == expected
+
+
+class TestNucleotidePosition:
+    def test_minus_strand_counts_from_gene_end(self, sample_gene):
+        from api.models import Gene
+
+        gene = Gene(**sample_gene)
+        assert clinvar.nucleotide_position(120291903, gene) == 1
+        assert clinvar.nucleotide_position(120291759, gene) == 145
+
+    def test_plus_strand_counts_from_gene_start(self, sample_gene):
+        from api.models import Gene
+
+        gene = Gene(**{**sample_gene, "strand": "+"})
+        assert clinvar.nucleotide_position(120291759, gene) == 1
+        assert clinvar.nucleotide_position(120291903, gene) == 145
+
+    def test_outside_gene_is_none(self, sample_gene):
+        from api.models import Gene
+
+        gene = Gene(**sample_gene)
+        assert clinvar.nucleotide_position(120291758, gene) is None
+        assert clinvar.nucleotide_position(120291904, gene) is None
+
+
+class TestImportClinvarCsv:
+    def test_adds_variant_and_clinvar_row(self, test_db, seed_gene, tmp_path):
+        from api.models import ClinvarClassification, Variant
+
+        summary = clinvar.import_clinvar_csv(
+            test_db, _write_rows(tmp_path, [_clinvar_row()])
+        )
+
+        assert summary.variants_added == 1
+        assert summary.clinvar_added == 1
+        variant = test_db.get(Variant, "chr12-120291764-C-T")
+        assert variant.geneId == "RNU4-2"
+        assert variant.position == 120291764
+        assert (variant.ref, variant.alt) == ("C", "T")
+        assert variant.hgvs == "NC_000012.12:g.120291764C>T"
+        assert variant.nucleotidePosition == 120291903 - 120291764 + 1
+        row = test_db.get(ClinvarClassification, "chr12-120291764-C-T")
+        assert row.release == "clinvar_20261108"
+        assert row.clinical_significance == "VUS"
+        assert row.raw_significance == "Uncertain_significance"
+        assert row.review_status == "criteria provided, single submitter"
+        assert row.conditions == "Neurodevelopmental disorder|not provided"
+        assert row.clinvar_variation_id == "4795829"
+        assert row.allele_id == "4907006"
+        assert row.scv_accessions == "SCV007494717"
+        assert row.condition_ids == "MONDO:MONDO:0971172,MedGen:C5935628"
+        audits = _audit_rows(test_db, "clinvar_classifications")
+        assert [(a.action, a.user_login) for a in audits] == [
+            ("CREATE", "clinvar-import")
+        ]
+        assert [a.action for a in _audit_rows(test_db, "variants")] == ["CREATE"]
+
+    def test_leaves_existing_variant_untouched(self, test_db, seed_gene, tmp_path):
+        from api.models import ClinvarClassification, Variant
+
+        test_db.add(
+            Variant(
+                id="chr12-120291764-C-T",
+                geneId="RNU4-2",
+                position=120291764,
+                ref="C",
+                alt="T",
+                hgvs="n.140G>A",
+                nucleotidePosition=140,
+                gnomad_af=0.01,
+                function_score=-1.2,
+            )
+        )
+        test_db.commit()
+
+        summary = clinvar.import_clinvar_csv(
+            test_db, _write_rows(tmp_path, [_clinvar_row()])
+        )
+
+        assert summary.variants_added == 0
+        variant = test_db.get(Variant, "chr12-120291764-C-T")
+        assert variant.hgvs == "n.140G>A"
+        assert variant.gnomad_af == 0.01
+        assert variant.function_score == -1.2
+        assert test_db.get(ClinvarClassification, "chr12-120291764-C-T")
+        assert _audit_rows(test_db, "variants") == []
+
+    def test_reimport_same_file_changes_nothing(self, test_db, seed_gene, tmp_path):
+        path = _write_rows(tmp_path, [_clinvar_row()])
+        clinvar.import_clinvar_csv(test_db, path)
+
+        summary = clinvar.import_clinvar_csv(test_db, path)
+
+        assert summary.unchanged == 1
+        assert summary.variants_added == summary.clinvar_added == 0
+        assert summary.clinvar_updated == 0
+        assert len(_audit_rows(test_db, "clinvar_classifications")) == 1
+
+    def test_newer_release_replaces_row(self, test_db, seed_gene, tmp_path):
+        from api.models import ClinvarClassification
+
+        clinvar.import_clinvar_csv(test_db, _write_rows(tmp_path, [_clinvar_row()]))
+
+        newer = _clinvar_row(
+            release="clinvar_20261115", clinical_significance="Likely_pathogenic"
+        )
+        summary = clinvar.import_clinvar_csv(
+            test_db, _write_rows(tmp_path, [newer], "newer.csv")
+        )
+
+        assert summary.clinvar_updated == 1
+        row = test_db.get(ClinvarClassification, "chr12-120291764-C-T")
+        assert row.release == "clinvar_20261115"
+        assert row.clinical_significance == "Likely Pathogenic"
+        update = [
+            a
+            for a in _audit_rows(test_db, "clinvar_classifications")
+            if a.action == "UPDATE"
+        ]
+        assert len(update) == 1
+        assert update[0].old_values["release"] == "clinvar_20261108"
+        assert update[0].new_values["release"] == "clinvar_20261115"
+
+    def test_older_release_does_not_replace(self, test_db, seed_gene, tmp_path):
+        from api.models import ClinvarClassification
+
+        newer = _clinvar_row(
+            release="clinvar_20261115", clinical_significance="Likely_pathogenic"
+        )
+        clinvar.import_clinvar_csv(test_db, _write_rows(tmp_path, [newer]))
+
+        summary = clinvar.import_clinvar_csv(
+            test_db, _write_rows(tmp_path, [_clinvar_row()], "older.csv")
+        )
+
+        assert summary.skipped_older == 1
+        assert summary.clinvar_updated == 0
+        row = test_db.get(ClinvarClassification, "chr12-120291764-C-T")
+        assert row.release == "clinvar_20261115"
+        assert row.clinical_significance == "Likely Pathogenic"
+
+    def test_unknown_gene_skipped(self, test_db, seed_gene, tmp_path):
+        from api.models import ClinvarClassification, Variant
+
+        rows = [
+            _clinvar_row(gene_id="RNU9-9", variant_id="chr1-100-A-G", position="100"),
+            _clinvar_row(),
+        ]
+
+        summary = clinvar.import_clinvar_csv(test_db, _write_rows(tmp_path, rows))
+
+        assert summary.skipped_unknown_gene == 1
+        assert summary.clinvar_added == 1
+        assert test_db.get(Variant, "chr1-100-A-G") is None
+        assert test_db.get(ClinvarClassification, "chr1-100-A-G") is None
+
+
+class TestSyncRelease:
+    def test_fetches_filters_and_imports(
+        self, test_db, seed_gene, tmp_path, clinvar_vcf, fake_ftp
+    ):
+        from pathlib import Path
+
+        from api.models import ClinvarClassification
+
+        files, _ = fake_ftp
+        url = clinvar.release_url_candidates("clinvar_20261108")[0]
+        vcf = Path(clinvar_vcf).read_bytes()
+        files[url] = vcf
+        files[f"{url}.tbi"] = Path(f"{clinvar_vcf}.tbi").read_bytes()
+        files[f"{url}.md5"] = _md5_line(vcf).encode()
+        out_dir = tmp_path / "out"
+
+        csv_path, summary = clinvar.sync_release(test_db, "clinvar_20261108", out_dir)
+
+        assert csv_path == out_dir / "clinvar_20261108_variants.csv"
+        assert csv_path.exists()
+        # Only the two RNU4-2 alleles; seed_gene is the only gene in the DB
+        assert summary.clinvar_added == 2
+        row = test_db.get(ClinvarClassification, "chr12-120291800-G-A")
+        assert row.release == "clinvar_20261108"
+        assert row.clinical_significance == "VUS"
