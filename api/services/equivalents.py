@@ -96,6 +96,46 @@ def find_counterpart(
     return m["gene_a"], m["pos_a"]
 
 
+_COMPLEMENT = str.maketrans("ACGTacgt", "TGCAtgca")
+
+
+def _transcript_alleles(ref: str, alt: str, strand: str | None) -> tuple[str, str]:
+    """Return (ref, alt) on the transcript strand. Variant alleles are stored
+    as in the VCF, on the forward genomic strand."""
+    if strand == "-":
+        return ref.translate(_COMPLEMENT)[::-1], alt.translate(_COMPLEMENT)[::-1]
+    return ref, alt
+
+
+def find_counterpart_variant(
+    db: Session, variant: dict, other_gene: str, other_pos: int
+) -> dict | None:
+    """Return the variant at *other_pos* in *other_gene* with the same base
+    change as *variant* on the transcript strand, or None."""
+    strands = {
+        r[0]: r[1]
+        for r in db.execute(
+            text("SELECT id, strand FROM genes WHERE id IN (:a, :b)"),
+            {"a": variant["geneId"], "b": other_gene},
+        ).fetchall()
+    }
+    change = _transcript_alleles(
+        variant["ref"], variant["alt"], strands.get(variant["geneId"])
+    )
+    rows = db.execute(
+        text(
+            "SELECT id, hgvs, nucleotidePosition, ref, alt, geneId, is_synthetic "
+            "FROM variants WHERE geneId=:g AND nucleotidePosition=:p"
+        ),
+        {"g": other_gene, "p": other_pos},
+    ).fetchall()
+    for r in rows:
+        m = dict(r._mapping)
+        if _transcript_alleles(m["ref"], m["alt"], strands.get(other_gene)) == change:
+            return m
+    return None
+
+
 def find_or_create_counterpart_variant(db: Session, variant_id: str) -> dict | None:
     """Find or create the counterpart variant for *variant_id*.
 
