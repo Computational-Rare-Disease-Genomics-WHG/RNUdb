@@ -13,6 +13,7 @@ from api.models import (
     EquivalentPosition,
     EquivalentPositionPublic,
 )
+from api.services.equivalents import find_counterpart_variant
 from rnudb_utils.database import get_db
 
 router = APIRouter()
@@ -62,9 +63,9 @@ async def get_gene_equivalent_positions(gene_id: str, db: Session = Depends(get_
 async def get_gene_variant_equivalents(gene_id: str, db: Session = Depends(get_db)):
     """Return every variant of the gene with its derived counterpart (or null).
 
-    The counterpart is the variant at the same transcript position in the other
-    gene (if that position is mapped AND a variant exists there). Missing
-    counterparts are null.
+    The counterpart is the variant with the same base change at the mapped
+    transcript position in the other gene (if that position is mapped AND such
+    a variant exists there). Missing counterparts are null.
     """
     variants = db.execute(
         text(
@@ -95,16 +96,7 @@ async def get_gene_variant_equivalents(gene_id: str, db: Session = Depends(get_d
         counterpart = None
         if nuc and nuc in pos_map:
             other_g, other_p = pos_map[nuc]
-            cr = db.execute(
-                text(
-                    "SELECT id, hgvs, nucleotidePosition, ref, alt, geneId, "
-                    "is_synthetic FROM variants "
-                    "WHERE geneId=:g AND nucleotidePosition=:p LIMIT 1"
-                ),
-                {"g": other_g, "p": other_p},
-            ).fetchone()
-            if cr:
-                counterpart = dict(cr._mapping)
+            counterpart = find_counterpart_variant(db, vm, other_g, other_p)
         result.append({"variant": vm, "counterpart": counterpart})
     return result
 
@@ -137,11 +129,7 @@ async def get_variant_equivalent(variant_id: str, db: Session = Depends(get_db))
     pm = dict(pair._mapping)
     other_g = pm["gene_b"] if pm["gene_a"] == vm["geneId"] else pm["gene_a"]
     other_p = pm["pos_b"] if pm["gene_a"] == vm["geneId"] else pm["pos_a"]
-    cr = db.execute(
-        text(
-            "SELECT id, hgvs, nucleotidePosition, ref, alt, geneId, is_synthetic "
-            "FROM variants WHERE geneId=:g AND nucleotidePosition=:p LIMIT 1"
-        ),
-        {"g": other_g, "p": other_p},
-    ).fetchone()
-    return {"variant": vm, "counterpart": dict(cr._mapping) if cr else None}
+    return {
+        "variant": vm,
+        "counterpart": find_counterpart_variant(db, vm, other_g, other_p),
+    }
